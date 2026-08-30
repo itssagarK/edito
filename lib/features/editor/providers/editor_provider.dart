@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/project.dart';
-import '../../../models/clip.dart';
 
 enum EditorTool {
   select,
@@ -75,6 +74,10 @@ class EditorNotifier extends StateNotifier<EditorState> {
       playheadPositionMs: 0,
       isPlaying: false,
     );
+  }
+
+  void updateProject(Project project) {
+    state = state.copyWith(project: project);
   }
 
   void seek(int positionMs) {

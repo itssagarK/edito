@@ -24,6 +24,34 @@ class Track extends Equatable {
     this.clips = const [],
   });
 
+  int get durationMs {
+    if (clips.isEmpty) return 0;
+    int maxEnd = 0;
+    for (final clip in clips) {
+      final end = clip.startTimeMs + clip.durationMs;
+      if (end > maxEnd) maxEnd = end;
+    }
+    return maxEnd;
+  }
+
+  Track addClip(Clip clip) {
+    return copyWith(
+      clips: [...clips, clip],
+    );
+  }
+
+  Track removeClip(String clipId) {
+    return copyWith(
+      clips: clips.where((c) => c.id != clipId).toList(),
+    );
+  }
+
+  Track updateClip(Clip updated) {
+    return copyWith(
+      clips: clips.map((c) => c.id == updated.id ? updated : c).toList(),
+    );
+  }
+
   Track copyWith({
     String? id,
     String? name,

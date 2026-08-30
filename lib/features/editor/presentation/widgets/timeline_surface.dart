@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/utils/timecode_formatter.dart';
 import '../../../../models/project.dart';
 import '../../../../models/track.dart';
 
@@ -13,6 +12,7 @@ class TimelineSurface extends StatelessWidget {
   final String? selectedClipId;
   final Function(int) onSeek;
   final Function(String?, {String? trackId}) onSelectClip;
+  final VoidCallback onAddMedia;
 
   const TimelineSurface({
     super.key,
@@ -22,14 +22,16 @@ class TimelineSurface extends StatelessWidget {
     this.selectedClipId,
     required this.onSeek,
     required this.onSelectClip,
+    required this.onAddMedia,
   });
 
   @override
   Widget build(BuildContext context) {
     final tracks = project?.tracks ?? [];
     final totalDurationMs = project?.durationMs ?? 30000;
+    final effectiveDurationMs = totalDurationMs > 0 ? totalDurationMs : 30000;
     final pps = AppConstants.timelinePixelsPerSecond * zoomScale;
-    final totalWidth = (totalDurationMs / 1000.0) * pps + 400; // Extra buffer for dragging
+    final totalWidth = (effectiveDurationMs / 1000.0) * pps + 500; // Extra buffer for dragging
 
     final playheadX = (playheadPositionMs / 1000.0) * pps;
 
@@ -61,7 +63,7 @@ class TimelineSurface extends StatelessWidget {
                 },
                 child: CustomPaint(
                   size: Size(totalWidth, 28),
-                  painter: _RulerPainter(pps: pps, totalDurationMs: totalDurationMs),
+                  painter: _RulerPainter(pps: pps, totalDurationMs: effectiveDurationMs),
                 ),
               ),
             ),
@@ -161,6 +163,32 @@ class TimelineSurface extends StatelessWidget {
             ),
           ),
 
+          // If track is empty, show Add Media button
+          if (track.clips.isEmpty)
+            Positioned(
+              left: 120,
+              top: 14,
+              child: InkWell(
+                onTap: onAddMedia,
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.add, size: 14, color: AppColors.primaryLight),
+                      const SizedBox(width: 4),
+                      Text('Add Clip', style: AppTypography.labelSmall.copyWith(color: AppColors.primaryLight)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
           // Render Clips inside track
           ...track.clips.map((clip) {
             final clipX = (clip.startTimeMs / 1000.0) * pps;
@@ -185,10 +213,22 @@ class TimelineSurface extends StatelessWidget {
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 6),
                   alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Clip ${clip.id.substring(0, 4)}',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
-                    overflow: TextOverflow.ellipsis,
+                  child: Row(
+                    children: [
+                      Icon(
+                        track.type == TrackType.video ? Icons.movie : Icons.graphic_eq,
+                        size: 12,
+                        color: Colors.white70,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          'Clip ${clip.id.substring(0, 4)}',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

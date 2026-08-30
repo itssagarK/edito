@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'track.dart';
+import 'clip.dart';
 import 'media_asset.dart';
 
 class Project extends Equatable {
@@ -28,6 +29,86 @@ class Project extends Equatable {
     this.tracks = const [],
     this.assets = const [],
   });
+
+  /// Recalculates total project duration from the max end time of all clips
+  Project recalculateDuration() {
+    int maxEnd = 0;
+    for (final track in tracks) {
+      if (track.durationMs > maxEnd) {
+        maxEnd = track.durationMs;
+      }
+    }
+    return copyWith(
+      durationMs: maxEnd,
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  /// Appends a media asset to the project's asset library if not already present
+  Project addAsset(MediaAsset asset) {
+    if (assets.any((a) => a.id == asset.id || a.path == asset.path)) {
+      return this;
+    }
+    return copyWith(
+      assets: [...assets, asset],
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  /// Adds a clip to a specific track and recalculates total duration
+  Project addClipToTrack(String trackId, Clip clip) {
+    final updatedTracks = tracks.map((track) {
+      if (track.id == trackId) {
+        return track.addClip(clip);
+      }
+      return track;
+    }).toList();
+
+    return copyWith(
+      tracks: updatedTracks,
+      updatedAt: DateTime.now(),
+    ).recalculateDuration();
+  }
+
+  /// Removes a clip across all tracks
+  Project removeClip(String clipId) {
+    final updatedTracks = tracks.map((track) {
+      return track.removeClip(clipId);
+    }).toList();
+
+    return copyWith(
+      tracks: updatedTracks,
+      updatedAt: DateTime.now(),
+    ).recalculateDuration();
+  }
+
+  /// Updates an existing clip
+  Project updateClip(Clip updatedClip) {
+    final updatedTracks = tracks.map((track) {
+      return track.updateClip(updatedClip);
+    }).toList();
+
+    return copyWith(
+      tracks: updatedTracks,
+      updatedAt: DateTime.now(),
+    ).recalculateDuration();
+  }
+
+  /// Adds a new track to the project
+  Project addTrack(Track track) {
+    return copyWith(
+      tracks: [...tracks, track],
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  /// Removes a track by id
+  Project removeTrack(String trackId) {
+    return copyWith(
+      tracks: tracks.where((t) => t.id != trackId).toList(),
+      updatedAt: DateTime.now(),
+    ).recalculateDuration();
+  }
 
   Project copyWith({
     String? id,

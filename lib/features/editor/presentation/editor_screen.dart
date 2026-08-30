@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/editor_provider.dart';
 import '../../home/providers/project_list_provider.dart';
+import '../../media/presentation/media_picker_sheet.dart';
 import 'widgets/editor_app_bar.dart';
 import 'widgets/preview_viewport.dart';
 import 'widgets/timeline_surface.dart';
@@ -52,7 +53,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
               flex: 4,
               child: PreviewViewport(
                 currentPositionMs: editorState.playheadPositionMs,
-                totalDurationMs: project.durationMs > 0 ? project.durationMs : 30000,
+                totalDurationMs: project.durationMs > 0 ? project.durationMs : 10000,
                 isPlaying: editorState.isPlaying,
                 onTogglePlay: () {
                   ref.read(editorProvider.notifier).togglePlay();
@@ -80,6 +81,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 onSelectClip: (clipId, {trackId}) {
                   ref.read(editorProvider.notifier).selectClip(clipId, trackId: trackId);
                 },
+                onAddMedia: () {
+                  MediaPickerSheet.show(context);
+                },
               ),
             ),
 
@@ -98,13 +102,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 );
               },
               onAddTrack: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Add track feature configured for Phase 2'),
-                    duration: Duration(seconds: 1),
-                    backgroundColor: AppColors.surfaceElevated,
-                  ),
-                );
+                MediaPickerSheet.show(context);
               },
             ),
           ],
