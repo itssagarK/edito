@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import '../features/audio/models/audio_effects_config.dart';
 import '../features/color_grading/models/color_grading_config.dart';
+import '../features/speed/models/speed_curve_preset.dart';
+import '../features/transitions/models/transition_type.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -15,6 +17,9 @@ class Clip extends Equatable {
   final bool isMuted;
   final AudioEffectsConfig audioEffects;
   final ColorGradingConfig colorGrading;
+  final TransitionConfig transitionIn;
+  final TransitionConfig transitionOut;
+  final SpeedCurveConfig speedCurve;
 
   const Clip({
     required this.id,
@@ -29,6 +34,9 @@ class Clip extends Equatable {
     this.isMuted = false,
     this.audioEffects = const AudioEffectsConfig(),
     this.colorGrading = const ColorGradingConfig(),
+    this.transitionIn = const TransitionConfig(),
+    this.transitionOut = const TransitionConfig(),
+    this.speedCurve = const SpeedCurveConfig(),
   });
 
   Clip copyWith({
@@ -44,6 +52,9 @@ class Clip extends Equatable {
     bool? isMuted,
     AudioEffectsConfig? audioEffects,
     ColorGradingConfig? colorGrading,
+    TransitionConfig? transitionIn,
+    TransitionConfig? transitionOut,
+    SpeedCurveConfig? speedCurve,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -58,6 +69,9 @@ class Clip extends Equatable {
       isMuted: isMuted ?? this.isMuted,
       audioEffects: audioEffects ?? this.audioEffects,
       colorGrading: colorGrading ?? this.colorGrading,
+      transitionIn: transitionIn ?? this.transitionIn,
+      transitionOut: transitionOut ?? this.transitionOut,
+      speedCurve: speedCurve ?? this.speedCurve,
     );
   }
 
@@ -74,6 +88,9 @@ class Clip extends Equatable {
         'isMuted': isMuted,
         'audioEffects': audioEffects.toJson(),
         'colorGrading': colorGrading.toJson(),
+        'transitionIn': transitionIn.toJson(),
+        'transitionOut': transitionOut.toJson(),
+        'speedCurve': speedCurve.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -93,6 +110,15 @@ class Clip extends Equatable {
         colorGrading: json['colorGrading'] != null
             ? ColorGradingConfig.fromJson(json['colorGrading'] as Map<String, dynamic>)
             : const ColorGradingConfig(),
+        transitionIn: json['transitionIn'] != null
+            ? TransitionConfig.fromJson(json['transitionIn'] as Map<String, dynamic>)
+            : const TransitionConfig(),
+        transitionOut: json['transitionOut'] != null
+            ? TransitionConfig.fromJson(json['transitionOut'] as Map<String, dynamic>)
+            : const TransitionConfig(),
+        speedCurve: json['speedCurve'] != null
+            ? SpeedCurveConfig.fromJson(json['speedCurve'] as Map<String, dynamic>)
+            : const SpeedCurveConfig(),
       );
 
   @override
@@ -109,5 +135,8 @@ class Clip extends Equatable {
         isMuted,
         audioEffects,
         colorGrading,
+        transitionIn,
+        transitionOut,
+        speedCurve,
       ];
 }

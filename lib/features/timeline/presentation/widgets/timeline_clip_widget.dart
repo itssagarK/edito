@@ -3,6 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../models/clip.dart';
 import '../../../../models/track.dart';
 import '../../../audio/presentation/widgets/waveform_painter.dart';
+import '../../../speed/models/speed_curve_preset.dart';
 
 class TimelineClipWidget extends StatelessWidget {
   final Clip clip;
@@ -74,7 +75,7 @@ class TimelineClipWidget extends StatelessWidget {
                 ),
               ),
 
-            // Internal clip body content (Icons, duration, AI badge)
+            // Internal clip body content (Icons, duration, AI / Transition badges)
             Positioned.fill(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: isSelected ? 14.0 : 6.0),
@@ -100,10 +101,21 @@ class TimelineClipWidget extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    if (clip.transitionIn.isEnabled)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        margin: const EdgeInsets.only(right: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentWarm.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(3),
+                          border: Border.all(color: AppColors.accentWarm, width: 0.8),
+                        ),
+                        child: const Icon(Icons.auto_awesome, size: 8, color: AppColors.accentWarm),
+                      ),
                     if (clip.audioEffects.isVoiceEnhancerEnabled)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                        margin: const EdgeInsets.only(right: 4),
+                        margin: const EdgeInsets.only(right: 3),
                         decoration: BoxDecoration(
                           color: AppColors.accent.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(3),
@@ -114,7 +126,7 @@ class TimelineClipWidget extends StatelessWidget {
                           style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: AppColors.accent),
                         ),
                       ),
-                    if (clip.speed != 1.0)
+                    if (clip.speedCurve.type != SpeedCurveType.constant || clip.speed != 1.0)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                         decoration: BoxDecoration(
@@ -122,7 +134,9 @@ class TimelineClipWidget extends StatelessWidget {
                           borderRadius: BorderRadius.circular(3),
                         ),
                         child: Text(
-                          '${clip.speed}x',
+                          clip.speedCurve.type != SpeedCurveType.constant
+                              ? 'Curve'
+                              : '${clip.speed}x',
                           style: const TextStyle(fontSize: 9, color: AppColors.accentGold),
                         ),
                       ),

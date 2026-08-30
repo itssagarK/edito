@@ -9,8 +9,10 @@ import '../../home/providers/project_list_provider.dart';
 import '../../media/presentation/media_picker_sheet.dart';
 import '../../preview/presentation/widgets/realtime_preview_viewport.dart';
 import '../../preview/providers/preview_playback_provider.dart';
+import '../../speed/presentation/widgets/speed_ramping_sheet.dart';
 import '../../timeline/presentation/widgets/interactive_timeline.dart';
 import '../../timeline/services/timeline_editing_service.dart';
+import '../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import 'widgets/editor_app_bar.dart';
 import 'widgets/editing_toolbar.dart';
 
@@ -161,6 +163,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         }
         break;
 
+      case EditorTool.effects:
+        _openTransitionsModal();
+        break;
+
       case EditorTool.color:
         _openColorGradingModal();
         break;
@@ -170,17 +176,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         break;
 
       case EditorTool.speed:
-        if (editorState.selectedClipId != null) {
-          _showSpeedDialog();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Select a clip first to adjust speed'),
-              duration: Duration(milliseconds: 900),
-              backgroundColor: AppColors.surfaceElevated,
-            ),
-          );
-        }
+        _openSpeedModal();
         break;
 
       default:
@@ -195,36 +191,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     }
   }
 
-  void _openColorGradingModal() {
-    final editorState = ref.read(editorProvider);
-    final project = editorState.project;
-    if (project == null) return;
-
-    Clip? targetClip;
-    if (editorState.selectedClipId != null) {
-      for (final track in project.tracks) {
-        for (final clip in track.clips) {
-          if (clip.id == editorState.selectedClipId) {
-            targetClip = clip;
-            break;
-          }
-        }
-        if (targetClip != null) break;
-      }
-    } else {
-      for (final track in project.tracks) {
-        if (track.clips.isNotEmpty) {
-          targetClip = track.clips.first;
-          break;
-        }
-      }
-    }
-
+  void _openTransitionsModal() {
+    final targetClip = _findTargetClip();
     if (targetClip != null) {
-      ColorGradingSheet.show(
+      TransitionSelectorSheet.show(
         context,
         clip: targetClip,
         onSave: (updatedClip) {
+          final project = ref.read(editorProvider).project!;
           final updatedProject = project.updateClip(updatedClip);
           ref.read(editorProvider.notifier).updateProject(updatedProject);
           ref.read(projectListProvider.notifier).updateProject(updatedProject);
@@ -233,7 +207,53 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Add or select a clip first to adjust Color & LUTs'),
+          content: Text('Select a video clip first to add Transitions'),
+          backgroundColor: AppColors.surfaceElevated,
+        ),
+      );
+    }
+  }
+
+  void _openSpeedModal() {
+    final targetClip = _findTargetClip();
+    if (targetClip != null) {
+      SpeedRampingSheet.show(
+        context,
+        clip: targetClip,
+        onSave: (updatedClip) {
+          final project = ref.read(editorProvider).project!;
+          final updatedProject = project.updateClip(updatedClip);
+          ref.read(editorProvider.notifier).updateProject(updatedProject);
+          ref.read(projectListProvider.notifier).updateProject(updatedProject);
+        },
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Select a clip first to adjust Speed & Curves'),
+          backgroundColor: AppColors.surfaceElevated,
+        ),
+      );
+    }
+  }
+
+  void _openColorGradingModal() {
+    final targetClip = _findTargetClip();
+    if (targetClip != null) {
+      ColorGradingSheet.show(
+        context,
+        clip: targetClip,
+        onSave: (updatedClip) {
+          final project = ref.read(editorProvider).project!;
+          final updatedProject = project.updateClip(updatedClip);
+          ref.read(editorProvider.notifier).updateProject(updatedProject);
+          ref.read(projectListProvider.notifier).updateProject(updatedProject);
+        },
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Select a clip first to adjust Color & LUTs'),
           backgroundColor: AppColors.surfaceElevated,
         ),
       );
@@ -241,35 +261,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   }
 
   void _openAudioToolsModal() {
-    final editorState = ref.read(editorProvider);
-    final project = editorState.project;
-    if (project == null) return;
-
-    Clip? targetClip;
-    if (editorState.selectedClipId != null) {
-      for (final track in project.tracks) {
-        for (final clip in track.clips) {
-          if (clip.id == editorState.selectedClipId) {
-            targetClip = clip;
-            break;
-          }
-        }
-        if (targetClip != null) break;
-      }
-    } else {
-      for (final track in project.tracks) {
-        if (track.clips.isNotEmpty) {
-          targetClip = track.clips.first;
-          break;
-        }
-      }
-    }
-
+    final targetClip = _findTargetClip();
     if (targetClip != null) {
       AudioMixerSheet.show(
         context,
         clip: targetClip,
         onSave: (updatedClip) {
+          final project = ref.read(editorProvider).project!;
           final updatedProject = project.updateClip(updatedClip);
           ref.read(editorProvider.notifier).updateProject(updatedProject);
           ref.read(projectListProvider.notifier).updateProject(updatedProject);
@@ -285,53 +283,26 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     }
   }
 
-  void _showSpeedDialog() {
+  Clip? _findTargetClip() {
     final editorState = ref.read(editorProvider);
     final project = editorState.project;
-    if (project == null || editorState.selectedClipId == null) return;
+    if (project == null) return null;
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surfaceElevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Clip Speed Ramping', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 10,
-                children: [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 4.0].map((speed) {
-                  return ChoiceChip(
-                    label: Text('${speed}x'),
-                    selected: false,
-                    onSelected: (selected) {
-                      Navigator.pop(context);
-                      for (final track in project.tracks) {
-                        for (final clip in track.clips) {
-                          if (clip.id == editorState.selectedClipId) {
-                            final updatedClip = clip.copyWith(speed: speed);
-                            final updatedProject = project.updateClip(updatedClip);
-                            ref.read(editorProvider.notifier).updateProject(updatedProject);
-                            ref.read(projectListProvider.notifier).updateProject(updatedProject);
-                            return;
-                          }
-                        }
-                      }
-                    },
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+    if (editorState.selectedClipId != null) {
+      for (final track in project.tracks) {
+        for (final clip in track.clips) {
+          if (clip.id == editorState.selectedClipId) {
+            return clip;
+          }
+        }
+      }
+    } else {
+      for (final track in project.tracks) {
+        if (track.clips.isNotEmpty) {
+          return track.clips.first;
+        }
+      }
+    }
+    return null;
   }
 }

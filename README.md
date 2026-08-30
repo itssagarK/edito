@@ -16,10 +16,10 @@
 | **Phase 1** | **Media Import & Data Models** | 🟢 Complete | Video/Audio/Image import, thumbnail generation, metadata extraction, atomic JSON project persistence. |
 | **Phase 2** | **Timeline UI & Multi-Track Editing** | 🟢 Complete | Multi-track timeline, playhead scrubbing, split/trim at playhead, snap-to-grid, reordering, duplicate & ripple delete. |
 | **Phase 3** | **Real-Time Preview Engine** | 🟢 Complete | 60 FPS clock, multi-track compositor, 16:9/9:16/1:1/21:9 Aspect Ratios, and Safe Area guides. |
+| **Phase 4** | **Transitions & Speed Ramping** | 🟢 Complete | Cross-dissolve, wipe, slide GPU transitions, non-linear bezier speed curves & audio pitch correction. |
 | **Phase 5** | **Color Grading & 3D LUTs** | 🟢 Complete | GLSL color pipeline: exposure, contrast, saturation, curves, 8-channel HSL, and `.cube` 3D LUT presets. |
 | **Phase 6** | **Audio Mixing & AI Voice Clean** | 🟢 Complete | Per-track volume envelope, auto-ducking, on-device AI speech isolation (DeepFilterNet/RNNoise), waveform visualizer, A/B comparison. |
 | **Phase 8** | **FFmpeg Export Pipeline** | 🟢 Complete | Multi-format render engine (4K / 1080p / 720p, H.264/H.265), background export with live ETA progress & direct share. |
-| **Phase 4** | **Transitions & Speed Ramping** | ⚪ Pending | Cross-dissolve, wipe, slide GPU shader transitions, non-linear bezier speed ramping. |
 | **Phase 7** | **Text, Titles & Overlays** | ⚪ Pending | Motion titles, sticker/image overlays with position, scale, and opacity keyframe animation. |
 | **Phase 9** | **Stability & Undo/Redo Engine** | ⚪ Pending | Global command pattern undo/redo stack, proxy editing for 4K media, performance benchmarking. |
 | **Phase 10** | **Release & Distribution** | ⚪ Pending | Production signing, tag-based automated GitHub Releases with instant APK download link. |
@@ -41,7 +41,7 @@
          │   • Android MediaCodec    │                 │   • FFmpeg Render Graph   │
          │   • SurfaceTexture / GL   │                 │   • 1080p / 4K MP4        │
          │   • Real-Time Color Matrix│                 │   • Multi-pass encode     │
-         │   • Zero-latency scrub    │                 │   • Baked 3D LUTs/Curves  │
+         │   • xfade Transitions     │                 │   • Baked 3D LUTs/Curves  │
          └─────────────┬─────────────┘                 └─────────────┬─────────────┘
                        │                                             │
                        └──────────────────────┬──────────────────────┘

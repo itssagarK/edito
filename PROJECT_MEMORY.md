@@ -1,6 +1,6 @@
 # PROJECT_MEMORY.md — Edito Architecture & System Blueprint
 
-> **Status:** Phase 5 In Progress (Pro Color Grading & 3D LUT Pipeline)  
+> **Status:** Phase 4 In Progress (Transitions & Non-Linear Speed Ramping)  
 > **Target:** High-performance, industry-grade Android Video Editor APK (CapCut / VN tier architecture)
 
 ---
@@ -23,10 +23,10 @@
 
 ## 2. Frozen Interface Contracts
 
-### 2.1 Color Grading Pipeline (`lib/features/color_grading/`)
-- `ColorGradingConfig`: Non-destructive parameters for Exposure, Contrast, Saturation, Temperature, Tint, Highlights, Shadows, Vignette, 8-channel HSL, Tone Curves, and 3D LUT presets.
-- `ColorFilterCompilerService`: Compiles color parameters into real-time Flutter/GL color matrices and FFmpeg filter graphs (`eq`, `colorbalance`, `curves`, `lut3d`).
-- `LutPreset`: Presets (*Teal & Orange*, *Vintage Kodak 500T*, *Moody Cyberpunk*, *Golden Hour*, *Film Noir B&W*) with blend intensity.
+### 2.1 Transitions & Speed Pipeline (`lib/features/transitions/` & `lib/features/speed/`)
+- `TransitionConfig`: Video transition schema (*Cross Dissolve*, *Fade to Black/White*, *Wipe*, *Slide*, *Zoom*) with custom durations.
+- `TransitionCompilerService`: Generates FFmpeg `xfade` filter chains and preview frame blends.
+- `SpeedCurveConfig`: Non-linear speed curves (*Montage*, *Hero Slow-Mo*, *Bullet Time*, *Jump Cut*) with audio pitch preservation.
 
 ---
 
@@ -42,7 +42,8 @@ Edito/
 │   ├── phase-1-spec.md            # Media import & data model spec (Complete)
 │   ├── phase-2-spec.md            # Timeline UI & multi-track editing spec (Complete)
 │   ├── phase-3-spec.md            # Real-time preview engine spec (Complete)
-│   ├── phase-5-spec.md            # Color grading & 3D LUT spec (Active)
+│   ├── phase-4-spec.md            # Transitions & speed ramping spec (Active)
+│   ├── phase-5-spec.md            # Color grading & 3D LUT spec (Complete)
 │   ├── phase-6-spec.md            # Audio tools & AI voice enhancement spec (Complete)
 │   ├── phase-8-spec.md            # FFmpeg export pipeline spec (Complete)
 │   └── ...
@@ -58,14 +59,16 @@ Edito/
 │   │   ├── project/               # Project storage & state repository
 │   │   ├── timeline/              # Multi-track timeline, interactive gestures, trimming & split
 │   │   ├── preview/               # Real-time compositor, playback clock & multi-aspect ratio canvas
-│   │   ├── audio/                 # AI voice enhancer, noise reduction, ducking & waveform rendering
+│   │   ├── transitions/           # Cross-dissolve, wipe, fade, slide & xfade compiler
+│   │   ├── speed/                 # Speed ramping, bezier curve presets & pitch correction
 │   │   ├── color_grading/         # LUTs, HSL 8-channel, tone curves & color compiler
+│   │   ├── audio/                 # AI voice enhancer, noise reduction, ducking & waveform rendering
 │   │   ├── export/                # FFmpeg graph builder, render progress & MP4 output
 │   │   └── ...
 │   ├── models/
 │   │   ├── project.dart           # Root project schema
 │   │   ├── track.dart             # Video / Audio / Overlay track definitions
-│   │   ├── clip.dart              # Slice, in/out points, speed, colorGrading, audioEffects
+│   │   ├── clip.dart              # Slice, in/out points, speed, transitions, colorGrading, audioEffects
 │   │   └── media_asset.dart       # Raw file references & metadata cache
 │   └── main.dart                  # Application entry point
 ├── pubspec.yaml                   # Dependencies & asset manifests
@@ -80,10 +83,10 @@ Edito/
 - **Phase 1:** Media Import, Thumbnail Caching & Project Data Model 🟢 *(Done)*
 - **Phase 2:** Multi-Track Timeline UI, Scrubbing, Trim & Split 🟢 *(Done)*
 - **Phase 3:** Real-Time Preview Compositor (Sync Audio/Video) 🟢 *(Done)*
+- **Phase 5:** GLSL Color Grading & 3D LUT Pipeline 🟢 *(Done)*
 - **Phase 6:** Audio Mixing & On-Device AI Voice Enhancement 🟢 *(Done)*
 - **Phase 8:** FFmpeg Export Pipeline (Multi-format, 4K/1080p) 🟢 *(Done)*
-- **Phase 5:** GLSL Color Grading & 3D LUT Pipeline 🟡 *(Active)*
-- **Phase 4:** Transitions & Speed Ramping (Time Remapping) ⚪
+- **Phase 4:** Transitions & Speed Ramping (Time Remapping) 🟡 *(Active)*
 - **Phase 7:** Text, Titles & Animated Keyframe Overlays ⚪
 - **Phase 9:** Performance Optimization, Proxy Rendering & Undo/Redo ⚪
 - **Phase 10:** Production Release & Distribution ⚪
