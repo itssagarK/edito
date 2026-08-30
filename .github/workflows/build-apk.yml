@@ -48,7 +48,7 @@ jobs:
       - name: Build Release APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --release --no-tree-shake-icons --verbose
+          flutter build apk --release --verbose 2>&1 | tee flutter_build.log
           cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/edito-release.apk
 
       - name: Upload Release APK Artifact

@@ -8,7 +8,7 @@
 
     <application
         android:label="Edito"
-        android:name="io.flutter.app.FlutterMultiDexApplication"
+        android:name="${applicationName}"
         android:icon="@drawable/ic_launcher"
         android:requestLegacyExternalStorage="true">
         <activity
