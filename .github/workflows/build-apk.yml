@@ -28,6 +28,9 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -39,8 +42,12 @@ jobs:
           flutter doctor -v
           flutter config --no-analytics
 
-      - name: Make Gradle Wrapper Executable
-        run: chmod +x android/gradlew
+      - name: Generate Complete Gradle Wrapper
+        run: |
+          cd android
+          gradle wrapper --gradle-version 8.4
+          chmod +x gradlew
+          cd ..
 
       - name: Install Dependencies
         run: flutter pub get
