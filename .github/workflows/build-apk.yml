@@ -49,20 +49,11 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --release --verbose > build.log 2>&1 || flutter build apk --debug --verbose > build.log 2>&1 || (cd android && ./gradlew assembleDebug --stacktrace --info > ../build.log 2>&1) || true
-          echo "=== FULL TAIL OF BUILD LOG ==="
-          tail -n 250 build.log
+          flutter build apk --release --no-tree-shake-icons --verbose || flutter build apk --debug --no-tree-shake-icons --verbose
           mkdir -p release_out
-          find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \; || true
-          find build/ -name "*.apk" -exec cp -v {} release_out/app-release.apk \; || true
-          ls -lh release_out/ || true
-
-      - name: Upload Build Log Artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: full-build-log
-          path: build.log
+          find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
+          cp -v release_out/edito-release.apk release_out/app-release.apk
+          ls -lh release_out/
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
