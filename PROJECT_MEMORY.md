@@ -1,6 +1,6 @@
 # PROJECT_MEMORY.md — Edito Architecture & System Blueprint
 
-> **Status:** Phase 3 In Progress (Real-Time Preview Engine & Compositor)  
+> **Status:** Phase 6 In Progress (Audio Tools & On-Device AI Voice Enhancement)  
 > **Target:** High-performance, industry-grade Android Video Editor APK (CapCut / VN tier architecture)
 
 ---
@@ -23,10 +23,11 @@
 
 ## 2. Frozen Interface Contracts
 
-### 2.1 Preview & Compositor Pipeline (`lib/features/preview/`)
-- `TimelineCompositorService`: Evaluates project timeline state at millisecond timestamp `T`.
-- `PlaybackClockService`: Precision 60fps clock driving timeline position and frame rendering.
-- `CompositorFrame`: Immutable frame representation carrying active visual asset, source seek time, audio channels, overlays, and aspect ratio.
+### 2.1 Audio & AI Voice Pipeline (`lib/features/audio/`)
+- `AudioEffectsConfig`: Per-clip parameter schema controlling AI de-noising, voice clarity boost, fade-in/out envelopes, and auto-ducking attenuation.
+- `AIVoiceEnhancerService`: On-device AI inference pipeline and FFmpeg audio filter graph generator.
+- `AudioDuckingService`: Dynamic attenuation curve calculation during active foreground speech.
+- `AudioWaveformService`: Audio amplitude peak generator for timeline visualization.
 
 ---
 
@@ -41,7 +42,8 @@ Edito/
 │   ├── phase-0-spec.md            # Scaffold & CI spec (Complete)
 │   ├── phase-1-spec.md            # Media import & data model spec (Complete)
 │   ├── phase-2-spec.md            # Timeline UI & multi-track editing spec (Complete)
-│   ├── phase-3-spec.md            # Real-time preview engine & compositor spec (Active)
+│   ├── phase-3-spec.md            # Real-time preview engine spec (Complete)
+│   ├── phase-6-spec.md            # Audio tools & AI voice enhancement spec (Active)
 │   └── ...
 ├── lib/
 │   ├── core/
@@ -55,13 +57,14 @@ Edito/
 │   │   ├── project/               # Project storage & state repository
 │   │   ├── timeline/              # Multi-track timeline, interactive gestures, trimming & split
 │   │   ├── preview/               # Real-time compositor, playback clock & multi-aspect ratio canvas
-│   │   ├── color_grading/         # LUTs, HSL, curves & color adjustments
-│   │   ├── audio/                 # Waveforms, volume envelope & AI voice enhancer
-│   │   └── export/                # Export settings, render progress & MP4 output
+│   │   ├── audio/                 # AI voice enhancer, noise reduction, ducking & waveform rendering
+│   │   ├── color_grading/         # LUTs, HSL, curves & color adjustments (Phase 5)
+│   │   ├── export/                # Export settings, render progress & MP4 output (Phase 8)
+│   │   └── ...
 │   ├── models/
 │   │   ├── project.dart           # Root project schema
 │   │   ├── track.dart             # Video / Audio / Overlay track definitions
-│   │   ├── clip.dart              # Slice, in/out points, speed, transforms
+│   │   ├── clip.dart              # Slice, in/out points, speed, transforms, audioEffects
 │   │   └── media_asset.dart       # Raw file references & metadata cache
 │   └── main.dart                  # Application entry point
 ├── pubspec.yaml                   # Dependencies & asset manifests
@@ -75,11 +78,11 @@ Edito/
 - **Phase 0:** Project Skeleton, CI/CD Pipeline & Home Shell 🟢 *(Done)*
 - **Phase 1:** Media Import, Thumbnail Caching & Project Data Model 🟢 *(Done)*
 - **Phase 2:** Multi-Track Timeline UI, Scrubbing, Trim & Split 🟢 *(Done)*
-- **Phase 3:** Real-Time Preview Compositor (Sync Audio/Video) 🟡 *(Active)*
+- **Phase 3:** Real-Time Preview Compositor (Sync Audio/Video) 🟢 *(Done)*
+- **Phase 6:** Audio Mixing & On-Device AI Voice Enhancement 🟡 *(Active MVP)*
+- **Phase 8:** FFmpeg Export Pipeline (Multi-format, 4K/1080p) ⚪ *(Next MVP)*
 - **Phase 4:** Transitions & Speed Ramping (Time Remapping) ⚪
 - **Phase 5:** GLSL Color Grading & 3D LUT Pipeline ⚪
-- **Phase 6:** Audio Mixing & On-Device AI Voice Enhancement ⚪
 - **Phase 7:** Text, Titles & Animated Keyframe Overlays ⚪
-- **Phase 8:** FFmpeg Export Pipeline (Multi-format, 4K/1080p) ⚪
 - **Phase 9:** Performance Optimization, Proxy Rendering & Undo/Redo ⚪
 - **Phase 10:** Production Release & Distribution ⚪

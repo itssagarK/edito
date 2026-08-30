@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../features/audio/models/audio_effects_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -11,6 +12,7 @@ class Clip extends Equatable {
   final double volume;      // 0.0 to 2.0 (1.0 = normal)
   final double speed;       // 0.1 to 10.0 (1.0 = normal)
   final bool isMuted;
+  final AudioEffectsConfig audioEffects;
 
   const Clip({
     required this.id,
@@ -23,6 +25,7 @@ class Clip extends Equatable {
     this.volume = 1.0,
     this.speed = 1.0,
     this.isMuted = false,
+    this.audioEffects = const AudioEffectsConfig(),
   });
 
   Clip copyWith({
@@ -36,6 +39,7 @@ class Clip extends Equatable {
     double? volume,
     double? speed,
     bool? isMuted,
+    AudioEffectsConfig? audioEffects,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -48,6 +52,7 @@ class Clip extends Equatable {
       volume: volume ?? this.volume,
       speed: speed ?? this.speed,
       isMuted: isMuted ?? this.isMuted,
+      audioEffects: audioEffects ?? this.audioEffects,
     );
   }
 
@@ -62,6 +67,7 @@ class Clip extends Equatable {
         'volume': volume,
         'speed': speed,
         'isMuted': isMuted,
+        'audioEffects': audioEffects.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -75,8 +81,23 @@ class Clip extends Equatable {
         volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
         speed: (json['speed'] as num?)?.toDouble() ?? 1.0,
         isMuted: json['isMuted'] as bool? ?? false,
+        audioEffects: json['audioEffects'] != null
+            ? AudioEffectsConfig.fromJson(json['audioEffects'] as Map<String, dynamic>)
+            : const AudioEffectsConfig(),
       );
 
   @override
-  List<Object?> get props => [id, assetId, trackId, startTimeMs, durationMs, sourceInMs, sourceOutMs, volume, speed, isMuted];
+  List<Object?> get props => [
+        id,
+        assetId,
+        trackId,
+        startTimeMs,
+        durationMs,
+        sourceInMs,
+        sourceOutMs,
+        volume,
+        speed,
+        isMuted,
+        audioEffects,
+      ];
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
 import '../../../../models/track.dart';
+import '../../../audio/presentation/widgets/waveform_painter.dart';
 
 class TimelineClipWidget extends StatelessWidget {
   final Clip clip;
@@ -60,7 +60,21 @@ class TimelineClipWidget extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Internal clip body content (Thumbnail strip or Audio waveform)
+            // Waveform background for audio tracks
+            if (trackType == TrackType.audio)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: CustomPaint(
+                    painter: WaveformPainter(
+                      color: Colors.white,
+                      seed: clip.id.hashCode,
+                    ),
+                  ),
+                ),
+              ),
+
+            // Internal clip body content (Icons, duration, AI badge)
             Positioned.fill(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: isSelected ? 14.0 : 6.0),
@@ -71,7 +85,7 @@ class TimelineClipWidget extends StatelessWidget {
                           ? Icons.movie_creation_outlined
                           : (trackType == TrackType.audio ? Icons.graphic_eq : Icons.title),
                       size: 14,
-                      color: Colors.white70,
+                      color: Colors.white,
                     ),
                     const SizedBox(width: 4),
                     Expanded(
@@ -86,6 +100,20 @@ class TimelineClipWidget extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    if (clip.audioEffects.isVoiceEnhancerEnabled)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        margin: const EdgeInsets.only(right: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(3),
+                          border: Border.all(color: AppColors.accent, width: 0.8),
+                        ),
+                        child: const Text(
+                          'AI',
+                          style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: AppColors.accent),
+                        ),
+                      ),
                     if (clip.speed != 1.0)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
