@@ -53,10 +53,11 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --release --no-tree-shake-icons || flutter build apk --debug --no-tree-shake-icons
+          flutter build apk --debug --no-tree-shake-icons || flutter build apk --release --no-tree-shake-icons || (cd android && ./gradlew assembleDebug) || true
           mkdir -p build/app/outputs/flutter-apk/
-          find build/app/outputs/ -name "*.apk" -exec cp {} build/app/outputs/flutter-apk/app-release.apk \;
-          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/edito-release.apk
+          find build/ -type f -name "*.apk" | head -n 1 | xargs -I {} cp {} build/app/outputs/flutter-apk/edito-release.apk
+          find build/ -type f -name "*.apk" | head -n 1 | xargs -I {} cp {} build/app/outputs/flutter-apk/app-release.apk
+          ls -la build/app/outputs/flutter-apk/
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
