@@ -49,19 +49,16 @@ jobs:
       - name: Build Android Release APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --release --no-tree-shake-icons --verbose 2>&1 | tee build_err.log || true
-          echo "=== TAIL OF BUILD LOG ==="
-          tail -n 120 build_err.log
-          echo "=== SEARCHING FOR ERRORS ==="
-          grep -i -C 3 -E "FAILURE|Error:|Exception|FAILED" build_err.log || true
-          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/edito-release.apk
-
-      - name: Upload Build Log Artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: build_err.log
+          flutter build apk --release --verbose || true
+          if [ -f build/app/outputs/flutter-apk/app-release.apk ]; then
+            cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/edito-release.apk
+          else
+            echo "::warning::Direct flutter build not outputted, running assembleRelease..."
+            cd android && ./gradlew assembleRelease --stacktrace --info && cd ..
+            mkdir -p build/app/outputs/flutter-apk/
+            find build/ -name "*.apk" -exec cp {} build/app/outputs/flutter-apk/app-release.apk \;
+            cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/edito-release.apk
+          fi
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
