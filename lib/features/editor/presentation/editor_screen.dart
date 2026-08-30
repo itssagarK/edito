@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/editor_provider.dart';
 import '../../audio/presentation/widgets/audio_mixer_sheet.dart';
+import '../../export/presentation/widgets/export_settings_modal.dart';
 import '../../home/providers/project_list_provider.dart';
 import '../../media/presentation/media_picker_sheet.dart';
 import '../../preview/presentation/widgets/realtime_preview_viewport.dart';
@@ -48,7 +49,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
               onUndo: () {},
               onRedo: () {},
               onExport: () {
-                _showExportModal(context);
+                ExportSettingsModal.show(context, project: project);
               },
             ),
 
@@ -277,52 +278,6 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                     },
                   );
                 }).toList(),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showExportModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surfaceElevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Export Project (FFmpeg Pipeline)',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Resolution: 1080p Full HD (1920x1080)\nFramerate: 30 FPS\nFormat: MP4 (H.264 / AAC)',
-                style: TextStyle(color: AppColors.textSecondary, height: 1.5),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Export pipeline will be connected in Phase 8 (FFmpeg render graph)'),
-                        backgroundColor: AppColors.primary,
-                      ),
-                    );
-                  },
-                  child: const Text('Render Video'),
-                ),
               ),
             ],
           ),
