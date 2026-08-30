@@ -1,6 +1,6 @@
 # PROJECT_MEMORY.md — Edito Architecture & System Blueprint
 
-> **Status:** Phase 1 In Progress (Media Import & Project Data Model Engine)  
+> **Status:** Phase 2 In Progress (Timeline UI & Multi-Track Editing Engine)  
 > **Target:** High-performance, industry-grade Android Video Editor APK (CapCut / VN tier architecture)
 
 ---
@@ -23,15 +23,16 @@
 
 ## 2. Frozen Interface Contracts
 
-### 2.1 Project Schema (`lib/models/project.dart`)
-- Stores list of `Track` (video, audio, text, overlay) and pool of `MediaAsset`.
-- Helper methods for calculating total timeline duration dynamically: `project.recalculateDuration()`.
-- Atomic persistence to disk via `ProjectStorageService`.
+### 2.1 Project & Clip Schema (`lib/models/`)
+- `Project`: Root state container with list of `Track` and library of `MediaAsset`.
+- `Track`: Lane with type (`video`, `audio`, `text`, `overlay`), list of `Clip`, and states (`isMuted`, `isLocked`, `isHidden`).
+- `Clip`: In-timeline parameters (`startTimeMs`, `durationMs`) mapped to source media window (`sourceInMs`, `sourceOutMs`), speed, volume, and mute flag.
 
-### 2.2 Media Import Pipeline (`lib/features/media/`)
-- `MediaPickerService`: Platform abstraction over gallery & file system selection.
-- `MetadataProbeService`: Asynchronous extraction of video resolution, duration, fps, and audio channels.
-- `ThumbnailService`: On-disk caching of preview thumbnails in app cache directory.
+### 2.2 Timeline Operations Engine (`lib/features/timeline/services/timeline_editing_service.dart`)
+- `splitClip`: Non-destructive split dividing a clip into two sequential clips at a given playhead timestamp.
+- `trimClipHead` & `trimClipTail`: Bound-checked trimming with minimum duration constraints (100ms).
+- `moveClip`: Re-anchoring clip start time with optional collision prevention.
+- `calculateSnapTime`: Magnetic snapping calculation with 150ms proximity threshold.
 
 ---
 
@@ -44,23 +45,20 @@ Edito/
 │       └── build-apk.yml          # Automated CI/CD for debug & release APKs
 ├── docs/
 │   ├── phase-0-spec.md            # Scaffold & CI spec (Complete)
-│   ├── phase-1-spec.md            # Media import & data model spec (Active)
+│   ├── phase-1-spec.md            # Media import & data model spec (Complete)
+│   ├── phase-2-spec.md            # Timeline UI & multi-track editing spec (Active)
 │   └── ...
-├── android/                       # Native Android harness & NDK/MediaCodec plugins
-│   ├── app/
-│   └── gradle/
 ├── lib/
 │   ├── core/
 │   │   ├── constants/             # App dimensions, strings, asset paths
 │   │   ├── theme/                 # Dark cinematic UI theme & design system
-│   │   ├── routing/               # Navigation router
 │   │   └── utils/                 # Timecode formatting, file helpers
 │   ├── features/
 │   │   ├── home/                  # Project browser & new project launcher
 │   │   ├── editor/                # Editor shell, playback controls & toolbar
 │   │   ├── media/                 # Media picker, thumbnail cache & metadata probing
 │   │   ├── project/               # Project storage & state repository
-│   │   ├── timeline/              # Multi-track timeline & clip manipulation
+│   │   ├── timeline/              # Multi-track timeline, interactive gestures, trimming & split
 │   │   ├── preview/               # Video compositor & GL surface view
 │   │   ├── color_grading/         # LUTs, HSL, curves & color adjustments
 │   │   ├── audio/                 # Waveforms, volume envelope & AI voice enhancer
@@ -80,8 +78,8 @@ Edito/
 ## 4. Phase Delivery Roadmap
 
 - **Phase 0:** Project Skeleton, CI/CD Pipeline & Home Shell 🟢 *(Done)*
-- **Phase 1:** Media Import, Thumbnail Caching & Project Data Model 🟡 *(Active)*
-- **Phase 2:** Multi-Track Timeline UI, Scrubbing, Trim & Split ⚪
+- **Phase 1:** Media Import, Thumbnail Caching & Project Data Model 🟢 *(Done)*
+- **Phase 2:** Multi-Track Timeline UI, Scrubbing, Trim & Split 🟡 *(Active)*
 - **Phase 3:** Real-Time Preview Compositor (Sync Audio/Video) ⚪
 - **Phase 4:** Transitions & Speed Ramping (Time Remapping) ⚪
 - **Phase 5:** GLSL Color Grading & 3D LUT Pipeline ⚪

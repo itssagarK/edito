@@ -4,9 +4,10 @@ import '../../../core/theme/app_colors.dart';
 import '../providers/editor_provider.dart';
 import '../../home/providers/project_list_provider.dart';
 import '../../media/presentation/media_picker_sheet.dart';
+import '../../timeline/presentation/widgets/interactive_timeline.dart';
+import '../../timeline/services/timeline_editing_service.dart';
 import 'widgets/editor_app_bar.dart';
 import 'widgets/preview_viewport.dart';
-import 'widgets/timeline_surface.dart';
 import 'widgets/editing_toolbar.dart';
 
 class EditorScreen extends ConsumerStatefulWidget {
@@ -67,10 +68,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
               ),
             ),
 
-            // Timeline Multi-Track Editor Area
+            // Multi-Track Interactive Timeline
             Expanded(
               flex: 5,
-              child: TimelineSurface(
+              child: InteractiveTimeline(
                 project: project,
                 playheadPositionMs: editorState.playheadPositionMs,
                 zoomScale: editorState.zoomScale,
@@ -78,8 +79,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 onSeek: (positionMs) {
                   ref.read(editorProvider.notifier).seek(positionMs);
                 },
+                onZoomChanged: (zoom) {
+                  ref.read(editorProvider.notifier).setZoom(zoom);
+                },
                 onSelectClip: (clipId, {trackId}) {
                   ref.read(editorProvider.notifier).selectClip(clipId, trackId: trackId);
+                },
+                onProjectMutated: (updatedProject) {
+                  ref.read(editorProvider.notifier).updateProject(updatedProject);
+                  ref.read(projectListProvider.notifier).updateProject(updatedProject);
                 },
                 onAddMedia: () {
                   MediaPickerSheet.show(context);
@@ -93,13 +101,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
               hasSelectedClip: editorState.selectedClipId != null,
               onSelectTool: (tool) {
                 ref.read(editorProvider.notifier).setActiveTool(tool);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Tool selected: ${tool.name.toUpperCase()} (Available in Phase 2-8)'),
-                    duration: const Duration(seconds: 1),
-                    backgroundColor: AppColors.surfaceElevated,
-                  ),
-                );
+                _handleToolAction(tool);
               },
               onAddTrack: () {
                 MediaPickerSheet.show(context);
@@ -108,6 +110,125 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _handleToolAction(EditorTool tool) {
+    final editorState = ref.read(editorProvider);
+    final project = editorState.project;
+    if (project == null) return;
+
+    switch (tool) {
+      case EditorTool.split:
+        if (editorState.selectedClipId != null) {
+          final updated = TimelineEditingService.splitClip(
+            project,
+            editorState.selectedClipId!,
+            editorState.playheadPositionMs,
+          );
+          if (updated != null) {
+            ref.read(editorProvider.notifier).updateProject(updated);
+            ref.read(projectListProvider.notifier).updateProject(updated);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Clip split at playhead position'),
+                duration: Duration(milliseconds: 900),
+                backgroundColor: AppColors.primary,
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Move playhead inside the clip to split'),
+                duration: Duration(milliseconds: 1200),
+                backgroundColor: AppColors.surfaceElevated,
+              ),
+            );
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Select a clip first to split'),
+              duration: Duration(milliseconds: 900),
+              backgroundColor: AppColors.surfaceElevated,
+            ),
+          );
+        }
+        break;
+
+      case EditorTool.speed:
+        if (editorState.selectedClipId != null) {
+          _showSpeedDialog();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Select a clip first to adjust speed'),
+              duration: Duration(milliseconds: 900),
+              backgroundColor: AppColors.surfaceElevated,
+            ),
+          );
+        }
+        break;
+
+      default:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${tool.name.toUpperCase()} tool active'),
+            duration: const Duration(milliseconds: 800),
+            backgroundColor: AppColors.surfaceElevated,
+          ),
+        );
+        break;
+    }
+  }
+
+  void _showSpeedDialog() {
+    final editorState = ref.read(editorProvider);
+    final project = editorState.project;
+    if (project == null || editorState.selectedClipId == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surfaceElevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Clip Speed Ramping', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 10,
+                children: [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 4.0].map((speed) {
+                  return ChoiceChip(
+                    label: Text('${speed}x'),
+                    selected: false,
+                    onSelected: (selected) {
+                      Navigator.pop(context);
+                      for (final track in project.tracks) {
+                        for (final clip in track.clips) {
+                          if (clip.id == editorState.selectedClipId) {
+                            final updatedClip = clip.copyWith(speed: speed);
+                            final updatedProject = project.updateClip(updatedClip);
+                            ref.read(editorProvider.notifier).updateProject(updatedProject);
+                            ref.read(projectListProvider.notifier).updateProject(updatedProject);
+                            return;
+                          }
+                        }
+                      }
+                    },
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
