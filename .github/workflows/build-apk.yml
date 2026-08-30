@@ -35,7 +35,9 @@ jobs:
           cache: true
 
       - name: Verify Flutter & Environment
-        run: flutter doctor -v
+        run: |
+          flutter doctor -v
+          flutter config --no-analytics
 
       - name: Install Dependencies
         run: flutter pub get
@@ -45,7 +47,7 @@ jobs:
 
       - name: Build Release APK
         run: |
-          flutter build apk --release
+          flutter build apk --release --verbose
           cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/edito-release.apk
 
       - name: Upload Release APK Artifact
