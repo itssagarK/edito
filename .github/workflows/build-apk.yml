@@ -49,8 +49,14 @@ jobs:
       - name: Build Android Release APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --release --no-tree-shake-icons
+          flutter build apk --release --no-tree-shake-icons --verbose 2>&1 | tee build_err.log
           cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/edito-release.apk
+
+      - name: Print Build Error Log On Failure
+        if: failure()
+        run: |
+          echo "=== RECENT BUILD LOG OUTPUT ==="
+          tail -n 120 build_err.log || true
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
