@@ -44,7 +44,7 @@ class TextOverlayConfig extends Equatable {
   final TextAnimationType animationType;
 
   const TextOverlayConfig({
-    this.text = 'Title Text',
+    this.text = '',
     this.fontFamily = 'Inter',
     this.fontSize = 24.0,
     this.textColor = 0xFFFFFFFF,
@@ -58,6 +58,8 @@ class TextOverlayConfig extends Equatable {
     this.opacity = 1.0,
     this.animationType = TextAnimationType.fadeIn,
   });
+
+  bool get isEnabled => text.trim().isNotEmpty;
 
   TextOverlayConfig copyWith({
     String? text,
@@ -108,7 +110,7 @@ class TextOverlayConfig extends Equatable {
       };
 
   factory TextOverlayConfig.fromJson(Map<String, dynamic> json) => TextOverlayConfig(
-        text: json['text'] as String? ?? 'Title Text',
+        text: json['text'] as String? ?? '',
         fontFamily: json['fontFamily'] as String? ?? 'Inter',
         fontSize: (json['fontSize'] as num?)?.toDouble() ?? 24.0,
         textColor: (json['textColor'] as num?)?.toInt() ?? 0xFFFFFFFF,
