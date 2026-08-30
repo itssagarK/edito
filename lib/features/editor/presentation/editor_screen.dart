@@ -51,8 +51,26 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 ref.read(playbackClockServiceProvider).pause();
                 Navigator.pop(context);
               },
-              onUndo: () {},
-              onRedo: () {},
+              onUndo: () {
+                ref.read(editorProvider.notifier).undo();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Action undone'),
+                    duration: Duration(milliseconds: 700),
+                    backgroundColor: AppColors.surfaceElevated,
+                  ),
+                );
+              },
+              onRedo: () {
+                ref.read(editorProvider.notifier).redo();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Action redone'),
+                    duration: Duration(milliseconds: 700),
+                    backgroundColor: AppColors.surfaceElevated,
+                  ),
+                );
+              },
               onExport: () {
                 ExportSettingsModal.show(context, project: project);
               },

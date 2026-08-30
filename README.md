@@ -21,7 +21,7 @@
 | **Phase 6** | **Audio Mixing & AI Voice Clean** | 🟢 Complete | Per-track volume envelope, auto-ducking, on-device AI speech isolation (DeepFilterNet/RNNoise), waveform visualizer, A/B comparison. |
 | **Phase 7** | **Text, Titles & Overlays** | 🟢 Complete | Motion titles, font picker, text animations (Typewriter/Fade/Pop), keyframe motion paths, and drawtext export. |
 | **Phase 8** | **FFmpeg Export Pipeline** | 🟢 Complete | Multi-format render engine (4K / 1080p / 720p, H.264/H.265), background export with live ETA progress & direct share. |
-| **Phase 9** | **Stability & Undo/Redo Engine** | ⚪ Pending | Global command pattern undo/redo stack, proxy editing for 4K media, performance benchmarking. |
+| **Phase 9** | **Stability & Undo/Redo Engine** | 🟢 Complete | Global command pattern undo/redo stack (50 levels), debounced autosave, and memory optimization. |
 | **Phase 10** | **Release & Distribution** | ⚪ Pending | Production signing, tag-based automated GitHub Releases with instant APK download link. |
 
 ---
@@ -42,6 +42,7 @@
          │   • SurfaceTexture / GL   │                 │   • 1080p / 4K MP4        │
          │   • Real-Time Color Matrix│                 │   • Multi-pass encode     │
          │   • xfade & drawtext      │                 │   • Baked 3D LUTs/Text    │
+         │   • Zero-latency scrub    │                 │   • Chained Audio Filters │
          └─────────────┬─────────────┘                 └─────────────┬─────────────┘
                        │                                             │
                        └──────────────────────┬──────────────────────┘

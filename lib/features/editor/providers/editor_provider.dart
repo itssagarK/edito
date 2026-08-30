@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/project.dart';
+import '../../history/services/history_manager_service.dart';
 
 enum EditorTool {
   select,
@@ -66,18 +67,56 @@ final editorProvider = StateNotifierProvider<EditorNotifier, EditorState>((ref) 
 });
 
 class EditorNotifier extends StateNotifier<EditorState> {
+  final HistoryManagerService _history = HistoryManagerService();
+
   EditorNotifier() : super(const EditorState());
 
   void initProject(Project project) {
+    _history.clear();
     state = EditorState(
       project: project,
       playheadPositionMs: 0,
       isPlaying: false,
+      canUndo: false,
+      canRedo: false,
     );
   }
 
-  void updateProject(Project project) {
-    state = state.copyWith(project: project);
+  void updateProject(Project newProject) {
+    if (state.project != null) {
+      _history.pushState(state.project!);
+    }
+    state = state.copyWith(
+      project: newProject,
+      canUndo: _history.canUndo,
+      canRedo: _history.canRedo,
+    );
+  }
+
+  void undo() {
+    if (!_history.canUndo || state.project == null) return;
+
+    final targetState = _history.undo(state.project!);
+    if (targetState != null) {
+      state = state.copyWith(
+        project: targetState,
+        canUndo: _history.canUndo,
+        canRedo: _history.canRedo,
+      );
+    }
+  }
+
+  void redo() {
+    if (!_history.canRedo || state.project == null) return;
+
+    final targetState = _history.redo(state.project!);
+    if (targetState != null) {
+      state = state.copyWith(
+        project: targetState,
+        canUndo: _history.canUndo,
+        canRedo: _history.canRedo,
+      );
+    }
   }
 
   void seek(int positionMs) {
@@ -98,18 +137,16 @@ class EditorNotifier extends StateNotifier<EditorState> {
     state = state.copyWith(isPlaying: true);
   }
 
-  void setZoom(double scale) {
-    state = state.copyWith(zoomScale: scale.clamp(0.2, 5.0));
+  void setZoom(double zoom) {
+    final clamped = zoom.clamp(0.2, 5.0);
+    state = state.copyWith(zoomScale: clamped);
   }
 
   void selectClip(String? clipId, {String? trackId}) {
     if (clipId == null) {
-      state = state.copyWith(clearSelectedClip: true, selectedTrackId: trackId);
+      state = state.copyWith(clearSelectedClip: true, selectedTrackId: null);
     } else {
-      state = state.copyWith(
-        selectedClipId: clipId,
-        selectedTrackId: trackId,
-      );
+      state = state.copyWith(selectedClipId: clipId, selectedTrackId: trackId);
     }
   }
 

@@ -1,6 +1,6 @@
 # PROJECT_MEMORY.md — Edito Architecture & System Blueprint
 
-> **Status:** Phase 7 In Progress (Text, Motion Titles & Animated Keyframe Overlays)  
+> **Status:** Phase 9 In Progress (Global Undo/Redo Engine & Performance Optimization)  
 > **Target:** High-performance, industry-grade Android Video Editor APK (CapCut / VN tier architecture)
 
 ---
@@ -23,10 +23,9 @@
 
 ## 2. Frozen Interface Contracts
 
-### 2.1 Overlays Pipeline (`lib/features/overlays/`)
-- `TextOverlayConfig`: Schema for motion text, fonts, colors, background plates, $(X, Y)$ position, scale, rotation, and animation presets.
-- `Keyframe`: Animation keyframe point for multi-parameter interpolation over time.
-- `OverlayCompilerService`: Live preview animator and FFmpeg `drawtext` command builder.
+### 2.1 History & Undo/Redo Pipeline (`lib/features/history/`)
+- `HistoryManagerService`: Command pattern state tracker supporting up to 50 levels of Undo/Redo with reactive state broadcasts.
+- `AutoSaveService`: Debounced atomic disk persistence and crash recovery.
 
 ---
 
@@ -45,8 +44,9 @@ Edito/
 │   ├── phase-4-spec.md            # Transitions & speed ramping spec (Complete)
 │   ├── phase-5-spec.md            # Color grading & 3D LUT spec (Complete)
 │   ├── phase-6-spec.md            # Audio tools & AI voice enhancement spec (Complete)
-│   ├── phase-7-spec.md            # Text & motion overlays spec (Active)
+│   ├── phase-7-spec.md            # Text & motion overlays spec (Complete)
 │   ├── phase-8-spec.md            # FFmpeg export pipeline spec (Complete)
+│   ├── phase-9-spec.md            # Undo/Redo & performance spec (Active)
 │   └── ...
 ├── lib/
 │   ├── core/
@@ -65,12 +65,13 @@ Edito/
 │   │   ├── color_grading/         # LUTs, HSL 8-channel, tone curves & color compiler
 │   │   ├── audio/                 # AI voice enhancer, noise reduction, ducking & waveform rendering
 │   │   ├── overlays/              # Text titles, keyframe animator & drawtext compiler
+│   │   ├── history/               # Global undo/redo history engine & autosave
 │   │   ├── export/                # FFmpeg graph builder, render progress & MP4 output
 │   │   └── ...
 │   ├── models/
 │   │   ├── project.dart           # Root project schema
 │   │   ├── track.dart             # Video / Audio / Overlay track definitions
-│   │   ├── clip.dart              # Slice, in/out points, textOverlay, keyframes, colorGrading, audioEffects
+│   │   ├── clip.dart              # Slice, in/out points, textOverlay, transitions, colorGrading, audioEffects
 │   │   └── media_asset.dart       # Raw file references & metadata cache
 │   └── main.dart                  # Application entry point
 ├── pubspec.yaml                   # Dependencies & asset manifests
@@ -88,7 +89,7 @@ Edito/
 - **Phase 4:** Transitions & Speed Ramping (Time Remapping) 🟢 *(Done)*
 - **Phase 5:** GLSL Color Grading & 3D LUT Pipeline 🟢 *(Done)*
 - **Phase 6:** Audio Mixing & On-Device AI Voice Enhancement 🟢 *(Done)*
+- **Phase 7:** Text, Titles & Animated Keyframe Overlays 🟢 *(Done)*
 - **Phase 8:** FFmpeg Export Pipeline (Multi-format, 4K/1080p) 🟢 *(Done)*
-- **Phase 7:** Text, Titles & Animated Keyframe Overlays 🟡 *(Active)*
-- **Phase 9:** Performance Optimization, Proxy Rendering & Undo/Redo ⚪
+- **Phase 9:** Performance Optimization, Proxy Rendering & Undo/Redo 🟡 *(Active)*
 - **Phase 10:** Production Release & Distribution ⚪
