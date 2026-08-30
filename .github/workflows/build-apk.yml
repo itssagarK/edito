@@ -39,6 +39,9 @@ jobs:
           flutter doctor -v
           flutter config --no-analytics
 
+      - name: Make Gradle Wrapper Executable
+        run: chmod +x android/gradlew
+
       - name: Install Dependencies
         run: flutter pub get
 
