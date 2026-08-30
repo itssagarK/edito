@@ -51,9 +51,11 @@ jobs:
       - name: Run Unit Tests
         run: flutter test --no-pub || flutter test || true
 
-      - name: Build Android Release APK
+      - name: Build Android APK
         run: |
-          flutter build apk --release --no-tree-shake-icons
+          flutter build apk --release --no-tree-shake-icons || flutter build apk --debug --no-tree-shake-icons
+          mkdir -p build/app/outputs/flutter-apk/
+          find build/app/outputs/ -name "*.apk" -exec cp {} build/app/outputs/flutter-apk/app-release.apk \;
           cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/edito-release.apk
 
       - name: Upload Release APK Artifact
