@@ -48,18 +48,8 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --release --verbose 2>&1 | tee flutter_build.log || flutter build apk --debug --verbose 2>&1 | tee -a flutter_build.log || true
-          mkdir -p build/app/outputs/flutter-apk/
-          find build/ -name "*.apk" -exec cp {} build/app/outputs/flutter-apk/app-release.apk \; || true
-          find build/ -name "*.apk" -exec cp {} build/app/outputs/flutter-apk/edito-release.apk \; || true
-          ls -lh build/app/outputs/flutter-apk/ || true
-
-      - name: Upload Build Log Artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: flutter-build-log
-          path: flutter_build.log
+          flutter build apk --release --verbose
+          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/edito-release.apk
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
@@ -76,6 +66,7 @@ jobs:
           name: ${{ startsWith(github.ref, 'refs/tags/v') && format('Release {0}', github.ref_name) || 'Edito v1.0.0 Production Release' }}
           draft: false
           prerelease: false
+          make_latest: true
           generate_release_notes: true
           files: |
             build/app/outputs/flutter-apk/app-release.apk
