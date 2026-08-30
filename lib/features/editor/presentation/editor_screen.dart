@@ -4,10 +4,11 @@ import '../../../core/theme/app_colors.dart';
 import '../providers/editor_provider.dart';
 import '../../home/providers/project_list_provider.dart';
 import '../../media/presentation/media_picker_sheet.dart';
+import '../../preview/presentation/widgets/realtime_preview_viewport.dart';
+import '../../preview/providers/preview_playback_provider.dart';
 import '../../timeline/presentation/widgets/interactive_timeline.dart';
 import '../../timeline/services/timeline_editing_service.dart';
 import 'widgets/editor_app_bar.dart';
-import 'widgets/preview_viewport.dart';
 import 'widgets/editing_toolbar.dart';
 
 class EditorScreen extends ConsumerStatefulWidget {
@@ -40,6 +41,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
               canUndo: editorState.canUndo,
               canRedo: editorState.canRedo,
               onBack: () {
+                ref.read(playbackClockServiceProvider).pause();
                 Navigator.pop(context);
               },
               onUndo: () {},
@@ -49,21 +51,21 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
               },
             ),
 
-            // Video Preview Viewport
+            // Real-Time Video Preview Viewport
             Expanded(
               flex: 4,
-              child: PreviewViewport(
+              child: RealtimePreviewViewport(
                 currentPositionMs: editorState.playheadPositionMs,
                 totalDurationMs: project.durationMs > 0 ? project.durationMs : 10000,
                 isPlaying: editorState.isPlaying,
                 onTogglePlay: () {
-                  ref.read(editorProvider.notifier).togglePlay();
+                  ref.read(previewPlaybackProvider.notifier).togglePlay();
                 },
                 onStepBackward: () {
-                  ref.read(editorProvider.notifier).seek(editorState.playheadPositionMs - 5000);
+                  ref.read(previewPlaybackProvider.notifier).seek(editorState.playheadPositionMs - 5000);
                 },
                 onStepForward: () {
-                  ref.read(editorProvider.notifier).seek(editorState.playheadPositionMs + 5000);
+                  ref.read(previewPlaybackProvider.notifier).seek(editorState.playheadPositionMs + 5000);
                 },
               ),
             ),
@@ -77,7 +79,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 zoomScale: editorState.zoomScale,
                 selectedClipId: editorState.selectedClipId,
                 onSeek: (positionMs) {
-                  ref.read(editorProvider.notifier).seek(positionMs);
+                  ref.read(previewPlaybackProvider.notifier).seek(positionMs);
                 },
                 onZoomChanged: (zoom) {
                   ref.read(editorProvider.notifier).setZoom(zoom);

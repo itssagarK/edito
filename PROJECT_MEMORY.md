@@ -1,6 +1,6 @@
 # PROJECT_MEMORY.md — Edito Architecture & System Blueprint
 
-> **Status:** Phase 2 In Progress (Timeline UI & Multi-Track Editing Engine)  
+> **Status:** Phase 3 In Progress (Real-Time Preview Engine & Compositor)  
 > **Target:** High-performance, industry-grade Android Video Editor APK (CapCut / VN tier architecture)
 
 ---
@@ -23,16 +23,10 @@
 
 ## 2. Frozen Interface Contracts
 
-### 2.1 Project & Clip Schema (`lib/models/`)
-- `Project`: Root state container with list of `Track` and library of `MediaAsset`.
-- `Track`: Lane with type (`video`, `audio`, `text`, `overlay`), list of `Clip`, and states (`isMuted`, `isLocked`, `isHidden`).
-- `Clip`: In-timeline parameters (`startTimeMs`, `durationMs`) mapped to source media window (`sourceInMs`, `sourceOutMs`), speed, volume, and mute flag.
-
-### 2.2 Timeline Operations Engine (`lib/features/timeline/services/timeline_editing_service.dart`)
-- `splitClip`: Non-destructive split dividing a clip into two sequential clips at a given playhead timestamp.
-- `trimClipHead` & `trimClipTail`: Bound-checked trimming with minimum duration constraints (100ms).
-- `moveClip`: Re-anchoring clip start time with optional collision prevention.
-- `calculateSnapTime`: Magnetic snapping calculation with 150ms proximity threshold.
+### 2.1 Preview & Compositor Pipeline (`lib/features/preview/`)
+- `TimelineCompositorService`: Evaluates project timeline state at millisecond timestamp `T`.
+- `PlaybackClockService`: Precision 60fps clock driving timeline position and frame rendering.
+- `CompositorFrame`: Immutable frame representation carrying active visual asset, source seek time, audio channels, overlays, and aspect ratio.
 
 ---
 
@@ -46,7 +40,8 @@ Edito/
 ├── docs/
 │   ├── phase-0-spec.md            # Scaffold & CI spec (Complete)
 │   ├── phase-1-spec.md            # Media import & data model spec (Complete)
-│   ├── phase-2-spec.md            # Timeline UI & multi-track editing spec (Active)
+│   ├── phase-2-spec.md            # Timeline UI & multi-track editing spec (Complete)
+│   ├── phase-3-spec.md            # Real-time preview engine & compositor spec (Active)
 │   └── ...
 ├── lib/
 │   ├── core/
@@ -59,7 +54,7 @@ Edito/
 │   │   ├── media/                 # Media picker, thumbnail cache & metadata probing
 │   │   ├── project/               # Project storage & state repository
 │   │   ├── timeline/              # Multi-track timeline, interactive gestures, trimming & split
-│   │   ├── preview/               # Video compositor & GL surface view
+│   │   ├── preview/               # Real-time compositor, playback clock & multi-aspect ratio canvas
 │   │   ├── color_grading/         # LUTs, HSL, curves & color adjustments
 │   │   ├── audio/                 # Waveforms, volume envelope & AI voice enhancer
 │   │   └── export/                # Export settings, render progress & MP4 output
@@ -79,8 +74,8 @@ Edito/
 
 - **Phase 0:** Project Skeleton, CI/CD Pipeline & Home Shell 🟢 *(Done)*
 - **Phase 1:** Media Import, Thumbnail Caching & Project Data Model 🟢 *(Done)*
-- **Phase 2:** Multi-Track Timeline UI, Scrubbing, Trim & Split 🟡 *(Active)*
-- **Phase 3:** Real-Time Preview Compositor (Sync Audio/Video) ⚪
+- **Phase 2:** Multi-Track Timeline UI, Scrubbing, Trim & Split 🟢 *(Done)*
+- **Phase 3:** Real-Time Preview Compositor (Sync Audio/Video) 🟡 *(Active)*
 - **Phase 4:** Transitions & Speed Ramping (Time Remapping) ⚪
 - **Phase 5:** GLSL Color Grading & 3D LUT Pipeline ⚪
 - **Phase 6:** Audio Mixing & On-Device AI Voice Enhancement ⚪
