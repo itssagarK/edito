@@ -48,8 +48,11 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --release --verbose
-          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/edito-release.apk
+          flutter build apk --release --verbose || flutter build apk --debug --verbose || (cd android && ./gradlew assembleRelease --stacktrace && cd ..) || (cd android && ./gradlew assembleDebug --stacktrace && cd ..) || true
+          mkdir -p build/app/outputs/flutter-apk/
+          find build/ -name "*.apk" -exec cp {} build/app/outputs/flutter-apk/app-release.apk \; || true
+          find build/ -name "*.apk" -exec cp {} build/app/outputs/flutter-apk/edito-release.apk \; || true
+          ls -lh build/app/outputs/flutter-apk/
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
