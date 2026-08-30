@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../features/audio/models/audio_effects_config.dart';
+import '../features/color_grading/models/color_grading_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -13,6 +14,7 @@ class Clip extends Equatable {
   final double speed;       // 0.1 to 10.0 (1.0 = normal)
   final bool isMuted;
   final AudioEffectsConfig audioEffects;
+  final ColorGradingConfig colorGrading;
 
   const Clip({
     required this.id,
@@ -26,6 +28,7 @@ class Clip extends Equatable {
     this.speed = 1.0,
     this.isMuted = false,
     this.audioEffects = const AudioEffectsConfig(),
+    this.colorGrading = const ColorGradingConfig(),
   });
 
   Clip copyWith({
@@ -40,6 +43,7 @@ class Clip extends Equatable {
     double? speed,
     bool? isMuted,
     AudioEffectsConfig? audioEffects,
+    ColorGradingConfig? colorGrading,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -53,6 +57,7 @@ class Clip extends Equatable {
       speed: speed ?? this.speed,
       isMuted: isMuted ?? this.isMuted,
       audioEffects: audioEffects ?? this.audioEffects,
+      colorGrading: colorGrading ?? this.colorGrading,
     );
   }
 
@@ -68,6 +73,7 @@ class Clip extends Equatable {
         'speed': speed,
         'isMuted': isMuted,
         'audioEffects': audioEffects.toJson(),
+        'colorGrading': colorGrading.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -84,6 +90,9 @@ class Clip extends Equatable {
         audioEffects: json['audioEffects'] != null
             ? AudioEffectsConfig.fromJson(json['audioEffects'] as Map<String, dynamic>)
             : const AudioEffectsConfig(),
+        colorGrading: json['colorGrading'] != null
+            ? ColorGradingConfig.fromJson(json['colorGrading'] as Map<String, dynamic>)
+            : const ColorGradingConfig(),
       );
 
   @override
@@ -99,5 +108,6 @@ class Clip extends Equatable {
         speed,
         isMuted,
         audioEffects,
+        colorGrading,
       ];
 }

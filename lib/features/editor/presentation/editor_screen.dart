@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/editor_provider.dart';
 import '../../audio/presentation/widgets/audio_mixer_sheet.dart';
+import '../../color_grading/presentation/widgets/color_grading_sheet.dart';
 import '../../export/presentation/widgets/export_settings_modal.dart';
 import '../../home/providers/project_list_provider.dart';
 import '../../media/presentation/media_picker_sheet.dart';
@@ -160,6 +161,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         }
         break;
 
+      case EditorTool.color:
+        _openColorGradingModal();
+        break;
+
       case EditorTool.audio:
         _openAudioToolsModal();
         break;
@@ -190,12 +195,56 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     }
   }
 
+  void _openColorGradingModal() {
+    final editorState = ref.read(editorProvider);
+    final project = editorState.project;
+    if (project == null) return;
+
+    Clip? targetClip;
+    if (editorState.selectedClipId != null) {
+      for (final track in project.tracks) {
+        for (final clip in track.clips) {
+          if (clip.id == editorState.selectedClipId) {
+            targetClip = clip;
+            break;
+          }
+        }
+        if (targetClip != null) break;
+      }
+    } else {
+      for (final track in project.tracks) {
+        if (track.clips.isNotEmpty) {
+          targetClip = track.clips.first;
+          break;
+        }
+      }
+    }
+
+    if (targetClip != null) {
+      ColorGradingSheet.show(
+        context,
+        clip: targetClip,
+        onSave: (updatedClip) {
+          final updatedProject = project.updateClip(updatedClip);
+          ref.read(editorProvider.notifier).updateProject(updatedProject);
+          ref.read(projectListProvider.notifier).updateProject(updatedProject);
+        },
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Add or select a clip first to adjust Color & LUTs'),
+          backgroundColor: AppColors.surfaceElevated,
+        ),
+      );
+    }
+  }
+
   void _openAudioToolsModal() {
     final editorState = ref.read(editorProvider);
     final project = editorState.project;
     if (project == null) return;
 
-    // Find selected clip or first available clip
     Clip? targetClip;
     if (editorState.selectedClipId != null) {
       for (final track in project.tracks) {

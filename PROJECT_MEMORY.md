@@ -1,6 +1,6 @@
 # PROJECT_MEMORY.md — Edito Architecture & System Blueprint
 
-> **Status:** Phase 8 In Progress (Deterministic FFmpeg Export Pipeline)  
+> **Status:** Phase 5 In Progress (Pro Color Grading & 3D LUT Pipeline)  
 > **Target:** High-performance, industry-grade Android Video Editor APK (CapCut / VN tier architecture)
 
 ---
@@ -23,10 +23,10 @@
 
 ## 2. Frozen Interface Contracts
 
-### 2.1 Export Pipeline (`lib/features/export/`)
-- `ExportConfiguration`: Holds output resolution (4K, 1080p, 720p), FPS (24, 30, 60), Codec (H.264, H.265), Quality/CRF, and output destination.
-- `FFmpegCommandBuilder`: Translates multi-track cuts, trims, clip speeds, aspect ratio letterboxing, AI audio filters, and volume envelopes into executable FFmpeg argument graphs.
-- `ExportRenderService`: Background render coordinator providing live progress streams (0–100%) and ETA.
+### 2.1 Color Grading Pipeline (`lib/features/color_grading/`)
+- `ColorGradingConfig`: Non-destructive parameters for Exposure, Contrast, Saturation, Temperature, Tint, Highlights, Shadows, Vignette, 8-channel HSL, Tone Curves, and 3D LUT presets.
+- `ColorFilterCompilerService`: Compiles color parameters into real-time Flutter/GL color matrices and FFmpeg filter graphs (`eq`, `colorbalance`, `curves`, `lut3d`).
+- `LutPreset`: Presets (*Teal & Orange*, *Vintage Kodak 500T*, *Moody Cyberpunk*, *Golden Hour*, *Film Noir B&W*) with blend intensity.
 
 ---
 
@@ -42,8 +42,9 @@ Edito/
 │   ├── phase-1-spec.md            # Media import & data model spec (Complete)
 │   ├── phase-2-spec.md            # Timeline UI & multi-track editing spec (Complete)
 │   ├── phase-3-spec.md            # Real-time preview engine spec (Complete)
+│   ├── phase-5-spec.md            # Color grading & 3D LUT spec (Active)
 │   ├── phase-6-spec.md            # Audio tools & AI voice enhancement spec (Complete)
-│   ├── phase-8-spec.md            # FFmpeg export pipeline spec (Active)
+│   ├── phase-8-spec.md            # FFmpeg export pipeline spec (Complete)
 │   └── ...
 ├── lib/
 │   ├── core/
@@ -58,13 +59,13 @@ Edito/
 │   │   ├── timeline/              # Multi-track timeline, interactive gestures, trimming & split
 │   │   ├── preview/               # Real-time compositor, playback clock & multi-aspect ratio canvas
 │   │   ├── audio/                 # AI voice enhancer, noise reduction, ducking & waveform rendering
+│   │   ├── color_grading/         # LUTs, HSL 8-channel, tone curves & color compiler
 │   │   ├── export/                # FFmpeg graph builder, render progress & MP4 output
-│   │   ├── color_grading/         # LUTs, HSL, curves & color adjustments (Phase 5)
 │   │   └── ...
 │   ├── models/
 │   │   ├── project.dart           # Root project schema
 │   │   ├── track.dart             # Video / Audio / Overlay track definitions
-│   │   ├── clip.dart              # Slice, in/out points, speed, transforms, audioEffects
+│   │   ├── clip.dart              # Slice, in/out points, speed, colorGrading, audioEffects
 │   │   └── media_asset.dart       # Raw file references & metadata cache
 │   └── main.dart                  # Application entry point
 ├── pubspec.yaml                   # Dependencies & asset manifests
@@ -80,9 +81,9 @@ Edito/
 - **Phase 2:** Multi-Track Timeline UI, Scrubbing, Trim & Split 🟢 *(Done)*
 - **Phase 3:** Real-Time Preview Compositor (Sync Audio/Video) 🟢 *(Done)*
 - **Phase 6:** Audio Mixing & On-Device AI Voice Enhancement 🟢 *(Done)*
-- **Phase 8:** FFmpeg Export Pipeline (Multi-format, 4K/1080p) 🟡 *(Active MVP)*
+- **Phase 8:** FFmpeg Export Pipeline (Multi-format, 4K/1080p) 🟢 *(Done)*
+- **Phase 5:** GLSL Color Grading & 3D LUT Pipeline 🟡 *(Active)*
 - **Phase 4:** Transitions & Speed Ramping (Time Remapping) ⚪
-- **Phase 5:** GLSL Color Grading & 3D LUT Pipeline ⚪
 - **Phase 7:** Text, Titles & Animated Keyframe Overlays ⚪
 - **Phase 9:** Performance Optimization, Proxy Rendering & Undo/Redo ⚪
 - **Phase 10:** Production Release & Distribution ⚪

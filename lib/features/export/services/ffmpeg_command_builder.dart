@@ -3,6 +3,7 @@ import '../../../models/media_asset.dart';
 import '../../../models/project.dart';
 import '../../../models/track.dart';
 import '../../audio/services/ai_voice_enhancer_service.dart';
+import '../../color_grading/services/color_filter_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandBuilder {
@@ -75,6 +76,12 @@ class FFmpegCommandBuilder {
           vFilters.add('scale=$targetW:$targetH:force_original_aspect_ratio=decrease');
           vFilters.add('pad=$targetW:$targetH:(ow-iw)/2:(oh-ih)/2:color=black');
           vFilters.add('setsar=1');
+
+          // Color Grading & 3D LUT filter
+          final colorFilter = ColorFilterCompilerService.generateFFmpegFilter(clip.colorGrading);
+          if (colorFilter.isNotEmpty) {
+            vFilters.add(colorFilter);
+          }
 
           filterComplexSegments.add('[$inputIdx:v]${vFilters.join(',')} [$vLabel]');
           videoStreamLabels.add('[$vLabel]');

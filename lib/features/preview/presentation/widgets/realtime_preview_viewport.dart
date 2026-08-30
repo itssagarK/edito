@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/timecode_formatter.dart';
+import '../../../color_grading/models/color_grading_config.dart';
+import '../../../color_grading/services/color_filter_compiler_service.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../providers/preview_playback_provider.dart';
@@ -123,7 +125,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        // Visual Frame Content (Video / Image / Placeholder)
+                        // Visual Frame Content with Real-Time Color Matrix Filter
                         _buildVisualContent(currentFrame),
 
                         // Safe-Zone Grid Overlays (90% action safe, 80% title safe)
@@ -234,51 +236,55 @@ class RealtimePreviewViewport extends ConsumerWidget {
 
     final clip = frame.primaryVideoClip!;
     final asset = frame.primaryAsset;
+    final colorMatrix = ColorFilterCompilerService.compileColorMatrix(clip.colorGrading);
 
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF1E272E), Color(0xFF0F141C)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return ColorFiltered(
+      colorFilter: ColorFilter.matrix(colorMatrix),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF1E272E), Color(0xFF0F141C)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.play_circle_filled,
-              size: 48,
-              color: AppColors.primaryLight.withOpacity(0.8),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              asset?.fileName ?? 'Clip ${clip.id.substring(0, 4)}',
-              style: AppTypography.titleMedium,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Source frame: ${TimecodeFormatter.formatMilliseconds(frame.sourceFrameTimeMs)} (${clip.speed}x)',
-              style: AppTypography.labelSmall.copyWith(color: AppColors.accent),
-            ),
-            if (frame.activeAudioSources.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.graphic_eq, size: 14, color: AppColors.audioTrack),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${frame.activeAudioSources.length} Audio Stream(s) active',
-                    style: AppTypography.labelSmall.copyWith(color: AppColors.audioTrack),
-                  ),
-                ],
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.play_circle_filled,
+                size: 48,
+                color: AppColors.primaryLight.withOpacity(0.8),
               ),
+              const SizedBox(height: 8),
+              Text(
+                asset?.fileName ?? 'Clip ${clip.id.substring(0, 4)}',
+                style: AppTypography.titleMedium,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Source frame: ${TimecodeFormatter.formatMilliseconds(frame.sourceFrameTimeMs)} (${clip.speed}x)',
+                style: AppTypography.labelSmall.copyWith(color: AppColors.accent),
+              ),
+              if (clip.colorGrading.activeLut != LutPreset.none) ...[
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'LUT: ${clip.colorGrading.activeLut.label.split(' ').first}',
+                    style: const TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
