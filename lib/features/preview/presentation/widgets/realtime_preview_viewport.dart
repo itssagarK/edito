@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/timecode_formatter.dart';
 import '../../../color_grading/models/color_grading_config.dart';
 import '../../../color_grading/services/color_filter_compiler_service.dart';
+import '../../../overlays/models/text_overlay_config.dart';
+import '../../../overlays/services/overlay_compiler_service.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../providers/preview_playback_provider.dart';
@@ -127,6 +130,14 @@ class RealtimePreviewViewport extends ConsumerWidget {
                       children: [
                         // Visual Frame Content with Real-Time Color Matrix Filter
                         _buildVisualContent(currentFrame),
+
+                        // Text & Graphic Overlays
+                        if (currentFrame != null && currentFrame.activeOverlays.isNotEmpty)
+                          ...currentFrame.activeOverlays.map((overlayClip) {
+                            final offsetMs = currentPositionMs - overlayClip.startTimeMs;
+                            final evaluatedText = OverlayCompilerService.evaluateOverlayAt(overlayClip, offsetMs);
+                            return _buildTextOverlayWidget(evaluatedText);
+                          }),
 
                         // Safe-Zone Grid Overlays (90% action safe, 80% title safe)
                         if (previewState.showSafeGuides)
@@ -284,6 +295,45 @@ class RealtimePreviewViewport extends ConsumerWidget {
                 ),
               ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextOverlayWidget(TextOverlayConfig config) {
+    if (config.text.trim().isEmpty) return const SizedBox.shrink();
+
+    return Align(
+      alignment: Alignment(
+        (config.positionX * 2.0) - 1.0,
+        (config.positionY * 2.0) - 1.0,
+      ),
+      child: Transform.scale(
+        scale: config.scale,
+        child: Transform.rotate(
+          angle: config.rotation * (3.14159 / 180.0),
+          child: Opacity(
+            opacity: config.opacity.clamp(0.0, 1.0),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: config.backgroundColor != null ? Color(config.backgroundColor!) : Colors.transparent,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                config.text,
+                style: GoogleFonts.getFont(
+                  config.fontFamily == 'Inter' ? 'Inter' : (config.fontFamily == 'JetBrainsMono' ? 'JetBrains Mono' : 'Roboto'),
+                  fontSize: config.fontSize,
+                  fontWeight: FontWeight.bold,
+                  color: Color(config.textColor),
+                  shadows: const [
+                    Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2)),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),

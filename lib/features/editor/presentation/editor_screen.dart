@@ -7,6 +7,8 @@ import '../../color_grading/presentation/widgets/color_grading_sheet.dart';
 import '../../export/presentation/widgets/export_settings_modal.dart';
 import '../../home/providers/project_list_provider.dart';
 import '../../media/presentation/media_picker_sheet.dart';
+import '../../overlays/models/text_overlay_config.dart';
+import '../../overlays/presentation/widgets/text_editor_sheet.dart';
 import '../../preview/presentation/widgets/realtime_preview_viewport.dart';
 import '../../preview/providers/preview_playback_provider.dart';
 import '../../speed/presentation/widgets/speed_ramping_sheet.dart';
@@ -163,6 +165,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         }
         break;
 
+      case EditorTool.text:
+        _openTextEditorModal();
+        break;
+
       case EditorTool.effects:
         _openTransitionsModal();
         break;
@@ -188,6 +194,29 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           ),
         );
         break;
+    }
+  }
+
+  void _openTextEditorModal() {
+    final targetClip = _findTargetClip();
+    if (targetClip != null) {
+      TextEditorSheet.show(
+        context,
+        clip: targetClip,
+        onSave: (updatedClip) {
+          final project = ref.read(editorProvider).project!;
+          final updatedProject = project.updateClip(updatedClip);
+          ref.read(editorProvider.notifier).updateProject(updatedProject);
+          ref.read(projectListProvider.notifier).updateProject(updatedProject);
+        },
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Select a clip first to add Text & Titles'),
+          backgroundColor: AppColors.surfaceElevated,
+        ),
+      );
     }
   }
 
