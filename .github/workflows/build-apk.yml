@@ -34,13 +34,8 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Generate Native Android Toolchain
+      - name: Setup Android SDK Licenses
         run: |
-          rm -rf android/
-          flutter create . --org com.edito --project-name edito --platforms android
-          sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 24/g' android/app/build.gradle || true
-          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/g' android/app/build.gradle || true
-          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/g' android/app/build.gradle || true
           yes | flutter doctor --android-licenses || true
           flutter doctor -v
           flutter config --no-analytics
@@ -51,9 +46,10 @@ jobs:
       - name: Run Unit Tests
         run: flutter test --no-pub || flutter test || true
 
-      - name: Build Android Release APK
+      - name: Build Android APK
         run: |
-          flutter build apk --release --no-tree-shake-icons || flutter build apk --debug --no-tree-shake-icons
+          chmod +x android/gradlew || true
+          flutter build apk --release --no-tree-shake-icons --verbose || flutter build apk --debug --no-tree-shake-icons --verbose
           mkdir -p release_out
           find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
           cp -v release_out/edito-release.apk release_out/app-release.apk
