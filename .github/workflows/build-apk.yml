@@ -34,9 +34,10 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Accept Android SDK Licenses
+      - name: Recreate Clean Native Android Scaffolding
         run: |
-          yes | flutter doctor --android-licenses || true
+          rm -rf android/
+          flutter create . --org com.edito --platforms android
           flutter doctor -v
           flutter config --no-analytics
 
@@ -48,17 +49,8 @@ jobs:
 
       - name: Build Android Release APK
         run: |
-          chmod +x android/gradlew || true
-          flutter build apk --release --verbose || true
-          if [ -f build/app/outputs/flutter-apk/app-release.apk ]; then
-            cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/edito-release.apk
-          else
-            echo "::warning::Direct flutter build not outputted, running assembleRelease..."
-            cd android && ./gradlew assembleRelease --stacktrace --info && cd ..
-            mkdir -p build/app/outputs/flutter-apk/
-            find build/ -name "*.apk" -exec cp {} build/app/outputs/flutter-apk/app-release.apk \;
-            cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/edito-release.apk
-          fi
+          flutter build apk --release --no-tree-shake-icons
+          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/edito-release.apk
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
