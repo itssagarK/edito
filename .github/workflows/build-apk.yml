@@ -34,14 +34,8 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Recreate Clean Native Android Scaffolding
+      - name: Accept Android SDK Licenses & Doctor
         run: |
-          rm -rf android/
-          flutter create . --org com.edito --platforms android
-          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/g' android/app/build.gradle || true
-          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/g' android/app/build.gradle || true
-          sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 34/g' android/app/build.gradle || true
-          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 34/g' android/app/build.gradle || true
           yes | flutter doctor --android-licenses || true
           flutter doctor -v
           flutter config --no-analytics
@@ -52,14 +46,12 @@ jobs:
       - name: Run Unit Tests
         run: flutter test --no-pub || flutter test || true
 
-      - name: Build Android APK
+      - name: Build Android Release APK
         run: |
-          yes | flutter doctor --android-licenses || true
-          flutter build apk --release --no-tree-shake-icons || flutter build apk --debug --no-tree-shake-icons || true
-          mkdir -p build/app/outputs/flutter-apk/
-          find build/ -type f -name "*.apk" | head -n 1 | xargs -I {} cp {} build/app/outputs/flutter-apk/edito-release.apk
-          find build/ -type f -name "*.apk" | head -n 1 | xargs -I {} cp {} build/app/outputs/flutter-apk/app-release.apk
-          ls -la build/app/outputs/flutter-apk/
+          chmod +x android/gradlew || true
+          flutter build apk --release --verbose
+          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/edito-release.apk
+          ls -lh build/app/outputs/flutter-apk/
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
