@@ -1,6 +1,6 @@
 # PROJECT_MEMORY.md — Edito Architecture & System Blueprint
 
-> **Status:** Phase 9 In Progress (Global Undo/Redo Engine & Performance Optimization)  
+> **Status:** All Phases (0–10) Delivered & Released (`v1.0.0`)  
 > **Target:** High-performance, industry-grade Android Video Editor APK (CapCut / VN tier architecture)
 
 ---
@@ -21,15 +21,7 @@
 
 ---
 
-## 2. Frozen Interface Contracts
-
-### 2.1 History & Undo/Redo Pipeline (`lib/features/history/`)
-- `HistoryManagerService`: Command pattern state tracker supporting up to 50 levels of Undo/Redo with reactive state broadcasts.
-- `AutoSaveService`: Debounced atomic disk persistence and crash recovery.
-
----
-
-## 3. Directory Layout
+## 2. Directory Layout
 
 ```
 Edito/
@@ -46,8 +38,8 @@ Edito/
 │   ├── phase-6-spec.md            # Audio tools & AI voice enhancement spec (Complete)
 │   ├── phase-7-spec.md            # Text & motion overlays spec (Complete)
 │   ├── phase-8-spec.md            # FFmpeg export pipeline spec (Complete)
-│   ├── phase-9-spec.md            # Undo/Redo & performance spec (Active)
-│   └── ...
+│   ├── phase-9-spec.md            # Undo/Redo & performance spec (Complete)
+│   └── phase-10-spec.md           # Production release & distribution spec (Complete)
 ├── lib/
 │   ├── core/
 │   │   ├── constants/             # App dimensions, strings, asset paths
@@ -74,13 +66,14 @@ Edito/
 │   │   ├── clip.dart              # Slice, in/out points, textOverlay, transitions, colorGrading, audioEffects
 │   │   └── media_asset.dart       # Raw file references & metadata cache
 │   └── main.dart                  # Application entry point
+├── test/                          # Comprehensive unit & integration test suite
 ├── pubspec.yaml                   # Dependencies & asset manifests
 └── PROJECT_MEMORY.md              # Living architecture document
 ```
 
 ---
 
-## 4. Phase Delivery Roadmap
+## 3. Phase Delivery Roadmap
 
 - **Phase 0:** Project Skeleton, CI/CD Pipeline & Home Shell 🟢 *(Done)*
 - **Phase 1:** Media Import, Thumbnail Caching & Project Data Model 🟢 *(Done)*
@@ -91,5 +84,5 @@ Edito/
 - **Phase 6:** Audio Mixing & On-Device AI Voice Enhancement 🟢 *(Done)*
 - **Phase 7:** Text, Titles & Animated Keyframe Overlays 🟢 *(Done)*
 - **Phase 8:** FFmpeg Export Pipeline (Multi-format, 4K/1080p) 🟢 *(Done)*
-- **Phase 9:** Performance Optimization, Proxy Rendering & Undo/Redo 🟡 *(Active)*
-- **Phase 10:** Production Release & Distribution ⚪
+- **Phase 9:** Performance Optimization, Proxy Rendering & Undo/Redo 🟢 *(Done)*
+- **Phase 10:** Production Release & Distribution (`v1.0.0`) 🟢 *(Done)*

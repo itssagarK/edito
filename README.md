@@ -22,7 +22,7 @@
 | **Phase 7** | **Text, Titles & Overlays** | 🟢 Complete | Motion titles, font picker, text animations (Typewriter/Fade/Pop), keyframe motion paths, and drawtext export. |
 | **Phase 8** | **FFmpeg Export Pipeline** | 🟢 Complete | Multi-format render engine (4K / 1080p / 720p, H.264/H.265), background export with live ETA progress & direct share. |
 | **Phase 9** | **Stability & Undo/Redo Engine** | 🟢 Complete | Global command pattern undo/redo stack (50 levels), debounced autosave, and memory optimization. |
-| **Phase 10** | **Release & Distribution** | ⚪ Pending | Production signing, tag-based automated GitHub Releases with instant APK download link. |
+| **Phase 10** | **Release & Distribution** | 🟢 Complete | Production signing, tag-based automated GitHub Releases with instant APK download link. |
 
 ---
 
@@ -85,4 +85,4 @@ To build and publish a signed release APK:
 git tag v1.0.0
 git push origin v1.0.0
 ```
-GitHub Actions will automatically build the APK and attach it directly to the GitHub Release!
+GitHub Actions will automatically build the APK and attach it directly to the [GitHub Release](https://github.com/itssagarK/edito/releases)!
