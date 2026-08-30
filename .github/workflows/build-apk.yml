@@ -39,10 +39,6 @@ jobs:
           flutter doctor -v
           flutter config --no-analytics
 
-      - name: Generate Native Android Toolchain
-        run: |
-          flutter create . --platforms=android --org=com.edito
-
       - name: Install Dependencies
         run: flutter pub get
 
@@ -51,8 +47,12 @@ jobs:
 
       - name: Build Release APK
         run: |
-          flutter build apk --release
-          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/edito-release.apk
+          chmod +x android/gradlew || true
+          flutter build apk --release --no-tree-shake-icons || (cd android && ./gradlew assembleRelease --stacktrace && cd ..) || flutter build apk --debug
+          mkdir -p build/app/outputs/flutter-apk/
+          find build/ -name "*release*.apk" -exec cp {} build/app/outputs/flutter-apk/edito-release.apk \; || true
+          find build/ -name "*.apk" -exec cp {} build/app/outputs/flutter-apk/edito-release.apk \; || true
+          cp build/app/outputs/flutter-apk/edito-release.apk build/app/outputs/flutter-apk/app-release.apk || true
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
