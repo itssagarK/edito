@@ -6,18 +6,6 @@ pluginManagement {
             localPropertiesFile.withInputStream { properties.load(it) }
         }
         def flutterSdkPath = properties.getProperty("flutter.sdk") ?: System.getenv("FLUTTER_ROOT") ?: System.getenv("FLUTTER_HOME")
-        if (flutterSdkPath == null) {
-            def path = System.getenv("PATH")
-            if (path != null) {
-                for (String entry : path.split(File.pathSeparator)) {
-                    def binDir = new File(entry)
-                    if (new File(binDir, "flutter").exists() || new File(binDir, "flutter.bat").exists()) {
-                        flutterSdkPath = binDir.parentFile.absolutePath
-                        break
-                    }
-                }
-            }
-        }
         return flutterSdkPath
     }()
 
