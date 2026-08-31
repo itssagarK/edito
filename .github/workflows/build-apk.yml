@@ -38,6 +38,9 @@ jobs:
         run: |
           FLUTTER_PATH=$(which flutter | sed 's|/bin/flutter||')
           echo "flutter.sdk=$FLUTTER_PATH" > android/local.properties
+          echo "flutter.buildMode=release" >> android/local.properties
+          echo "flutter.versionName=1.0.0" >> android/local.properties
+          echo "flutter.versionCode=1" >> android/local.properties
           echo "sdk.dir=$ANDROID_SDK_ROOT" >> android/local.properties
           cat android/local.properties
           chmod +x android/gradlew || true
@@ -60,18 +63,18 @@ jobs:
           cp -v build/app/outputs/flutter-apk/app-release.apk release_out/app-release.apk
           ls -lh release_out/
 
+      - name: Dump Build Failure Log
+        if: failure()
+        run: |
+          echo "=== SEARCHING FOR ERROR PATTERNS IN BUILD LOG ==="
+          grep -i -C 5 -E "FAILURE|Error:|Exception|FAILED|BUILD FAILED" build_raw.log || true
+
       - name: Upload Failure Log Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-raw-log
           path: build_raw.log
-
-      - name: Dump Build Failure Log
-        if: failure()
-        run: |
-          echo "=== FULL BUILD FAILURE LOG ==="
-          cat build_raw.log || true
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
