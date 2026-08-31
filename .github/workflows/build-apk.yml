@@ -57,11 +57,17 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --debug --no-tree-shake-icons
+          flutter build apk --debug --no-tree-shake-icons --verbose 2>&1 | tee build_raw.log
           mkdir -p release_out
           cp -v build/app/outputs/flutter-apk/app-debug.apk release_out/edito-release.apk
           cp -v build/app/outputs/flutter-apk/app-debug.apk release_out/app-release.apk
           ls -lh release_out/
+
+      - name: Dump Build Failure Log
+        if: failure()
+        run: |
+          echo "=== BUILD LOG FAILURE TAIL ==="
+          tail -n 250 build_raw.log || true
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
