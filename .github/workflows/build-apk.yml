@@ -57,7 +57,7 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --release --no-tree-shake-icons -v 2>&1 | tee build.log || (echo "=== FAILURE LOG ===" && grep -i -C 3 -E "FAILURE:|Error:|Exception|FAILED" build.log && exit 1)
+          flutter build apk --release --no-tree-shake-icons > build.log 2>&1 || (echo "=== FULL FAILURE LOG ===" && tail -n 120 build.log && exit 1)
           mkdir -p release_out
           cp -v build/app/outputs/flutter-apk/app-release.apk release_out/edito-release.apk
           cp -v build/app/outputs/flutter-apk/app-release.apk release_out/app-release.apk
