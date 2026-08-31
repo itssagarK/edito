@@ -57,24 +57,16 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --release --no-tree-shake-icons > build_out.txt 2>&1 || true
+          flutter build apk --release --no-tree-shake-icons || (cd android && ./gradlew assembleRelease --stacktrace) || true
           mkdir -p release_out
           find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \; || true
           find build/ -name "*.apk" -exec cp -v {} release_out/app-release.apk \; || true
           ls -lh release_out/ || true
 
-      - name: Upload Build Log Artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: full-build-log
-          path: build_out.txt
-
       - name: Verify and Fail If No APK
         run: |
           if [ ! -f release_out/edito-release.apk ]; then
-            echo "ERROR: APK was not built successfully! Dumping full build log:"
-            cat build_out.txt
+            echo "ERROR: APK was not built successfully!"
             exit 1
           fi
 
