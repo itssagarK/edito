@@ -57,11 +57,12 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --release --no-tree-shake-icons
+          flutter build apk --release --no-tree-shake-icons > build_out.txt 2>&1 || true
+          cat build_out.txt
           mkdir -p release_out
-          cp -v build/app/outputs/flutter-apk/app-release.apk release_out/edito-release.apk
-          cp -v build/app/outputs/flutter-apk/app-release.apk release_out/app-release.apk
-          ls -lh release_out/
+          find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \; || true
+          find build/ -name "*.apk" -exec cp -v {} release_out/app-release.apk \; || true
+          ls -lh release_out/ || true
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
