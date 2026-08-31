@@ -57,11 +57,24 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --debug
+          flutter build apk --release --no-tree-shake-icons -v 2>&1 | tee build_raw.log
           mkdir -p release_out
-          cp -v build/app/outputs/flutter-apk/app-debug.apk release_out/edito-release.apk
-          cp -v build/app/outputs/flutter-apk/app-debug.apk release_out/app-release.apk
+          cp -v build/app/outputs/flutter-apk/app-release.apk release_out/edito-release.apk
+          cp -v build/app/outputs/flutter-apk/app-release.apk release_out/app-release.apk
           ls -lh release_out/
+
+      - name: Dump Build Failure Log
+        if: failure()
+        run: |
+          echo "=== SEARCHING FOR ERROR STRINGS IN RAW LOG ==="
+          grep -i -C 5 -E "FAILURE|Error:|Exception|FAILED" build_raw.log || true
+
+      - name: Upload Raw Log Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-raw-log
+          path: build_raw.log
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
