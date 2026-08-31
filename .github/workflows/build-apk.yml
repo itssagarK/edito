@@ -60,6 +60,13 @@ jobs:
           cp -v build/app/outputs/flutter-apk/app-release.apk release_out/app-release.apk
           ls -lh release_out/
 
+      - name: Upload Failure Log Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-raw-log
+          path: build_raw.log
+
       - name: Dump Build Failure Log
         if: failure()
         run: |
