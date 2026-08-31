@@ -57,10 +57,10 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --release -v 2>&1 | tee build_all.log || (echo "=== BUILD FAILED: PRINTING ERROR SUMMARY ===" && grep -i -C 3 -E "FAILURE:|Error:|Exception|FAILED" build_all.log | head -n 100 && exit 1)
+          flutter build apk --debug --no-tree-shake-icons
           mkdir -p release_out
-          cp -v build/app/outputs/flutter-apk/app-release.apk release_out/edito-release.apk
-          cp -v build/app/outputs/flutter-apk/app-release.apk release_out/app-release.apk
+          cp -v build/app/outputs/flutter-apk/app-debug.apk release_out/edito-release.apk
+          cp -v build/app/outputs/flutter-apk/app-debug.apk release_out/app-release.apk
           ls -lh release_out/
 
       - name: Upload Release APK Artifact
