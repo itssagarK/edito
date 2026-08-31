@@ -28,6 +28,9 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -57,7 +60,7 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --release --verbose
+          flutter build apk --release --no-tree-shake-icons
           mkdir -p release_out
           cp -v build/app/outputs/flutter-apk/app-release.apk release_out/edito-release.apk
           cp -v build/app/outputs/flutter-apk/app-release.apk release_out/app-release.apk
