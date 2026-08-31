@@ -59,14 +59,15 @@ jobs:
           chmod +x android/gradlew || true
           flutter build apk --release --no-tree-shake-icons || (cd android && ./gradlew assembleRelease --stacktrace) || true
           mkdir -p release_out
-          find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \; || true
-          find build/ -name "*.apk" -exec cp -v {} release_out/app-release.apk \; || true
+          find . -type f -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/edito-release.apk \; || true
+          cp -v release_out/edito-release.apk release_out/app-release.apk || true
           ls -lh release_out/ || true
 
       - name: Verify and Fail If No APK
         run: |
           if [ ! -f release_out/edito-release.apk ]; then
-            echo "ERROR: APK was not built successfully!"
+            echo "ERROR: APK was not found anywhere in workspace!"
+            find . -type f -name "*.apk"
             exit 1
           fi
 
