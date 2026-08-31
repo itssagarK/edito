@@ -57,18 +57,11 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --release --no-tree-shake-icons || flutter build apk --debug --no-tree-shake-icons || (cd android && ./gradlew assembleDebug) || true
+          flutter build apk --release --no-tree-shake-icons
           mkdir -p release_out
-          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/edito-release.apk \;
-          cp -v release_out/edito-release.apk release_out/app-release.apk
+          cp -v build/app/outputs/flutter-apk/app-release.apk release_out/edito-release.apk
+          cp -v build/app/outputs/flutter-apk/app-release.apk release_out/app-release.apk
           ls -lh release_out/
-
-      - name: Verify and Fail If No APK
-        run: |
-          if [ ! -f release_out/edito-release.apk ]; then
-            echo "ERROR: No APK generated!"
-            exit 1
-          fi
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
