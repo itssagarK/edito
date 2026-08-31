@@ -34,8 +34,13 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Setup Android SDK Licenses
+      - name: Setup Android Toolchain & local.properties
         run: |
+          FLUTTER_PATH=$(which flutter | sed 's|/bin/flutter||')
+          echo "flutter.sdk=$FLUTTER_PATH" > android/local.properties
+          echo "sdk.dir=$ANDROID_SDK_ROOT" >> android/local.properties
+          cat android/local.properties
+          chmod +x android/gradlew || true
           yes | flutter doctor --android-licenses || true
           flutter doctor -v
           flutter config --no-analytics
@@ -48,10 +53,9 @@ jobs:
 
       - name: Build Android APK
         run: |
-          chmod +x android/gradlew || true
           flutter build apk --release --no-tree-shake-icons --verbose || flutter build apk --debug --no-tree-shake-icons --verbose
           mkdir -p release_out
-          find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
+          find build/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
           cp -v release_out/edito-release.apk release_out/app-release.apk
           ls -lh release_out/
 
