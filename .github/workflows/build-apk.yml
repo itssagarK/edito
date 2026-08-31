@@ -60,10 +60,10 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --release --no-tree-shake-icons --verbose || (cd android && ./gradlew assembleRelease --stacktrace --info)
+          flutter build apk --release -v > build_output.txt 2>&1 || (echo "=== TOP 100 LINES OF LOG ===" && head -n 100 build_output.txt && echo "=== BOTTOM 100 LINES OF LOG ===" && tail -n 100 build_output.txt && exit 1)
           mkdir -p release_out
-          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/edito-release.apk \;
-          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/app-release.apk \;
+          cp -v build/app/outputs/flutter-apk/app-release.apk release_out/edito-release.apk
+          cp -v build/app/outputs/flutter-apk/app-release.apk release_out/app-release.apk
           ls -lh release_out/
 
       - name: Upload Release APK Artifact
