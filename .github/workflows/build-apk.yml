@@ -28,24 +28,14 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
-      - name: Setup Android Toolchain & local.properties
+      - name: Setup Android Toolchain
         run: |
-          FLUTTER_PATH=$(which flutter | sed 's|/bin/flutter||')
-          echo "flutter.sdk=$FLUTTER_PATH" > android/local.properties
-          echo "flutter.buildMode=debug" >> android/local.properties
-          echo "flutter.versionName=1.0.0" >> android/local.properties
-          echo "flutter.versionCode=1" >> android/local.properties
-          echo "sdk.dir=${ANDROID_HOME:-/usr/local/lib/android/sdk}" >> android/local.properties
-          cat android/local.properties
           chmod +x android/gradlew || true
           yes | flutter doctor --android-licenses || true
           flutter doctor -v
@@ -60,12 +50,11 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --debug --no-tree-shake-icons || (cd android && ./gradlew assembleDebug --no-daemon)
+          flutter build apk --release --no-tree-shake-icons
           mkdir -p release_out
-          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/app-release.apk \;
+          find build/ -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
           cp -v release_out/app-release.apk release_out/edito-release.apk
           ls -lh release_out/
-          test -f release_out/app-release.apk
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
