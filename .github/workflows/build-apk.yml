@@ -41,6 +41,7 @@ jobs:
           echo "flutter.buildMode=debug" >> android/local.properties
           echo "flutter.versionName=1.0.0" >> android/local.properties
           echo "flutter.versionCode=1" >> android/local.properties
+          echo "sdk.dir=${ANDROID_HOME:-/usr/local/lib/android/sdk}" >> android/local.properties
           cat android/local.properties
           chmod +x android/gradlew || true
           yes | flutter doctor --android-licenses || true
@@ -56,11 +57,12 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --debug || (cd android && ./gradlew assembleDebug) || true
+          flutter build apk --debug || (cd android && ./gradlew assembleDebug --no-daemon)
           mkdir -p release_out
           find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/app-release.apk \;
           find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/edito-release.apk \;
-          ls -la release_out/
+          ls -lh release_out/
+          test -f release_out/app-release.apk
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
