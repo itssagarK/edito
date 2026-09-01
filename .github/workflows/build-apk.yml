@@ -44,6 +44,8 @@ jobs:
         run: |
           rm -rf android
           flutter create --org com.edito --platforms=android .
+          echo "sdk.dir=${ANDROID_HOME:-/usr/local/lib/android/sdk}" > android/local.properties
+          cat android/local.properties
           sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/g' android/app/build.gradle* || true
           sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/g' android/app/build.gradle* || true
           sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 34/g' android/app/build.gradle* || true
@@ -62,9 +64,9 @@ jobs:
         run: |
           flutter build apk --debug --no-tree-shake-icons
           mkdir -p release_out
-          find build/ -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
-          find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
-          ls -lh release_out/
+          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/app-release.apk \;
+          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/edito-release.apk \;
+          ls -la release_out/
           test -f release_out/app-release.apk
 
       - name: Upload Release APK Artifact
