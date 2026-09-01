@@ -28,25 +28,22 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
-      - name: Fresh Android Platform Generation & local.properties
+      - name: Configure Android SDK & licenses
+        run: |
+          yes | flutter doctor --android-licenses || true
+          flutter doctor -v
+          flutter config --no-analytics
+
+      - name: Generate Clean Android Platform
         run: |
           rm -rf android
           flutter create --org com.edito --platforms=android .
-          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
-          echo "flutter.sdk=$(which flutter | sed 's|/bin/flutter||')" >> android/local.properties
-          echo "flutter.buildMode=debug" >> android/local.properties
-          echo "flutter.versionName=1.0.0" >> android/local.properties
-          echo "flutter.versionCode=1" >> android/local.properties
-          cat android/local.properties
           sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/g' android/app/build.gradle* || true
           sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/g' android/app/build.gradle* || true
           sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 34/g' android/app/build.gradle* || true
@@ -54,9 +51,6 @@ jobs:
           sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 34/g' android/app/build.gradle* || true
           sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 34/g' android/app/build.gradle* || true
           chmod +x android/gradlew || true
-          yes | flutter doctor --android-licenses || true
-          flutter doctor -v
-          flutter config --no-analytics
 
       - name: Install Dependencies
         run: flutter pub get
@@ -68,9 +62,9 @@ jobs:
         run: |
           flutter build apk --debug --no-tree-shake-icons
           mkdir -p release_out
-          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/app-release.apk \;
-          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/edito-release.apk \;
-          ls -la release_out/
+          find build/ -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
+          find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
+          ls -lh release_out/
           test -f release_out/app-release.apk
 
       - name: Upload Release APK Artifact
