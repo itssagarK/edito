@@ -41,15 +41,21 @@ jobs:
         run: |
           FLUTTER_PATH=$(which flutter | sed 's|/bin/flutter||')
           echo "flutter.sdk=$FLUTTER_PATH" > android/local.properties
-          echo "flutter.buildMode=debug" >> android/local.properties
+          echo "flutter.buildMode=release" >> android/local.properties
           echo "flutter.versionName=1.0.0" >> android/local.properties
           echo "flutter.versionCode=1" >> android/local.properties
           echo "sdk.dir=$ANDROID_HOME" >> android/local.properties
           cat android/local.properties
-          chmod +x android/gradlew || true
           yes | flutter doctor --android-licenses || true
           flutter doctor -v
           flutter config --no-analytics
+
+      - name: Generate Gradle Wrapper JAR
+        run: |
+          cd android
+          gradle wrapper --gradle-version 8.4 || true
+          ls -la gradle/wrapper/
+          chmod +x gradlew || true
 
       - name: Install Dependencies
         run: flutter pub get
@@ -59,13 +65,11 @@ jobs:
 
       - name: Build Android APK
         run: |
-          chmod +x android/gradlew || true
-          flutter build apk --debug || (cd android && ./gradlew assembleDebug --no-daemon)
+          flutter build apk --release --no-tree-shake-icons
           mkdir -p release_out
-          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/app-release.apk \;
-          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/edito-release.apk \;
-          ls -la release_out/
-          test -f release_out/app-release.apk
+          cp -v build/app/outputs/flutter-apk/app-release.apk release_out/app-release.apk
+          cp -v build/app/outputs/flutter-apk/app-release.apk release_out/edito-release.apk
+          ls -lh release_out/
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
