@@ -40,6 +40,12 @@ jobs:
           flutter create --org com.edito --project-name edito --platforms=android .
           mkdir -p android/gradle/wrapper
           curl -sLo android/gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.3.0/gradle/wrapper/gradle-wrapper.jar
+          echo "sdk.dir=${ANDROID_HOME:-/usr/local/lib/android/sdk}" > android/local.properties
+          echo "flutter.sdk=$(which flutter | sed 's|/bin/flutter||')" >> android/local.properties
+          echo "flutter.buildMode=debug" >> android/local.properties
+          echo "flutter.versionName=1.0.0" >> android/local.properties
+          echo "flutter.versionCode=1" >> android/local.properties
+          cat android/local.properties
           sed -i 's/minSdk = .*/minSdk = 24/g' android/app/build.gradle.kts || true
           sed -i 's/compileSdk = .*/compileSdk = 34/g' android/app/build.gradle.kts || true
           sed -i 's/targetSdk = .*/targetSdk = 34/g' android/app/build.gradle.kts || true
@@ -57,9 +63,7 @@ jobs:
 
       - name: Build Android APK
         run: |
-          cd android
-          ./gradlew assembleDebug --stacktrace
-          cd ..
+          flutter build apk --debug --no-tree-shake-icons
           mkdir -p release_out
           find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/app-release.apk \;
           find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/edito-release.apk \;
