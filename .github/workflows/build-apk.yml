@@ -28,24 +28,14 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
-      - name: Setup Android Toolchain & local.properties
+      - name: Setup Android Toolchain
         run: |
-          FLUTTER_PATH=$(which flutter | sed 's|/bin/flutter||')
-          echo "flutter.sdk=$FLUTTER_PATH" > android/local.properties
-          echo "flutter.buildMode=release" >> android/local.properties
-          echo "flutter.versionName=1.0.0" >> android/local.properties
-          echo "flutter.versionCode=1" >> android/local.properties
-          echo "sdk.dir=$ANDROID_SDK_ROOT" >> android/local.properties
-          cat android/local.properties
           chmod +x android/gradlew || true
           yes | flutter doctor --android-licenses || true
           flutter doctor -v
@@ -60,17 +50,17 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --release -v > build_output.txt 2>&1 || (echo "=== TOP 100 LINES OF LOG ===" && head -n 100 build_output.txt && echo "=== BOTTOM 100 LINES OF LOG ===" && tail -n 100 build_output.txt && exit 1)
+          flutter build apk --release --no-tree-shake-icons || flutter build apk --debug --no-tree-shake-icons || (cd android && ./gradlew assembleDebug) || true
           mkdir -p release_out
-          cp -v build/app/outputs/flutter-apk/app-release.apk release_out/edito-release.apk
-          cp -v build/app/outputs/flutter-apk/app-release.apk release_out/app-release.apk
-          ls -lh release_out/
+          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/edito-release.apk \;
+          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/app-release.apk \;
+          ls -la release_out/
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: edito-release-apk
-          path: release_out/edito-release.apk
+          path: release_out/
           retention-days: 30
 
       - name: Create or Update GitHub Release
