@@ -26,11 +26,20 @@ android {
         multiDexEnabled true
     }
 
+    signingConfigs {
+        debug {
+            storeFile file("${System.getProperty('user.home')}/.android/debug.keystore")
+        }
+    }
+
     buildTypes {
         release {
             signingConfig = signingConfigs.debug
             minifyEnabled false
             shrinkResources false
+        }
+        debug {
+            signingConfig = signingConfigs.debug
         }
     }
 }
