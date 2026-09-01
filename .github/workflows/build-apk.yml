@@ -38,17 +38,15 @@ jobs:
         run: |
           rm -rf android
           flutter create --org com.edito --project-name edito --platforms=android .
-          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/g' android/app/build.gradle.kts || true
-          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 34/g' android/app/build.gradle.kts || true
-          sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 34/g' android/app/build.gradle.kts || true
-          sed -i 's/ndkVersion = flutter.ndkVersion/ndkVersion = "25.1.8937393"/g' android/app/build.gradle.kts || true
-          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/g' android/app/build.gradle || true
-          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/g' android/app/build.gradle || true
-          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 34/g' android/app/build.gradle || true
-          sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 34/g' android/app/build.gradle || true
-          sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 34/g' android/app/build.gradle || true
-          sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 34/g' android/app/build.gradle || true
-          sed -i 's/ndkVersion flutter.ndkVersion/ndkVersion "25.1.8937393"/g' android/app/build.gradle || true
+          sed -i 's/minSdk = .*/minSdk = 24/g' android/app/build.gradle.kts || true
+          sed -i 's/compileSdk = .*/compileSdk = 34/g' android/app/build.gradle.kts || true
+          sed -i 's/targetSdk = .*/targetSdk = 34/g' android/app/build.gradle.kts || true
+          sed -i 's/minSdk = .*/minSdk = 24/g' android/app/build.gradle || true
+          sed -i 's/compileSdk = .*/compileSdk = 34/g' android/app/build.gradle || true
+          sed -i 's/targetSdk = .*/targetSdk = 34/g' android/app/build.gradle || true
+          sed -i 's/minSdkVersion .*/minSdkVersion 24/g' android/app/build.gradle || true
+          sed -i 's/compileSdkVersion .*/compileSdkVersion 34/g' android/app/build.gradle || true
+          sed -i 's/targetSdkVersion .*/targetSdkVersion 34/g' android/app/build.gradle || true
           chmod +x android/gradlew || true
           yes | flutter doctor --android-licenses || true
           flutter doctor -v
@@ -62,10 +60,10 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --debug --no-tree-shake-icons -v
+          flutter build apk --debug --no-tree-shake-icons || (cd android && ./gradlew assembleDebug --no-daemon)
           mkdir -p release_out
-          find build/ -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
-          find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
+          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/app-release.apk \;
+          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/edito-release.apk \;
           ls -la release_out/
           test -f release_out/app-release.apk
 
