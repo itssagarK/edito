@@ -21,8 +21,8 @@ android {
         applicationId = "com.edito.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        versionCode = (project.findProperty('flutter.versionCode') ?: 1).toString().toInteger()
+        versionName = project.findProperty('flutter.versionName') ?: "1.0.0"
         multiDexEnabled true
     }
 
@@ -31,6 +31,9 @@ android {
             signingConfig = signingConfigs.debug
             minifyEnabled false
             shrinkResources false
+        }
+        debug {
+            signingConfig = signingConfigs.debug
         }
     }
 }
