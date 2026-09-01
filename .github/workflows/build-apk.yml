@@ -43,6 +43,7 @@ jobs:
           sed -i 's/minSdk = .*/minSdk = 24/g' android/app/build.gradle.kts || true
           sed -i 's/compileSdk = .*/compileSdk = 34/g' android/app/build.gradle.kts || true
           sed -i 's/targetSdk = .*/targetSdk = 34/g' android/app/build.gradle.kts || true
+          sed -i '/ndkVersion/d' android/app/build.gradle.kts || true
           chmod +x android/gradlew || true
           yes | flutter doctor --android-licenses || true
           flutter doctor -v
@@ -57,11 +58,12 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x android/gradlew || true
-          flutter build apk --debug --no-tree-shake-icons || (cd android && ./gradlew assembleDebug) || true
+          flutter build apk --debug --no-tree-shake-icons
           mkdir -p release_out
-          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/app-release.apk \;
-          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/edito-release.apk \;
+          find build/ -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
+          find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
           ls -la release_out/
+          test -f release_out/app-release.apk
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
