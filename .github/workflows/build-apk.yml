@@ -36,6 +36,7 @@ jobs:
 
       - name: Configure Android SDK & licenses
         run: |
+          chmod +x android/gradlew || true
           yes | flutter doctor --android-licenses || true
           flutter doctor -v
           flutter config --no-analytics
@@ -48,6 +49,7 @@ jobs:
 
       - name: Build Android APK
         run: |
+          chmod +x android/gradlew || true
           flutter build apk --release --no-tree-shake-icons || flutter build apk --debug --no-tree-shake-icons
           mkdir -p release_out
           find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/app-release.apk \;
