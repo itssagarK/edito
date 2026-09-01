@@ -34,7 +34,7 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Generate Pristine Android Platform & Toolchain
+      - name: Generate Pristine Android Platform
         run: |
           rm -rf android
           flutter create --org com.edito --project-name edito --platforms=android .
@@ -43,13 +43,6 @@ jobs:
           sed -i 's/minSdk = .*/minSdk = 24/g' android/app/build.gradle.kts || true
           sed -i 's/compileSdk = .*/compileSdk = 34/g' android/app/build.gradle.kts || true
           sed -i 's/targetSdk = .*/targetSdk = 34/g' android/app/build.gradle.kts || true
-          sed -i 's/minSdk = .*/minSdk = 24/g' android/app/build.gradle || true
-          sed -i 's/compileSdk = .*/compileSdk = 34/g' android/app/build.gradle || true
-          sed -i 's/targetSdk = .*/targetSdk = 34/g' android/app/build.gradle || true
-          sed -i 's/minSdkVersion .*/minSdkVersion 24/g' android/app/build.gradle || true
-          sed -i 's/compileSdkVersion .*/compileSdkVersion 34/g' android/app/build.gradle || true
-          sed -i 's/targetSdkVersion .*/targetSdkVersion 34/g' android/app/build.gradle || true
-          echo -e '\nsubprojects { afterEvaluate { project -> if (project.hasProperty("android")) { project.android { compileSdkVersion 34 } } } }' >> android/build.gradle || true
           chmod +x android/gradlew || true
           yes | flutter doctor --android-licenses || true
           flutter doctor -v
@@ -63,10 +56,11 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --debug --no-tree-shake-icons || (cd android && ./gradlew assembleDebug)
+          chmod +x android/gradlew || true
+          flutter build apk --debug --no-tree-shake-icons
           mkdir -p release_out
-          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/app-release.apk \;
-          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/edito-release.apk \;
+          find build/ -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
+          find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
           ls -la release_out/
           test -f release_out/app-release.apk
 
