@@ -38,13 +38,14 @@ jobs:
         run: |
           rm -rf android
           flutter create --org com.edito --project-name edito --platforms=android .
-          mkdir -p android/gradle/wrapper
-          curl -sLo android/gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/master/gradle/wrapper/gradle-wrapper.jar
+          cd android
+          gradle wrapper --gradle-version 8.4
+          chmod +x gradlew
+          cd ..
           sed -i 's/minSdk = .*/minSdk = 24/g' android/app/build.gradle.kts || true
           sed -i 's/compileSdk = .*/compileSdk = 34/g' android/app/build.gradle.kts || true
           sed -i 's/targetSdk = .*/targetSdk = 34/g' android/app/build.gradle.kts || true
           sed -i '/ndkVersion/d' android/app/build.gradle.kts || true
-          chmod +x android/gradlew || true
           yes | flutter doctor --android-licenses || true
           flutter doctor -v
           flutter config --no-analytics
