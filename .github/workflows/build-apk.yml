@@ -41,12 +41,14 @@ jobs:
           sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/g' android/app/build.gradle.kts || true
           sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 34/g' android/app/build.gradle.kts || true
           sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 34/g' android/app/build.gradle.kts || true
+          sed -i 's/ndkVersion = flutter.ndkVersion/ndkVersion = "25.1.8937393"/g' android/app/build.gradle.kts || true
           sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/g' android/app/build.gradle || true
           sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/g' android/app/build.gradle || true
           sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 34/g' android/app/build.gradle || true
           sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 34/g' android/app/build.gradle || true
           sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 34/g' android/app/build.gradle || true
           sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 34/g' android/app/build.gradle || true
+          sed -i 's/ndkVersion flutter.ndkVersion/ndkVersion "25.1.8937393"/g' android/app/build.gradle || true
           chmod +x android/gradlew || true
           yes | flutter doctor --android-licenses || true
           flutter doctor -v
@@ -60,7 +62,7 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --debug --no-tree-shake-icons
+          flutter build apk --debug --no-tree-shake-icons -v
           mkdir -p release_out
           find build/ -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
           find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
