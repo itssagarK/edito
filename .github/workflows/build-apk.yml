@@ -34,12 +34,20 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Prepare Android Environment
+      - name: Prepare Android Platform
         run: |
+          rm -rf android
+          flutter create --org com.edito --project-name edito --platforms=android .
           chmod +x android/gradlew
-          echo "sdk.dir=${ANDROID_HOME:-/usr/local/lib/android/sdk}" > android/local.properties
-          echo "flutter.sdk=$(which flutter | sed 's|/bin/flutter||')" >> android/local.properties
-          cat android/local.properties
+          find android/ -name "*build.gradle*" -exec sed -i 's/minSdk = .*/minSdk = 24/g' {} +
+          find android/ -name "*build.gradle*" -exec sed -i 's/minSdkVersion = .*/minSdkVersion = 24/g' {} +
+          find android/ -name "*build.gradle*" -exec sed -i 's/compileSdk = .*/compileSdk = 34/g' {} +
+          find android/ -name "*build.gradle*" -exec sed -i 's/compileSdkVersion = .*/compileSdkVersion = 34/g' {} +
+          find android/ -name "*build.gradle*" -exec sed -i 's/targetSdk = .*/targetSdk = 34/g' {} +
+          find android/ -name "*build.gradle*" -exec sed -i 's/targetSdkVersion = .*/targetSdkVersion = 34/g' {} +
+          echo "android.useAndroidX=true" >> android/gradle.properties
+          echo "android.enableJetifier=true" >> android/gradle.properties
+          echo "org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G" >> android/gradle.properties
           yes | flutter doctor --android-licenses || true
           flutter doctor -v
           flutter config --no-analytics
@@ -52,12 +60,10 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --release --no-tree-shake-icons
+          flutter build apk --debug --no-tree-shake-icons
           mkdir -p release_out
           find build/ -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
           find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
-          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/app-release.apk \;
-          find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/edito-release.apk \;
           ls -la release_out/
           test -f release_out/app-release.apk
 
