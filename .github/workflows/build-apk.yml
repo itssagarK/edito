@@ -55,7 +55,7 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --debug --no-tree-shake-icons -v
+          flutter build apk --debug --no-tree-shake-icons 2>&1 | tee build_output.log
           mkdir -p release_out
           find build/ -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
           find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
