@@ -39,49 +39,95 @@ jobs:
           rm -rf android
           flutter create --platforms=android --org=com.edito --project-name=edito .
           chmod +x android/gradlew
-          cat << 'EOF' > android/app/build.gradle.kts
+          rm -f android/app/build.gradle.kts android/build.gradle.kts android/settings.gradle.kts
+          cat << 'EOF' > android/settings.gradle
+          pluginManagement {
+              def flutterSdkPath = {
+                  def properties = new Properties()
+                  file("local.properties").withInputStream { properties.load(it) }
+                  def flutterSdkPath = properties.getProperty("flutter.sdk")
+                  assert flutterSdkPath != null : "flutter.sdk not set in local.properties"
+                  return flutterSdkPath
+              }()
+
+              includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
+
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+
           plugins {
-              id("com.android.application")
-              id("kotlin-android")
-              id("dev.flutter.flutter-gradle-plugin")
+              id "dev.flutter.flutter-plugin-loader" version "1.0.0"
+              id "com.android.application" version "8.3.0" apply false
+              id "org.jetbrains.kotlin.android" version "1.9.22" apply false
+          }
+
+          include ":app"
+          EOF
+
+          cat << 'EOF' > android/build.gradle
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+
+          tasks.register("clean", Delete) {
+              delete rootProject.layout.buildDirectory
+          }
+          EOF
+
+          cat << 'EOF' > android/app/build.gradle
+          plugins {
+              id "com.android.application"
+              id "org.jetbrains.kotlin.android"
+              id "dev.flutter.flutter-gradle-plugin"
           }
 
           android {
-              namespace = "com.edito"
-              compileSdk = 34
+              namespace "com.edito"
+              compileSdk 34
 
               compileOptions {
-                  sourceCompatibility = JavaVersion.VERSION_1_8
-                  targetCompatibility = JavaVersion.VERSION_1_8
+                  sourceCompatibility JavaVersion.VERSION_1_8
+                  targetCompatibility JavaVersion.VERSION_1_8
               }
 
               kotlinOptions {
-                  jvmTarget = "1.8"
+                  jvmTarget = '1.8'
               }
 
               defaultConfig {
-                  applicationId = "com.edito"
-                  minSdk = 24
-                  targetSdk = 34
-                  versionCode = 1
-                  versionName = "1.0.0"
+                  applicationId "com.edito"
+                  minSdk 24
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0.0"
+                  multiDexEnabled true
               }
 
               buildTypes {
-                  getByName("release") {
-                      signingConfig = signingConfigs.getByName("debug")
+                  release {
+                      signingConfig signingConfigs.debug
+                  }
+                  debug {
+                      signingConfig signingConfigs.debug
                   }
               }
           }
 
           flutter {
-              source = "../.."
+              source '../..'
           }
           EOF
+
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G" >> android/gradle.properties
-          cat android/app/build.gradle.kts
           flutter doctor -v
           flutter config --no-analytics
 
