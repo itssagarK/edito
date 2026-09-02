@@ -62,10 +62,10 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --debug --no-tree-shake-icons
+          flutter build apk --debug --no-tree-shake-icons --verbose || (cd android && ./gradlew assembleDebug --stacktrace --info)
           mkdir -p release_out
-          find build/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
-          find build/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
+          find . -type f -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/app-release.apk \;
+          find . -type f -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/edito-release.apk \;
           ls -la release_out/
           test -f release_out/app-release.apk
 
