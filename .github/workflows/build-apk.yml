@@ -39,16 +39,31 @@ jobs:
           rm -rf android
           flutter create --platforms=android --org=com.edito --project-name=edito .
           chmod +x android/gradlew
-          sed -i 's/minSdk = .*/minSdk = 24/g' android/app/build.gradle.kts || true
-          sed -i 's/compileSdk = .*/compileSdk = 34/g' android/app/build.gradle.kts || true
-          sed -i 's/targetSdk = .*/targetSdk = 34/g' android/app/build.gradle.kts || true
-          sed -i 's/versionCode = .*/versionCode = 1/g' android/app/build.gradle.kts || true
-          sed -i 's/versionName = .*/versionName = "1.0.0"/g' android/app/build.gradle.kts || true
-          sed -i 's/ndkVersion = .*/\/\/ ndkVersion/g' android/app/build.gradle.kts || true
-          sed -i 's/android:name="\${applicationName}"//g' android/app/src/main/AndroidManifest.xml || true
+          python3 -c "
+          import os
+          p = 'android/app/build.gradle.kts'
+          if os.path.exists(p):
+              c = open(p).read()
+              c = c.replace('minSdk = flutter.minSdkVersion', 'minSdk = 24')
+              c = c.replace('compileSdk = flutter.compileSdkVersion', 'compileSdk = 34')
+              c = c.replace('targetSdk = flutter.targetSdkVersion', 'targetSdk = 34')
+              c = c.replace('versionCode = flutter.versionCode', 'versionCode = 1')
+              c = c.replace('versionName = flutter.versionName', 'versionName = \"1.0.0\"')
+              c = c.replace('ndkVersion = flutter.ndkVersion', '// ndkVersion')
+              open(p, 'w').write(c)
+
+          m = 'android/app/src/main/AndroidManifest.xml'
+          if os.path.exists(m):
+              c = open(m).read()
+              c = c.replace('\${applicationName}', 'android.app.Application')
+              c = c.replace('${applicationName}', 'android.app.Application')
+              open(m, 'w').write(c)
+          "
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G" >> android/gradle.properties
+          cat android/app/build.gradle.kts
+          cat android/app/src/main/AndroidManifest.xml
           yes | flutter doctor --android-licenses || true
           flutter doctor -v
           flutter config --no-analytics
