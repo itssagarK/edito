@@ -55,18 +55,14 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --debug --no-tree-shake-icons -v 2>&1 | tee build.log || true
+          flutter build apk --debug --no-tree-shake-icons
           mkdir -p release_out
           find build/ -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
           find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
           find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/app-release.apk \;
           find . -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/edito-release.apk \;
           ls -la release_out/
-          if [ ! -f release_out/app-release.apk ]; then
-            echo "Build failed. Error highlights:"
-            grep -E -A 5 -B 2 "FAILURE|error:|Error:|Exception" build.log | head -n 80 || true
-            exit 1
-          fi
+          test -f release_out/app-release.apk
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
