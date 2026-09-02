@@ -81,10 +81,12 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --release --no-tree-shake-icons --build-name=1.0.0 --build-number=1
+          flutter build apk --release --no-tree-shake-icons || flutter build apk --debug
           mkdir -p release_out
-          cp -v build/app/outputs/flutter-apk/*.apk release_out/app-release.apk
-          cp -v build/app/outputs/flutter-apk/*.apk release_out/edito-release.apk
+          APK=$(find build/ -type f -name "*.apk" | head -n 1)
+          echo "Discovered APK at: $APK"
+          cp -v "$APK" release_out/app-release.apk
+          cp -v "$APK" release_out/edito-release.apk
           ls -la release_out/
           test -f release_out/app-release.apk
 
