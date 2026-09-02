@@ -48,24 +48,18 @@ jobs:
               c = c.replace('minSdk = flutter.minSdkVersion', 'minSdk = 24')
               c = c.replace('compileSdk = flutter.compileSdkVersion', 'compileSdk = 34')
               c = c.replace('targetSdk = flutter.targetSdkVersion', 'targetSdk = 34')
-              c = c.replace('versionCode = flutter.versionCode', 'versionCode = 1')
-              c = c.replace('versionName = flutter.versionName', 'versionName = \"1.0.0\"')
               c = c.replace('ndkVersion = flutter.ndkVersion', '// ndkVersion')
-              c = c.replace('JavaVersion.VERSION_1_8', 'JavaVersion.VERSION_17')
-              c = c.replace('jvmTarget = \"1.8\"', 'jvmTarget = \"17\"')
               open(p, 'w').write(c)
 
           m = 'android/app/src/main/AndroidManifest.xml'
           if os.path.exists(m):
               c = open(m).read()
-              target = '$' + '{applicationName}'
-              c = c.replace(target, 'io.flutter.app.FlutterApplication')
+              target = 'android:name=\"$' + '{applicationName}\"'
+              c = c.replace(target, '')
               open(m, 'w').write(c)
           "
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
-          echo "android.nonTransitiveRClass=false" >> android/gradle.properties
-          echo "android.defaults.buildfeatures.buildconfig=true" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G" >> android/gradle.properties
           cat android/app/build.gradle.kts
           cat android/app/src/main/AndroidManifest.xml
@@ -81,12 +75,10 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --release --no-tree-shake-icons || flutter build apk --debug
+          flutter build apk --debug --verbose
           mkdir -p release_out
-          APK=$(find build/ -type f -name "*.apk" | head -n 1)
-          echo "Discovered APK at: $APK"
-          cp -v "$APK" release_out/app-release.apk
-          cp -v "$APK" release_out/edito-release.apk
+          find build/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
+          find build/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
           ls -la release_out/
           test -f release_out/app-release.apk
 
