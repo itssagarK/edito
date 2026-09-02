@@ -52,6 +52,13 @@ jobs:
               c = c.replace('ndkVersion = flutter.ndkVersion', '// ndkVersion')
               open(p, 'w').write(c)
 
+          s = 'android/settings.gradle.kts'
+          if os.path.exists(s):
+              c = open(s).read()
+              c = c.replace('1.8.22', '1.9.24')
+              c = c.replace('1.9.0', '1.9.24')
+              open(s, 'w').write(c)
+
           m = 'android/app/src/main/AndroidManifest.xml'
           if os.path.exists(m):
               c = open(m).read()
@@ -78,10 +85,14 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --debug -v
+          flutter build apk --debug || (cd android && ./gradlew assembleDebug --stacktrace)
           mkdir -p release_out
-          find build/ -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
-          find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
+          find . -name "*debug*.apk" -o -name "*release*.apk" | grep -v "release_out" | while read f; do
+            echo "Found APK: $f"
+            cp -v "$f" release_out/app-release.apk
+            cp -v "$f" release_out/edito-release.apk
+            break
+          done
           ls -lh release_out/
           test -f release_out/app-release.apk
 
