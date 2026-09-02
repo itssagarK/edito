@@ -53,6 +53,7 @@ jobs:
             sed -i 's/targetSdk = .*/targetSdk = 34/g' android/app/build.gradle.kts
             sed -i 's/versionCode = .*/versionCode = 1/g' android/app/build.gradle.kts
             sed -i 's/versionName = .*/versionName = "1.0.0"/g' android/app/build.gradle.kts
+            sed -i 's/ndkVersion = .*/\/\/ ndkVersion removed/g' android/app/build.gradle.kts
           fi
           if [ -f android/app/build.gradle ]; then
             sed -i 's/minSdkVersion .*/minSdkVersion 24/g' android/app/build.gradle
@@ -60,6 +61,7 @@ jobs:
             sed -i 's/targetSdkVersion .*/targetSdkVersion 34/g' android/app/build.gradle
             sed -i 's/versionCode .*/versionCode 1/g' android/app/build.gradle
             sed -i 's/versionName .*/versionName "1.0.0"/g' android/app/build.gradle
+            sed -i 's/ndkVersion .*/\/\/ ndkVersion removed/g' android/app/build.gradle
           fi
           flutter doctor -v
           flutter config --no-analytics
