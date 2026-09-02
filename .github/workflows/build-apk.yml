@@ -39,30 +39,49 @@ jobs:
           rm -rf android
           flutter create --platforms=android --org=com.edito --project-name=edito .
           chmod +x android/gradlew
+          cat << 'EOF' > android/app/build.gradle.kts
+          plugins {
+              id("com.android.application")
+              id("kotlin-android")
+              id("dev.flutter.flutter-gradle-plugin")
+          }
+
+          android {
+              namespace = "com.edito"
+              compileSdk = 34
+
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_1_8
+                  targetCompatibility = JavaVersion.VERSION_1_8
+              }
+
+              kotlinOptions {
+                  jvmTarget = "1.8"
+              }
+
+              defaultConfig {
+                  applicationId = "com.edito"
+                  minSdk = 24
+                  targetSdk = 34
+                  versionCode = 1
+                  versionName = "1.0.0"
+              }
+
+              buildTypes {
+                  getByName("release") {
+                      signingConfig = signingConfigs.getByName("debug")
+                  }
+              }
+          }
+
+          flutter {
+              source = "../.."
+          }
+          EOF
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G" >> android/gradle.properties
-          echo "flutter.minSdkVersion=24" >> android/local.properties
-          echo "flutter.targetSdkVersion=34" >> android/local.properties
-          echo "flutter.compileSdkVersion=34" >> android/local.properties
-          echo "flutter.versionCode=1" >> android/local.properties
-          echo "flutter.versionName=1.0.0" >> android/local.properties
-          if [ -f android/app/build.gradle.kts ]; then
-            sed -i 's/minSdk = .*/minSdk = 24/g' android/app/build.gradle.kts
-            sed -i 's/compileSdk = .*/compileSdk = 34/g' android/app/build.gradle.kts
-            sed -i 's/targetSdk = .*/targetSdk = 34\n        multiDexEnabled = true/g' android/app/build.gradle.kts
-            sed -i 's/versionCode = .*/versionCode = 1/g' android/app/build.gradle.kts
-            sed -i 's/versionName = .*/versionName = "1.0.0"/g' android/app/build.gradle.kts
-            sed -i 's/ndkVersion = .*/\/\/ ndkVersion removed/g' android/app/build.gradle.kts
-          fi
-          if [ -f android/app/build.gradle ]; then
-            sed -i 's/minSdkVersion .*/minSdkVersion 24/g' android/app/build.gradle
-            sed -i 's/compileSdkVersion .*/compileSdkVersion 34/g' android/app/build.gradle
-            sed -i 's/targetSdkVersion .*/targetSdkVersion 34\n        multiDexEnabled true/g' android/app/build.gradle
-            sed -i 's/versionCode .*/versionCode 1/g' android/app/build.gradle
-            sed -i 's/versionName .*/versionName "1.0.0"/g' android/app/build.gradle
-            sed -i 's/ndkVersion .*/\/\/ ndkVersion removed/g' android/app/build.gradle
-          fi
+          cat android/app/build.gradle.kts
           flutter doctor -v
           flutter config --no-analytics
 
@@ -76,10 +95,8 @@ jobs:
         run: |
           flutter build apk --debug --no-tree-shake-icons
           mkdir -p release_out
-          find build/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \; || true
-          find build/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \; || true
-          find android/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \; || true
-          find android/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \; || true
+          find build/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
+          find build/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
           ls -la release_out/
           test -f release_out/app-release.apk
 
