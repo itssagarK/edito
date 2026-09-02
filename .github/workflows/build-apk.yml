@@ -40,20 +40,34 @@ jobs:
           flutter create --platforms=android --org=com.edito --project-name=edito .
           chmod +x android/gradlew
           
-          # Upgrade Kotlin version in settings.gradle.kts to 1.9.22 to satisfy AGP 8.3+
-          sed -i 's/1.8.22/1.9.22/g' android/settings.gradle.kts || true
-          sed -i 's/1.8.0/1.9.22/g' android/settings.gradle.kts || true
-          sed -i 's/1.7.10/1.9.22/g' android/settings.gradle.kts || true
+          # 1. Create local.properties
+          echo "sdk.dir=${ANDROID_HOME:-/usr/local/lib/android/sdk}" > android/local.properties
+          echo "flutter.sdk=$(which flutter | sed 's|/bin/flutter||')" >> android/local.properties
+          echo "flutter.minSdkVersion=24" >> android/local.properties
+          echo "flutter.targetSdkVersion=34" >> android/local.properties
+          echo "flutter.compileSdkVersion=34" >> android/local.properties
+          echo "flutter.versionCode=1" >> android/local.properties
+          echo "flutter.versionName=1.0.0" >> android/local.properties
 
-          # Adjust SDK versions in app build.gradle.kts
+          # 2. Upgrade Kotlin in settings.gradle.kts and add safe fallback
           python3 -c "
           import os
+          s = 'android/settings.gradle.kts'
+          if os.path.exists(s):
+              c = open(s).read()
+              c = c.replace('1.8.22', '1.9.22')
+              c = c.replace('1.8.0', '1.9.22')
+              c = c.replace('1.7.10', '1.9.22')
+              open(s, 'w').write(c)
+
           p = 'android/app/build.gradle.kts'
           if os.path.exists(p):
               c = open(p).read()
               c = c.replace('minSdk = flutter.minSdkVersion', 'minSdk = 24')
               c = c.replace('compileSdk = flutter.compileSdkVersion', 'compileSdk = 34')
               c = c.replace('targetSdk = flutter.targetSdkVersion', 'targetSdk = 34')
+              c = c.replace('versionCode = flutter.versionCode', 'versionCode = 1')
+              c = c.replace('versionName = flutter.versionName', 'versionName = \"1.0.0\"')
               c = c.replace('ndkVersion = flutter.ndkVersion', '// ndkVersion')
               open(p, 'w').write(c)
 
@@ -70,6 +84,7 @@ jobs:
           echo "android.nonTransitiveRClass=false" >> android/gradle.properties
           echo "android.defaults.buildfeatures.buildconfig=true" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G" >> android/gradle.properties
+          cat android/local.properties
           cat android/settings.gradle.kts
           cat android/app/build.gradle.kts
           cat android/app/src/main/AndroidManifest.xml
@@ -85,10 +100,14 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --debug
+          cd android && ./gradlew assembleDebug --no-daemon && cd ..
           mkdir -p release_out
-          find build/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
-          find build/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
+          find . -name "*debug*.apk" -o -name "*release*.apk" | grep -v "release_out" | while read f; do
+            echo "Found APK: $f"
+            cp -v "$f" release_out/app-release.apk
+            cp -v "$f" release_out/edito-release.apk
+            break
+          done
           ls -la release_out/
           test -f release_out/app-release.apk
 
