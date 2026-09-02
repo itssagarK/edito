@@ -50,7 +50,7 @@ jobs:
           if [ -f android/app/build.gradle.kts ]; then
             sed -i 's/minSdk = .*/minSdk = 24/g' android/app/build.gradle.kts
             sed -i 's/compileSdk = .*/compileSdk = 34/g' android/app/build.gradle.kts
-            sed -i 's/targetSdk = .*/targetSdk = 34/g' android/app/build.gradle.kts
+            sed -i 's/targetSdk = .*/targetSdk = 34\n        multiDexEnabled = true/g' android/app/build.gradle.kts
             sed -i 's/versionCode = .*/versionCode = 1/g' android/app/build.gradle.kts
             sed -i 's/versionName = .*/versionName = "1.0.0"/g' android/app/build.gradle.kts
             sed -i 's/ndkVersion = .*/\/\/ ndkVersion removed/g' android/app/build.gradle.kts
@@ -58,7 +58,7 @@ jobs:
           if [ -f android/app/build.gradle ]; then
             sed -i 's/minSdkVersion .*/minSdkVersion 24/g' android/app/build.gradle
             sed -i 's/compileSdkVersion .*/compileSdkVersion 34/g' android/app/build.gradle
-            sed -i 's/targetSdkVersion .*/targetSdkVersion 34/g' android/app/build.gradle
+            sed -i 's/targetSdkVersion .*/targetSdkVersion 34\n        multiDexEnabled true/g' android/app/build.gradle
             sed -i 's/versionCode .*/versionCode 1/g' android/app/build.gradle
             sed -i 's/versionName .*/versionName "1.0.0"/g' android/app/build.gradle
             sed -i 's/ndkVersion .*/\/\/ ndkVersion removed/g' android/app/build.gradle
@@ -76,8 +76,10 @@ jobs:
         run: |
           flutter build apk --debug --no-tree-shake-icons
           mkdir -p release_out
-          find build/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
-          find build/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
+          find build/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \; || true
+          find build/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \; || true
+          find android/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \; || true
+          find android/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \; || true
           ls -la release_out/
           test -f release_out/app-release.apk
 
