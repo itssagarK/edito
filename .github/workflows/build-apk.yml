@@ -45,12 +45,16 @@ jobs:
           echo "flutter.minSdkVersion=24" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
           echo "flutter.compileSdkVersion=34" >> android/local.properties
-          find android/ -name "*.kts" -exec sed -i 's/minSdk = .*/minSdk = 24/g' {} + || true
-          find android/ -name "*.kts" -exec sed -i 's/compileSdk = .*/compileSdk = 34/g' {} + || true
-          find android/ -name "*.kts" -exec sed -i 's/targetSdk = .*/targetSdk = 34/g' {} + || true
-          find android/ -name "*.gradle" -exec sed -i 's/minSdkVersion .*/minSdkVersion 24/g' {} + || true
-          find android/ -name "*.gradle" -exec sed -i 's/compileSdkVersion .*/compileSdkVersion 34/g' {} + || true
-          find android/ -name "*.gradle" -exec sed -i 's/targetSdkVersion .*/targetSdkVersion 34/g' {} + || true
+          if [ -f android/app/build.gradle.kts ]; then
+            sed -i 's/minSdk = .*/minSdk = 24/g' android/app/build.gradle.kts
+            sed -i 's/compileSdk = .*/compileSdk = 34/g' android/app/build.gradle.kts
+            sed -i 's/targetSdk = .*/targetSdk = 34/g' android/app/build.gradle.kts
+          fi
+          if [ -f android/app/build.gradle ]; then
+            sed -i 's/minSdkVersion .*/minSdkVersion 24/g' android/app/build.gradle
+            sed -i 's/compileSdkVersion .*/compileSdkVersion 34/g' android/app/build.gradle
+            sed -i 's/targetSdkVersion .*/targetSdkVersion 34/g' android/app/build.gradle
+          fi
           flutter doctor -v
           flutter config --no-analytics
 
@@ -62,10 +66,10 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --debug --no-tree-shake-icons --verbose || (cd android && ./gradlew assembleDebug --stacktrace --info)
+          flutter build apk --debug --no-tree-shake-icons
           mkdir -p release_out
-          find . -type f -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/app-release.apk \;
-          find . -type f -name "*.apk" ! -path "./release_out/*" -exec cp -v {} release_out/edito-release.apk \;
+          find build/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
+          find build/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
           ls -la release_out/
           test -f release_out/app-release.apk
 
