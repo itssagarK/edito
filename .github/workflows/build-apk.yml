@@ -40,7 +40,6 @@ jobs:
           flutter create --platforms=android --org=com.edito --project-name=edito .
           chmod +x android/gradlew
           sed -i 's/gradle-.*\.zip/gradle-8.4-bin.zip/g' android/gradle/wrapper/gradle-wrapper.properties || true
-          cat android/gradle/wrapper/gradle-wrapper.properties
           rm -f android/app/build.gradle.kts android/build.gradle.kts android/settings.gradle.kts
           echo "sdk.dir=${ANDROID_HOME:-/usr/local/lib/android/sdk}" > android/local.properties
           echo "flutter.sdk=$(which flutter | sed 's|/bin/flutter||')" >> android/local.properties
@@ -51,43 +50,46 @@ jobs:
           echo "flutter.versionName=1.0.0" >> android/local.properties
 
           cat << 'EOF' > android/settings.gradle
-          pluginManagement {
-              def flutterSdkPath = {
-                  def properties = new Properties()
-                  def localPropertiesFile = file("local.properties")
-                  if (localPropertiesFile.exists()) {
-                      localPropertiesFile.withInputStream { properties.load(it) }
-                  }
-                  def flutterSdkPath = properties.getProperty("flutter.sdk") ?: System.getenv("FLUTTER_ROOT") ?: System.getenv("FLUTTER_HOME")
-                  assert flutterSdkPath != null : "flutter.sdk not set"
-                  return flutterSdkPath
-              }()
+          include ':app'
 
-              includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
+          def localPropertiesFile = new File(rootProject.projectDir, "local.properties")
+          def properties = new Properties()
 
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
+          assert localPropertiesFile.exists()
+          localPropertiesFile.withReader("UTF-8") { reader -> properties.load(reader) }
 
-          plugins {
-              id "dev.flutter.flutter-plugin-loader" version "1.0.0"
-              id "dev.flutter.flutter-gradle-plugin" version "1.0.0" apply false
-              id "com.android.application" version "8.3.0" apply false
-              id "org.jetbrains.kotlin.android" version "1.9.22" apply false
-          }
-
-          include ":app"
+          def flutterSdkPath = properties.getProperty("flutter.sdk") ?: System.getenv("FLUTTER_ROOT") ?: System.getenv("FLUTTER_HOME")
+          assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
+          apply from: "$flutterSdkPath/packages/flutter_tools/gradle/app_plugin_loader.gradle"
           EOF
 
           cat << 'EOF' > android/build.gradle
+          buildscript {
+              ext.kotlin_version = '1.9.22'
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+
+              dependencies {
+                  classpath 'com.android.tools.build:gradle:8.3.0'
+                  classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+              }
+          }
+
           allprojects {
               repositories {
                   google()
                   mavenCentral()
               }
+          }
+
+          rootProject.buildDir = '../build'
+          subprojects {
+              project.buildDir = "${rootProject.buildDir}/${project.name}"
+          }
+          subprojects {
+              project.evaluationDependsOn(':app')
           }
 
           tasks.register("clean", Delete) {
@@ -96,15 +98,29 @@ jobs:
           EOF
 
           cat << 'EOF' > android/app/build.gradle
-          plugins {
-              id "com.android.application"
-              id "org.jetbrains.kotlin.android"
-              id "dev.flutter.flutter-gradle-plugin"
+          def localProperties = new Properties()
+          def localPropertiesFile = rootProject.file('local.properties')
+          if (localPropertiesFile.exists()) {
+              localPropertiesFile.withReader('UTF-8') { reader ->
+                  localProperties.load(reader)
+              }
           }
+
+          def flutterRoot = localProperties.getProperty('flutter.sdk')
+          if (flutterRoot == null) {
+              flutterRoot = System.getenv('FLUTTER_ROOT') ?: System.getenv('FLUTTER_HOME')
+          }
+
+          def flutterVersionCode = localProperties.getProperty('flutter.versionCode') ?: '1'
+          def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '1.0.0'
+
+          apply plugin: 'com.android.application'
+          apply plugin: 'kotlin-android'
+          apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
           android {
               namespace "com.edito"
-              compileSdk 34
+              compileSdkVersion 34
 
               compileOptions {
                   sourceCompatibility JavaVersion.VERSION_1_8
@@ -115,12 +131,16 @@ jobs:
                   jvmTarget = '1.8'
               }
 
+              sourceSets {
+                  main.java.srcDirs += 'src/main/kotlin'
+              }
+
               defaultConfig {
                   applicationId "com.edito"
-                  minSdk 24
-                  targetSdk 34
-                  versionCode 1
-                  versionName "1.0.0"
+                  minSdkVersion 24
+                  targetSdkVersion 34
+                  versionCode flutterVersionCode.toInteger()
+                  versionName flutterVersionName
                   multiDexEnabled true
               }
 
@@ -144,6 +164,7 @@ jobs:
           echo "org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G" >> android/gradle.properties
           cat android/local.properties
           cat android/settings.gradle
+          cat android/build.gradle
           cat android/app/build.gradle
           flutter doctor -v
           flutter config --no-analytics
@@ -156,22 +177,14 @@ jobs:
 
       - name: Build Android APK
         run: |
-          set +e
-          flutter build apk --debug --no-tree-shake-icons -v > build_output.log 2>&1
-          BUILD_CODE=$?
-          echo "Flutter build exit code: $BUILD_CODE"
+          flutter build apk --debug --no-tree-shake-icons
           mkdir -p release_out
           find build/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \; || true
           find build/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \; || true
           find android/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \; || true
           find android/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \; || true
           ls -la release_out/
-          if [ ! -f release_out/app-release.apk ]; then
-            echo "====== ERRORS IN BUILD LOG ======"
-            grep -i -E "error|exception|failure" build_output.log | tail -n 50 || tail -n 80 build_output.log
-            tail -n 100 build_output.log
-            exit 1
-          fi
+          test -f release_out/app-release.apk
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
