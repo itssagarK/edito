@@ -23,6 +23,7 @@ android {
         targetSdk = 34
         versionCode = (project.findProperty("flutter.versionCode") as? String)?.toIntOrNull() ?: 1
         versionName = (project.findProperty("flutter.versionName") as? String) ?: "1.0.0"
+        multiDexEnabled = true
     }
 
     buildTypes {
