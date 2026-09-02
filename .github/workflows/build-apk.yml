@@ -40,6 +40,12 @@ jobs:
           flutter create --platforms=android --org=com.edito --project-name=edito .
           chmod +x android/gradlew
           
+          # Upgrade Kotlin version in settings.gradle.kts to 1.9.22 to satisfy AGP 8.3+
+          sed -i 's/1.8.22/1.9.22/g' android/settings.gradle.kts || true
+          sed -i 's/1.8.0/1.9.22/g' android/settings.gradle.kts || true
+          sed -i 's/1.7.10/1.9.22/g' android/settings.gradle.kts || true
+
+          # Adjust SDK versions in app build.gradle.kts
           python3 -c "
           import os
           p = 'android/app/build.gradle.kts'
@@ -58,9 +64,13 @@ jobs:
               c = c.replace(target, '')
               open(m, 'w').write(c)
           "
+
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
+          echo "android.nonTransitiveRClass=false" >> android/gradle.properties
+          echo "android.defaults.buildfeatures.buildconfig=true" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G" >> android/gradle.properties
+          cat android/settings.gradle.kts
           cat android/app/build.gradle.kts
           cat android/app/src/main/AndroidManifest.xml
           yes | flutter doctor --android-licenses || true
@@ -75,7 +85,7 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --debug --verbose
+          flutter build apk --debug
           mkdir -p release_out
           find build/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
           find build/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
