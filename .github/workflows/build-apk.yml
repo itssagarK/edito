@@ -40,13 +40,24 @@ jobs:
           flutter create --platforms=android --org=com.edito --project-name=edito .
           chmod +x android/gradlew
           rm -f android/app/build.gradle.kts android/build.gradle.kts android/settings.gradle.kts
+          echo "sdk.dir=${ANDROID_HOME:-/usr/local/lib/android/sdk}" > android/local.properties
+          echo "flutter.sdk=$(which flutter | sed 's|/bin/flutter||')" >> android/local.properties
+          echo "flutter.minSdkVersion=24" >> android/local.properties
+          echo "flutter.targetSdkVersion=34" >> android/local.properties
+          echo "flutter.compileSdkVersion=34" >> android/local.properties
+          echo "flutter.versionCode=1" >> android/local.properties
+          echo "flutter.versionName=1.0.0" >> android/local.properties
+
           cat << 'EOF' > android/settings.gradle
           pluginManagement {
               def flutterSdkPath = {
                   def properties = new Properties()
-                  file("local.properties").withInputStream { properties.load(it) }
-                  def flutterSdkPath = properties.getProperty("flutter.sdk")
-                  assert flutterSdkPath != null : "flutter.sdk not set in local.properties"
+                  def localPropertiesFile = file("local.properties")
+                  if (localPropertiesFile.exists()) {
+                      localPropertiesFile.withInputStream { properties.load(it) }
+                  }
+                  def flutterSdkPath = properties.getProperty("flutter.sdk") ?: System.getenv("FLUTTER_ROOT") ?: System.getenv("FLUTTER_HOME")
+                  assert flutterSdkPath != null : "flutter.sdk not set"
                   return flutterSdkPath
               }()
 
@@ -128,6 +139,9 @@ jobs:
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G" >> android/gradle.properties
+          cat android/local.properties
+          cat android/settings.gradle
+          cat android/app/build.gradle
           flutter doctor -v
           flutter config --no-analytics
 
