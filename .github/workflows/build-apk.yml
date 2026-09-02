@@ -37,6 +37,12 @@ jobs:
       - name: Prepare Android Environment
         run: |
           chmod +x android/gradlew
+          echo "sdk.dir=${ANDROID_HOME:-/usr/local/lib/android/sdk}" > android/local.properties
+          echo "flutter.sdk=$(which flutter | sed 's|/bin/flutter||')" >> android/local.properties
+          echo "flutter.buildMode=debug" >> android/local.properties
+          echo "flutter.versionName=1.0.0" >> android/local.properties
+          echo "flutter.versionCode=1" >> android/local.properties
+          cat android/local.properties
           yes | flutter doctor --android-licenses || true
           flutter doctor -v
           flutter config --no-analytics
