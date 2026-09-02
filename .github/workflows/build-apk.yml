@@ -74,6 +74,7 @@ jobs:
 
           plugins {
               id "dev.flutter.flutter-plugin-loader" version "1.0.0"
+              id "dev.flutter.flutter-gradle-plugin" version "1.0.0" apply false
               id "com.android.application" version "8.3.0" apply false
               id "org.jetbrains.kotlin.android" version "1.9.22" apply false
           }
@@ -155,14 +156,22 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --debug --no-tree-shake-icons --verbose || (cd android && ./gradlew assembleDebug --no-daemon --stacktrace)
+          set +e
+          flutter build apk --debug --no-tree-shake-icons -v > build_output.log 2>&1
+          BUILD_CODE=$?
+          echo "Flutter build exit code: $BUILD_CODE"
           mkdir -p release_out
           find build/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \; || true
           find build/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \; || true
           find android/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \; || true
           find android/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \; || true
           ls -la release_out/
-          test -f release_out/app-release.apk
+          if [ ! -f release_out/app-release.apk ]; then
+            echo "====== ERRORS IN BUILD LOG ======"
+            grep -i -E "error|exception|failure" build_output.log | tail -n 50 || tail -n 80 build_output.log
+            tail -n 100 build_output.log
+            exit 1
+          fi
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
