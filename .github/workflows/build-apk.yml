@@ -53,12 +53,21 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --debug --no-tree-shake-icons
+          set +e
+          flutter build apk --debug --no-tree-shake-icons -v > build_output.log 2>&1
+          BUILD_EXIT=$?
+          echo "Flutter build exit code: $BUILD_EXIT"
           mkdir -p release_out
           find build/ -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
           find build/ -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
           ls -la release_out/
-          test -f release_out/app-release.apk
+          if [ ! -f release_out/app-release.apk ]; then
+            echo "====== BUILD LOG TAIL ======"
+            tail -n 100 build_output.log
+            echo "====== ERRORS IN BUILD LOG ======"
+            grep -i -C 3 "error:" build_output.log || grep -i -C 3 "exception" build_output.log || tail -n 50 build_output.log
+            exit 1
+          fi
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
