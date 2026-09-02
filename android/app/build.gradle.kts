@@ -6,8 +6,7 @@ plugins {
 
 android {
     namespace = "com.edito.app"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 34
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -25,9 +24,9 @@ android {
     defaultConfig {
         applicationId = "com.edito.app"
         minSdk = 24
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        targetSdk = 34
+        versionCode = (project.findProperty("flutter.versionCode") as? String)?.toIntOrNull() ?: 1
+        versionName = (project.findProperty("flutter.versionName") as? String) ?: "1.0.0"
         multiDexEnabled = true
     }
 
