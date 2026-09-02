@@ -88,7 +88,7 @@ jobs:
           }
 
           tasks.register("clean", Delete) {
-              delete rootProject.layout.buildDirectory
+              delete rootProject.buildDir
           }
           EOF
 
@@ -139,9 +139,6 @@ jobs:
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G" >> android/gradle.properties
-          cat android/local.properties
-          cat android/settings.gradle
-          cat android/app/build.gradle
           flutter doctor -v
           flutter config --no-analytics
 
@@ -155,8 +152,10 @@ jobs:
         run: |
           flutter build apk --debug --no-tree-shake-icons
           mkdir -p release_out
-          find build/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
-          find build/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
+          find build/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \; || true
+          find build/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \; || true
+          find android/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \; || true
+          find android/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \; || true
           ls -la release_out/
           test -f release_out/app-release.apk
 
