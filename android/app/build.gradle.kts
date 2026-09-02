@@ -1,12 +1,13 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
+    id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
     namespace = "com.edito.app"
-    compileSdk = 34
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -24,14 +25,14 @@ android {
     defaultConfig {
         applicationId = "com.edito.app"
         minSdk = 24
-        targetSdk = 34
-        versionCode = (project.findProperty("flutter.versionCode") as? String)?.toIntOrNull() ?: 1
-        versionName = (project.findProperty("flutter.versionName") as? String) ?: "1.0.0"
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
         multiDexEnabled = true
     }
 
     buildTypes {
-        getByName("release") {
+        release {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
