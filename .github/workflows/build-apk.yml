@@ -40,7 +40,10 @@ jobs:
           flutter create --platforms=android --org=com.edito --project-name=edito .
           chmod +x android/gradlew
           
-          # 1. Create local.properties
+          # 1. Update Gradle wrapper to 8.5 for AGP 8.3+ compatibility
+          sed -i 's/gradle-.*\.zip/gradle-8.5-bin.zip/g' android/gradle/wrapper/gradle-wrapper.properties || true
+
+          # 2. Create local.properties
           echo "sdk.dir=${ANDROID_HOME:-/usr/local/lib/android/sdk}" > android/local.properties
           echo "flutter.sdk=$(which flutter | sed 's|/bin/flutter||')" >> android/local.properties
           echo "flutter.minSdkVersion=24" >> android/local.properties
@@ -49,7 +52,7 @@ jobs:
           echo "flutter.versionCode=1" >> android/local.properties
           echo "flutter.versionName=1.0.0" >> android/local.properties
 
-          # 2. Upgrade Kotlin in settings.gradle.kts
+          # 3. Upgrade Kotlin in settings.gradle.kts and adjust SDK versions
           python3 -c "
           import os
           s = 'android/settings.gradle.kts'
@@ -84,6 +87,7 @@ jobs:
           echo "android.nonTransitiveRClass=false" >> android/gradle.properties
           echo "android.defaults.buildfeatures.buildconfig=true" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G" >> android/gradle.properties
+          cat android/gradle/wrapper/gradle-wrapper.properties
           cat android/local.properties
           cat android/settings.gradle.kts
           cat android/app/build.gradle.kts
