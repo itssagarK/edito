@@ -39,40 +39,145 @@ jobs:
           rm -rf android
           flutter create --platforms=android --org=com.edito --project-name=edito .
           chmod +x android/gradlew
-          python3 -c "
-          import os
-          p = 'android/app/build.gradle.kts'
-          if os.path.exists(p):
-              c = open(p).read()
-              c = c.replace('minSdk = flutter.minSdkVersion', 'minSdk = 24')
-              c = c.replace('compileSdk = flutter.compileSdkVersion', 'compileSdk = 34')
-              c = c.replace('targetSdk = flutter.targetSdkVersion', 'targetSdk = 34')
-              c = c.replace('versionCode = flutter.versionCode', 'versionCode = 1')
-              c = c.replace('versionName = flutter.versionName', 'versionName = \"1.0.0\"')
-              c = c.replace('ndkVersion = flutter.ndkVersion', '// ndkVersion')
-              open(p, 'w').write(c)
+          
+          cat << 'EOF' > android/settings.gradle.kts
+          pluginManagement {
+              val flutterSdkPath = run {
+                  val properties = java.util.Properties()
+                  val localProperties = file("local.properties")
+                  if (localProperties.exists()) {
+                      localProperties.reader().use { properties.load(it) }
+                  }
+                  properties.getProperty("flutter.sdk") ?: System.getenv("FLUTTER_ROOT") ?: System.getenv("FLUTTER_HOME")
+              }
+              includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
 
-          s = 'android/settings.gradle.kts'
-          if os.path.exists(s):
-              c = open(s).read()
-              c = c.replace('1.8.22', '1.9.24')
-              c = c.replace('1.9.0', '1.9.24')
-              open(s, 'w').write(c)
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
 
-          m = 'android/app/src/main/AndroidManifest.xml'
-          if os.path.exists(m):
-              c = open(m).read()
-              target = '$' + '{applicationName}'
-              c = c.replace(target, 'android.app.Application')
-              open(m, 'w').write(c)
-          "
+          plugins {
+              id("dev.flutter.flutter-plugin-loader") version "1.0.0"
+              id("com.android.application") version "8.3.0" apply false
+              id("org.jetbrains.kotlin.android") version "1.9.22" apply false
+          }
+
+          include(":app")
+          EOF
+
+          cat << 'EOF' > android/build.gradle.kts
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+
+          val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
+          rootProject.layout.buildDirectory.value(newBuildDir)
+
+          subprojects {
+              val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
+              project.layout.buildDirectory.value(newSubprojectBuildDir)
+          }
+          subprojects {
+              project.evaluationDependsOn(":app")
+          }
+
+          tasks.register<Delete>("clean") {
+              delete(rootProject.layout.buildDirectory)
+          }
+          EOF
+
+          cat << 'EOF' > android/app/build.gradle.kts
+          plugins {
+              id("com.android.application")
+              id("org.jetbrains.kotlin.android")
+              id("dev.flutter.flutter-gradle-plugin")
+          }
+
+          android {
+              namespace = "com.edito"
+              compileSdk = 34
+
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_1_8
+                  targetCompatibility = JavaVersion.VERSION_1_8
+              }
+
+              kotlinOptions {
+                  jvmTarget = "1.8"
+              }
+
+              defaultConfig {
+                  applicationId = "com.edito"
+                  minSdk = 24
+                  targetSdk = 34
+                  versionCode = 1
+                  versionName = "1.0.0"
+                  multiDexEnabled = true
+              }
+
+              buildTypes {
+                  getByName("release") {
+                      signingConfig = signingConfigs.getByName("debug")
+                  }
+                  getByName("debug") {
+                      signingConfig = signingConfigs.getByName("debug")
+                  }
+              }
+          }
+
+          flutter {
+              source = "../.."
+          }
+          EOF
+
+          cat << 'EOF' > android/app/src/main/AndroidManifest.xml
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              package="com.edito">
+              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+              <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+              <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+              <uses-permission android:name="android.permission.INTERNET" />
+              <application
+                  android:label="Edito"
+                  android:name="android.app.Application"
+                  android:icon="@mipmap/ic_launcher">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:launchMode="singleTop"
+                      android:theme="@style/LaunchTheme"
+                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+                      android:hardwareAccelerated="true"
+                      android:windowSoftInputMode="adjustResize">
+                      <meta-data
+                        android:name="io.flutter.embedding.android.NormalTheme"
+                        android:resource="@style/NormalTheme"
+                        />
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+                  <meta-data
+                      android:name="flutterEmbedding"
+                      android:value="2" />
+              </application>
+          </manifest>
+          EOF
+
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
           echo "android.nonTransitiveRClass=false" >> android/gradle.properties
           echo "android.defaults.buildfeatures.buildconfig=true" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G" >> android/gradle.properties
-          cat android/app/build.gradle.kts
-          cat android/app/src/main/AndroidManifest.xml
           yes | flutter doctor --android-licenses || true
           flutter doctor -v
           flutter config --no-analytics
@@ -85,14 +190,10 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --debug || (cd android && ./gradlew assembleDebug --stacktrace)
+          flutter build apk --release --no-tree-shake-icons || flutter build apk --debug
           mkdir -p release_out
-          find . -name "*debug*.apk" -o -name "*release*.apk" | grep -v "release_out" | while read f; do
-            echo "Found APK: $f"
-            cp -v "$f" release_out/app-release.apk
-            cp -v "$f" release_out/edito-release.apk
-            break
-          done
+          find build/ android/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
+          find build/ android/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
           ls -lh release_out/
           test -f release_out/app-release.apk
 
