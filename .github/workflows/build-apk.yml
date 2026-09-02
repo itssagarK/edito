@@ -45,15 +45,21 @@ jobs:
           echo "flutter.minSdkVersion=24" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
           echo "flutter.compileSdkVersion=34" >> android/local.properties
+          echo "flutter.versionCode=1" >> android/local.properties
+          echo "flutter.versionName=1.0.0" >> android/local.properties
           if [ -f android/app/build.gradle.kts ]; then
             sed -i 's/minSdk = .*/minSdk = 24/g' android/app/build.gradle.kts
             sed -i 's/compileSdk = .*/compileSdk = 34/g' android/app/build.gradle.kts
             sed -i 's/targetSdk = .*/targetSdk = 34/g' android/app/build.gradle.kts
+            sed -i 's/versionCode = .*/versionCode = 1/g' android/app/build.gradle.kts
+            sed -i 's/versionName = .*/versionName = "1.0.0"/g' android/app/build.gradle.kts
           fi
           if [ -f android/app/build.gradle ]; then
             sed -i 's/minSdkVersion .*/minSdkVersion 24/g' android/app/build.gradle
             sed -i 's/compileSdkVersion .*/compileSdkVersion 34/g' android/app/build.gradle
             sed -i 's/targetSdkVersion .*/targetSdkVersion 34/g' android/app/build.gradle
+            sed -i 's/versionCode .*/versionCode 1/g' android/app/build.gradle
+            sed -i 's/versionName .*/versionName "1.0.0"/g' android/app/build.gradle
           fi
           flutter doctor -v
           flutter config --no-analytics
