@@ -6,7 +6,7 @@ import '../../../../core/utils/timecode_formatter.dart';
 import '../../../../models/project.dart';
 import '../../models/export_preset.dart';
 import '../../models/export_status.dart';
-import '../providers/export_provider.dart';
+import '../../providers/export_provider.dart';
 import 'export_progress_dialog.dart';
 import 'export_success_dialog.dart';
 

@@ -40,8 +40,8 @@ jobs:
           flutter create --platforms=android --org=com.edito --project-name=edito .
           chmod +x android/gradlew
           
-          # 1. Update Gradle wrapper to 8.5 for AGP 8.3+ compatibility
-          sed -i 's/gradle-.*\.zip/gradle-8.5-bin.zip/g' android/gradle/wrapper/gradle-wrapper.properties || true
+          # 1. Update Gradle wrapper to 9.3.1 for AGP 9.1+ compatibility
+          sed -i 's/gradle-.*\.zip/gradle-9.3.1-bin.zip/g' android/gradle/wrapper/gradle-wrapper.properties || true
 
           # 2. Create local.properties
           echo "sdk.dir=${ANDROID_HOME:-/usr/local/lib/android/sdk}" > android/local.properties
@@ -104,10 +104,12 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flutter build apk --debug
+          flutter build apk --release --no-tree-shake-icons || flutter build apk --debug
           mkdir -p release_out
-          find build/ -type f -name "*.apk" -exec cp -v {} release_out/app-release.apk \;
-          find build/ -type f -name "*.apk" -exec cp -v {} release_out/edito-release.apk \;
+          APK=$(find build/ -type f -name "*.apk" | head -n 1)
+          echo "Discovered APK at: $APK"
+          cp -v "$APK" release_out/app-release.apk
+          cp -v "$APK" release_out/edito-release.apk
           ls -la release_out/
           test -f release_out/app-release.apk
 
