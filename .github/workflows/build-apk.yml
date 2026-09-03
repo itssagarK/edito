@@ -39,75 +39,7 @@ jobs:
           rm -rf android
           flutter create --platforms=android --org=com.edito --project-name=edito .
           chmod +x android/gradlew
-          
-          # 1. Update Gradle wrapper to 9.3.1 for AGP 9.1+ compatibility
-          sed -i 's/gradle-.*\.zip/gradle-9.3.1-bin.zip/g' android/gradle/wrapper/gradle-wrapper.properties || true
-
-          # 2. Create local.properties
-          echo "sdk.dir=${ANDROID_HOME:-/usr/local/lib/android/sdk}" > android/local.properties
-          echo "flutter.sdk=$(which flutter | sed 's|/bin/flutter||')" >> android/local.properties
-          echo "flutter.minSdkVersion=24" >> android/local.properties
-          echo "flutter.targetSdkVersion=36" >> android/local.properties
-          echo "flutter.compileSdkVersion=36" >> android/local.properties
-          echo "flutter.versionCode=1" >> android/local.properties
-          echo "flutter.versionName=1.0.0" >> android/local.properties
-
-          # 3. Upgrade Kotlin in settings.gradle.kts and adjust SDK versions
-          python3 -c "
-          import os
-          s = 'android/settings.gradle.kts'
-          if os.path.exists(s):
-              c = open(s).read()
-              c = c.replace('1.8.22', '1.9.22')
-              c = c.replace('1.8.0', '1.9.22')
-              c = c.replace('1.7.10', '1.9.22')
-              open(s, 'w').write(c)
-
-          p = 'android/app/build.gradle.kts'
-          if os.path.exists(p):
-              c = open(p).read()
-              c = c.replace('minSdk = flutter.minSdkVersion', 'minSdk = 24')
-              c = c.replace('compileSdk = flutter.compileSdkVersion', 'compileSdk = 36')
-              c = c.replace('targetSdk = flutter.targetSdkVersion', 'targetSdk = 36')
-              c = c.replace('versionCode = flutter.versionCode', 'versionCode = 1')
-              c = c.replace('versionName = flutter.versionName', 'versionName = \"1.0.0\"')
-              c = c.replace('ndkVersion = flutter.ndkVersion', '// ndkVersion')
-              open(p, 'w').write(c)
-
-          m = 'android/app/src/main/AndroidManifest.xml'
-          if os.path.exists(m):
-              c = open(m).read()
-              target = 'android:name=\"$' + '{applicationName}\"'
-              c = c.replace(target, '')
-              open(m, 'w').write(c)
-
-          b = 'android/build.gradle.kts'
-          if os.path.exists(b):
-              with open(b, 'a') as f:
-                  f.write('''
-subprojects {
-    tasks.configureEach {
-        if (name.contains("AarMetadata")) {
-            enabled = false
-        }
-    }
-    afterEvaluate {
-        val android = extensions.findByName("android")
-        if (android != null) {
-            try {
-                val method = android.javaClass.getMethod("compileSdkVersion", Int::class.javaPrimitiveType)
-                method.invoke(android, 36)
-            } catch (e: Exception) {}
-        }
-    }
-}
-''')
-          "
-
-          echo "android.useAndroidX=true" >> android/gradle.properties
-          echo "android.enableJetifier=true" >> android/gradle.properties
-          echo "android.nonTransitiveRClass=false" >> android/gradle.properties
-          echo "org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G" >> android/gradle.properties
+          python3 scripts/configure_android.py
           cat android/gradle/wrapper/gradle-wrapper.properties
           cat android/local.properties
           cat android/settings.gradle.kts
