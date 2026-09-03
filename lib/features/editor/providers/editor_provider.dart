@@ -14,6 +14,7 @@ enum EditorTool {
   effects,
   speed,
   enhance,
+  chromaKey,
 }
 
 class EditorState {

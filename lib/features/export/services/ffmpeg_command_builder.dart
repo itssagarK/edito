@@ -82,10 +82,16 @@ class FFmpegCommandBuilder {
           vFilters.add('pad=$targetW:$targetH:(ow-iw)/2:(oh-ih)/2:color=black');
           vFilters.add('setsar=1');
 
-          // Color Grading & 3D LUT filter
+          // Color Grading & Looks filter
           final colorFilter = ColorFilterCompilerService.generateFFmpegFilter(clip.colorGrading);
           if (colorFilter.isNotEmpty) {
             vFilters.add(colorFilter);
+          }
+
+          // Chroma Key / Green Screen Removal
+          if (clip.chromaKey.isEnabled) {
+            final hex = '0x${clip.chromaKey.keyColor.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+            vFilters.add('chromakey=color=$hex:similarity=${clip.chromaKey.similarity.toStringAsFixed(2)}:blend=${clip.chromaKey.smoothness.toStringAsFixed(2)}');
           }
 
           // Text Titles & DrawText Burn-In

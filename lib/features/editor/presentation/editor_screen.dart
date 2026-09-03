@@ -9,6 +9,7 @@ import '../../../models/track.dart';
 import '../providers/editor_provider.dart';
 import '../../audio/presentation/widgets/audio_mixer_sheet.dart';
 import '../../captions/presentation/widgets/caption_manager_sheet.dart';
+import '../../chroma/presentation/widgets/chroma_key_sheet.dart';
 import '../../color_grading/presentation/widgets/color_grading_sheet.dart';
 import '../../enhancement/presentation/widgets/video_enhancement_sheet.dart';
 import '../../export/presentation/widgets/export_settings_modal.dart';
@@ -194,6 +195,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openSmootherModal();
         break;
 
+      case EditorTool.chromaKey:
+        _openChromaKeyModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -369,6 +374,20 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   void _openSmootherModal() {
     final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Smoother');
     VideoSmootherSheet.show(
+      context,
+      clip: targetClip,
+      onSave: (updatedClip) {
+        final project = ref.read(editorProvider).project!;
+        final updatedProject = project.updateClip(updatedClip);
+        ref.read(editorProvider.notifier).updateProject(updatedProject);
+        ref.read(projectListProvider.notifier).updateProject(updatedProject);
+      },
+    );
+  }
+
+  void _openChromaKeyModal() {
+    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Green Screen');
+    ChromaKeySheet.show(
       context,
       clip: targetClip,
       onSave: (updatedClip) {

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../features/audio/models/audio_effects_config.dart';
+import '../features/chroma/models/chroma_key_config.dart';
 import '../features/color_grading/models/color_grading_config.dart';
 import '../features/enhancement/models/video_enhancement_config.dart';
 import '../features/overlays/models/keyframe.dart';
@@ -27,6 +28,7 @@ class Clip extends Equatable {
   final TextOverlayConfig textOverlay;
   final VideoEnhancementConfig enhancement;
   final VideoSmootherConfig smoother;
+  final ChromaKeyConfig chromaKey;
   final List<Keyframe> keyframes;
 
   const Clip({
@@ -48,6 +50,7 @@ class Clip extends Equatable {
     this.textOverlay = const TextOverlayConfig(),
     this.enhancement = const VideoEnhancementConfig(),
     this.smoother = const VideoSmootherConfig(),
+    this.chromaKey = const ChromaKeyConfig(),
     this.keyframes = const [],
   });
 
@@ -70,6 +73,7 @@ class Clip extends Equatable {
     TextOverlayConfig? textOverlay,
     VideoEnhancementConfig? enhancement,
     VideoSmootherConfig? smoother,
+    ChromaKeyConfig? chromaKey,
     List<Keyframe>? keyframes,
   }) {
     return Clip(
@@ -91,6 +95,7 @@ class Clip extends Equatable {
       textOverlay: textOverlay ?? this.textOverlay,
       enhancement: enhancement ?? this.enhancement,
       smoother: smoother ?? this.smoother,
+      chromaKey: chromaKey ?? this.chromaKey,
       keyframes: keyframes ?? this.keyframes,
     );
   }
@@ -114,6 +119,7 @@ class Clip extends Equatable {
         'textOverlay': textOverlay.toJson(),
         'enhancement': enhancement.toJson(),
         'smoother': smoother.toJson(),
+        'chromaKey': chromaKey.toJson(),
         'keyframes': keyframes.map((k) => k.toJson()).toList(),
       };
 
@@ -152,6 +158,9 @@ class Clip extends Equatable {
         smoother: json['smoother'] != null
             ? VideoSmootherConfig.fromJson(json['smoother'] as Map<String, dynamic>)
             : const VideoSmootherConfig(),
+        chromaKey: json['chromaKey'] != null
+            ? ChromaKeyConfig.fromJson(json['chromaKey'] as Map<String, dynamic>)
+            : const ChromaKeyConfig(),
         keyframes: (json['keyframes'] as List<dynamic>?)
                 ?.map((k) => Keyframe.fromJson(k as Map<String, dynamic>))
                 .toList() ??
@@ -178,6 +187,7 @@ class Clip extends Equatable {
         textOverlay,
         enhancement,
         smoother,
+        chromaKey,
         keyframes,
       ];
 }

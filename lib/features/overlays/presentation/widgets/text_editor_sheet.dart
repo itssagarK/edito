@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
+import '../../models/keyframe.dart';
 import '../../models/text_overlay_config.dart';
 
 class TextEditorSheet extends StatefulWidget {
@@ -31,12 +32,14 @@ class _TextEditorSheetState extends State<TextEditorSheet> with SingleTickerProv
   late TabController _tabController;
   late TextEditingController _textController;
   late TextOverlayConfig _config;
+  late List<Keyframe> _keyframes;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _config = widget.clip.textOverlay;
+    _keyframes = List.from(widget.clip.keyframes);
     _textController = TextEditingController(text: _config.text);
   }
 
@@ -48,7 +51,7 @@ class _TextEditorSheetState extends State<TextEditorSheet> with SingleTickerProv
   }
 
   void _applyChange() {
-    final updated = widget.clip.copyWith(textOverlay: _config);
+    final updated = widget.clip.copyWith(textOverlay: _config, keyframes: _keyframes);
     widget.onSave(updated);
   }
 
@@ -147,6 +150,7 @@ class _TextEditorSheetState extends State<TextEditorSheet> with SingleTickerProv
                 Tab(text: 'Style & Font'),
                 Tab(text: 'Animation'),
                 Tab(text: 'Position & Scale'),
+                Tab(text: 'Keyframes'),
               ],
             ),
           ),
@@ -158,6 +162,7 @@ class _TextEditorSheetState extends State<TextEditorSheet> with SingleTickerProv
                 _buildStyleTab(),
                 _buildAnimationTab(),
                 _buildPositionTab(),
+                _buildKeyframesTab(),
               ],
             ),
           ),
@@ -363,6 +368,215 @@ class _TextEditorSheetState extends State<TextEditorSheet> with SingleTickerProv
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildKeyframesTab() {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      children: [
+        // Header & Quick Add Buttons
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceElevated,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Motion Path Keyframes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              const SizedBox(height: 4),
+              const Text('Add keyframe points to dynamically animate position, scale, and opacity over time.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.add_circle_outline, size: 16, color: AppColors.accent),
+                      label: const Text('Start (0s)', style: TextStyle(fontSize: 11)),
+                      onPressed: () => _addKeyframeAt(0),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.add_circle_outline, size: 16, color: AppColors.accent),
+                      label: const Text('Midpoint', style: TextStyle(fontSize: 11)),
+                      onPressed: () => _addKeyframeAt(widget.clip.durationMs ~/ 2),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.add_circle_outline, size: 16, color: AppColors.accent),
+                      label: const Text('End', style: TextStyle(fontSize: 11)),
+                      onPressed: () => _addKeyframeAt(widget.clip.durationMs),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        if (_keyframes.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Column(
+                children: [
+                  Icon(Icons.timeline, size: 40, color: AppColors.textMuted.withOpacity(0.5)),
+                  const SizedBox(height: 8),
+                  const Text('No keyframes added yet', style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                  const SizedBox(height: 4),
+                  const Text('Tap a button above to add an animation keyframe', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                ],
+              ),
+            ),
+          )
+        else
+          for (int i = 0; i < _keyframes.length; i++)
+            _buildKeyframeCard(i, _keyframes[i]),
+      ],
+    );
+  }
+
+  void _addKeyframeAt(int timeMs) {
+    setState(() {
+      _keyframes.removeWhere((k) => (k.timeOffsetMs - timeMs).abs() < 50);
+      _keyframes.add(Keyframe(
+        timeOffsetMs: timeMs,
+        positionX: _config.positionX,
+        positionY: _config.positionY,
+        scale: _config.scale,
+        opacity: 1.0,
+      ));
+      _keyframes.sort((a, b) => a.timeOffsetMs.compareTo(b.timeOffsetMs));
+    });
+    _applyChange();
+  }
+
+  Widget _buildKeyframeCard(int index, Keyframe kf) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.diamond, size: 16, color: AppColors.accent),
+                  const SizedBox(width: 6),
+                  Text('Keyframe #${index + 1} @ ${(kf.timeOffsetMs / 1000.0).toStringAsFixed(2)}s', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                ],
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                onPressed: () {
+                  setState(() => _keyframes.removeAt(index));
+                  _applyChange();
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // X & Y
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('X: ${(kf.positionX * 100).round()}%', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    Slider(
+                      value: kf.positionX,
+                      min: 0.0,
+                      max: 1.0,
+                      activeColor: AppColors.primary,
+                      onChanged: (v) {
+                        setState(() => _keyframes[index] = kf.copyWith(positionX: v));
+                        _applyChange();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Y: ${(kf.positionY * 100).round()}%', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    Slider(
+                      value: kf.positionY,
+                      min: 0.0,
+                      max: 1.0,
+                      activeColor: AppColors.primary,
+                      onChanged: (v) {
+                        setState(() => _keyframes[index] = kf.copyWith(positionY: v));
+                        _applyChange();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // Scale & Opacity
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Scale: ${kf.scale.toStringAsFixed(1)}x', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    Slider(
+                      value: kf.scale,
+                      min: 0.5,
+                      max: 3.0,
+                      activeColor: AppColors.accent,
+                      onChanged: (v) {
+                        setState(() => _keyframes[index] = kf.copyWith(scale: v));
+                        _applyChange();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Opacity: ${(kf.opacity * 100).round()}%', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    Slider(
+                      value: kf.opacity,
+                      min: 0.0,
+                      max: 1.0,
+                      activeColor: AppColors.accent,
+                      onChanged: (v) {
+                        setState(() => _keyframes[index] = kf.copyWith(opacity: v));
+                        _applyChange();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
