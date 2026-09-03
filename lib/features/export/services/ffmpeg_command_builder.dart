@@ -149,12 +149,39 @@ class FFmpegCommandBuilder {
     }
 
     // Concatenate / Mix Streams
+    final hasTextTracks = project.tracks
+        .where((t) => !t.isHidden && (t.type == TrackType.text || t.type == TrackType.overlay))
+        .any((t) => t.clips.any((c) => c.textOverlay.text.trim().isNotEmpty));
+
+    final baseVideoLabel = hasTextTracks ? '[vconcat]' : '[vout]';
+
     if (videoStreamLabels.isNotEmpty) {
       filterComplexSegments.add(
-        '${videoStreamLabels.join('')} concat=n=${videoStreamLabels.length}:v=1:a=0 [vout]',
+        '${videoStreamLabels.join('')} concat=n=${videoStreamLabels.length}:v=1:a=0 $baseVideoLabel',
       );
     } else {
-      filterComplexSegments.add('color=c=black:s=${targetW}x${targetH}:d=1 [vout]');
+      filterComplexSegments.add('color=c=black:s=${targetW}x${targetH}:d=1 $baseVideoLabel');
+    }
+
+    // Burn-in overlay titles & captions from text tracks
+    if (hasTextTracks) {
+      final textFilters = <String>[];
+      for (final track in project.tracks) {
+        if (track.isHidden) continue;
+        if (track.type == TrackType.text || track.type == TrackType.overlay) {
+          for (final clip in track.clips) {
+            final drawText = OverlayCompilerService.generateFFmpegDrawText(clip, clip.textOverlay);
+            if (drawText.isNotEmpty) {
+              textFilters.add(drawText);
+            }
+          }
+        }
+      }
+      if (textFilters.isNotEmpty) {
+        filterComplexSegments.add('$baseVideoLabel ${textFilters.join(',')} [vout]');
+      } else {
+        filterComplexSegments.add('$baseVideoLabel null [vout]');
+      }
     }
 
     if (audioStreamLabels.isNotEmpty) {

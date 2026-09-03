@@ -161,5 +161,46 @@ void main() {
       expect(progress.currentFrame, equals(195));
       expect(progress.totalFrames, equals(300));
     });
+
+    test('FFmpegCommandBuilder burns in text track captions into output stream', () {
+      final textClip = const Clip(
+        id: 'clip_t1',
+        assetId: '',
+        trackId: 'track_text',
+        startTimeMs: 1000,
+        durationMs: 3000,
+        sourceInMs: 0,
+        sourceOutMs: 3000,
+        textOverlay: TextOverlayConfig(
+          text: 'Viral Subtitle',
+          fontSize: 28,
+        ),
+      );
+
+      final projectWithCaptions = sampleProject.copyWith(
+        tracks: [
+          ...sampleProject.tracks,
+          Track(
+            id: 'track_text',
+            name: 'Captions',
+            type: TrackType.text,
+            order: 2,
+            clips: [textClip],
+          ),
+        ],
+      );
+
+      const config = ExportConfiguration(
+        outputPath: '/storage/exports/caption_test.mp4',
+      );
+
+      final args = FFmpegCommandBuilder.buildArguments(projectWithCaptions, config);
+      final filterIdx = args.indexOf('-filter_complex');
+      final filterGraph = args[filterIdx + 1];
+
+      expect(filterGraph, contains('[vconcat]'));
+      expect(filterGraph, contains('drawtext=text=\'Viral Subtitle\''));
+      expect(filterGraph, contains('[vout]'));
+    });
   });
 }

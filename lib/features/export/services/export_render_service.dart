@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
@@ -7,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../../models/media_asset.dart';
 import '../../../models/project.dart';
 import '../../../models/track.dart';
+import '../../captions/services/auto_caption_service.dart';
 import '../models/export_preset.dart';
 import '../models/export_status.dart';
 import 'ffmpeg_command_builder.dart';
@@ -81,6 +83,11 @@ class ExportRenderService {
 
     final stopwatch = Stopwatch()..start();
 
+    // 1. Build FFmpeg command and compile complete filter graph
+    final ffmpegArgs = FFmpegCommandBuilder.buildArguments(project, resolvedConfig);
+    final commandString = FFmpegCommandBuilder.buildCommandString(project, resolvedConfig);
+    debugPrint('Export FFmpeg command: $commandString');
+
     _progressController.add(ExportProgress(
       status: ExportStatus.preparing,
       progress: 0.05,
@@ -93,7 +100,7 @@ class ExportRenderService {
     await Future.delayed(const Duration(milliseconds: 300));
     if (_isCancelled) return targetPath;
 
-    // 1. Discover primary source media asset
+    // 2. Discover primary source media asset
     MediaAsset? primaryVideoAsset;
     for (final track in project.tracks) {
       if (track.type == TrackType.video) {
@@ -114,7 +121,40 @@ class ExportRenderService {
       if (primaryVideoAsset != null) break;
     }
 
-    // 2. Multi-stage render simulation and encoding progress
+    // 3. Extract and export companion .srt subtitles for all captions and text overlays
+    final captions = AutoCaptionService.extractCaptionsFromProject(project);
+    String? srtPath;
+    if (captions.isNotEmpty) {
+      try {
+        final srtContent = AutoCaptionService.exportSrt(captions);
+        srtPath = p.setExtension(targetPath, '.srt');
+        await File(srtPath).writeAsString(srtContent);
+        _notifyMediaScanner(srtPath);
+      } catch (e) {
+        debugPrint('SRT export error: $e');
+      }
+    }
+
+    // 4. Write export render manifest (.manifest.json)
+    try {
+      final manifestPath = '$targetPath.manifest.json';
+      final manifest = {
+        'project': project.title,
+        'durationMs': totalDurationMs,
+        'resolution': '${resolvedConfig.resolution.width}x${resolvedConfig.resolution.height}',
+        'framerate': resolvedConfig.framerate.fpsValue,
+        'codec': resolvedConfig.codec.label,
+        'quality': resolvedConfig.quality.label,
+        'outputPath': targetPath,
+        'srtPath': srtPath,
+        'captionsCount': captions.length,
+        'ffmpegCommand': commandString,
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+      await File(manifestPath).writeAsString(jsonEncode(manifest));
+    } catch (_) {}
+
+    // 5. Multi-stage render simulation and encoding progress
     const steps = 15;
     for (int i = 1; i <= steps; i++) {
       if (_isCancelled) {
@@ -156,7 +196,7 @@ class ExportRenderService {
       ));
     }
 
-    // 3. Write actual, playable MP4 file to disk
+    // 6. Write actual, playable MP4 file to disk
     try {
       final targetFile = File(targetPath);
       final parentDir = targetFile.parent;
@@ -164,14 +204,27 @@ class ExportRenderService {
         parentDir.createSync(recursive: true);
       }
 
-      if (primaryVideoAsset != null && File(primaryVideoAsset.path).existsSync()) {
-        // Copy edited source video to target path
-        final sourceFile = File(primaryVideoAsset.path);
-        await sourceFile.copy(targetPath);
-      } else {
-        // Create compliant MP4 file header & container
-        final mp4Bytes = _createSampleMp4Bytes();
-        await targetFile.writeAsBytes(mp4Bytes, flush: true);
+      bool nativeFfmpegRendered = false;
+      try {
+        final result = await Process.run('ffmpeg', ffmpegArgs);
+        if (result.exitCode == 0 && targetFile.existsSync() && targetFile.lengthSync() > 0) {
+          nativeFfmpegRendered = true;
+          debugPrint('FFmpeg rendered successfully: $targetPath');
+        }
+      } catch (_) {
+        // Native standalone ffmpeg executable not present in system PATH
+      }
+
+      if (!nativeFfmpegRendered) {
+        if (primaryVideoAsset != null && File(primaryVideoAsset.path).existsSync()) {
+          // Copy edited source video to target path
+          final sourceFile = File(primaryVideoAsset.path);
+          await sourceFile.copy(targetPath);
+        } else {
+          // Create compliant MP4 file header & container
+          final mp4Bytes = _createSampleMp4Bytes();
+          await targetFile.writeAsBytes(mp4Bytes, flush: true);
+        }
       }
 
       // Also copy to public Movies directory if targetPath is in private app storage
@@ -182,6 +235,13 @@ class ExportRenderService {
           final publicPath = p.join(publicDir.path, p.basename(targetPath));
           await targetFile.copy(publicPath);
           _notifyMediaScanner(publicPath);
+
+          // Also copy srt subtitle file to public directory
+          if (srtPath != null && File(srtPath).existsSync()) {
+            final publicSrtPath = p.join(publicDir.path, p.basename(srtPath));
+            await File(srtPath).copy(publicSrtPath);
+            _notifyMediaScanner(publicSrtPath);
+          }
         } catch (_) {}
       }
 
@@ -191,7 +251,7 @@ class ExportRenderService {
       debugPrint('Export file creation error: $e');
     }
 
-    // 4. Complete export
+    // 7. Complete export
     stopwatch.stop();
     final finalSizeMb = File(targetPath).existsSync()
         ? (File(targetPath).lengthSync() / (1024 * 1024))
