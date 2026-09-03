@@ -430,8 +430,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       textOverlay: purpose == 'Text'
           ? const TextOverlayConfig(
               text: 'EDITO TITLE',
-              style: TextStylePreset.impact,
-              animation: TextAnimationPreset.typewriter,
+              fontSize: 28.0,
+              animationType: TextAnimationType.typewriter,
             )
           : const TextOverlayConfig(),
     );

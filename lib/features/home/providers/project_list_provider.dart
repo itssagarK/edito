@@ -76,14 +76,14 @@ class ProjectListNotifier extends StateNotifier<List<Project>> {
         sourceInMs: 0,
         sourceOutMs: 6000,
         colorGrading: const ColorGradingConfig(
-          activeLut: LutPreset.tealOrange,
+          activeLut: LutPreset.tealAndOrange,
           contrast: 1.15,
           saturation: 1.25,
         ),
         textOverlay: const TextOverlayConfig(
           text: 'EDITO CINEMATIC',
-          style: TextStylePreset.neonGlow,
-          animation: TextAnimationPreset.typewriter,
+          fontSize: 26.0,
+          animationType: TextAnimationType.typewriter,
         ),
         transitionIn: const TransitionConfig(
           type: TransitionType.zoomIn,
@@ -101,16 +101,16 @@ class ProjectListNotifier extends StateNotifier<List<Project>> {
         sourceOutMs: 8000,
         speed: 1.25,
         colorGrading: const ColorGradingConfig(
-          activeLut: LutPreset.cyberpunk,
+          activeLut: LutPreset.moodyCyber,
           saturation: 1.3,
         ),
         textOverlay: const TextOverlayConfig(
           text: '4K PRO MASTER',
-          style: TextStylePreset.impact,
-          animation: TextAnimationPreset.slideUp,
+          fontSize: 28.0,
+          animationType: TextAnimationType.slideUp,
         ),
         transitionIn: const TransitionConfig(
-          type: TransitionType.crossfade,
+          type: TransitionType.crossDissolve,
           durationMs: 800,
         ),
       );
@@ -125,9 +125,9 @@ class ProjectListNotifier extends StateNotifier<List<Project>> {
         sourceOutMs: 14000,
         volume: 0.85,
         audioEffects: const AudioEffectsConfig(
-          enableDucking: true,
-          enableAiSpeechEnhance: true,
-          bassBoost: 1.2,
+          isDuckingEnabled: true,
+          isVoiceEnhancerEnabled: true,
+          denoiseIntensity: 0.80,
         ),
       );
 
@@ -188,11 +188,11 @@ class ProjectListNotifier extends StateNotifier<List<Project>> {
       sourceOutMs: 6000,
       textOverlay: const TextOverlayConfig(
         text: 'EDITO TITLE',
-        style: TextStylePreset.impact,
-        animation: TextAnimationPreset.typewriter,
+        fontSize: 28.0,
+        animationType: TextAnimationType.typewriter,
       ),
       colorGrading: const ColorGradingConfig(
-        activeLut: LutPreset.cinematicWarm,
+        activeLut: LutPreset.goldenHour,
       ),
     );
 
