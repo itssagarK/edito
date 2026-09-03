@@ -6,6 +6,7 @@ enum EditorTool {
   select,
   split,
   trim,
+  smooth,
   audio,
   color,
   text,

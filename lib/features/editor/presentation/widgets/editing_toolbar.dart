@@ -23,6 +23,7 @@ class EditingToolbar extends StatelessWidget {
       _ToolItem(EditorTool.split, 'Split', Icons.content_cut),
       _ToolItem(EditorTool.trim, 'Trim', Icons.crop),
       _ToolItem(EditorTool.enhance, '8K Enhance', Icons.auto_awesome_motion),
+      _ToolItem(EditorTool.smooth, 'Smoother', Icons.waves),
       _ToolItem(EditorTool.speed, 'Speed', Icons.speed),
       _ToolItem(EditorTool.audio, 'Voice & Audio', Icons.mic_none),
       _ToolItem(EditorTool.color, 'Color & LUT', Icons.palette_outlined),

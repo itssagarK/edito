@@ -348,6 +348,21 @@ class RealtimePreviewViewport extends ConsumerWidget {
                         style: const TextStyle(fontSize: 9, color: AppColors.audioTrack, fontWeight: FontWeight.bold),
                       ),
                     ),
+                  if (clip.smoother.hasActiveSmoothing)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentWarm.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: AppColors.accentWarm.withOpacity(0.6)),
+                      ),
+                      child: Text(
+                        clip.smoother.isStabilizationEnabled
+                            ? '🛡️ GIMBAL STABILIZED'
+                            : '🌊 ${clip.smoother.targetFps}FPS SMOOTH',
+                        style: const TextStyle(fontSize: 9, color: AppColors.accentWarm, fontWeight: FontWeight.bold),
+                      ),
+                    ),
                 ],
               ),
             ],

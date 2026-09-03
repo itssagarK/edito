@@ -8,6 +8,7 @@ import '../../audio/models/audio_effects_config.dart';
 import '../../color_grading/models/color_grading_config.dart';
 import '../../enhancement/models/video_enhancement_config.dart';
 import '../../overlays/models/text_overlay_config.dart';
+import '../../smoothing/models/video_smoother_config.dart';
 import '../../transitions/models/transition_type.dart';
 import '../../project/services/project_storage_service.dart';
 
@@ -96,6 +97,14 @@ class ProjectListNotifier extends StateNotifier<List<Project>> {
           sharpness: 1.4,
           isHdrToneMapping: true,
           modelPreset: EnhanceModelPreset.ultraCinema8k,
+        ),
+        smoother: const VideoSmootherConfig(
+          isStabilizationEnabled: true,
+          stabilizationStrength: 0.85,
+          isMotionSmoothingEnabled: true,
+          targetFps: 60,
+          isDeGlitchEnabled: true,
+          preset: SmootherPreset.gimbalSmooth,
         ),
       );
 

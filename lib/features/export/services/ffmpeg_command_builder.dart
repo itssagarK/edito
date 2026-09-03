@@ -6,6 +6,7 @@ import '../../audio/services/ai_voice_enhancer_service.dart';
 import '../../color_grading/services/color_filter_compiler_service.dart';
 import '../../enhancement/services/ai_video_enhancer_service.dart';
 import '../../overlays/services/overlay_compiler_service.dart';
+import '../../smoothing/services/ai_video_smoother_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandBuilder {
@@ -101,6 +102,12 @@ class FFmpegCommandBuilder {
           );
           if (enhancementFilters.isNotEmpty) {
             vFilters.addAll(enhancementFilters);
+          }
+
+          // Video Smoother, Anti-Flutter, & Frame Interpolation
+          final smootherFilters = AIVideoSmootherService.generateFFmpegFilters(clip.smoother);
+          if (smootherFilters.isNotEmpty) {
+            vFilters.addAll(smootherFilters);
           }
 
           filterComplexSegments.add('[$inputIdx:v]${vFilters.join(',')} [$vLabel]');

@@ -17,6 +17,7 @@ import '../../overlays/models/text_overlay_config.dart';
 import '../../overlays/presentation/widgets/text_editor_sheet.dart';
 import '../../preview/presentation/widgets/realtime_preview_viewport.dart';
 import '../../preview/providers/preview_playback_provider.dart';
+import '../../smoothing/presentation/widgets/video_smoother_sheet.dart';
 import '../../speed/presentation/widgets/speed_ramping_sheet.dart';
 import '../../timeline/presentation/widgets/interactive_timeline.dart';
 import '../../timeline/services/timeline_editing_service.dart';
@@ -184,6 +185,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openEnhancementModal();
         break;
 
+      case EditorTool.smooth:
+        _openSmootherModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -328,6 +333,20 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   void _openEnhancementModal() {
     final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: '8K Enhance');
     VideoEnhancementSheet.show(
+      context,
+      clip: targetClip,
+      onSave: (updatedClip) {
+        final project = ref.read(editorProvider).project!;
+        final updatedProject = project.updateClip(updatedClip);
+        ref.read(editorProvider.notifier).updateProject(updatedProject);
+        ref.read(projectListProvider.notifier).updateProject(updatedProject);
+      },
+    );
+  }
+
+  void _openSmootherModal() {
+    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Smoother');
+    VideoSmootherSheet.show(
       context,
       clip: targetClip,
       onSave: (updatedClip) {
