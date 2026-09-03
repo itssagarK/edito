@@ -148,7 +148,7 @@ class _VideoEnhancementSheetState extends State<VideoEnhancementSheet> {
                       children: [
                         const Icon(Icons.auto_awesome, color: AppColors.accent, size: 22),
                         const SizedBox(width: 8),
-                        Text('8K AI Video & Photo Enhancer', style: AppTypography.titleLarge),
+                        Text('8K Upscale & Detail Enhancer', style: AppTypography.titleLarge),
                       ],
                     ),
                     IconButton(
@@ -167,8 +167,8 @@ class _VideoEnhancementSheetState extends State<VideoEnhancementSheet> {
               children: [
                 // 1. 8K Ultra HD Upscaling Banner Card
                 _buildCard(
-                  title: '🚀 8K AI Ultra HD Upscaler',
-                  subtitle: 'Neural super-resolution up to 7680x4320 resolution',
+                  title: '🚀 8K Lanczos Upscaler',
+                  subtitle: 'High-order Lanczos interpolation up to 7680x4320 resolution',
                   badge: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
@@ -194,8 +194,8 @@ class _VideoEnhancementSheetState extends State<VideoEnhancementSheet> {
                     children: [
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Enable 8K AI Upscale (7680x4320)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                        subtitle: const Text('Upscales standard video or photos to ultra-crisp 8K master output', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                        title: const Text('Enable 8K Upscale (7680x4320)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                        subtitle: const Text('Upscales standard video or photos using high-order Lanczos interpolation', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                         value: _config.is8kUpscaleEnabled,
                         activeColor: const Color(0xFFFF007F),
                         onChanged: (val) {
@@ -210,8 +210,8 @@ class _VideoEnhancementSheetState extends State<VideoEnhancementSheet> {
                       ),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('AI Super-Resolution & Edge Reconstruction', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                        subtitle: const Text('Synthesizes missing high-frequency micro-details & sharpens edges', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                        title: const Text('Adaptive Detail & Edge Sharpening', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                        subtitle: const Text('Enhances micro-contrast and sharpens fine edges using unsharp masking', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                         value: _config.isAiSuperResolutionEnabled,
                         activeColor: AppColors.accent,
                         onChanged: (val) {

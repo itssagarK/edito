@@ -75,11 +75,12 @@ class AIVoiceEnhancerService {
         break;
     }
 
-    // 4. Loud & Clear Voice Booster (Gain Boost + Dynamic Limiter)
+    // 4. Loud & Clear Voice Booster (Gain Boost + Dynamic Compressor & True-Peak Limiter)
     if (config.isLoudVoiceEnabled) {
       final boost = config.voiceBoost.clamp(1.0, 3.0);
       filters.add('volume=${boost.toStringAsFixed(2)}');
       filters.add('compand=attacks=0.02:decays=0.15:points=-80/-80|-24/-12|0/-0.5');
+      filters.add('alimiter=limit=0.95:attack=5:release=50:asc=1');
     }
 
     // 5. Fade In Envelope

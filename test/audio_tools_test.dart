@@ -60,6 +60,7 @@ void main() {
 
       expect(filterStr, contains('volume=1.80'));
       expect(filterStr, contains('compand=attacks=0.02:decays=0.15'));
+      expect(filterStr, contains('alimiter=limit=0.95'));
       expect(filterStr, contains('equalizer=f=120:width_type=o:width=1.2:g=3.5'));
     });
 

@@ -41,7 +41,7 @@ class AIVideoEnhancerService {
       return '8K UHD (7680x4320)';
     }
     if (config.isAiSuperResolutionEnabled) {
-      return 'AI SUPER-RES';
+      return 'DETAIL ENHANCED';
     }
     if (config.isHdrToneMapping) {
       return 'HDR ENHANCED';

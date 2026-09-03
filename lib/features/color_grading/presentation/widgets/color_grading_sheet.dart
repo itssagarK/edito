@@ -85,7 +85,7 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
                       children: [
                         const Icon(Icons.palette_outlined, color: AppColors.accent, size: 22),
                         const SizedBox(width: 8),
-                        Text('Color Grading & LUTs', style: AppTypography.titleLarge),
+                        Text('Color Presets & Grading', style: AppTypography.titleLarge),
                       ],
                     ),
                     Row(
@@ -130,7 +130,7 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
               labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
               tabs: const [
                 Tab(text: 'Basic'),
-                Tab(text: '3D LUTs'),
+                Tab(text: 'Color Looks'),
                 Tab(text: 'HSL'),
                 Tab(text: 'Curves'),
               ],
