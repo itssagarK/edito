@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'core/services/crash_reporting_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/home/presentation/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  CrashReportingService.initialize();
 
   // Lock status bar and navigation styling for cinematic dark UI
   SystemChrome.setSystemUIOverlayStyle(

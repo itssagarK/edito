@@ -13,6 +13,7 @@ class MediaAsset extends Equatable {
   final double fps;
   final int fileSize;
   final String? thumbnailPath;
+  final String? proxyPath;
 
   const MediaAsset({
     required this.id,
@@ -25,7 +26,11 @@ class MediaAsset extends Equatable {
     this.fps = 30.0,
     this.fileSize = 0,
     this.thumbnailPath,
+    this.proxyPath,
   });
+
+  bool get is4kOrHigher => width >= 3840 || height >= 2160;
+  bool get hasProxy => proxyPath != null && proxyPath!.isNotEmpty;
 
   MediaAsset copyWith({
     String? id,
@@ -38,6 +43,7 @@ class MediaAsset extends Equatable {
     double? fps,
     int? fileSize,
     String? thumbnailPath,
+    String? proxyPath,
   }) {
     return MediaAsset(
       id: id ?? this.id,
@@ -50,6 +56,7 @@ class MediaAsset extends Equatable {
       fps: fps ?? this.fps,
       fileSize: fileSize ?? this.fileSize,
       thumbnailPath: thumbnailPath ?? this.thumbnailPath,
+      proxyPath: proxyPath ?? this.proxyPath,
     );
   }
 
@@ -64,6 +71,7 @@ class MediaAsset extends Equatable {
         'fps': fps,
         'fileSize': fileSize,
         'thumbnailPath': thumbnailPath,
+        'proxyPath': proxyPath,
       };
 
   factory MediaAsset.fromJson(Map<String, dynamic> json) => MediaAsset(
@@ -77,8 +85,9 @@ class MediaAsset extends Equatable {
         fps: (json['fps'] as num?)?.toDouble() ?? 30.0,
         fileSize: (json['fileSize'] as num?)?.toInt() ?? 0,
         thumbnailPath: json['thumbnailPath'] as String?,
+        proxyPath: json['proxyPath'] as String?,
       );
 
   @override
-  List<Object?> get props => [id, path, fileName, type, durationMs, width, height, fps, fileSize, thumbnailPath];
+  List<Object?> get props => [id, path, fileName, type, durationMs, width, height, fps, fileSize, thumbnailPath, proxyPath];
 }
