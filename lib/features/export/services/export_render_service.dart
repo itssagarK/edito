@@ -98,7 +98,13 @@ class ExportRenderService {
     for (final track in project.tracks) {
       if (track.type == TrackType.video) {
         for (final clip in track.clips) {
-          final asset = project.assets[clip.assetId];
+          MediaAsset? asset;
+          for (final a in project.assets) {
+            if (a.id == clip.assetId) {
+              asset = a;
+              break;
+            }
+          }
           if (asset != null && File(asset.path).existsSync()) {
             primaryVideoAsset = asset;
             break;
