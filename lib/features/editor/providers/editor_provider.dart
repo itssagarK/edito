@@ -15,6 +15,7 @@ enum EditorTool {
   speed,
   enhance,
   chromaKey,
+  imageEditor,
 }
 
 class EditorState {

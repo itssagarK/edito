@@ -30,6 +30,7 @@ class EditingToolbar extends StatelessWidget {
       _ToolItem(EditorTool.text, 'Text / Titles', Icons.title),
       _ToolItem(EditorTool.captions, 'Captions', Icons.closed_caption),
       _ToolItem(EditorTool.chromaKey, 'Chroma Key', Icons.blur_linear),
+      _ToolItem(EditorTool.imageEditor, 'Cover / Thumb', Icons.photo_size_select_actual_outlined),
       _ToolItem(EditorTool.effects, 'Effects', Icons.auto_awesome),
     ];
 
