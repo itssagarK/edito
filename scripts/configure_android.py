@@ -60,28 +60,23 @@ def configure():
     if os.path.exists(root_gradle):
         with open(root_gradle, "r", encoding="utf-8") as f:
             c = f.read()
-        if "AarMetadata" not in c:
+        if "setCompileSdk" not in c:
             hook = """
 subprojects {
-    tasks.configureEach {
-        if (name.contains("AarMetadata")) {
-            enabled = false
-        }
-    }
-    if (state.executed) {
-        val a = extensions.findByName("android")
-        if (a != null) {
-            try {
-                a.javaClass.getMethod("compileSdkVersion", Int::class.javaPrimitiveType).invoke(a, 36)
-            } catch (e: Exception) {}
-        }
-    } else {
-        plugins.withId("com.android.library") {
+    if (project.name != "app") {
+        val setCompileSdk = {
             val a = extensions.findByName("android")
             if (a != null) {
                 try {
                     a.javaClass.getMethod("compileSdkVersion", Int::class.javaPrimitiveType).invoke(a, 36)
                 } catch (e: Exception) {}
+            }
+        }
+        if (state.executed) {
+            setCompileSdk()
+        } else {
+            afterEvaluate {
+                setCompileSdk()
             }
         }
     }
