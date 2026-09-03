@@ -7,6 +7,7 @@ import 'package:edito/features/audio/models/audio_effects_config.dart';
 import 'package:edito/features/export/models/export_preset.dart';
 import 'package:edito/features/export/models/export_status.dart';
 import 'package:edito/features/export/services/ffmpeg_command_builder.dart';
+import 'package:edito/features/overlays/models/text_overlay_config.dart';
 
 void main() {
   group('FFmpeg Export Pipeline Tests', () {
