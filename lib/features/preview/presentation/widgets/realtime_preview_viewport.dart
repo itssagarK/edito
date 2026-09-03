@@ -321,17 +321,31 @@ class RealtimePreviewViewport extends ConsumerWidget {
                 color: config.backgroundColor != null ? Color(config.backgroundColor!) : Colors.transparent,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Text(
-                config.text,
-                style: GoogleFonts.getFont(
-                  config.fontFamily == 'Inter' ? 'Inter' : (config.fontFamily == 'JetBrainsMono' ? 'JetBrains Mono' : 'Roboto'),
-                  fontSize: config.fontSize,
-                  fontWeight: FontWeight.bold,
-                  color: Color(config.textColor),
-                  shadows: const [
-                    Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2)),
-                  ],
-                ),
+              child: Builder(
+                builder: (context) {
+                  TextStyle style;
+                  try {
+                    style = GoogleFonts.getFont(
+                      config.fontFamily == 'Inter' ? 'Inter' : (config.fontFamily == 'JetBrainsMono' ? 'JetBrains Mono' : 'Roboto'),
+                      fontSize: config.fontSize,
+                      fontWeight: FontWeight.bold,
+                      color: Color(config.textColor),
+                      shadows: const [
+                        Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2)),
+                      ],
+                    );
+                  } catch (_) {
+                    style = TextStyle(
+                      fontSize: config.fontSize,
+                      fontWeight: FontWeight.bold,
+                      color: Color(config.textColor),
+                      shadows: const [
+                        Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2)),
+                      ],
+                    );
+                  }
+                  return Text(config.text, style: style);
+                },
               ),
             ),
           ),

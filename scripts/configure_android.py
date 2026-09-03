@@ -51,9 +51,21 @@ def configure():
             c = f.read()
         target = 'android:name="${applicationName}"'
         c = c.replace(target, "")
+        permissions = """
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29"/>
+"""
+        if "READ_MEDIA_VIDEO" not in c:
+            c = c.replace("<application", permissions + "\n    <application", 1)
+        if 'android:requestLegacyExternalStorage="true"' not in c:
+            c = c.replace("<application", '<application\n        android:requestLegacyExternalStorage="true"', 1)
         with open(manifest_path, "w", encoding="utf-8") as f:
             f.write(c)
-        print("Updated AndroidManifest.xml")
+        print("Updated AndroidManifest.xml with storage & media permissions")
 
     # 5. Append subprojects hook to android/build.gradle.kts
     root_gradle = "android/build.gradle.kts"

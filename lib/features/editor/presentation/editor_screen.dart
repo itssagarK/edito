@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart' hide Clip;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/clip.dart';
+import '../../../models/media_asset.dart';
 import '../../../models/project.dart';
+import '../../../models/track.dart';
 import '../providers/editor_provider.dart';
 import '../../audio/presentation/widgets/audio_mixer_sheet.dart';
 import '../../color_grading/presentation/widgets/color_grading_sheet.dart';
@@ -149,40 +152,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
     switch (tool) {
       case EditorTool.split:
-        if (editorState.selectedClipId != null) {
-          final updated = TimelineEditingService.splitClip(
-            project,
-            editorState.selectedClipId!,
-            editorState.playheadPositionMs,
-          );
-          if (updated != null) {
-            ref.read(editorProvider.notifier).updateProject(updated);
-            ref.read(projectListProvider.notifier).updateProject(updated);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Clip split at playhead position'),
-                duration: Duration(milliseconds: 900),
-                backgroundColor: AppColors.primary,
-              ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Move playhead inside the clip to split'),
-                duration: Duration(milliseconds: 1200),
-                backgroundColor: AppColors.surfaceElevated,
-              ),
-            );
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Select a clip first to split'),
-              duration: Duration(milliseconds: 900),
-              backgroundColor: AppColors.surfaceElevated,
-            ),
-          );
-        }
+        _handleSplitAction();
+        break;
+
+      case EditorTool.trim:
+        _handleTrimAction();
         break;
 
       case EditorTool.text:
@@ -217,119 +191,133 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     }
   }
 
-  void _openTextEditorModal() {
+  void _handleSplitAction() {
+    final editorState = ref.read(editorProvider);
+    final project = editorState.project!;
+    final playhead = editorState.playheadPositionMs;
+
+    // 1. If a clip is selected or at the playhead, split it
     final targetClip = _findTargetClip();
     if (targetClip != null) {
-      TextEditorSheet.show(
-        context,
-        clip: targetClip,
-        onSave: (updatedClip) {
-          final project = ref.read(editorProvider).project!;
-          final updatedProject = project.updateClip(updatedClip);
-          ref.read(editorProvider.notifier).updateProject(updatedProject);
-          ref.read(projectListProvider.notifier).updateProject(updatedProject);
-        },
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Select a clip first to add Text & Titles'),
-          backgroundColor: AppColors.surfaceElevated,
-        ),
-      );
+      int splitPos = playhead;
+      // If playhead is not within the clip, split at the midpoint of the clip
+      if (splitPos <= targetClip.startTimeMs || splitPos >= (targetClip.startTimeMs + targetClip.durationMs)) {
+        splitPos = targetClip.startTimeMs + (targetClip.durationMs ~/ 2);
+      }
+
+      final updated = TimelineEditingService.splitClip(project, targetClip.id, splitPos);
+      if (updated != null) {
+        ref.read(editorProvider.notifier).updateProject(updated);
+        ref.read(projectListProvider.notifier).updateProject(updated);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✂️ Clip split into two clips'),
+            duration: Duration(milliseconds: 900),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+        return;
+      }
     }
+
+    // 2. If no clips exist at all, create a clip and split it right away
+    final newClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Scene');
+    final updatedProject = ref.read(editorProvider).project!;
+    final splitPos = newClip.startTimeMs + 3000;
+    final splitUpdated = TimelineEditingService.splitClip(updatedProject, newClip.id, splitPos);
+    if (splitUpdated != null) {
+      ref.read(editorProvider.notifier).updateProject(splitUpdated);
+      ref.read(projectListProvider.notifier).updateProject(splitUpdated);
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✂️ Created clip and split into two segments'),
+        duration: Duration(milliseconds: 900),
+        backgroundColor: AppColors.primary,
+      ),
+    );
+  }
+
+  void _handleTrimAction() {
+    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Trim');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✂️ Selected Clip: Drag the yellow handles on the timeline left or right to trim'),
+        duration: const Duration(milliseconds: 1500),
+        backgroundColor: AppColors.primary,
+      ),
+    );
+  }
+
+  void _openTextEditorModal() {
+    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Text');
+    TextEditorSheet.show(
+      context,
+      clip: targetClip,
+      onSave: (updatedClip) {
+        final project = ref.read(editorProvider).project!;
+        final updatedProject = project.updateClip(updatedClip);
+        ref.read(editorProvider.notifier).updateProject(updatedProject);
+        ref.read(projectListProvider.notifier).updateProject(updatedProject);
+      },
+    );
   }
 
   void _openTransitionsModal() {
-    final targetClip = _findTargetClip();
-    if (targetClip != null) {
-      TransitionSelectorSheet.show(
-        context,
-        clip: targetClip,
-        onSave: (updatedClip) {
-          final project = ref.read(editorProvider).project!;
-          final updatedProject = project.updateClip(updatedClip);
-          ref.read(editorProvider.notifier).updateProject(updatedProject);
-          ref.read(projectListProvider.notifier).updateProject(updatedProject);
-        },
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Select a video clip first to add Transitions'),
-          backgroundColor: AppColors.surfaceElevated,
-        ),
-      );
-    }
+    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Transitions');
+    TransitionSelectorSheet.show(
+      context,
+      clip: targetClip,
+      onSave: (updatedClip) {
+        final project = ref.read(editorProvider).project!;
+        final updatedProject = project.updateClip(updatedClip);
+        ref.read(editorProvider.notifier).updateProject(updatedProject);
+        ref.read(projectListProvider.notifier).updateProject(updatedProject);
+      },
+    );
   }
 
   void _openSpeedModal() {
-    final targetClip = _findTargetClip();
-    if (targetClip != null) {
-      SpeedRampingSheet.show(
-        context,
-        clip: targetClip,
-        onSave: (updatedClip) {
-          final project = ref.read(editorProvider).project!;
-          final updatedProject = project.updateClip(updatedClip);
-          ref.read(editorProvider.notifier).updateProject(updatedProject);
-          ref.read(projectListProvider.notifier).updateProject(updatedProject);
-        },
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Select a clip first to adjust Speed & Curves'),
-          backgroundColor: AppColors.surfaceElevated,
-        ),
-      );
-    }
+    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Speed');
+    SpeedRampingSheet.show(
+      context,
+      clip: targetClip,
+      onSave: (updatedClip) {
+        final project = ref.read(editorProvider).project!;
+        final updatedProject = project.updateClip(updatedClip);
+        ref.read(editorProvider.notifier).updateProject(updatedProject);
+        ref.read(projectListProvider.notifier).updateProject(updatedProject);
+      },
+    );
   }
 
   void _openColorGradingModal() {
-    final targetClip = _findTargetClip();
-    if (targetClip != null) {
-      ColorGradingSheet.show(
-        context,
-        clip: targetClip,
-        onSave: (updatedClip) {
-          final project = ref.read(editorProvider).project!;
-          final updatedProject = project.updateClip(updatedClip);
-          ref.read(editorProvider.notifier).updateProject(updatedProject);
-          ref.read(projectListProvider.notifier).updateProject(updatedProject);
-        },
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Select a clip first to adjust Color & LUTs'),
-          backgroundColor: AppColors.surfaceElevated,
-        ),
-      );
-    }
+    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Color');
+    ColorGradingSheet.show(
+      context,
+      clip: targetClip,
+      onSave: (updatedClip) {
+        final project = ref.read(editorProvider).project!;
+        final updatedProject = project.updateClip(updatedClip);
+        ref.read(editorProvider.notifier).updateProject(updatedProject);
+        ref.read(projectListProvider.notifier).updateProject(updatedProject);
+      },
+    );
   }
 
   void _openAudioToolsModal() {
-    final targetClip = _findTargetClip();
-    if (targetClip != null) {
-      AudioMixerSheet.show(
-        context,
-        clip: targetClip,
-        onSave: (updatedClip) {
-          final project = ref.read(editorProvider).project!;
-          final updatedProject = project.updateClip(updatedClip);
-          ref.read(editorProvider.notifier).updateProject(updatedProject);
-          ref.read(projectListProvider.notifier).updateProject(updatedProject);
-        },
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Add or select a clip first to use Audio & AI Tools'),
-          backgroundColor: AppColors.surfaceElevated,
-        ),
-      );
-    }
+    final targetClip = _findOrCreateTargetClip(trackType: TrackType.audio, purpose: 'Audio');
+    AudioMixerSheet.show(
+      context,
+      clip: targetClip,
+      onSave: (updatedClip) {
+        final project = ref.read(editorProvider).project!;
+        final updatedProject = project.updateClip(updatedClip);
+        ref.read(editorProvider.notifier).updateProject(updatedProject);
+        ref.read(projectListProvider.notifier).updateProject(updatedProject);
+      },
+    );
   }
 
   Clip? _findTargetClip() {
@@ -345,13 +333,124 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           }
         }
       }
-    } else {
-      for (final track in project.tracks) {
-        if (track.clips.isNotEmpty) {
-          return track.clips.first;
+    }
+
+    // Check if playhead is over any clip
+    final playhead = editorState.playheadPositionMs;
+    for (final track in project.tracks) {
+      for (final clip in track.clips) {
+        if (playhead >= clip.startTimeMs && playhead <= (clip.startTimeMs + clip.durationMs)) {
+          return clip;
         }
       }
     }
+
+    // Fallback to first clip
+    for (final track in project.tracks) {
+      if (track.clips.isNotEmpty) {
+        return track.clips.first;
+      }
+    }
     return null;
+  }
+
+  Clip _findOrCreateTargetClip({required TrackType trackType, required String purpose}) {
+    final editorState = ref.read(editorProvider);
+    var project = editorState.project!;
+    final playhead = editorState.playheadPositionMs;
+
+    // 1. If a clip is explicitly selected and matches the track type (or any track if applicable)
+    if (editorState.selectedClipId != null) {
+      for (final track in project.tracks) {
+        for (final clip in track.clips) {
+          if (clip.id == editorState.selectedClipId) {
+            return clip;
+          }
+        }
+      }
+    }
+
+    // 2. Check if a clip sits under the current playhead
+    for (final track in project.tracks) {
+      if (track.type == trackType || trackType == TrackType.video) {
+        for (final clip in track.clips) {
+          if (playhead >= clip.startTimeMs && playhead <= (clip.startTimeMs + clip.durationMs)) {
+            ref.read(editorProvider.notifier).selectClip(clip.id, trackId: track.id);
+            return clip;
+          }
+        }
+      }
+    }
+
+    // 3. Check if any clip exists in the project tracks matching trackType
+    for (final track in project.tracks) {
+      if (track.type == trackType && track.clips.isNotEmpty) {
+        final clip = track.clips.first;
+        ref.read(editorProvider.notifier).selectClip(clip.id, trackId: track.id);
+        return clip;
+      }
+    }
+
+    // Check any clip in any track as fallback
+    for (final track in project.tracks) {
+      if (track.clips.isNotEmpty) {
+        final clip = track.clips.first;
+        ref.read(editorProvider.notifier).selectClip(clip.id, trackId: track.id);
+        return clip;
+      }
+    }
+
+    // 4. If no clip exists, automatically create a new clip at the playhead!
+    final targetTrack = project.tracks.firstWhere(
+      (t) => t.type == trackType,
+      orElse: () => project.tracks.first,
+    );
+
+    final assetId = const Uuid().v4();
+    final assetName = purpose == 'Audio' ? 'Audio_Soundtrack.mp3' : 'Scene_Clip.mp4';
+    final newAsset = MediaAsset(
+      id: assetId,
+      path: assetName,
+      fileName: assetName,
+      type: trackType == TrackType.audio ? MediaType.audio : MediaType.video,
+      durationMs: 6000,
+      width: trackType == TrackType.audio ? 0 : 1920,
+      height: trackType == TrackType.audio ? 0 : 1080,
+      fps: trackType == TrackType.audio ? 0.0 : 30.0,
+    );
+
+    final newClip = Clip(
+      id: const Uuid().v4(),
+      assetId: assetId,
+      trackId: targetTrack.id,
+      startTimeMs: playhead,
+      durationMs: 6000,
+      sourceInMs: 0,
+      sourceOutMs: 6000,
+      textOverlay: purpose == 'Text'
+          ? const TextOverlayConfig(
+              text: 'EDITO TITLE',
+              style: TextStylePreset.impact,
+              animation: TextAnimationPreset.typewriter,
+            )
+          : const TextOverlayConfig(),
+    );
+
+    project = project.addAsset(newAsset);
+    project = project.addClipToTrack(targetTrack.id, newClip);
+
+    ref.read(editorProvider.notifier).updateProject(project);
+    ref.read(projectListProvider.notifier).updateProject(project);
+    ref.read(editorProvider.notifier).selectClip(newClip.id, trackId: targetTrack.id);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✨ Added new $purpose clip to timeline'),
+        duration: const Duration(milliseconds: 900),
+        backgroundColor: AppColors.primary,
+      ),
+    );
+
+    return newClip;
   }
 }
