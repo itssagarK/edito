@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Clip;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../models/clip.dart';
+import '../../../models/project.dart';
 import '../providers/editor_provider.dart';
 import '../../audio/presentation/widgets/audio_mixer_sheet.dart';
 import '../../color_grading/presentation/widgets/color_grading_sheet.dart';
