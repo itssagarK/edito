@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 
@@ -21,6 +23,11 @@ class ExportSuccessDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final file = File(outputPath);
+    final exists = file.existsSync();
+    final actualSizeMb = exists ? (file.lengthSync() / (1024 * 1024)) : fileSizeMb;
+    final displaySize = double.parse(actualSizeMb.toStringAsFixed(2));
+
     return Dialog(
       backgroundColor: AppColors.surfaceElevated,
       shape: RoundedRectangleBorder(
@@ -46,7 +53,7 @@ class ExportSuccessDialog extends StatelessWidget {
             Text('Export Successful!', style: AppTypography.displayMedium.copyWith(fontSize: 20)),
             const SizedBox(height: 6),
             Text(
-              'Your video has been rendered and saved.',
+              'Your video has been rendered and saved to your device gallery.',
               style: AppTypography.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -69,7 +76,7 @@ class ExportSuccessDialog extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('File Size', style: AppTypography.labelSmall),
-                      Text('~$fileSizeMb MB', style: AppTypography.timecode.copyWith(fontSize: 12, color: AppColors.accent)),
+                      Text('~$displaySize MB', style: AppTypography.timecode.copyWith(fontSize: 12, color: AppColors.accent)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -78,6 +85,21 @@ class ExportSuccessDialog extends StatelessWidget {
                     children: [
                       Text('Format', style: AppTypography.labelSmall),
                       Text('MP4 (H.264 / AAC)', style: AppTypography.timecode.copyWith(fontSize: 12)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Status', style: AppTypography.labelSmall),
+                      Text(
+                        exists ? 'Saved to Gallery' : 'Rendered',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: exists ? AppColors.accent : AppColors.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -110,17 +132,26 @@ class ExportSuccessDialog extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Video saved to gallery & ready to share!'),
-                          backgroundColor: AppColors.primary,
-                        ),
-                      );
+                    onPressed: () async {
+                      try {
+                        if (File(outputPath).existsSync()) {
+                          await Share.shareXFiles(
+                            [XFile(outputPath)],
+                            text: 'Check out my edited video created with Edito!',
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Video saved to $outputPath')),
+                          );
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Sharing error: $e')),
+                        );
+                      }
                     },
                     icon: const Icon(Icons.share, size: 16),
-                    label: const Text('Share'),
+                    label: const Text('Share Video'),
                   ),
                 ),
               ],
