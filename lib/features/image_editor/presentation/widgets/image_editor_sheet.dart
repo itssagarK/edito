@@ -349,8 +349,11 @@ class _ImageEditorSheetState extends State<ImageEditorSheet> with SingleTickerPr
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton.filled(
-                  style: IconButton.filledStyleFrom(backgroundColor: AppColors.surface),
+                IconButton(
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColors.surface,
+                    foregroundColor: Colors.white,
+                  ),
                   icon: const Icon(Icons.download, color: Colors.white, size: 20),
                   tooltip: 'Save HD to Gallery',
                   onPressed: _isSaving ? null : _exportToGallery,
