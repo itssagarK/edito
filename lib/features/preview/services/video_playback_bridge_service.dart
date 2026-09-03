@@ -99,7 +99,9 @@ class VideoPlaybackBridgeService {
 
       // Calculate target time within source video
       final clipLocalMs = timestampMs - clip.startTimeMs + clip.sourceInMs;
-      final targetDuration = Duration(milliseconds: clipLocalMs.clamp(0, _videoController!.value.duration.inMilliseconds));
+      final maxVideoMs = _videoController!.value.duration.inMilliseconds;
+      final targetVideoMs = clipLocalMs.clamp(0, maxVideoMs).toInt();
+      final targetDuration = Duration(milliseconds: targetVideoMs);
 
       // Drift check: If position drifts by more than 350ms, seek to exact frame
       final currentPos = _videoController!.value.position;
@@ -124,8 +126,8 @@ class VideoPlaybackBridgeService {
   }
 
   Future<void> _syncAudioClip(CompositorFrame? frame, bool isPlaying, int timestampMs) async {
-    final audioClip = frame?.activeAudioClips.isNotEmpty == true ? frame!.activeAudioClips.first : null;
-    if (audioClip == null) {
+    final activeAudio = frame?.activeAudioSources.isNotEmpty == true ? frame!.activeAudioSources.first : null;
+    if (activeAudio == null || activeAudio.isMuted || activeAudio.filePath == null) {
       if (_audioController != null) {
         try {
           await _audioController!.pause();
@@ -134,17 +136,11 @@ class VideoPlaybackBridgeService {
       return;
     }
 
-    // Find audio asset path
-    final audioAsset = frame?.primaryAsset?.type == MediaType.audio
-        ? frame?.primaryAsset
-        : null;
-
-    if (audioAsset == null) return;
-    final audioFile = File(audioAsset.path);
+    final audioFile = File(activeAudio.filePath!);
     if (!audioFile.existsSync()) return;
 
-    if (_currentAudioPath != audioAsset.path || _audioController == null) {
-      _currentAudioPath = audioAsset.path;
+    if (_currentAudioPath != activeAudio.filePath || _audioController == null) {
+      _currentAudioPath = activeAudio.filePath;
       try {
         await _audioController?.dispose();
         _audioController = VideoPlayerController.file(audioFile);
@@ -158,12 +154,12 @@ class VideoPlaybackBridgeService {
     if (_audioController == null || !_audioController!.value.isInitialized) return;
 
     try {
-      final effectiveVolume = audioClip.isMuted ? 0.0 : audioClip.volume.clamp(0.0, 1.0);
+      final effectiveVolume = activeAudio.effectiveVolume.clamp(0.0, 1.0);
       _audioController!.setVolume(effectiveVolume);
-      _audioController!.setPlaybackSpeed(audioClip.speed.clamp(0.25, 4.0));
 
-      final clipLocalMs = timestampMs - audioClip.startTimeMs + audioClip.sourceInMs;
-      final targetDuration = Duration(milliseconds: clipLocalMs.clamp(0, _audioController!.value.duration.inMilliseconds));
+      final maxDurationMs = _audioController!.value.duration.inMilliseconds;
+      final targetAudioMs = activeAudio.sourceOffsetMs.clamp(0, maxDurationMs).toInt();
+      final targetDuration = Duration(milliseconds: targetAudioMs);
 
       final currentPos = _audioController!.value.position;
       final driftMs = (currentPos.inMilliseconds - targetDuration.inMilliseconds).abs();
