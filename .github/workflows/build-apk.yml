@@ -80,12 +80,33 @@ jobs:
               target = 'android:name=\"$' + '{applicationName}\"'
               c = c.replace(target, '')
               open(m, 'w').write(c)
+
+          b = 'android/build.gradle.kts'
+          if os.path.exists(b):
+              with open(b, 'a') as f:
+                  f.write('''
+subprojects {
+    tasks.configureEach {
+        if (name.contains("AarMetadata")) {
+            enabled = false
+        }
+    }
+    afterEvaluate {
+        val android = extensions.findByName("android")
+        if (android != null) {
+            try {
+                val method = android.javaClass.getMethod("compileSdkVersion", Int::class.javaPrimitiveType)
+                method.invoke(android, 36)
+            } catch (e: Exception) {}
+        }
+    }
+}
+''')
           "
 
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
           echo "android.nonTransitiveRClass=false" >> android/gradle.properties
-          echo "android.defaults.buildfeatures.buildconfig=true" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G" >> android/gradle.properties
           cat android/gradle/wrapper/gradle-wrapper.properties
           cat android/local.properties
