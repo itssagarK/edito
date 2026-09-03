@@ -1,6 +1,7 @@
 import '../../preview/models/aspect_ratio_preset.dart';
 
 enum ExportResolution {
+  res8k,
   res4k,
   res1080p,
   res720p,
@@ -9,6 +10,8 @@ enum ExportResolution {
 extension ExportResolutionExtension on ExportResolution {
   String get label {
     switch (this) {
+      case ExportResolution.res8k:
+        return '8K Ultra HD (4320p)';
       case ExportResolution.res4k:
         return '4K Ultra HD (2160p)';
       case ExportResolution.res1080p:
@@ -20,6 +23,8 @@ extension ExportResolutionExtension on ExportResolution {
 
   int get width {
     switch (this) {
+      case ExportResolution.res8k:
+        return 7680;
       case ExportResolution.res4k:
         return 3840;
       case ExportResolution.res1080p:
@@ -31,6 +36,8 @@ extension ExportResolutionExtension on ExportResolution {
 
   int get height {
     switch (this) {
+      case ExportResolution.res8k:
+        return 4320;
       case ExportResolution.res4k:
         return 2160;
       case ExportResolution.res1080p:
@@ -42,6 +49,8 @@ extension ExportResolutionExtension on ExportResolution {
 
   double get baseBitrateMbps {
     switch (this) {
+      case ExportResolution.res8k:
+        return 80.0;
       case ExportResolution.res4k:
         return 35.0;
       case ExportResolution.res1080p:

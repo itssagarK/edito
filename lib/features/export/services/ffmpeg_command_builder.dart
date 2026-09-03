@@ -4,6 +4,7 @@ import '../../../models/project.dart';
 import '../../../models/track.dart';
 import '../../audio/services/ai_voice_enhancer_service.dart';
 import '../../color_grading/services/color_filter_compiler_service.dart';
+import '../../enhancement/services/ai_video_enhancer_service.dart';
 import '../../overlays/services/overlay_compiler_service.dart';
 import '../models/export_preset.dart';
 
@@ -90,6 +91,16 @@ class FFmpegCommandBuilder {
           final drawTextFilter = OverlayCompilerService.generateFFmpegDrawText(clip, clip.textOverlay);
           if (drawTextFilter.isNotEmpty) {
             vFilters.add(drawTextFilter);
+          }
+
+          // 8K AI Enhancement Filters (Upscaling, Sharpening, Denoising, HDR)
+          final enhancementFilters = AIVideoEnhancerService.generateFFmpegFilters(
+            clip.enhancement,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (enhancementFilters.isNotEmpty) {
+            vFilters.addAll(enhancementFilters);
           }
 
           filterComplexSegments.add('[$inputIdx:v]${vFilters.join(',')} [$vLabel]');

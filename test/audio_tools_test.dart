@@ -49,6 +49,20 @@ void main() {
       expect(filterStr, contains('volume=1.25'));
     });
 
+    test('AIVoiceEnhancerService supports Loud Voice Booster and Voice Modulation', () {
+      const config = AudioEffectsConfig(
+        isLoudVoiceEnabled: true,
+        voiceBoost: 1.8,
+        modulationPreset: VoiceModulationPreset.studioBroadcast,
+      );
+
+      final filterStr = AIVoiceEnhancerService.generateFFmpegFilter(config);
+
+      expect(filterStr, contains('volume=1.80'));
+      expect(filterStr, contains('compand=attacks=0.02:decays=0.15'));
+      expect(filterStr, contains('equalizer=f=120:width_type=o:width=1.2:g=3.5'));
+    });
+
     test('AudioDuckingService attenuates background music when dialogue track is active', () {
       final now = DateTime.now();
 

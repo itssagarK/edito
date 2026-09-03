@@ -4,8 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/timecode_formatter.dart';
+import '../../../audio/models/audio_effects_config.dart';
 import '../../../color_grading/models/color_grading_config.dart';
 import '../../../color_grading/services/color_filter_compiler_service.dart';
+import '../../../enhancement/models/video_enhancement_config.dart';
 import '../../../overlays/models/text_overlay_config.dart';
 import '../../../overlays/services/overlay_compiler_service.dart';
 import '../../models/aspect_ratio_preset.dart';
@@ -280,20 +282,74 @@ class RealtimePreviewViewport extends ConsumerWidget {
                 'Source frame: ${TimecodeFormatter.formatMilliseconds(frame.sourceFrameTimeMs)} (${clip.speed}x)',
                 style: AppTypography.labelSmall.copyWith(color: AppColors.accent),
               ),
-              if (clip.colorGrading.activeLut != LutPreset.none) ...[
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'LUT: ${clip.colorGrading.activeLut.label.split(' ').first}',
-                    style: const TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                alignment: WrapAlignment.center,
+                children: [
+                  if (clip.colorGrading.activeLut != LutPreset.none)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'LUT: ${clip.colorGrading.activeLut.label.split(' ').first}',
+                        style: const TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  if (clip.enhancement.is8kUpscaleEnabled)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [Color(0xFFFF007F), Color(0xFF7928CA)]),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        '8K UHD (7680x4320)',
+                        style: TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    )
+                  else if (clip.enhancement.hasActiveEnhancements)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        '✨ AI ENHANCED',
+                        style: TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  if (clip.audioEffects.isLoudVoiceEnabled)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        '🔥 LOUD VOICE',
+                        style: TextStyle(fontSize: 9, color: AppColors.primaryLight, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  if (clip.audioEffects.modulationPreset != VoiceModulationPreset.natural)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.audioTrack.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        clip.audioEffects.modulationPreset.label.toUpperCase(),
+                        style: const TextStyle(fontSize: 9, color: AppColors.audioTrack, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
         ),

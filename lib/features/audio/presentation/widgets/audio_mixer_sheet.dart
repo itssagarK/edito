@@ -53,7 +53,7 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> {
     final clarityScore = AIVoiceEnhancerService.calculateClarityScore(_effects);
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.78,
+      height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -84,7 +84,7 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> {
                       children: [
                         const Icon(Icons.mic_none, color: AppColors.primaryLight, size: 22),
                         const SizedBox(width: 8),
-                        Text('Audio & AI Voice Tools', style: AppTypography.titleLarge),
+                        Text('Voice & Audio Tools', style: AppTypography.titleLarge),
                       ],
                     ),
                     IconButton(
@@ -101,30 +101,139 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               children: [
-                // 1. Master Volume Card
+                // 1. Loud & Clear Voice Booster Card
                 _buildCard(
-                  title: 'Volume Multiplier',
-                  subtitle: '${(_volume * 100).toInt()}% (${_volume > 1.0 ? '+${((_volume - 1.0) * 12).toStringAsFixed(1)}dB' : '${((_volume - 1.0) * 20).toStringAsFixed(1)}dB'})',
-                  child: Slider(
-                    value: _volume,
-                    min: 0.0,
-                    max: 2.0,
-                    divisions: 40,
-                    activeColor: AppColors.primary,
-                    inactiveColor: AppColors.surfaceElevated,
-                    onChanged: (val) {
-                      setState(() => _volume = val);
-                      _applyChange();
-                    },
+                  title: '🔥 Loud Voice Booster & Pre-Amp',
+                  subtitle: 'Amplifies quiet speech with dynamic peak limiting',
+                  badge: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: _effects.isLoudVoiceEnabled
+                          ? AppColors.primary.withOpacity(0.2)
+                          : AppColors.surfaceElevated,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _effects.isLoudVoiceEnabled ? AppColors.primary : AppColors.border,
+                      ),
+                    ),
+                    child: Text(
+                      _effects.isLoudVoiceEnabled ? '+${((_effects.voiceBoost - 1.0) * 10).toInt()}dB BOOST' : 'NORMAL',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: _effects.isLoudVoiceEnabled ? AppColors.primaryLight : AppColors.textMuted,
+                      ),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Enable Loud & Punchy Voice', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        subtitle: const Text('Boosts vocal loudness up to +15dB without speaker distortion', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                        value: _effects.isLoudVoiceEnabled,
+                        activeColor: AppColors.primary,
+                        onChanged: (enabled) {
+                          setState(() {
+                            _effects = _effects.copyWith(isLoudVoiceEnabled: enabled);
+                          });
+                          _applyChange();
+                        },
+                      ),
+                      if (_effects.isLoudVoiceEnabled) ...[
+                        const Divider(color: AppColors.border, height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Voice Gain Multiplier', style: TextStyle(fontSize: 13)),
+                            Text('${(_effects.voiceBoost * 100).toInt()}% (+${((_effects.voiceBoost - 1.0) * 10).toStringAsFixed(1)}dB)', style: AppTypography.timecode.copyWith(fontSize: 12, color: AppColors.primaryLight)),
+                          ],
+                        ),
+                        Slider(
+                          value: _effects.voiceBoost,
+                          min: 1.0,
+                          max: 2.5,
+                          divisions: 15,
+                          activeColor: AppColors.primary,
+                          inactiveColor: AppColors.surfaceElevated,
+                          onChanged: (val) {
+                            setState(() => _effects = _effects.copyWith(voiceBoost: val));
+                            _applyChange();
+                          },
+                        ),
+                      ],
+                    ],
                   ),
                 ),
 
                 const SizedBox(height: 14),
 
-                // 2. AI Voice Enhancer & Noise Reduction Card
+                // 2. Voice Modulation & Pitch Presets Card
                 _buildCard(
-                  title: 'On-Device AI Voice Enhancer',
-                  subtitle: 'DeepFilterNet speech isolation & noise removal',
+                  title: '🎙️ Voice Modulation Presets',
+                  subtitle: 'Transform vocal timbre, tone, and character',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: VoiceModulationPreset.values.map((preset) {
+                          final isSelected = _effects.modulationPreset == preset;
+                          return ChoiceChip(
+                            label: Text(preset.label, style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                            selected: isSelected,
+                            selectedColor: AppColors.accent,
+                            backgroundColor: AppColors.surface,
+                            labelStyle: TextStyle(color: isSelected ? Colors.white : AppColors.textSecondary),
+                            onSelected: (selected) {
+                              if (selected) {
+                                setState(() {
+                                  _effects = _effects.copyWith(modulationPreset: preset);
+                                });
+                                _applyChange();
+                              }
+                            },
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _effects.modulationPreset.description,
+                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontStyle: FontStyle.italic),
+                      ),
+                      if (_effects.modulationPreset == VoiceModulationPreset.customPitch) ...[
+                        const SizedBox(height: 14),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Pitch Shift (Semitones)', style: TextStyle(fontSize: 13)),
+                            Text('${_effects.pitchShiftSemitones > 0 ? "+" : ""}${_effects.pitchShiftSemitones.toStringAsFixed(1)} st', style: AppTypography.timecode.copyWith(fontSize: 12, color: AppColors.accent)),
+                          ],
+                        ),
+                        Slider(
+                          value: _effects.pitchShiftSemitones,
+                          min: -12.0,
+                          max: 12.0,
+                          divisions: 24,
+                          activeColor: AppColors.accent,
+                          inactiveColor: AppColors.surfaceElevated,
+                          onChanged: (val) {
+                            setState(() => _effects = _effects.copyWith(pitchShiftSemitones: val));
+                            _applyChange();
+                          },
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                // 3. AI Voice Enhancer & Noise Reduction Card
+                _buildCard(
+                  title: '✨ AI Voice Clarity & Isolation',
+                  subtitle: 'Deep neural noise cancellation & speech presence',
                   badge: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
@@ -204,27 +313,6 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> {
                             _applyChange();
                           },
                         ),
-
-                        // A/B Comparison Toggle
-                        const SizedBox(height: 8),
-                        OutlinedButton.icon(
-                          onPressed: () {
-                            setState(() => _isListeningOriginal = !_isListeningOriginal);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(_isListeningOriginal ? 'Listening to Raw Audio (Original)' : 'Listening to AI Clean Audio (Enhanced)'),
-                                duration: const Duration(milliseconds: 900),
-                                backgroundColor: _isListeningOriginal ? AppColors.surfaceElevated : AppColors.primary,
-                              ),
-                            );
-                          },
-                          icon: Icon(_isListeningOriginal ? Icons.hearing_disabled : Icons.hearing, size: 16),
-                          label: Text(_isListeningOriginal ? 'Showing: Original Raw Audio' : 'Showing: AI Cleaned Audio'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: _isListeningOriginal ? AppColors.accentWarm : AppColors.accent,
-                            side: BorderSide(color: _isListeningOriginal ? AppColors.accentWarm : AppColors.accent),
-                          ),
-                        ),
                       ],
                     ],
                   ),
@@ -232,34 +320,24 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> {
 
                 const SizedBox(height: 14),
 
-                // 3. Fades and Auto-Ducking
+                // 4. Master Volume & Envelopes
                 _buildCard(
-                  title: 'Fade Envelopes & Auto-Ducking',
-                  subtitle: 'Automatic volume transitions',
+                  title: 'Volume & Auto-Ducking',
+                  subtitle: '${(_volume * 100).toInt()}% output volume',
                   child: Column(
                     children: [
-                      // Fade In
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Fade In Duration', style: TextStyle(fontSize: 13)),
-                          Text('${(_effects.fadeInMs / 1000.0).toStringAsFixed(1)}s', style: AppTypography.timecode.copyWith(fontSize: 12)),
-                        ],
-                      ),
                       Slider(
-                        value: _effects.fadeInMs.toDouble(),
-                        min: 0,
-                        max: 4000,
+                        value: _volume,
+                        min: 0.0,
+                        max: 2.0,
                         divisions: 40,
-                        activeColor: AppColors.audioTrack,
+                        activeColor: AppColors.primary,
                         inactiveColor: AppColors.surfaceElevated,
                         onChanged: (val) {
-                          setState(() => _effects = _effects.copyWith(fadeInMs: val.toInt()));
+                          setState(() => _volume = val);
                           _applyChange();
                         },
                       ),
-
-                      // Auto-Ducking
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
                         title: const Text('Smart Auto-Ducking', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
@@ -302,13 +380,15 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: AppTypography.titleMedium),
-                  const SizedBox(height: 2),
-                  Text(subtitle, style: AppTypography.labelSmall),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: AppTypography.titleMedium),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: AppTypography.labelSmall),
+                  ],
+                ),
               ),
               if (badge != null) badge,
             ],

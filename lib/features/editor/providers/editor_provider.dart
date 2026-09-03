@@ -11,6 +11,7 @@ enum EditorTool {
   text,
   effects,
   speed,
+  enhance,
 }
 
 class EditorState {

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../features/audio/models/audio_effects_config.dart';
 import '../features/color_grading/models/color_grading_config.dart';
+import '../features/enhancement/models/video_enhancement_config.dart';
 import '../features/overlays/models/keyframe.dart';
 import '../features/overlays/models/text_overlay_config.dart';
 import '../features/speed/models/speed_curve_preset.dart';
@@ -23,6 +24,7 @@ class Clip extends Equatable {
   final TransitionConfig transitionOut;
   final SpeedCurveConfig speedCurve;
   final TextOverlayConfig textOverlay;
+  final VideoEnhancementConfig enhancement;
   final List<Keyframe> keyframes;
 
   const Clip({
@@ -42,6 +44,7 @@ class Clip extends Equatable {
     this.transitionOut = const TransitionConfig(),
     this.speedCurve = const SpeedCurveConfig(),
     this.textOverlay = const TextOverlayConfig(),
+    this.enhancement = const VideoEnhancementConfig(),
     this.keyframes = const [],
   });
 
@@ -62,6 +65,7 @@ class Clip extends Equatable {
     TransitionConfig? transitionOut,
     SpeedCurveConfig? speedCurve,
     TextOverlayConfig? textOverlay,
+    VideoEnhancementConfig? enhancement,
     List<Keyframe>? keyframes,
   }) {
     return Clip(
@@ -81,6 +85,7 @@ class Clip extends Equatable {
       transitionOut: transitionOut ?? this.transitionOut,
       speedCurve: speedCurve ?? this.speedCurve,
       textOverlay: textOverlay ?? this.textOverlay,
+      enhancement: enhancement ?? this.enhancement,
       keyframes: keyframes ?? this.keyframes,
     );
   }
@@ -102,6 +107,7 @@ class Clip extends Equatable {
         'transitionOut': transitionOut.toJson(),
         'speedCurve': speedCurve.toJson(),
         'textOverlay': textOverlay.toJson(),
+        'enhancement': enhancement.toJson(),
         'keyframes': keyframes.map((k) => k.toJson()).toList(),
       };
 
@@ -134,6 +140,9 @@ class Clip extends Equatable {
         textOverlay: json['textOverlay'] != null
             ? TextOverlayConfig.fromJson(json['textOverlay'] as Map<String, dynamic>)
             : const TextOverlayConfig(),
+        enhancement: json['enhancement'] != null
+            ? VideoEnhancementConfig.fromJson(json['enhancement'] as Map<String, dynamic>)
+            : const VideoEnhancementConfig(),
         keyframes: (json['keyframes'] as List<dynamic>?)
                 ?.map((k) => Keyframe.fromJson(k as Map<String, dynamic>))
                 .toList() ??
@@ -158,6 +167,7 @@ class Clip extends Equatable {
         transitionOut,
         speedCurve,
         textOverlay,
+        enhancement,
         keyframes,
       ];
 }

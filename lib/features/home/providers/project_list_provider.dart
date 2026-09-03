@@ -6,6 +6,7 @@ import '../../../models/project.dart';
 import '../../../models/track.dart';
 import '../../audio/models/audio_effects_config.dart';
 import '../../color_grading/models/color_grading_config.dart';
+import '../../enhancement/models/video_enhancement_config.dart';
 import '../../overlays/models/text_overlay_config.dart';
 import '../../transitions/models/transition_type.dart';
 import '../../project/services/project_storage_service.dart';
@@ -89,6 +90,13 @@ class ProjectListNotifier extends StateNotifier<List<Project>> {
           type: TransitionType.zoomIn,
           durationMs: 1000,
         ),
+        enhancement: const VideoEnhancementConfig(
+          is8kUpscaleEnabled: true,
+          isAiSuperResolutionEnabled: true,
+          sharpness: 1.4,
+          isHdrToneMapping: true,
+          modelPreset: EnhanceModelPreset.ultraCinema8k,
+        ),
       );
 
       final clip2 = Clip(
@@ -128,6 +136,9 @@ class ProjectListNotifier extends StateNotifier<List<Project>> {
           isDuckingEnabled: true,
           isVoiceEnhancerEnabled: true,
           denoiseIntensity: 0.80,
+          isLoudVoiceEnabled: true,
+          voiceBoost: 1.6,
+          modulationPreset: VoiceModulationPreset.studioBroadcast,
         ),
       );
 
