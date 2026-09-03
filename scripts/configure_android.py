@@ -68,12 +68,21 @@ subprojects {
             enabled = false
         }
     }
-    afterEvaluate {
+    if (state.executed) {
         val a = extensions.findByName("android")
         if (a != null) {
             try {
                 a.javaClass.getMethod("compileSdkVersion", Int::class.javaPrimitiveType).invoke(a, 36)
             } catch (e: Exception) {}
+        }
+    } else {
+        plugins.withId("com.android.library") {
+            val a = extensions.findByName("android")
+            if (a != null) {
+                try {
+                    a.javaClass.getMethod("compileSdkVersion", Int::class.javaPrimitiveType).invoke(a, 36)
+                } catch (e: Exception) {}
+            }
         }
     }
 }
