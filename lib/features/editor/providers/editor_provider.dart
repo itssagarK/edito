@@ -10,6 +10,7 @@ enum EditorTool {
   audio,
   color,
   text,
+  captions,
   effects,
   speed,
   enhance,

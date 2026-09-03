@@ -8,6 +8,7 @@ import '../../../models/project.dart';
 import '../../../models/track.dart';
 import '../providers/editor_provider.dart';
 import '../../audio/presentation/widgets/audio_mixer_sheet.dart';
+import '../../captions/presentation/widgets/caption_manager_sheet.dart';
 import '../../color_grading/presentation/widgets/color_grading_sheet.dart';
 import '../../enhancement/presentation/widgets/video_enhancement_sheet.dart';
 import '../../export/presentation/widgets/export_settings_modal.dart';
@@ -165,6 +166,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openTextEditorModal();
         break;
 
+      case EditorTool.captions:
+        _openCaptionsModal();
+        break;
+
       case EditorTool.effects:
         _openTransitionsModal();
         break;
@@ -270,6 +275,23 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         final updatedProject = project.updateClip(updatedClip);
         ref.read(editorProvider.notifier).updateProject(updatedProject);
         ref.read(projectListProvider.notifier).updateProject(updatedProject);
+      },
+    );
+  }
+
+  void _openCaptionsModal() {
+    final project = ref.read(editorProvider).project;
+    if (project == null) return;
+
+    CaptionManagerSheet.show(
+      context,
+      project: project,
+      onSave: (updatedProject) {
+        ref.read(editorProvider.notifier).updateProject(updatedProject);
+        ref.read(projectListProvider.notifier).updateProject(updatedProject);
+      },
+      onSeek: (timestampMs) {
+        ref.read(previewPlaybackProvider.notifier).seek(timestampMs);
       },
     );
   }
