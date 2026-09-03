@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
-import '../models/speed_curve_preset.dart';
+import '../../models/speed_curve_preset.dart';
 
 class SpeedRampingSheet extends StatefulWidget {
   final Clip clip;

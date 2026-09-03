@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
-import '../models/transition_type.dart';
+import '../../models/transition_type.dart';
 
 class TransitionSelectorSheet extends StatefulWidget {
   final Clip clip;

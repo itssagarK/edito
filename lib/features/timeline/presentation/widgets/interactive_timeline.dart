@@ -4,7 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/project.dart';
 import '../../../../models/track.dart';
-import '../services/timeline_editing_service.dart';
+import '../../services/timeline_editing_service.dart';
 import 'timeline_track_lane.dart';
 import 'timeline_context_bar.dart';
 

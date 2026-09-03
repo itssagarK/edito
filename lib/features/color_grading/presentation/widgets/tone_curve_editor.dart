@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../models/color_grading_config.dart';
+import '../../models/color_grading_config.dart';
 
 class ToneCurveEditor extends StatefulWidget {
   final List<CurvePoint> points;

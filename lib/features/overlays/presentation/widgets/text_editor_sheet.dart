@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
-import '../models/text_overlay_config.dart';
+import '../../models/text_overlay_config.dart';
 
 class TextEditorSheet extends StatefulWidget {
   final Clip clip;

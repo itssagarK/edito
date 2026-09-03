@@ -10,7 +10,7 @@ import '../../../overlays/models/text_overlay_config.dart';
 import '../../../overlays/services/overlay_compiler_service.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
-import '../providers/preview_playback_provider.dart';
+import '../../providers/preview_playback_provider.dart';
 
 class RealtimePreviewViewport extends ConsumerWidget {
   final int currentPositionMs;
