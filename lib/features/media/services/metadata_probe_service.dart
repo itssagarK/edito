@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
+import 'package:video_player/video_player.dart';
 import '../../../models/media_asset.dart';
 import 'thumbnail_service.dart';
 
@@ -22,23 +23,57 @@ class MetadataProbeService {
 
     switch (type) {
       case MediaType.video:
-        // Default video assumptions before native probe, or when probing without FFmpeg active
-        durationMs = 10000; // Default 10s fallback
-        width = 1920;
-        height = 1080;
+        if (fileExists) {
+          try {
+            final controller = VideoPlayerController.file(file);
+            await controller.initialize();
+            final d = controller.value.duration.inMilliseconds;
+            if (d > 0) durationMs = d;
+            final w = controller.value.size.width.toInt();
+            final h = controller.value.size.height.toInt();
+            if (w > 0 && h > 0) {
+              width = w;
+              height = h;
+            } else {
+              width = 1920;
+              height = 1080;
+            }
+            await controller.dispose();
+          } catch (_) {
+            durationMs = 10000;
+            width = 1920;
+            height = 1080;
+          }
+        } else {
+          durationMs = 10000;
+          width = 1920;
+          height = 1080;
+        }
         fps = 30.0;
         break;
 
       case MediaType.audio:
-        durationMs = 30000; // Default 30s fallback
+        if (fileExists) {
+          try {
+            final controller = VideoPlayerController.file(file);
+            await controller.initialize();
+            final d = controller.value.duration.inMilliseconds;
+            if (d > 0) durationMs = d;
+            await controller.dispose();
+          } catch (_) {
+            durationMs = 30000;
+          }
+        } else {
+          durationMs = 30000;
+        }
         width = 0;
         height = 0;
         fps = 0.0;
         break;
 
       case MediaType.image:
-        durationMs = 3000; // Images get default 3.0s timeline duration
-        width = 1080;
+        durationMs = 4000; // Images get default 4.0s timeline duration
+        width = 1920;
         height = 1080;
         fps = 0.0;
         break;

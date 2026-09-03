@@ -5,6 +5,7 @@ import '../../../models/media_asset.dart';
 import '../../../models/track.dart';
 import '../../editor/providers/editor_provider.dart';
 import '../../home/providers/project_list_provider.dart';
+import '../../preview/providers/preview_playback_provider.dart';
 import '../services/media_picker_service.dart';
 
 final mediaPickerServiceProvider = Provider<MediaPickerService>((ref) {
@@ -22,6 +23,35 @@ class MediaImportNotifier extends StateNotifier<AsyncValue<List<MediaAsset>>> {
 
   MediaImportNotifier(this._pickerService, this._ref) : super(const AsyncValue.data([]));
 
+  /// Imports video directly from device gallery / Google Photos
+  Future<List<MediaAsset>> importVideoFromGallery() async {
+    state = const AsyncValue.loading();
+    try {
+      final assets = await _pickerService.pickVideoFromGallery();
+      state = AsyncValue.data(assets);
+      _addAssetsToProject(assets, targetType: TrackType.video);
+      return assets;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return [];
+    }
+  }
+
+  /// Records and imports a video from the camera
+  Future<List<MediaAsset>> recordVideoWithCamera() async {
+    state = const AsyncValue.loading();
+    try {
+      final assets = await _pickerService.recordVideoWithCamera();
+      state = AsyncValue.data(assets);
+      _addAssetsToProject(assets, targetType: TrackType.video);
+      return assets;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return [];
+    }
+  }
+
+  /// Imports videos from files / downloads
   Future<List<MediaAsset>> importVideos() async {
     state = const AsyncValue.loading();
     try {
@@ -35,6 +65,7 @@ class MediaImportNotifier extends StateNotifier<AsyncValue<List<MediaAsset>>> {
     }
   }
 
+  /// Imports audio files from device storage
   Future<List<MediaAsset>> importAudios() async {
     state = const AsyncValue.loading();
     try {
@@ -48,10 +79,25 @@ class MediaImportNotifier extends StateNotifier<AsyncValue<List<MediaAsset>>> {
     }
   }
 
+  /// Imports images / photos from gallery
   Future<List<MediaAsset>> importImages() async {
     state = const AsyncValue.loading();
     try {
       final assets = await _pickerService.pickImages(allowMultiple: true);
+      state = AsyncValue.data(assets);
+      _addAssetsToProject(assets, targetType: TrackType.video);
+      return assets;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return [];
+    }
+  }
+
+  /// Captures photo with camera and imports
+  Future<List<MediaAsset>> capturePhotoWithCamera() async {
+    state = const AsyncValue.loading();
+    try {
+      final assets = await _pickerService.capturePhotoWithCamera();
       state = AsyncValue.data(assets);
       _addAssetsToProject(assets, targetType: TrackType.video);
       return assets;
@@ -69,17 +115,32 @@ class MediaImportNotifier extends StateNotifier<AsyncValue<List<MediaAsset>>> {
     if (project == null) return;
 
     // Find or create suitable target track
-    Track? targetTrack = project.tracks.firstWhere(
-      (t) => t.type == targetType,
-      orElse: () => project!.tracks.first,
-    );
+    Track? targetTrack;
+    for (final t in project.tracks) {
+      if (t.type == targetType) {
+        targetTrack = t;
+        break;
+      }
+    }
 
-    int insertionPositionMs = targetTrack.durationMs;
+    if (targetTrack == null) {
+      targetTrack = Track(
+        id: const Uuid().v4(),
+        name: targetType == TrackType.audio ? 'Audio Track' : 'Video Track',
+        type: targetType,
+        order: project.tracks.length,
+      );
+      project = project.addTrack(targetTrack);
+    }
+
+    // Insert at current playhead position or end of track
+    int insertionPositionMs = editorState.playheadPositionMs;
+    Clip? firstNewClip;
 
     for (final asset in assets) {
       project = project!.addAsset(asset);
 
-      final clipDuration = asset.durationMs > 0 ? asset.durationMs : 3000;
+      final clipDuration = asset.durationMs > 0 ? asset.durationMs : 4000;
       final newClip = Clip(
         id: const Uuid().v4(),
         assetId: asset.id,
@@ -90,11 +151,18 @@ class MediaImportNotifier extends StateNotifier<AsyncValue<List<MediaAsset>>> {
         sourceOutMs: clipDuration,
       );
 
+      firstNewClip ??= newClip;
       project = project.addClipToTrack(targetTrack.id, newClip);
       insertionPositionMs += clipDuration;
     }
 
     _ref.read(editorProvider.notifier).updateProject(project!);
     _ref.read(projectListProvider.notifier).updateProject(project);
+
+    // Auto-select and jump playhead to the newly imported clip
+    if (firstNewClip != null) {
+      _ref.read(editorProvider.notifier).selectClip(firstNewClip.id, trackId: targetTrack.id);
+      _ref.read(previewPlaybackProvider.notifier).seek(firstNewClip.startTimeMs);
+    }
   }
 }

@@ -4,6 +4,7 @@ import '../models/aspect_ratio_preset.dart';
 import '../models/compositor_frame.dart';
 import '../services/playback_clock_service.dart';
 import '../services/timeline_compositor_service.dart';
+import '../services/video_playback_bridge_service.dart';
 
 class PreviewState {
   final AspectRatioPreset aspectRatio;
@@ -39,16 +40,24 @@ final playbackClockServiceProvider = Provider<PlaybackClockService>((ref) {
   return service;
 });
 
+final videoPlaybackBridgeServiceProvider = Provider<VideoPlaybackBridgeService>((ref) {
+  final service = VideoPlaybackBridgeService();
+  ref.onDispose(() => service.dispose());
+  return service;
+});
+
 final previewPlaybackProvider = StateNotifierProvider<PreviewPlaybackNotifier, PreviewState>((ref) {
   final clock = ref.watch(playbackClockServiceProvider);
-  return PreviewPlaybackNotifier(clock, ref);
+  final bridge = ref.watch(videoPlaybackBridgeServiceProvider);
+  return PreviewPlaybackNotifier(clock, bridge, ref);
 });
 
 class PreviewPlaybackNotifier extends StateNotifier<PreviewState> {
   final PlaybackClockService _clock;
+  final VideoPlaybackBridgeService _playbackBridge;
   final Ref _ref;
 
-  PreviewPlaybackNotifier(this._clock, this._ref) : super(const PreviewState()) {
+  PreviewPlaybackNotifier(this._clock, this._playbackBridge, this._ref) : super(const PreviewState()) {
     _clock.tickStream.listen((positionMs) {
       _ref.read(editorProvider.notifier).seek(positionMs);
       _updateCurrentFrame(positionMs);
@@ -62,6 +71,7 @@ class PreviewPlaybackNotifier extends StateNotifier<PreviewState> {
 
     if (editorState.isPlaying) {
       _clock.pause();
+      _playbackBridge.pause();
       _ref.read(editorProvider.notifier).pause();
     } else {
       final maxDuration = project.durationMs > 0 ? project.durationMs : 30000;
@@ -69,6 +79,7 @@ class PreviewPlaybackNotifier extends StateNotifier<PreviewState> {
 
       _clock.start(startPositionMs: startPos, maxDurationMs: maxDuration);
       _ref.read(editorProvider.notifier).play();
+      _playbackBridge.play();
     }
   }
 
@@ -98,5 +109,11 @@ class PreviewPlaybackNotifier extends StateNotifier<PreviewState> {
       aspectRatio: state.aspectRatio,
     );
     state = state.copyWith(currentFrame: frame);
+
+    _playbackBridge.syncPlayback(
+      frame: frame,
+      isPlaying: _ref.read(editorProvider).isPlaying,
+      timestampMs: timestampMs,
+    );
   }
 }

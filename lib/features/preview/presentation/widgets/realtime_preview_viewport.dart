@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:video_player/video_player.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/timecode_formatter.dart';
@@ -8,11 +10,13 @@ import '../../../audio/models/audio_effects_config.dart';
 import '../../../color_grading/models/color_grading_config.dart';
 import '../../../color_grading/services/color_filter_compiler_service.dart';
 import '../../../enhancement/models/video_enhancement_config.dart';
+import '../../../models/media_asset.dart';
 import '../../../overlays/models/text_overlay_config.dart';
 import '../../../overlays/services/overlay_compiler_service.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';
+import '../../services/video_playback_bridge_service.dart';
 
 class RealtimePreviewViewport extends ConsumerWidget {
   final int currentPositionMs;
@@ -131,7 +135,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
                       fit: StackFit.expand,
                       children: [
                         // Visual Frame Content with Real-Time Color Matrix Filter
-                        _buildVisualContent(currentFrame),
+                        _buildVisualContent(context, ref, currentFrame),
 
                         // Text & Graphic Overlays
                         if (currentFrame != null && currentFrame.activeOverlays.isNotEmpty)
@@ -226,7 +230,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
     );
   }
 
-  Widget _buildVisualContent(CompositorFrame? frame) {
+  Widget _buildVisualContent(BuildContext context, WidgetRef ref, CompositorFrame? frame) {
     if (frame == null || !frame.hasVisualContent) {
       return Center(
         child: Column(
@@ -251,122 +255,179 @@ class RealtimePreviewViewport extends ConsumerWidget {
     final asset = frame.primaryAsset;
     final colorMatrix = ColorFilterCompilerService.compileColorMatrix(clip.colorGrading);
 
-    return ColorFiltered(
-      colorFilter: ColorFilter.matrix(colorMatrix),
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF1E272E), Color(0xFF0F141C)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    final bool hasLocalFile = asset != null && File(asset.path).existsSync();
+
+    Widget contentWidget;
+
+    if (hasLocalFile && asset.type == MediaType.image) {
+      // 1. Real photo / image rendering from disk
+      contentWidget = Image.file(
+        File(asset.path),
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => _buildPlaceholderContent(frame, clip, asset),
+      );
+    } else if (hasLocalFile && asset.type == MediaType.video) {
+      // 2. Real Hardware Video Texture playback via VideoPlayer
+      final bridge = ref.watch(videoPlaybackBridgeServiceProvider);
+      contentWidget = ValueListenableBuilder<VideoPlayerController?>(
+        valueListenable: bridge.activeVideoController,
+        builder: (context, controller, child) {
+          if (controller != null && controller.value.isInitialized) {
+            return Center(
+              child: AspectRatio(
+                aspectRatio: controller.value.aspectRatio,
+                child: VideoPlayer(controller),
+              ),
+            );
+          }
+          return _buildPlaceholderContent(frame, clip, asset, isLoading: true);
+        },
+      );
+    } else {
+      // 3. Fallback placeholder / seeded sample canvas
+      contentWidget = _buildPlaceholderContent(frame, clip, asset);
+    }
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ColorFiltered(
+          colorFilter: ColorFilter.matrix(colorMatrix),
+          child: contentWidget,
+        ),
+        // Live Floating HUD Badges
+        Positioned(
+          left: 12,
+          bottom: 12,
+          right: 12,
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              if (clip.colorGrading.activeLut != LutPreset.none)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.accent.withOpacity(0.5)),
+                  ),
+                  child: Text(
+                    'LUT: ${clip.colorGrading.activeLut.label.split(' ').first}',
+                    style: const TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              if (clip.enhancement.is8kUpscaleEnabled)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Color(0xFFFF007F), Color(0xFF7928CA)]),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    '8K UHD (7680x4320)',
+                    style: TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                )
+              else if (clip.enhancement.hasActiveEnhancements)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.accent),
+                  ),
+                  child: const Text(
+                    '✨ AI ENHANCED',
+                    style: TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              if (clip.audioEffects.isLoudVoiceEnabled)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.primaryLight),
+                  ),
+                  child: const Text(
+                    '🔥 LOUD VOICE',
+                    style: TextStyle(fontSize: 9, color: AppColors.primaryLight, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              if (clip.audioEffects.modulationPreset != VoiceModulationPreset.natural)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.audioTrack),
+                  ),
+                  child: Text(
+                    clip.audioEffects.modulationPreset.label.toUpperCase(),
+                    style: const TextStyle(fontSize: 9, color: AppColors.audioTrack, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              if (clip.smoother.hasActiveSmoothing)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.accentWarm),
+                  ),
+                  child: Text(
+                    clip.smoother.isStabilizationEnabled
+                        ? '🛡️ GIMBAL STABILIZED'
+                        : '🌊 ${clip.smoother.targetFps}FPS SMOOTH',
+                    style: const TextStyle(fontSize: 9, color: AppColors.accentWarm, fontWeight: FontWeight.bold),
+                  ),
+                ),
+            ],
           ),
         ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+      ],
+    );
+  }
+
+  Widget _buildPlaceholderContent(CompositorFrame frame, Clip clip, MediaAsset? asset, {bool isLoading = false}) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF1E272E), Color(0xFF0F141C)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (isLoading)
+              const SizedBox(
+                width: 36,
+                height: 36,
+                child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2.5),
+              )
+            else
               Icon(
                 Icons.play_circle_filled,
                 size: 48,
                 color: AppColors.primaryLight.withOpacity(0.8),
               ),
-              const SizedBox(height: 8),
-              Text(
-                asset?.fileName ?? 'Clip ${clip.id.substring(0, 4)}',
-                style: AppTypography.titleMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Source frame: ${TimecodeFormatter.formatMilliseconds(frame.sourceFrameTimeMs)} (${clip.speed}x)',
-                style: AppTypography.labelSmall.copyWith(color: AppColors.accent),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                alignment: WrapAlignment.center,
-                children: [
-                  if (clip.colorGrading.activeLut != LutPreset.none)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.accent.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        'LUT: ${clip.colorGrading.activeLut.label.split(' ').first}',
-                        style: const TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  if (clip.enhancement.is8kUpscaleEnabled)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [Color(0xFFFF007F), Color(0xFF7928CA)]),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        '8K UHD (7680x4320)',
-                        style: TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                    )
-                  else if (clip.enhancement.hasActiveEnhancements)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.accent.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        '✨ AI ENHANCED',
-                        style: TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  if (clip.audioEffects.isLoudVoiceEnabled)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        '🔥 LOUD VOICE',
-                        style: TextStyle(fontSize: 9, color: AppColors.primaryLight, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  if (clip.audioEffects.modulationPreset != VoiceModulationPreset.natural)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.audioTrack.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        clip.audioEffects.modulationPreset.label.toUpperCase(),
-                        style: const TextStyle(fontSize: 9, color: AppColors.audioTrack, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  if (clip.smoother.hasActiveSmoothing)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.accentWarm.withOpacity(0.25),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: AppColors.accentWarm.withOpacity(0.6)),
-                      ),
-                      child: Text(
-                        clip.smoother.isStabilizationEnabled
-                            ? '🛡️ GIMBAL STABILIZED'
-                            : '🌊 ${clip.smoother.targetFps}FPS SMOOTH',
-                        style: const TextStyle(fontSize: 9, color: AppColors.accentWarm, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
+            const SizedBox(height: 8),
+            Text(
+              asset?.fileName ?? 'Clip ${clip.id.substring(0, 4)}',
+              style: AppTypography.titleMedium,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Source frame: ${TimecodeFormatter.formatMilliseconds(frame.sourceFrameTimeMs)} (${clip.speed}x)',
+              style: AppTypography.labelSmall.copyWith(color: AppColors.accent),
+            ),
+          ],
         ),
       ),
     );

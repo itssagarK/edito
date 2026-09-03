@@ -4,7 +4,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../models/media_asset.dart';
 import '../providers/media_import_provider.dart';
-import 'widgets/asset_thumbnail_tile.dart';
 
 class MediaPickerSheet extends ConsumerStatefulWidget {
   const MediaPickerSheet({super.key});
@@ -24,8 +23,6 @@ class MediaPickerSheet extends ConsumerStatefulWidget {
 
 class _MediaPickerSheetState extends ConsumerState<MediaPickerSheet> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final Set<String> _selectedAssetIds = {};
-  final List<MediaAsset> _sessionAssets = [];
 
   @override
   void initState() {
@@ -45,7 +42,7 @@ class _MediaPickerSheetState extends ConsumerState<MediaPickerSheet> with Single
     final isLoading = importState.isLoading;
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.75,
+      height: MediaQuery.of(context).size.height * 0.78,
       decoration: const BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -116,41 +113,164 @@ class _MediaPickerSheetState extends ConsumerState<MediaPickerSheet> with Single
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildMediaTypeTab(
-                  type: MediaType.video,
-                  icon: Icons.video_library_outlined,
-                  title: 'Select Videos from Device',
-                  subtitle: 'MP4, MOV, MKV, AVI supported',
-                  onPick: () async {
-                    final picked = await ref.read(mediaImportProvider.notifier).importVideos();
-                    if (picked.isNotEmpty && mounted) {
-                      Navigator.pop(context);
-                    }
-                  },
+                // 1. Videos Tab
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceElevated,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: const Icon(Icons.video_library_outlined, size: 48, color: AppColors.primaryLight),
+                      ),
+                      const SizedBox(height: 16),
+                      Text('Import Video to Timeline', style: AppTypography.titleMedium),
+                      const SizedBox(height: 6),
+                      Text('MP4, MOV, MKV, AVI supported', style: AppTypography.bodyMedium),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            final picked = await ref.read(mediaImportProvider.notifier).importVideoFromGallery();
+                            if (picked.isNotEmpty && mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          icon: const Icon(Icons.photo_library, size: 18),
+                          label: const Text('Pick from Gallery / Photos'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final picked = await ref.read(mediaImportProvider.notifier).importVideos();
+                            if (picked.isNotEmpty && mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          icon: const Icon(Icons.folder_open, size: 18),
+                          label: const Text('Browse Files & Downloads'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: TextButton.icon(
+                          onPressed: () async {
+                            final picked = await ref.read(mediaImportProvider.notifier).recordVideoWithCamera();
+                            if (picked.isNotEmpty && mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          icon: const Icon(Icons.videocam, size: 18, color: AppColors.accent),
+                          label: const Text('Record Video with Camera', style: TextStyle(color: AppColors.accent)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                _buildMediaTypeTab(
-                  type: MediaType.audio,
-                  icon: Icons.audio_file_outlined,
-                  title: 'Select Audio from Device',
-                  subtitle: 'MP3, WAV, AAC, M4A supported',
-                  onPick: () async {
-                    final picked = await ref.read(mediaImportProvider.notifier).importAudios();
-                    if (picked.isNotEmpty && mounted) {
-                      Navigator.pop(context);
-                    }
-                  },
+
+                // 2. Audio Tab
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceElevated,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: const Icon(Icons.audio_file_outlined, size: 48, color: AppColors.audioTrack),
+                      ),
+                      const SizedBox(height: 16),
+                      Text('Import Audio or Music', style: AppTypography.titleMedium),
+                      const SizedBox(height: 6),
+                      Text('MP3, WAV, AAC, M4A, FLAC supported', style: AppTypography.bodyMedium),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(backgroundColor: AppColors.audioTrack),
+                          onPressed: () async {
+                            final picked = await ref.read(mediaImportProvider.notifier).importAudios();
+                            if (picked.isNotEmpty && mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          icon: const Icon(Icons.music_note, size: 18),
+                          label: const Text('Browse Device Audio Files'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                _buildMediaTypeTab(
-                  type: MediaType.image,
-                  icon: Icons.image_search_outlined,
-                  title: 'Select Photos from Gallery',
-                  subtitle: 'JPG, PNG, WEBP supported',
-                  onPick: () async {
-                    final picked = await ref.read(mediaImportProvider.notifier).importImages();
-                    if (picked.isNotEmpty && mounted) {
-                      Navigator.pop(context);
-                    }
-                  },
+
+                // 3. Photos Tab
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceElevated,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: const Icon(Icons.image_search_outlined, size: 48, color: AppColors.accent),
+                      ),
+                      const SizedBox(height: 16),
+                      Text('Import Photos & Graphics', style: AppTypography.titleMedium),
+                      const SizedBox(height: 6),
+                      Text('JPG, PNG, WEBP, GIF supported', style: AppTypography.bodyMedium),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            final picked = await ref.read(mediaImportProvider.notifier).importImages();
+                            if (picked.isNotEmpty && mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          icon: const Icon(Icons.photo_library, size: 18),
+                          label: const Text('Pick Photos from Gallery'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final picked = await ref.read(mediaImportProvider.notifier).capturePhotoWithCamera();
+                            if (picked.isNotEmpty && mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          icon: const Icon(Icons.camera_alt, size: 18),
+                          label: const Text('Take Photo with Camera'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -162,46 +282,6 @@ class _MediaPickerSheetState extends ConsumerState<MediaPickerSheet> with Single
               backgroundColor: AppColors.surfaceElevated,
               color: AppColors.primary,
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMediaTypeTab({
-    required MediaType type,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onPick,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceElevated,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Icon(icon, size: 48, color: AppColors.primaryLight),
-          ),
-          const SizedBox(height: 16),
-          Text(title, style: AppTypography.titleMedium),
-          const SizedBox(height: 6),
-          Text(subtitle, style: AppTypography.bodyMedium),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: onPick,
-              icon: const Icon(Icons.folder_open, size: 18),
-              label: const Text('Browse Files'),
-            ),
-          ),
         ],
       ),
     );
