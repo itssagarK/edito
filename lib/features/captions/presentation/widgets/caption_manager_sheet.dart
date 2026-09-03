@@ -4,8 +4,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/timecode_formatter.dart';
 import '../../../../models/project.dart';
-import '../models/caption_line.dart';
-import '../services/auto_caption_service.dart';
+import '../../models/caption_line.dart';
+import '../../services/auto_caption_service.dart';
 
 class CaptionManagerSheet extends StatefulWidget {
   final Project project;
@@ -228,7 +228,7 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with SingleTi
                     children: [
                       Text(
                         'Automatically detect speech timing and populate animated captions across your entire timeline.',
-                        style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                        style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 14),
