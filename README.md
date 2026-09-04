@@ -39,8 +39,8 @@ Get the official compiled release APK and install it directly on any Android dev
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.10/app-release.apk">
-        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.10%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
+      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.11/app-release.apk">
+        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.11%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
       </a>
       <br>
       <sub><b>Target:</b> <code>ARM64-v8a</code>, <code>ARMeabi-v7a</code>, <code>x86_64</code> &nbsp;•&nbsp; <b>Min SDK:</b> Android 7.0+ (API 24+) &nbsp;•&nbsp; <b>Target SDK:</b> Android 16 (API 36)</sub>
@@ -48,7 +48,7 @@ Get the official compiled release APK and install it directly on any Android dev
   </tr>
   <tr>
     <td align="center">
-      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.10"><b>v1.0.10 Production Release on GitHub</b></a>
+      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.11"><b>v1.0.11 Production Release on GitHub</b></a>
     </td>
   </tr>
 </table>
@@ -56,6 +56,13 @@ Get the official compiled release APK and install it directly on any Android dev
 ---
 
 ## 🌟 Key Features
+
+### ⚡ Real-Time Video Rendering & Playback Engine (v1.0.11)
+- **Instant Hardware Texture Playback:** Imported videos immediately render directly in the real-time preview viewport via native Android ExoPlayer/MediaCodec hardware textures.
+- **Dynamic Compositor Evaluation:** Zero-latency evaluation ensures the viewport stays synchronized upon project loading, asset picking, and multi-track trimming.
+- **Anti-Stall Playback Sync:** Eliminates decoding decoder-flush loops during continuous playback, preserving fluid 60 FPS preview with accurate playhead tracking.
+- **Universal Android Media Support:** Seamless support for Android `content://` URIs (Storage Access Framework / Google Photos), local filesystem paths, and network streams.
+- **Secondary Audio Isolation:** Dedicated audio tracks (soundtracks, music, sound effects) play synchronously without interfering with the primary video's native audio stream.
 
 ### 📐 Video Canvas Layouts & Aspect Ratio Framing
 - **Multi-Aspect Ratio Canvas:** Switch instantly between **16:9** (YouTube/Cinema), **9:16** (Reels/TikTok/Shorts), **1:1** (Square Feed), **4:5** (Instagram Portrait), and **21:9** (Ultra-Wide).
