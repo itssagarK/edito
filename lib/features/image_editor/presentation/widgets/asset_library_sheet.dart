@@ -2,8 +2,8 @@ import 'package:flutter/material.dart' hide Clip;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/project.dart';
-import '../models/creative_asset.dart';
-import '../services/asset_library_service.dart';
+import '../../models/creative_asset.dart';
+import '../../services/asset_library_service.dart';
 
 class AssetLibrarySheet extends StatefulWidget {
   final Project project;

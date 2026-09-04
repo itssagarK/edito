@@ -3,7 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
-import '../models/image_overlay_config.dart';
+import '../../models/image_overlay_config.dart';
 
 class ImageOverlaySheet extends StatefulWidget {
   final Clip clip;
