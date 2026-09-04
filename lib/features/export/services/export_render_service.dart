@@ -38,7 +38,7 @@ class ExportRenderService {
   Future<String> startExport(Project project, ExportConfiguration config) async {
     _isCancelled = false;
 
-    final targetPath = config.outputPath.isNotEmpty
+    String targetPath = config.outputPath.isNotEmpty
         ? config.outputPath
         : await generateOutputPath(project.title);
 
