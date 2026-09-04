@@ -39,8 +39,8 @@ Get the official compiled release APK and install it directly on any Android dev
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.11/app-release.apk">
-        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.11%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
+      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.12/app-release.apk">
+        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.12%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
       </a>
       <br>
       <sub><b>Target:</b> <code>ARM64-v8a</code>, <code>ARMeabi-v7a</code>, <code>x86_64</code> &nbsp;•&nbsp; <b>Min SDK:</b> Android 7.0+ (API 24+) &nbsp;•&nbsp; <b>Target SDK:</b> Android 16 (API 36)</sub>
@@ -48,7 +48,7 @@ Get the official compiled release APK and install it directly on any Android dev
   </tr>
   <tr>
     <td align="center">
-      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.11"><b>v1.0.11 Production Release on GitHub</b></a>
+      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.12"><b>v1.0.12 Production Release on GitHub</b></a>
     </td>
   </tr>
 </table>
@@ -56,6 +56,13 @@ Get the official compiled release APK and install it directly on any Android dev
 ---
 
 ## 🌟 Key Features
+
+### 🎬 Android MediaStore Gallery Export & Reliable Rendering (v1.0.12)
+- **Instant Android Gallery Indexing:** Exported videos are immediately written to Android `MediaStore.Video` under the `Movies/Edito/` directory, appearing right away in Google Photos, Samsung Gallery, Xiaomi Gallery, and WhatsApp/Instagram pickers.
+- **Thumbnail & Cover Gallery Saving:** Image Editor graphics, YouTube thumbnails, and video covers export straight to `MediaStore.Images` under `Pictures/Edito/`.
+- **Scoped Storage API 29–36 Compliant:** Native Kotlin platform channel handles atomic MediaStore insertions with `IS_PENDING` flags and system `MediaScannerConnection` broadcasts across modern Android 10–16.
+- **Robust Video Assembly & Playback:** Renders playable, high-bitrate MP4 files with accurate audio streams and companion `.srt` subtitle files, completely eliminating 0-byte or corrupted export containers.
+- **Interactive Export Dialog:** Export success screen displays the exact gallery destination path with an instant one-tap "Save to Gallery" verification button.
 
 ### ⚡ Real-Time Video Rendering & Playback Engine (v1.0.11)
 - **Instant Hardware Texture Playback:** Imported videos immediately render directly in the real-time preview viewport via native Android ExoPlayer/MediaCodec hardware textures.

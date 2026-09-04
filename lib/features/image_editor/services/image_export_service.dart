@@ -11,6 +11,7 @@ import '../../../models/clip.dart';
 import '../../../models/media_asset.dart';
 import '../../../models/project.dart';
 import '../../../models/track.dart';
+import '../../export/services/gallery_saver_service.dart';
 
 class ImageExportService {
   /// Captures a RepaintBoundary widget tree and exports it to a high-res PNG file
@@ -31,28 +32,22 @@ class ImageExportService {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final fileName = '${prefix}_$timestamp.png';
 
-      // 1. Try public Pictures/Edito directory
-      final publicDir = Directory('/storage/emulated/0/Pictures/Edito');
-      try {
-        if (!publicDir.existsSync()) publicDir.createSync(recursive: true);
-        if (publicDir.existsSync()) {
-          final targetPath = p.join(publicDir.path, fileName);
-          await File(targetPath).writeAsBytes(bytes, flush: true);
-          _notifyMediaScanner(targetPath);
-          return targetPath;
-        }
-      } catch (_) {}
-
-      // 2. Fallback to app documents directory
       final docDir = await getApplicationDocumentsDirectory();
       final targetDir = Directory(p.join(docDir.path, 'thumbnails'));
       if (!targetDir.existsSync()) {
         targetDir.createSync(recursive: true);
       }
-      final targetPath = p.join(targetDir.path, fileName);
-      await File(targetPath).writeAsBytes(bytes, flush: true);
-      _notifyMediaScanner(targetPath);
-      return targetPath;
+      final localPath = p.join(targetDir.path, fileName);
+      await File(localPath).writeAsBytes(bytes, flush: true);
+
+      // Save to Android Gallery MediaStore (Pictures/Edito)
+      final galleryResult = await GallerySaverService.saveImageToGallery(
+        localPath,
+        title: prefix,
+        album: 'Edito',
+      );
+
+      return galleryResult.savedPath ?? localPath;
     } catch (e) {
       debugPrint('captureBoundaryToFile error: $e');
       return null;

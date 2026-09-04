@@ -12,6 +12,7 @@ import '../../captions/services/auto_caption_service.dart';
 import '../models/export_preset.dart';
 import '../models/export_status.dart';
 import 'ffmpeg_command_builder.dart';
+import 'gallery_saver_service.dart';
 
 class ExportRenderService {
   final StreamController<ExportProgress> _progressController = StreamController<ExportProgress>.broadcast();
@@ -19,46 +20,12 @@ class ExportRenderService {
 
   bool _isCancelled = false;
 
-  /// Generates the standard output video path, prioritizing public Gallery folders on Android
+  /// Generates the standard working output video path in app documents
   static Future<String> generateOutputPath(String projectTitle) async {
     final sanitizedTitle = projectTitle.replaceAll(RegExp(r'[^\w\s]+'), '').replaceAll(' ', '_');
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final filename = '${sanitizedTitle}_$timestamp.mp4';
 
-    // 1. Try public Movies/Edito directory (automatically shows in Android Gallery)
-    final publicMoviesDir = Directory('/storage/emulated/0/Movies/Edito');
-    try {
-      if (!publicMoviesDir.existsSync()) {
-        publicMoviesDir.createSync(recursive: true);
-      }
-      if (publicMoviesDir.existsSync()) {
-        return p.join(publicMoviesDir.path, filename);
-      }
-    } catch (_) {}
-
-    // 2. Try DCIM/Edito
-    final publicDcimDir = Directory('/storage/emulated/0/DCIM/Edito');
-    try {
-      if (!publicDcimDir.existsSync()) {
-        publicDcimDir.createSync(recursive: true);
-      }
-      if (publicDcimDir.existsSync()) {
-        return p.join(publicDcimDir.path, filename);
-      }
-    } catch (_) {}
-
-    // 3. Try Download/Edito
-    final publicDownloadDir = Directory('/storage/emulated/0/Download/Edito');
-    try {
-      if (!publicDownloadDir.existsSync()) {
-        publicDownloadDir.createSync(recursive: true);
-      }
-      if (publicDownloadDir.existsSync()) {
-        return p.join(publicDownloadDir.path, filename);
-      }
-    } catch (_) {}
-
-    // 4. Fallback to app documents directory
     final docDir = await getApplicationDocumentsDirectory();
     final exportDir = Directory(p.join(docDir.path, 'exports'));
     if (!await exportDir.exists()) {
@@ -105,20 +72,29 @@ class ExportRenderService {
     for (final track in project.tracks) {
       if (track.type == TrackType.video) {
         for (final clip in track.clips) {
-          MediaAsset? asset;
           for (final a in project.assets) {
             if (a.id == clip.assetId) {
-              asset = a;
-              break;
+              if (File(a.path).existsSync() || a.path.startsWith('content://')) {
+                primaryVideoAsset = a;
+                break;
+              }
             }
           }
-          if (asset != null && File(asset.path).existsSync()) {
-            primaryVideoAsset = asset;
+          if (primaryVideoAsset != null) break;
+        }
+      }
+      if (primaryVideoAsset != null) break;
+    }
+
+    if (primaryVideoAsset == null) {
+      for (final a in project.assets) {
+        if (a.type == MediaType.video) {
+          if (File(a.path).existsSync() || a.path.startsWith('content://')) {
+            primaryVideoAsset = a;
             break;
           }
         }
       }
-      if (primaryVideoAsset != null) break;
     }
 
     // 3. Extract and export companion .srt subtitles for all captions and text overlays
@@ -227,26 +203,29 @@ class ExportRenderService {
         }
       }
 
-      // Also copy to public Movies directory if targetPath is in private app storage
-      if (!targetPath.contains('/storage/emulated/0/')) {
-        try {
-          final publicDir = Directory('/storage/emulated/0/Movies/Edito');
-          if (!publicDir.existsSync()) publicDir.createSync(recursive: true);
-          final publicPath = p.join(publicDir.path, p.basename(targetPath));
-          await targetFile.copy(publicPath);
-          _notifyMediaScanner(publicPath);
+      // Automatically save to Android Gallery MediaStore (Movies/Edito)
+      final galleryResult = await GallerySaverService.saveVideoToGallery(
+        targetPath,
+        title: project.title,
+        album: 'Edito',
+      );
 
-          // Also copy srt subtitle file to public directory
-          if (srtPath != null && File(srtPath).existsSync()) {
-            final publicSrtPath = p.join(publicDir.path, p.basename(srtPath));
-            await File(srtPath).copy(publicSrtPath);
-            _notifyMediaScanner(publicSrtPath);
-          }
+      String finalGalleryPath = targetPath;
+      if (galleryResult.isSuccess && galleryResult.savedPath != null) {
+        finalGalleryPath = galleryResult.savedPath!;
+        debugPrint('Rendered video saved to gallery: $finalGalleryPath');
+      }
+
+      // If companion srt was exported, copy it alongside the gallery video if possible
+      if (srtPath != null && File(srtPath).existsSync()) {
+        try {
+          final targetDir = File(finalGalleryPath).parent;
+          final srtName = p.setExtension(p.basename(finalGalleryPath), '.srt');
+          await File(srtPath).copy(p.join(targetDir.path, srtName));
         } catch (_) {}
       }
 
-      // Notify Android MediaScanner so file shows in Photos/Gallery
-      _notifyMediaScanner(targetPath);
+      targetPath = finalGalleryPath;
     } catch (e) {
       debugPrint('Export file creation error: $e');
     }
@@ -264,7 +243,7 @@ class ExportRenderService {
       totalFrames: totalFrames,
       elapsedTimeMs: stopwatch.elapsedMilliseconds,
       etaRemainingMs: 0,
-      statusMessage: 'Render complete! Video saved to gallery.',
+      statusMessage: 'Render complete! Video saved to gallery (Movies/Edito).',
       outputPath: targetPath,
       outputFileSizeMb: double.parse(finalSizeMb.toStringAsFixed(2)),
     ));
