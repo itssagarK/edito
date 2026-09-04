@@ -90,6 +90,11 @@ class TimelineCompositorService {
             isPrimaryVideoAudio: true,
           ));
         }
+
+        // If video clip has an active text overlay, include it in activeOverlays
+        if (activeClip.textOverlay.text.trim().isNotEmpty) {
+          activeOverlays.add(activeClip);
+        }
       } else if (track.type == TrackType.audio) {
         // Audio track: add to audio mixer with isPrimaryVideoAudio = false
         if (!track.isMuted && !activeClip.isMuted) {

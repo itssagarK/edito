@@ -21,6 +21,9 @@ import '../../services/playback_clock_service.dart';
 import '../../services/timeline_compositor_service.dart';
 import '../../services/video_playback_bridge_service.dart';
 import '../../../editor/providers/editor_provider.dart';
+import '../../../image_editor/models/image_overlay_config.dart';
+import '../../../image_editor/models/video_layout_config.dart';
+import '../../../transitions/models/transition_type.dart';
 
 class RealtimePreviewViewport extends ConsumerWidget {
   final int currentPositionMs;
@@ -44,11 +47,17 @@ class RealtimePreviewViewport extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final previewState = ref.watch(previewPlaybackProvider);
     final editorState = ref.watch(editorProvider);
-    final activeRatio = previewState.aspectRatio;
+    final project = editorState.project;
+    final layoutConfig = project?.layoutConfig ?? const VideoLayoutConfig();
+    final layoutPreset = _mapLayoutRatioToPreset(layoutConfig.ratio);
+    final activeRatio = previewState.aspectRatio != AspectRatioPreset.ratio16x9
+        ? previewState.aspectRatio
+        : layoutPreset;
+
     final currentFrame = previewState.currentFrame ??
-        (editorState.project != null
+        (project != null
             ? TimelineCompositorService.evaluateFrame(
-                editorState.project!,
+                project,
                 currentPositionMs,
                 aspectRatio: activeRatio,
               )
@@ -69,6 +78,16 @@ class RealtimePreviewViewport extends ConsumerWidget {
                 initialValue: activeRatio,
                 onSelected: (ratio) {
                   ref.read(previewPlaybackProvider.notifier).setAspectRatio(ratio);
+                  final proj = ref.read(editorProvider).project;
+                  if (proj != null) {
+                    final mapped = _mapPresetToLayoutRatio(ratio);
+                    final updated = proj.copyWith(
+                      layoutConfig: proj.layoutConfig.copyWith(ratio: mapped),
+                      width: mapped.defaultWidth,
+                      height: mapped.defaultHeight,
+                    );
+                    ref.read(editorProvider.notifier).updateProject(updated);
+                  }
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -142,14 +161,28 @@ class RealtimePreviewViewport extends ConsumerWidget {
                 child: AspectRatio(
                   aspectRatio: activeRatio.ratio,
                   child: Container(
-                    color: const Color(0xFF0D0D12),
+                    decoration: _buildCanvasDecoration(layoutConfig),
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        // Visual Frame Content with Real-Time Color Matrix Filter
-                        _buildVisualContent(context, ref, currentFrame),
+                        // 1. Primary Visual Content framed with layout padding & corner radius
+                        Padding(
+                          padding: EdgeInsets.all(layoutConfig.framePadding),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(layoutConfig.cornerRadius),
+                            child: _buildVisualContent(context, ref, currentFrame, layoutConfig: layoutConfig),
+                          ),
+                        ),
 
-                        // Text & Graphic Overlays
+                        // 2. Picture-in-Picture & Creative Asset Badges / Image Overlays
+                        if (currentFrame?.primaryVideoClip != null && currentFrame!.primaryVideoClip!.imageOverlay.isEnabled)
+                          _buildImageOverlayWidget(currentFrame.primaryVideoClip!.imageOverlay),
+
+                        // 3. Live Video Transition In Animation Overlay
+                        if (currentFrame?.primaryVideoClip != null)
+                          _buildTransitionOverlay(currentFrame!.primaryVideoClip!, currentPositionMs),
+
+                        // 4. Text & Graphic Overlays
                         if (currentFrame != null && currentFrame.activeOverlays.isNotEmpty)
                           ...currentFrame.activeOverlays.map((overlayClip) {
                             final offsetMs = currentPositionMs - overlayClip.startTimeMs;
@@ -242,7 +275,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
     );
   }
 
-  Widget _buildVisualContent(BuildContext context, WidgetRef ref, CompositorFrame? frame) {
+  Widget _buildVisualContent(BuildContext context, WidgetRef ref, CompositorFrame? frame, {VideoLayoutConfig? layoutConfig}) {
     if (frame == null || !frame.hasVisualContent) {
       return Center(
         child: Column(
@@ -265,7 +298,11 @@ class RealtimePreviewViewport extends ConsumerWidget {
 
     final clip = frame.primaryVideoClip!;
     final asset = frame.primaryAsset;
-    final colorMatrix = ColorFilterCompilerService.compileColorMatrix(clip.colorGrading);
+    final colorMatrix = ColorFilterCompilerService.compileColorMatrix(
+      clip.colorGrading,
+      chromaKey: clip.chromaKey,
+      enhancement: clip.enhancement,
+    );
 
     final bool isPlayable = asset != null && VideoPlaybackBridgeService.isPlayablePath(asset.path);
 
@@ -407,6 +444,45 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: const TextStyle(fontSize: 9, color: AppColors.accentWarm, fontWeight: FontWeight.bold),
                   ),
                 ),
+              if (clip.chromaKey.isEnabled)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF00FF66)),
+                  ),
+                  child: Text(
+                    '🟢 CHROMA KEY (${((clip.chromaKey.keyColorValue >> 8) & 0xFF > 120) ? "GREEN" : "BLUE"} SCREEN)',
+                    style: const TextStyle(fontSize: 9, color: Color(0xFF00FF66), fontWeight: FontWeight.bold),
+                  ),
+                ),
+              if (clip.transitionIn.isEnabled)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.primaryLight),
+                  ),
+                  child: Text(
+                    '🔀 ${clip.transitionIn.type.label.toUpperCase()}',
+                    style: const TextStyle(fontSize: 9, color: AppColors.primaryLight, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              if (clip.imageOverlay.isEnabled)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.accent),
+                  ),
+                  child: Text(
+                    clip.imageOverlay.isPiP ? '🖼️ PiP ACTIVE' : '🏷️ BADGE ACTIVE',
+                    style: const TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
+                  ),
+                ),
             ],
           ),
         ),
@@ -508,6 +584,227 @@ class RealtimePreviewViewport extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildImageOverlayWidget(ImageOverlayConfig config) {
+    if (!config.isEnabled) return const SizedBox.shrink();
+
+    Widget imageContent;
+    if (config.imagePath.trim().isNotEmpty) {
+      if (config.imagePath.startsWith('http://') || config.imagePath.startsWith('https://')) {
+        imageContent = Image.network(config.imagePath, fit: BoxFit.contain);
+      } else if (config.imagePath.startsWith('assets/') || config.imagePath.startsWith('packages/')) {
+        imageContent = Image.asset(config.imagePath, fit: BoxFit.contain);
+      } else if (File(config.imagePath).existsSync()) {
+        imageContent = Image.file(File(config.imagePath), fit: BoxFit.contain);
+      } else {
+        imageContent = Center(
+          child: Text(config.assetLabel.isNotEmpty ? config.assetLabel : 'Overlay',
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13)),
+        );
+      }
+    } else if (config.assetLabel.trim().isNotEmpty) {
+      // Creative Asset Badge / Sticker
+      return Align(
+        alignment: Alignment(
+          (config.positionX * 2.0) - 1.0,
+          (config.positionY * 2.0) - 1.0,
+        ),
+        child: Transform.scale(
+          scale: config.scale.clamp(0.2, 3.0),
+          child: Transform.rotate(
+            angle: config.rotation * (3.14159 / 180.0),
+            child: Opacity(
+              opacity: config.opacity.clamp(0.0, 1.0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(config.cornerRadius),
+                  border: Border.all(color: Color(config.borderColor), width: 1.8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(config.borderColor).withOpacity(0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  config.assetLabel,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    } else {
+      return const SizedBox.shrink();
+    }
+
+    Widget framedContent = imageContent;
+    if (config.isPiP) {
+      framedContent = Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(config.cornerRadius),
+          border: Border.all(color: Color(config.borderColor), width: 2.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.55),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(config.cornerRadius > 2 ? config.cornerRadius - 2 : 0),
+          child: imageContent,
+        ),
+      );
+    } else if (config.cornerRadius > 0) {
+      framedContent = ClipRRect(
+        borderRadius: BorderRadius.circular(config.cornerRadius),
+        child: imageContent,
+      );
+    }
+
+    return Align(
+      alignment: Alignment(
+        (config.positionX * 2.0) - 1.0,
+        (config.positionY * 2.0) - 1.0,
+      ),
+      child: Transform.scale(
+        scale: config.scale.clamp(0.2, 3.0),
+        child: Transform.rotate(
+          angle: config.rotation * (3.14159 / 180.0),
+          child: Opacity(
+            opacity: config.opacity.clamp(0.0, 1.0),
+            child: SizedBox(
+              width: config.isPiP ? 130 : 100,
+              height: config.isPiP ? 90 : 70,
+              child: framedContent,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTransitionOverlay(Clip clip, int currentPositionMs) {
+    if (!clip.transitionIn.isEnabled) return const SizedBox.shrink();
+
+    final transIn = clip.transitionIn;
+    final startMs = clip.startTimeMs;
+    final durationMs = transIn.durationMs > 0 ? transIn.durationMs : 500;
+    final elapsedMs = currentPositionMs - startMs;
+
+    if (elapsedMs < 0 || elapsedMs > durationMs) {
+      return const SizedBox.shrink();
+    }
+
+    final progress = (elapsedMs / durationMs).clamp(0.0, 1.0);
+
+    switch (transIn.type) {
+      case TransitionType.fadeBlack:
+        return IgnorePointer(
+          child: Container(
+            color: Colors.black.withOpacity(1.0 - progress),
+          ),
+        );
+      case TransitionType.fadeWhite:
+        return IgnorePointer(
+          child: Container(
+            color: Colors.white.withOpacity(1.0 - progress),
+          ),
+        );
+      case TransitionType.wipeLeft:
+        return IgnorePointer(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: (1.0 - progress),
+              heightFactor: 1.0,
+              child: Container(color: Colors.black),
+            ),
+          ),
+        );
+      case TransitionType.wipeRight:
+        return IgnorePointer(
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: FractionallySizedBox(
+              widthFactor: (1.0 - progress),
+              heightFactor: 1.0,
+              child: Container(color: Colors.black),
+            ),
+          ),
+        );
+      case TransitionType.crossDissolve:
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  static Decoration _buildCanvasDecoration(VideoLayoutConfig layout) {
+    switch (layout.backgroundMode) {
+      case LayoutBackgroundMode.blur:
+        return const BoxDecoration(
+          color: Color(0xFF141419),
+          gradient: LinearGradient(
+            colors: [Color(0xFF232526), Color(0xFF0F1012)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        );
+      case LayoutBackgroundMode.gradient:
+        return const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF4A00E0), Color(0xFF8E2DE2)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        );
+      case LayoutBackgroundMode.solidColor:
+        return BoxDecoration(
+          color: Color(layout.backgroundColor),
+        );
+    }
+  }
+
+  static AspectRatioPreset _mapLayoutRatioToPreset(VideoLayoutRatio ratio) {
+    switch (ratio) {
+      case VideoLayoutRatio.ratio16_9:
+        return AspectRatioPreset.ratio16x9;
+      case VideoLayoutRatio.ratio9_16:
+        return AspectRatioPreset.ratio9x16;
+      case VideoLayoutRatio.ratio1_1:
+        return AspectRatioPreset.ratio1x1;
+      case VideoLayoutRatio.ratio4_5:
+        return AspectRatioPreset.ratio4x5;
+      case VideoLayoutRatio.ratio21_9:
+        return AspectRatioPreset.ratio21x9;
+    }
+  }
+
+  static VideoLayoutRatio _mapPresetToLayoutRatio(AspectRatioPreset preset) {
+    switch (preset) {
+      case AspectRatioPreset.ratio16_9:
+        return VideoLayoutRatio.ratio16_9;
+      case AspectRatioPreset.ratio9x16:
+        return VideoLayoutRatio.ratio9_16;
+      case AspectRatioPreset.ratio1x1:
+        return VideoLayoutRatio.ratio1_1;
+      case AspectRatioPreset.ratio4_5:
+        return VideoLayoutRatio.ratio4_5;
+      case AspectRatioPreset.ratio21_9:
+        return VideoLayoutRatio.ratio21_9;
+    }
   }
 }
 

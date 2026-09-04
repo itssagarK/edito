@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import '../../chroma/models/chroma_key_config.dart';
+import '../../enhancement/models/video_enhancement_config.dart';
 import '../models/color_grading_config.dart';
 
 class ColorFilterCompilerService {
   /// Compiles ColorGradingConfig into a 4x5 ColorFilter matrix for instant Flutter GPU rendering
-  static List<double> compileColorMatrix(ColorGradingConfig config) {
+  static List<double> compileColorMatrix(
+    ColorGradingConfig config, {
+    ChromaKeyConfig? chromaKey,
+    VideoEnhancementConfig? enhancement,
+  }) {
     // Base Identity Matrix
     // [ R, 0, 0, 0, rOffset,
     //   0, G, 0, 0, gOffset,
@@ -74,22 +80,47 @@ class ColorFilterCompilerService {
         break;
     }
 
-    final finalContrast = contrast * lutContrast;
+    // 8K AI Enhancement detail boost
+    final enhanceBoost = (enhancement != null && enhancement.hasActiveEnhancements)
+        ? (enhancement.is8kUpscaleEnabled ? 0.12 : (enhancement.clarity - 1.0) * 0.15)
+        : 0.0;
+
+    final finalContrast = (contrast * lutContrast + enhanceBoost).clamp(0.4, 2.5);
     final effectiveSat = saturation * lutSat;
     final effInvSat = 1.0 - effectiveSat;
 
+    // Chroma Key color suppression
+    double chromaGScale = 1.0;
+    double chromaBScale = 1.0;
+    double chromaGOffset = 0.0;
+    double chromaBOffset = 0.0;
+
+    if (chromaKey != null && chromaKey.isEnabled) {
+      final keyVal = chromaKey.keyColorValue;
+      final isGreen = ((keyVal >> 8) & 0xFF) > 120 && ((keyVal >> 16) & 0xFF) < 120;
+      final isBlue = (keyVal & 0xFF) > 120 && ((keyVal >> 8) & 0xFF) < 120;
+
+      if (isGreen) {
+        chromaGScale = (1.0 - (chromaKey.similarity * 1.5)).clamp(0.08, 0.90);
+        chromaGOffset = -35.0 * chromaKey.similarity;
+      } else if (isBlue) {
+        chromaBScale = (1.0 - (chromaKey.similarity * 1.5)).clamp(0.08, 0.90);
+        chromaBOffset = -35.0 * chromaKey.similarity;
+      }
+    }
+
     final mR = finalContrast * (effInvSat * lr + effectiveSat);
-    final mG = finalContrast * (effInvSat * lg);
-    final mB = finalContrast * (effInvSat * lb);
+    final mG = finalContrast * (effInvSat * lg) * chromaGScale;
+    final mB = finalContrast * (effInvSat * lb) * chromaBScale;
 
     final totalROffset = brightnessOffset + rTemp + rTint + lutR;
-    final totalGOffset = brightnessOffset + gTint + lutG;
-    final totalBOffset = brightnessOffset + bTemp + bTint + lutB;
+    final totalGOffset = brightnessOffset + gTint + lutG + chromaGOffset;
+    final totalBOffset = brightnessOffset + bTemp + bTint + lutB + chromaBOffset;
 
     return [
       mR, mG, mB, 0, totalROffset,
-      mR, finalContrast * (effInvSat * lg + effectiveSat), mB, 0, totalGOffset,
-      mR, mG, finalContrast * (effInvSat * lb + effectiveSat), 0, totalBOffset,
+      mR, finalContrast * (effInvSat * lg + effectiveSat) * chromaGScale, mB, 0, totalGOffset,
+      mR, mG, finalContrast * (effInvSat * lb + effectiveSat) * chromaBScale, 0, totalBOffset,
       0, 0, 0, 1, 0,
     ];
   }

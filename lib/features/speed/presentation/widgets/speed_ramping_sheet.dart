@@ -47,9 +47,15 @@ class _SpeedRampingSheetState extends State<SpeedRampingSheet> with SingleTicker
   }
 
   void _applyChange() {
+    final sourceSpan = (widget.clip.sourceOutMs - widget.clip.sourceInMs).abs();
+    final newDuration = sourceSpan > 0 && _constantSpeed > 0
+        ? (sourceSpan / _constantSpeed).round().clamp(100, 3600000)
+        : widget.clip.durationMs;
+
     final updated = widget.clip.copyWith(
       speed: _constantSpeed,
       speedCurve: _speedCurve,
+      durationMs: newDuration,
     );
     widget.onSave(updated);
   }

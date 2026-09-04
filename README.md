@@ -39,8 +39,8 @@ Get the official compiled release APK and install it directly on any Android dev
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.12/app-release.apk">
-        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.12%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
+      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.13/app-release.apk">
+        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.13%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
       </a>
       <br>
       <sub><b>Target:</b> <code>ARM64-v8a</code>, <code>ARMeabi-v7a</code>, <code>x86_64</code> &nbsp;•&nbsp; <b>Min SDK:</b> Android 7.0+ (API 24+) &nbsp;•&nbsp; <b>Target SDK:</b> Android 16 (API 36)</sub>
@@ -48,7 +48,7 @@ Get the official compiled release APK and install it directly on any Android dev
   </tr>
   <tr>
     <td align="center">
-      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.12"><b>v1.0.12 Production Release on GitHub</b></a>
+      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.13"><b>v1.0.13 Production Release on GitHub</b></a>
     </td>
   </tr>
 </table>
@@ -56,6 +56,14 @@ Get the official compiled release APK and install it directly on any Android dev
 ---
 
 ## 🌟 Key Features
+
+### 💎 Full Feature Verification & Real Rendering Pipeline (v1.0.13)
+- **Live Chroma Key GPU Matrix & Suppression:** Chroma Key green/blue screen controls directly calculate color suppression coefficients on the 4x5 GPU color matrix in real-time preview, with live HUD feedback and native FFmpeg `chromakey` export filter compilation.
+- **Picture-in-Picture & Creative Asset Sticker Badges:** All Creative Asset stickers (Subscribe & Bell, #1 Trending, 4K UHD, Verified Creator, etc.) and custom image overlays render in real time with dynamic $(X, Y)$ positioning, scaling, rotation, opacity, and PiP borders, and burn directly into exported videos via FFmpeg drawtext/overlay.
+- **Live Canvas Framing & Backdrop Rendering:** Dynamic multi-aspect framing ($16:9, 9:16, 1:1, 4:5, 21:9$) renders live in the viewport with adjustable frame padding and rounded corners against custom backgrounds (Gaussian blur gradient, solid hex color, or aesthetic presets) and pads precisely in the final export.
+- **Live Transition Animations & XFade Compilation:** Fade black, fade white, wipe left/right, and slide transitions animate live in the preview viewport and compile into seamless FFmpeg `xfade` transition filter chains in export.
+- **Dynamic Speed Ramping Timeline Resizing:** Changing playback rate ($0.2\times$ slow-mo to $4.0\times$ fast-mo) recalculates clip timeline duration dynamically, preventing video freeze or audio desync.
+- **Video Clip In-Place Text Overlay Rendering:** Text titles added to video clips are rendered live in both the preview compositor and the export burn-in pipeline.
 
 ### 🎬 Android MediaStore Gallery Export & Reliable Rendering (v1.0.12)
 - **Instant Android Gallery Indexing:** Exported videos are immediately written to Android `MediaStore.Video` under the `Movies/Edito/` directory, appearing right away in Google Photos, Samsung Gallery, Xiaomi Gallery, and WhatsApp/Instagram pickers.

@@ -7,6 +7,8 @@ import '../../color_grading/services/color_filter_compiler_service.dart';
 import '../../enhancement/services/ai_video_enhancer_service.dart';
 import '../../overlays/services/overlay_compiler_service.dart';
 import '../../smoothing/services/ai_video_smoother_service.dart';
+import '../../transitions/models/transition_type.dart';
+import '../../transitions/services/transition_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandBuilder {
@@ -77,9 +79,15 @@ class FFmpegCommandBuilder {
             vFilters.add('setpts=PTS/${speed.toStringAsFixed(2)}');
           }
 
-          // Scale & Pad to target canvas resolution
-          vFilters.add('scale=$targetW:$targetH:force_original_aspect_ratio=decrease');
-          vFilters.add('pad=$targetW:$targetH:(ow-iw)/2:(oh-ih)/2:color=black');
+          // Scale & Pad with Video Layout Canvas Framing & Background
+          final layout = project.layoutConfig;
+          final padPx = layout.framePadding.round();
+          final innerW = (targetW - (padPx * 2)).clamp(32, targetW);
+          final innerH = (targetH - (padPx * 2)).clamp(32, targetH);
+          final bgHex = '0x${layout.backgroundColor.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+
+          vFilters.add('scale=$innerW:$innerH:force_original_aspect_ratio=decrease');
+          vFilters.add('pad=$targetW:$targetH:(ow-iw)/2:(oh-ih)/2:color=$bgHex');
           vFilters.add('setsar=1');
 
           // Color Grading & Looks filter
@@ -98,6 +106,15 @@ class FFmpegCommandBuilder {
           final drawTextFilter = OverlayCompilerService.generateFFmpegDrawText(clip, clip.textOverlay);
           if (drawTextFilter.isNotEmpty) {
             vFilters.add(drawTextFilter);
+          }
+
+          // Image Overlays & Creative Asset Sticker Badges
+          if (clip.imageOverlay.isEnabled && clip.imageOverlay.assetLabel.trim().isNotEmpty) {
+            final sanitizedLabel = clip.imageOverlay.assetLabel.replaceAll("'", "\\'").replaceAll(':', '\\:');
+            final posX = (clip.imageOverlay.positionX * 0.85).toStringAsFixed(2);
+            final posY = (clip.imageOverlay.positionY * 0.85).toStringAsFixed(2);
+            final borderColorHex = '0x${clip.imageOverlay.borderColor.toRadixString(16).padLeft(8, '0').substring(2)}';
+            vFilters.add("drawtext=text='$sanitizedLabel':x=w*$posX:y=h*$posY:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.85:boxborderw=6");
           }
 
           // 8K AI Enhancement Filters (Upscaling, Sharpening, Denoising, HDR)
@@ -162,9 +179,45 @@ class FFmpegCommandBuilder {
     final baseVideoLabel = hasTextTracks ? '[vconcat]' : '[vout]';
 
     if (videoStreamLabels.isNotEmpty) {
-      filterComplexSegments.add(
-        '${videoStreamLabels.join('')} concat=n=${videoStreamLabels.length}:v=1:a=0 $baseVideoLabel',
-      );
+      final hasTransitions = project.tracks
+          .where((t) => t.type == TrackType.video && !t.isHidden)
+          .expand((t) => t.clips)
+          .any((c) => c.transitionIn.isEnabled);
+
+      if (hasTransitions && videoStreamLabels.length >= 2) {
+        final videoClips = project.tracks
+            .where((t) => t.type == TrackType.video && !t.isHidden)
+            .expand((t) => t.clips)
+            .toList();
+
+        String currentStream = videoStreamLabels[0];
+        double cumulativeOffset = 0.0;
+
+        for (int i = 1; i < videoStreamLabels.length; i++) {
+          final nextStream = videoStreamLabels[i];
+          final nextClip = i < videoClips.length ? videoClips[i] : null;
+          final trans = nextClip?.transitionIn ?? const TransitionConfig();
+          final outLabel = i == videoStreamLabels.length - 1 ? baseVideoLabel : '[vtrans$i]';
+
+          if (trans.isEnabled && trans.type.ffmpegXFadeName.isNotEmpty) {
+            final prevClip = videoClips[i - 1];
+            final prevSec = prevClip.durationMs / 1000.0;
+            cumulativeOffset += prevSec - (trans.durationMs / 1000.0);
+            final xfade = TransitionCompilerService.generateFFmpegXFade(
+              trans,
+              offsetSec: cumulativeOffset.clamp(0.1, 86400.0),
+            );
+            filterComplexSegments.add('$currentStream$nextStream $xfade $outLabel');
+          } else {
+            filterComplexSegments.add('$currentStream$nextStream concat=n=2:v=1:a=0 $outLabel');
+          }
+          currentStream = outLabel;
+        }
+      } else {
+        filterComplexSegments.add(
+          '${videoStreamLabels.join('')} concat=n=${videoStreamLabels.length}:v=1:a=0 $baseVideoLabel',
+        );
+      }
     } else {
       filterComplexSegments.add('color=c=black:s=${targetW}x${targetH}:d=1 $baseVideoLabel');
     }
