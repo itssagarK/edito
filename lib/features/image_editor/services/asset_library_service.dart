@@ -234,7 +234,6 @@ class AssetLibraryService {
       fontSize: 22,
       textColor: 0xFFFFFFFF,
       backgroundColor: asset.primaryColor.withOpacity(0.85).toInt(),
-      isBold: true,
     );
 
     // Create a new overlay clip or apply to clip

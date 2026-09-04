@@ -97,6 +97,18 @@ class Project extends Equatable {
     ).recalculateDuration();
   }
 
+  /// Updates an existing track
+  Project updateTrack(Track updatedTrack) {
+    final updatedTracks = tracks.map((track) {
+      return track.id == updatedTrack.id ? updatedTrack : track;
+    }).toList();
+
+    return copyWith(
+      tracks: updatedTracks,
+      updatedAt: DateTime.now(),
+    ).recalculateDuration();
+  }
+
   /// Adds a new track to the project
   Project addTrack(Track track) {
     return copyWith(
