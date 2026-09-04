@@ -794,15 +794,15 @@ class RealtimePreviewViewport extends ConsumerWidget {
 
   static VideoLayoutRatio _mapPresetToLayoutRatio(AspectRatioPreset preset) {
     switch (preset) {
-      case AspectRatioPreset.ratio16_9:
+      case AspectRatioPreset.ratio16x9:
         return VideoLayoutRatio.ratio16_9;
       case AspectRatioPreset.ratio9x16:
         return VideoLayoutRatio.ratio9_16;
       case AspectRatioPreset.ratio1x1:
         return VideoLayoutRatio.ratio1_1;
-      case AspectRatioPreset.ratio4_5:
+      case AspectRatioPreset.ratio4x5:
         return VideoLayoutRatio.ratio4_5;
-      case AspectRatioPreset.ratio21_9:
+      case AspectRatioPreset.ratio21x9:
         return VideoLayoutRatio.ratio21_9;
     }
   }
