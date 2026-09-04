@@ -39,16 +39,16 @@ Get the official compiled release APK and install it directly on any Android dev
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.0/app-release.apk">
-        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.0%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
+      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.10/app-release.apk">
+        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.10%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
       </a>
       <br>
-      <sub><b>Target:</b> <code>ARM64-v8a</code>, <code>ARMeabi-v7a</code>, <code>x86_64</code> &nbsp;•&nbsp; <b>Min SDK:</b> Android 7.0+ (API 24+)</sub>
+      <sub><b>Target:</b> <code>ARM64-v8a</code>, <code>ARMeabi-v7a</code>, <code>x86_64</code> &nbsp;•&nbsp; <b>Min SDK:</b> Android 7.0+ (API 24+) &nbsp;•&nbsp; <b>Target SDK:</b> Android 16 (API 36)</sub>
     </td>
   </tr>
   <tr>
     <td align="center">
-      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.0"><b>v1.0.0 Production Release on GitHub</b></a>
+      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.10"><b>v1.0.10 Production Release on GitHub</b></a>
     </td>
   </tr>
 </table>
@@ -56,6 +56,33 @@ Get the official compiled release APK and install it directly on any Android dev
 ---
 
 ## 🌟 Key Features
+
+### 📐 Video Canvas Layouts & Aspect Ratio Framing
+- **Multi-Aspect Ratio Canvas:** Switch instantly between **16:9** (YouTube/Cinema), **9:16** (Reels/TikTok/Shorts), **1:1** (Square Feed), **4:5** (Instagram Portrait), and **21:9** (Ultra-Wide).
+- **Gaussian Video Blur Backdrop:** Automatically generates a smooth, blurred fill of the video footage itself behind vertical or square aspect frames.
+- **Floating Border Padding & Corner Curvature:** Customize frame inset ($0–36\text{ px}$) and corner radius ($0–32\text{ px}$) for sleek modern mobile aesthetics.
+
+### 🖼️ Picture-in-Picture (PiP) & Image Overlays
+- **Interactive Overlay Layer:** Pin photos, graphics, stickers, or second video clips anywhere over the primary video.
+- **Precise Transform Sliders:** Scale ($0.2\times–2.5\times$), $X/Y$ coordinates, rotation ($0°–360°$), and layer opacity ($0–100\%$).
+- **PiP Window Framing:** Toggle rounded frame borders, contrast outline, and drop shadows with one tap.
+
+### 🎨 Built-in Creative Assets Catalog
+- **Badges & Call-to-Actions:** Subscribe & Bell notification, Thumbs Up & Share, #1 On Trending, 4K UHD 60FPS, Verified Creator tick, and Live indicator.
+- **Layout Frames & Borders:** Cinematic 2.35:1 Anamorphic letterbox, Modern Rounded Border, and Vintage Polaroid Photo Frame.
+- **Lower Thirds & Text Banners:** Breaking News alert banner, Social Media Handle card, and Chapter Segment card.
+- **Canvas Backgrounds:** Dark Cosmic Nebula, Cyberpunk Neon Grid, and Minimal Studio Charcoal.
+
+### 📸 Thumbnail & Cover Designer Studio
+- **On-Canvas Design Studio:** Capture any frame from the video or import graphics to design high-impact YouTube/TikTok thumbnails.
+- **Viral Headline Typography:** Bold headline text with custom drop shadows, color swatches, and background pill containers.
+- **Cinematic Color Looks:** Instant one-tap looks (*Vibrant Pop*, *Cinematic Teal*, *Cyber Neon*, *Golden Hour*, *Noir B&W*) and vignette darkening.
+- **One-Tap Actions:** Save as official project cover, add into video timeline as a clip, or export high-res PNG to device gallery.
+
+### 🟩 Chroma Key Green / Blue Screen Removal
+- **One-Tap Color Presets:** Dedicated green screen (`#00FF00`), blue screen (`#0000FF`), cyan, and magenta keyers.
+- **Fine-Tuning Controls:** Similarity threshold, edge feather blend smoothness, and color spill suppression.
+- **FFmpeg Transcode Integration:** Directly compiles `chromakey=color=$hex:similarity=$sim:blend=$smooth` into export filter graph.
 
 ### 🎞️ Multi-Track Non-Linear Timeline
 - **Smooth Pinch-to-Zoom:** Zoom seamlessly from high-level bird's-eye view ($0.2\times$) to frame-accurate sample level ($5.0\times$).
@@ -65,45 +92,29 @@ Get the official compiled release APK and install it directly on any Android dev
 
 ### ⚡ Real-Time Preview & Compositor
 - **Synchronized 60 FPS Engine:** Ultra-low latency playback clock driving continuous playhead synchronization.
-- **Multi-Aspect Ratio Presets:** Switch instantly between **16:9** (YouTube/Cinema), **9:16** (Reels/TikTok/Shorts), **1:1** (Square), **4:5** (Instagram Portrait), and **21:9** (Ultra-Wide).
 - **Broadcast Safe Guides:** $90\%$ Action Safe and $80\%$ Title Safe broadcast overlay grids with center crosshair.
+- **Real-Time PCM Audio Waveforms:** Timeline waveform visualizer supporting deterministic audio peaks.
 
-### 🎨 Pro Color Grading & 3D LUT Pipeline
+### 🎨 Color Grading & Looks
 - **Primary Adjustments:** Exposure ($-2.0$ to $+2.0\text{ EV}$), Contrast, Saturation, Brightness, Highlights, Shadows, Vignette.
 - **Color Temperature & Tint:** Kelvin temperature shift (Cool Blue $\leftrightarrow$ Warm Amber) and Tint (Green $\leftrightarrow$ Magenta).
-- **8-Channel Selective HSL:** Dedicated Hue, Saturation, and Luminance sliders for Red, Orange, Yellow, Green, Cyan, Blue, Purple, and Magenta.
+- **8-Channel Selective HSL:** Dedicated Hue, Saturation, and Luminance sliders for 8 individual color channels.
 - **Master RGB Tone Curves:** Interactive 4-channel spline curve editor with draggable touch control points.
-- **Cinematic 3D LUT Presets:** Built-in looks with adjustable $0–100\%$ blend intensity:
-  - *Teal & Orange (Blockbuster Cinema)*
-  - *Vintage Kodak 500T (Retro Analog)*
-  - *Moody Cyberpunk (Neon Glow)*
-  - *Golden Hour (Sunset Warmth)*
-  - *Film Noir (High-Contrast B&W)*
 
-### 🎙️ On-Device AI Voice Enhancement & Audio Tools
-- **AI Neural Speech Cleaner:** Removes background hums, traffic noise, room reverberation, and wind noise on-device.
-- **Voice Clarity Boost:** Enhances speech presence, crispness, and vocal articulation.
-- **Smart Auto-Ducking:** Automatically attenuates background soundtrack volume when dialogue is detected on foreground tracks.
-- **Volume Booster:** Amplify quiet audio up to $200\%$ with soft clipping protection.
-- **Waveform Visualizer:** Timeline audio amplitude waveform rendering.
-- **A/B Comparison:** Instant toggle to preview original vs. enhanced audio.
-
-### ✨ Transitions & Speed Ramping
-- **GPU Transitions:** *Cross Dissolve*, *Fade to Black*, *Fade to White*, *Wipe Left*, *Wipe Right*, *Slide Up*, *Slide Down*, and *Zoom In* with custom durations ($0.2\text{s}–2.0\text{s}$).
-- **Bezier Speed Ramping Curves:** Dynamic curve presets (*Montage Ramp*, *Hero Slow-Mo*, *Bullet Time*, *Jump Cut Rush*) and constant multipliers ($0.1\times–10\times$).
-- **Audio Pitch Correction:** Preserves natural voice pitch (`atempo` / `rubberband`) during slow-mo and fast-motion.
+### 🎙️ Audio Enhancement & Safeguards
+- **Brickwall Audio Limiter Safeguard:** Peak envelope ceiling constrained to $-0.5\text{ dB}$ (`alimiter=limit=0.95:attack=5:release=50:asc=1`) to eliminate digital clipping distortion.
+- **Speech Denoising & Presence Boost:** Removes background hums and room rumble while boosting vocal articulation.
+- **Smart Auto-Ducking:** Automatically attenuates background soundtrack volume when dialogue is detected.
 
 ### ✍️ Motion Typography & Keyframe Overlays
 - **Rich Text Styling:** Font family picker (*Inter*, *Bebas Neue*, *JetBrains Mono*, *Montserrat*), custom sizing, colors, outlines, and background plates.
-- **Text Motion Animations:** *Typewriter Machine*, *Smooth Fade In*, *Slide Up*, *Pop & Scale*, and *Golden Shimmer*.
-- **Keyframe Motion Paths:** Multi-point keyframing for position $(X, Y)$, scale, rotation, and opacity animation.
+- **Keyframe Motion Paths:** Multi-point keyframing for position $(X, Y)$, scale, and opacity animation interpolated dynamically across clip duration.
 
-### 🚀 Deterministic FFmpeg 4K Export Pipeline
+### 🚀 Deterministic FFmpeg Export Pipeline
+- **Burn-in Subtitles & Text:** Seamlessly burns text titles and captions into exported video stream via timed `drawtext` filters.
+- **Companion `.srt` Subtitle Generation:** Synchronized `.srt` subtitle file exported automatically into `/storage/emulated/0/Movies/Edito/`.
+- **Export Render Manifests:** Writes metadata manifests (`.manifest.json`) logging duration, codec, bitrate, quality, and complete FFmpeg command string.
 - **Multi-Resolution:** **4K UHD** ($3840\times2160$), **1080p FHD** ($1920\times1080$), and **720p HD** ($1280\times720$).
-- **Custom Framerate:** $24\text{ FPS}$ (Cinematic Film), $30\text{ FPS}$ (Standard Video), $60\text{ FPS}$ (High Motion).
-- **Modern Codecs:** Universal **H.264** (`libx264`) and High-Efficiency **H.265 / HEVC** (`libx265`).
-- **Live Background Render Dialog:** Frame count indicator, percentage progress bar, and estimated time remaining (ETA).
-- **Direct Save & Share:** One-tap export to device gallery and native Android share sheet.
 
 ### ⏪ Global Undo / Redo Engine
 - **Command-Pattern History:** Stores up to 50 levels of historical project snapshots with LRU memory management.
