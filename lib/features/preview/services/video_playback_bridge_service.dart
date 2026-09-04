@@ -11,6 +11,9 @@ class VideoPlaybackBridgeService {
   String? _currentVideoPath;
   String? _currentAudioPath;
 
+  bool _isInitializingVideo = false;
+  bool _isInitializingAudio = false;
+
   final ValueNotifier<VideoPlayerController?> activeVideoController = ValueNotifier(null);
   final ValueNotifier<bool> isVideoReady = ValueNotifier(false);
 
@@ -18,6 +21,32 @@ class VideoPlaybackBridgeService {
 
   VideoPlayerController? get videoController => _videoController;
   VideoPlayerController? get audioController => _audioController;
+
+  /// Helper to create a VideoPlayerController from path or URI
+  static VideoPlayerController createControllerForPath(String path) {
+    if (path.startsWith('content://')) {
+      return VideoPlayerController.contentUri(Uri.parse(path));
+    } else if (path.startsWith('http://') || path.startsWith('https://')) {
+      return VideoPlayerController.networkUrl(Uri.parse(path));
+    } else {
+      return VideoPlayerController.file(File(path));
+    }
+  }
+
+  /// Helper to test if a file or URI path is valid and playable
+  static bool isPlayablePath(String? path) {
+    if (path == null || path.isEmpty) return false;
+    if (path.startsWith('content://') ||
+        path.startsWith('http://') ||
+        path.startsWith('https://')) {
+      return true;
+    }
+    try {
+      return File(path).existsSync();
+    } catch (_) {
+      return false;
+    }
+  }
 
   /// Synchronizes video and audio playback controllers with current timeline frame
   Future<void> syncPlayback({
@@ -30,7 +59,7 @@ class VideoPlaybackBridgeService {
     // 1. Sync Primary Video Clip
     await _syncVideoClip(frame, isPlaying, timestampMs);
 
-    // 2. Sync Primary Audio Clip
+    // 2. Sync Dedicated Secondary Audio Clip (Music / SFX only)
     await _syncAudioClip(frame, isPlaying, timestampMs);
   }
 
@@ -49,35 +78,52 @@ class VideoPlaybackBridgeService {
       return;
     }
 
-    final videoFile = File(asset.path);
-    final fileExists = videoFile.existsSync();
-
-    if (!fileExists) {
-      // Asset is sample placeholder, no local file to play
+    if (!isPlayablePath(asset.path)) {
+      // Asset is sample placeholder or missing, no local hardware texture
       activeVideoController.value = null;
       isVideoReady.value = false;
       return;
     }
 
-    // If video path changed, initialize new controller
+    // If video path changed or controller is null, initialize new controller
     if (_currentVideoPath != asset.path || _videoController == null) {
+      if (_isInitializingVideo) return; // Prevent concurrent re-entry
+      _isInitializingVideo = true;
       _currentVideoPath = asset.path;
       isVideoReady.value = false;
 
       try {
-        await _videoController?.dispose();
-        _videoController = VideoPlayerController.file(videoFile);
-        await _videoController!.initialize();
+        final oldController = _videoController;
+        _videoController = null;
+        activeVideoController.value = null;
 
-        if (_isDisposed) return;
+        if (oldController != null) {
+          try {
+            await oldController.pause();
+            await oldController.dispose();
+          } catch (_) {}
+        }
 
-        activeVideoController.value = _videoController;
+        final newController = createControllerForPath(asset.path);
+        await newController.initialize();
+
+        if (_isDisposed) {
+          await newController.dispose();
+          return;
+        }
+
+        _videoController = newController;
+        activeVideoController.value = newController;
         isVideoReady.value = true;
       } catch (e) {
-        debugPrint('VideoPlayer initialization error: $e');
+        debugPrint('VideoPlayer initialization error for ${asset.path}: $e');
+        _currentVideoPath = null;
+        _videoController = null;
         activeVideoController.value = null;
         isVideoReady.value = false;
         return;
+      } finally {
+        _isInitializingVideo = false;
       }
     }
 
@@ -103,21 +149,30 @@ class VideoPlaybackBridgeService {
       final targetVideoMs = clipLocalMs.clamp(0, maxVideoMs).toInt();
       final targetDuration = Duration(milliseconds: targetVideoMs);
 
-      // Drift check: If position drifts by more than 350ms, seek to exact frame
-      final currentPos = _videoController!.value.position;
-      final driftMs = (currentPos.inMilliseconds - targetDuration.inMilliseconds).abs();
-
-      if (driftMs > 350 || !isPlaying) {
-        await _videoController!.seekTo(targetDuration);
-      }
-
-      if (isPlaying) {
-        if (!_videoController!.value.isPlaying) {
-          await _videoController!.play();
+      if (!isPlaying) {
+        // Paused / Scrubbing mode: seek precisely to target frame
+        final currentPos = _videoController!.value.position;
+        final driftMs = (currentPos.inMilliseconds - targetDuration.inMilliseconds).abs();
+        if (driftMs > 80) {
+          await _videoController!.seekTo(targetDuration);
         }
-      } else {
         if (_videoController!.value.isPlaying) {
           await _videoController!.pause();
+        }
+      } else {
+        // Active Playback mode:
+        if (!_videoController!.value.isPlaying) {
+          // If starting playback, first position to frame, then start
+          await _videoController!.seekTo(targetDuration);
+          await _videoController!.play();
+        } else {
+          // While already playing smoothly, do NOT seek repeatedly (which flushes ExoPlayer decoder)
+          // Only resync if massive drift (> 1500ms) occurs
+          final currentPos = _videoController!.value.position;
+          final driftMs = (currentPos.inMilliseconds - targetDuration.inMilliseconds).abs();
+          if (driftMs > 1500) {
+            await _videoController!.seekTo(targetDuration);
+          }
         }
       }
     } catch (e) {
@@ -126,8 +181,18 @@ class VideoPlaybackBridgeService {
   }
 
   Future<void> _syncAudioClip(CompositorFrame? frame, bool isPlaying, int timestampMs) async {
-    final activeAudio = frame?.activeAudioSources.isNotEmpty == true ? frame!.activeAudioSources.first : null;
-    if (activeAudio == null || activeAudio.isMuted || activeAudio.filePath == null) {
+    // Only handle secondary/standalone audio tracks (isPrimaryVideoAudio == false)
+    ActiveAudioSource? secondaryAudio;
+    if (frame != null) {
+      for (final src in frame.activeAudioSources) {
+        if (!src.isPrimaryVideoAudio && !src.isMuted && src.filePath != null) {
+          secondaryAudio = src;
+          break;
+        }
+      }
+    }
+
+    if (secondaryAudio == null || secondaryAudio.filePath == null) {
       if (_audioController != null) {
         try {
           await _audioController!.pause();
@@ -136,45 +201,72 @@ class VideoPlaybackBridgeService {
       return;
     }
 
-    final audioFile = File(activeAudio.filePath!);
-    if (!audioFile.existsSync()) return;
+    final audioPath = secondaryAudio.filePath!;
+    if (!isPlayablePath(audioPath)) return;
 
-    if (_currentAudioPath != activeAudio.filePath || _audioController == null) {
-      _currentAudioPath = activeAudio.filePath;
+    if (_currentAudioPath != audioPath || _audioController == null) {
+      if (_isInitializingAudio) return;
+      _isInitializingAudio = true;
+      _currentAudioPath = audioPath;
+
       try {
-        await _audioController?.dispose();
-        _audioController = VideoPlayerController.file(audioFile);
-        await _audioController!.initialize();
+        final oldAudio = _audioController;
+        _audioController = null;
+        if (oldAudio != null) {
+          try {
+            await oldAudio.pause();
+            await oldAudio.dispose();
+          } catch (_) {}
+        }
+
+        final newAudio = createControllerForPath(audioPath);
+        await newAudio.initialize();
+
+        if (_isDisposed) {
+          await newAudio.dispose();
+          return;
+        }
+
+        _audioController = newAudio;
       } catch (e) {
-        debugPrint('Audio controller init error: $e');
+        debugPrint('Audio controller init error for $audioPath: $e');
+        _currentAudioPath = null;
+        _audioController = null;
         return;
+      } finally {
+        _isInitializingAudio = false;
       }
     }
 
     if (_audioController == null || !_audioController!.value.isInitialized) return;
 
     try {
-      final effectiveVolume = activeAudio.effectiveVolume.clamp(0.0, 1.0);
+      final effectiveVolume = secondaryAudio.effectiveVolume.clamp(0.0, 1.0);
       _audioController!.setVolume(effectiveVolume);
 
       final maxDurationMs = _audioController!.value.duration.inMilliseconds;
-      final targetAudioMs = activeAudio.sourceOffsetMs.clamp(0, maxDurationMs).toInt();
+      final targetAudioMs = secondaryAudio.sourceOffsetMs.clamp(0, maxDurationMs).toInt();
       final targetDuration = Duration(milliseconds: targetAudioMs);
 
-      final currentPos = _audioController!.value.position;
-      final driftMs = (currentPos.inMilliseconds - targetDuration.inMilliseconds).abs();
-
-      if (driftMs > 350 || !isPlaying) {
-        await _audioController!.seekTo(targetDuration);
-      }
-
-      if (isPlaying) {
-        if (!_audioController!.value.isPlaying) {
-          await _audioController!.play();
+      if (!isPlaying) {
+        final currentPos = _audioController!.value.position;
+        final driftMs = (currentPos.inMilliseconds - targetDuration.inMilliseconds).abs();
+        if (driftMs > 80) {
+          await _audioController!.seekTo(targetDuration);
         }
-      } else {
         if (_audioController!.value.isPlaying) {
           await _audioController!.pause();
+        }
+      } else {
+        if (!_audioController!.value.isPlaying) {
+          await _audioController!.seekTo(targetDuration);
+          await _audioController!.play();
+        } else {
+          final currentPos = _audioController!.value.position;
+          final driftMs = (currentPos.inMilliseconds - targetDuration.inMilliseconds).abs();
+          if (driftMs > 1500) {
+            await _audioController!.seekTo(targetDuration);
+          }
         }
       }
     } catch (_) {}
@@ -192,8 +284,14 @@ class VideoPlaybackBridgeService {
 
   void dispose() {
     _isDisposed = true;
-    _videoController?.dispose();
-    _audioController?.dispose();
+    try {
+      _videoController?.pause();
+      _videoController?.dispose();
+    } catch (_) {}
+    try {
+      _audioController?.pause();
+      _audioController?.dispose();
+    } catch (_) {}
     activeVideoController.dispose();
     isVideoReady.dispose();
   }

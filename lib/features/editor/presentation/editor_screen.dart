@@ -40,6 +40,16 @@ class EditorScreen extends ConsumerStatefulWidget {
 
 class _EditorScreenState extends ConsumerState<EditorScreen> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(previewPlaybackProvider.notifier).syncCurrentFrame();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final editorState = ref.watch(editorProvider);
     final project = editorState.project;

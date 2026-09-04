@@ -114,6 +114,29 @@ class MediaImportNotifier extends StateNotifier<AsyncValue<List<MediaAsset>>> {
     var project = editorState.project;
     if (project == null) return;
 
+    // Check if the current project only contains starter/placeholder clips
+    final hasOnlyPlaceholderClips = project.tracks.every((t) => t.clips.every((c) {
+      MediaAsset? asset;
+      for (final a in project!.assets) {
+        if (a.id == c.assetId) {
+          asset = a;
+          break;
+        }
+      }
+      if (asset == null) return true;
+      return asset.path == 'starter_scene.mp4' || asset.path.startsWith('sample_');
+    }));
+
+    if (hasOnlyPlaceholderClips && targetType == TrackType.video) {
+      // Clear out starter clips and assets so user's real media is the foundation
+      final clearedTracks = project.tracks.map((t) => t.copyWith(clips: const [])).toList();
+      project = project.copyWith(
+        tracks: clearedTracks,
+        assets: const [],
+        durationMs: 0,
+      );
+    }
+
     // Find or create suitable target track
     Track? targetTrack;
     for (final t in project.tracks) {
@@ -133,8 +156,8 @@ class MediaImportNotifier extends StateNotifier<AsyncValue<List<MediaAsset>>> {
       project = project.addTrack(targetTrack);
     }
 
-    // Insert at current playhead position or end of track
-    int insertionPositionMs = editorState.playheadPositionMs;
+    // Insert at 0ms if track is empty, or at current playhead position
+    int insertionPositionMs = targetTrack.clips.isEmpty ? 0 : editorState.playheadPositionMs;
     Clip? firstNewClip;
 
     for (final asset in assets) {
@@ -159,10 +182,11 @@ class MediaImportNotifier extends StateNotifier<AsyncValue<List<MediaAsset>>> {
     _ref.read(editorProvider.notifier).updateProject(project!);
     _ref.read(projectListProvider.notifier).updateProject(project);
 
-    // Auto-select and jump playhead to the newly imported clip
+    // Auto-select and jump playhead to the newly imported clip and force frame sync
     if (firstNewClip != null) {
       _ref.read(editorProvider.notifier).selectClip(firstNewClip.id, trackId: targetTrack.id);
       _ref.read(previewPlaybackProvider.notifier).seek(firstNewClip.startTimeMs);
+      _ref.read(previewPlaybackProvider.notifier).syncCurrentFrame();
     }
   }
 }

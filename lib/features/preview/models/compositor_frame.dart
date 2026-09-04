@@ -10,6 +10,7 @@ class ActiveAudioSource extends Equatable {
   final int sourceOffsetMs;
   final double effectiveVolume;
   final bool isMuted;
+  final bool isPrimaryVideoAudio;
 
   const ActiveAudioSource({
     required this.clipId,
@@ -18,10 +19,11 @@ class ActiveAudioSource extends Equatable {
     required this.sourceOffsetMs,
     required this.effectiveVolume,
     this.isMuted = false,
+    this.isPrimaryVideoAudio = false,
   });
 
   @override
-  List<Object?> get props => [clipId, assetId, filePath, sourceOffsetMs, effectiveVolume, isMuted];
+  List<Object?> get props => [clipId, assetId, filePath, sourceOffsetMs, effectiveVolume, isMuted, isPrimaryVideoAudio];
 }
 
 class CompositorFrame extends Equatable {

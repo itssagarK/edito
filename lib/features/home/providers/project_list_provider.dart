@@ -185,51 +185,21 @@ class ProjectListNotifier extends StateNotifier<List<Project>> {
     final now = DateTime.now();
     final videoTrackId = const Uuid().v4();
     final audioTrackId = const Uuid().v4();
-    final starterAssetId = const Uuid().v4();
-
-    final starterAsset = MediaAsset(
-      id: starterAssetId,
-      path: 'starter_scene.mp4',
-      fileName: 'Scene_01.mp4',
-      type: MediaType.video,
-      durationMs: 6000,
-      width: 1920,
-      height: 1080,
-      fps: 30.0,
-    );
-
-    final starterClip = Clip(
-      id: const Uuid().v4(),
-      assetId: starterAssetId,
-      trackId: videoTrackId,
-      startTimeMs: 0,
-      durationMs: 6000,
-      sourceInMs: 0,
-      sourceOutMs: 6000,
-      textOverlay: const TextOverlayConfig(
-        text: 'EDITO TITLE',
-        fontSize: 28.0,
-        animationType: TextAnimationType.typewriter,
-      ),
-      colorGrading: const ColorGradingConfig(
-        activeLut: LutPreset.goldenHour,
-      ),
-    );
 
     final newProj = Project(
       id: const Uuid().v4(),
       title: title,
       createdAt: now,
       updatedAt: now,
-      durationMs: 6000,
-      assets: [starterAsset],
+      durationMs: 0,
+      assets: const [],
       tracks: [
         Track(
           id: videoTrackId,
           name: 'Video Track 1',
           type: TrackType.video,
           order: 0,
-          clips: [starterClip],
+          clips: const [],
         ),
         Track(
           id: audioTrackId,

@@ -62,6 +62,36 @@ class PreviewPlaybackNotifier extends StateNotifier<PreviewState> {
       _ref.read(editorProvider.notifier).seek(positionMs);
       _updateCurrentFrame(positionMs);
     });
+
+    // Automatically synchronize when project is loaded, mutated, or playhead moves
+    _ref.listen<EditorState>(editorProvider, (previous, next) {
+      final prevProject = previous?.project;
+      final nextProject = next.project;
+      final prevPos = previous?.playheadPositionMs;
+      final nextPos = next.playheadPositionMs;
+      final prevPlaying = previous?.isPlaying ?? false;
+      final nextPlaying = next.isPlaying;
+
+      if (nextProject != null) {
+        if (prevProject != nextProject || (!nextPlaying && prevPos != nextPos) || prevPlaying != nextPlaying) {
+          _updateCurrentFrame(nextPos);
+        }
+      }
+    });
+
+    // Evaluate initial frame immediately if project is already available
+    final initialProject = _ref.read(editorProvider).project;
+    if (initialProject != null) {
+      final pos = _ref.read(editorProvider).playheadPositionMs;
+      _updateCurrentFrame(pos);
+    }
+  }
+
+  /// Manually forces a synchronization of the current compositor frame
+  void syncCurrentFrame() {
+    final editorState = _ref.read(editorProvider);
+    final currentPos = editorState.playheadPositionMs;
+    _updateCurrentFrame(currentPos);
   }
 
   void togglePlay() {

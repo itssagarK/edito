@@ -17,7 +17,10 @@ import '../../../overlays/services/overlay_compiler_service.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';
+import '../../services/playback_clock_service.dart';
+import '../../services/timeline_compositor_service.dart';
 import '../../services/video_playback_bridge_service.dart';
+import '../../../editor/providers/editor_provider.dart';
 
 class RealtimePreviewViewport extends ConsumerWidget {
   final int currentPositionMs;
@@ -40,8 +43,16 @@ class RealtimePreviewViewport extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final previewState = ref.watch(previewPlaybackProvider);
-    final currentFrame = previewState.currentFrame;
+    final editorState = ref.watch(editorProvider);
     final activeRatio = previewState.aspectRatio;
+    final currentFrame = previewState.currentFrame ??
+        (editorState.project != null
+            ? TimelineCompositorService.evaluateFrame(
+                editorState.project!,
+                currentPositionMs,
+                aspectRatio: activeRatio,
+              )
+            : null);
 
     return Column(
       children: [
@@ -256,27 +267,39 @@ class RealtimePreviewViewport extends ConsumerWidget {
     final asset = frame.primaryAsset;
     final colorMatrix = ColorFilterCompilerService.compileColorMatrix(clip.colorGrading);
 
-    final bool hasLocalFile = asset != null && File(asset.path).existsSync();
+    final bool isPlayable = asset != null && VideoPlaybackBridgeService.isPlayablePath(asset.path);
 
     Widget contentWidget;
 
-    if (hasLocalFile && asset.type == MediaType.image) {
-      // 1. Real photo / image rendering from disk
-      contentWidget = Image.file(
-        File(asset.path),
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) => _buildPlaceholderContent(frame, clip, asset),
-      );
-    } else if (hasLocalFile && asset.type == MediaType.video) {
+    if (isPlayable && asset.type == MediaType.image) {
+      // 1. Real photo / image rendering from disk or network
+      if (asset.path.startsWith('http://') || asset.path.startsWith('https://')) {
+        contentWidget = Image.network(
+          asset.path,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) => _buildPlaceholderContent(frame, clip, asset),
+        );
+      } else {
+        contentWidget = Image.file(
+          File(asset.path),
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) => _buildPlaceholderContent(frame, clip, asset),
+        );
+      }
+    } else if (isPlayable && asset.type == MediaType.video) {
       // 2. Real Hardware Video Texture playback via VideoPlayer
       final bridge = ref.watch(videoPlaybackBridgeServiceProvider);
       contentWidget = ValueListenableBuilder<VideoPlayerController?>(
         valueListenable: bridge.activeVideoController,
         builder: (context, controller, child) {
           if (controller != null && controller.value.isInitialized) {
+            final double videoRatio = controller.value.aspectRatio > 0
+                ? controller.value.aspectRatio
+                : (asset.width > 0 && asset.height > 0 ? asset.width / asset.height : frame.aspectRatio.ratio);
+
             return Center(
               child: AspectRatio(
-                aspectRatio: controller.value.aspectRatio,
+                aspectRatio: videoRatio,
                 child: VideoPlayer(controller),
               ),
             );

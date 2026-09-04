@@ -1,3 +1,4 @@
+import 'dart:io';
 import '../../../models/clip.dart';
 import '../../../models/media_asset.dart';
 import '../../../models/project.dart';
@@ -30,15 +31,36 @@ class TimelineCompositorService {
       for (final clip in track.clips) {
         final clipStart = clip.startTimeMs;
         final clipEnd = clip.startTimeMs + clip.durationMs;
-        if (timestampMs >= clipStart && timestampMs < clipEnd) {
-          activeClip = clip;
-          break;
+        final isAtEndBoundary = timestampMs == clipEnd && timestampMs == project.durationMs && clip.durationMs > 0;
+        if ((timestampMs >= clipStart && timestampMs < clipEnd) || isAtEndBoundary) {
+          if (activeClip == null) {
+            activeClip = clip;
+          } else {
+            // If multiple clips overlap, prefer the one with a verified playable media asset
+            MediaAsset? currentAsset;
+            MediaAsset? prevAsset;
+            for (final a in project.assets) {
+              if (a.id == clip.assetId) currentAsset = a;
+              if (a.id == activeClip!.assetId) prevAsset = a;
+            }
+            final currentPlayable = currentAsset != null &&
+                (currentAsset.path.startsWith('content://') ||
+                    currentAsset.path.startsWith('http') ||
+                    File(currentAsset.path).existsSync());
+            final prevPlayable = prevAsset != null &&
+                (prevAsset.path.startsWith('content://') ||
+                    prevAsset.path.startsWith('http') ||
+                    File(prevAsset.path).existsSync());
+            if (currentPlayable && !prevPlayable) {
+              activeClip = clip;
+            }
+          }
         }
       }
 
       if (activeClip == null) continue;
 
-      final clipOffset = timestampMs - activeClip.startTimeMs;
+      final clipOffset = (timestampMs - activeClip.startTimeMs).clamp(0, activeClip.durationMs);
       final computedSourceMs = activeClip.sourceInMs + (clipOffset * activeClip.speed).round();
 
       // Find corresponding MediaAsset
@@ -56,7 +78,7 @@ class TimelineCompositorService {
         primaryAsset = asset;
         sourceFrameTimeMs = computedSourceMs;
 
-        // If video track has audio and is not muted, add to audio mixer
+        // If video track has audio and is not muted, add to audio mixer with isPrimaryVideoAudio = true
         if (!track.isMuted && !activeClip.isMuted) {
           activeAudioSources.add(ActiveAudioSource(
             clipId: activeClip.id,
@@ -65,10 +87,11 @@ class TimelineCompositorService {
             sourceOffsetMs: computedSourceMs,
             effectiveVolume: activeClip.volume,
             isMuted: false,
+            isPrimaryVideoAudio: true,
           ));
         }
       } else if (track.type == TrackType.audio) {
-        // Audio track: add to audio mixer
+        // Audio track: add to audio mixer with isPrimaryVideoAudio = false
         if (!track.isMuted && !activeClip.isMuted) {
           activeAudioSources.add(ActiveAudioSource(
             clipId: activeClip.id,
@@ -77,6 +100,7 @@ class TimelineCompositorService {
             sourceOffsetMs: computedSourceMs,
             effectiveVolume: activeClip.volume,
             isMuted: false,
+            isPrimaryVideoAudio: false,
           ));
         }
       } else if (track.type == TrackType.overlay || track.type == TrackType.text) {
