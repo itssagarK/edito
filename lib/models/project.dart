@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'track.dart';
 import 'clip.dart';
 import 'media_asset.dart';
+import '../features/image_editor/models/video_layout_config.dart';
 
 class Project extends Equatable {
   final String id;
@@ -13,6 +14,7 @@ class Project extends Equatable {
   final int width;
   final int height;
   final String? thumbnailPath;
+  final VideoLayoutConfig layoutConfig;
   final List<Track> tracks;
   final List<MediaAsset> assets;
 
@@ -26,6 +28,7 @@ class Project extends Equatable {
     this.width = 1920,
     this.height = 1080,
     this.thumbnailPath,
+    this.layoutConfig = const VideoLayoutConfig(),
     this.tracks = const [],
     this.assets = const [],
   });
@@ -120,6 +123,7 @@ class Project extends Equatable {
     int? width,
     int? height,
     String? thumbnailPath,
+    VideoLayoutConfig? layoutConfig,
     List<Track>? tracks,
     List<MediaAsset>? assets,
   }) {
@@ -133,6 +137,7 @@ class Project extends Equatable {
       width: width ?? this.width,
       height: height ?? this.height,
       thumbnailPath: thumbnailPath ?? this.thumbnailPath,
+      layoutConfig: layoutConfig ?? this.layoutConfig,
       tracks: tracks ?? this.tracks,
       assets: assets ?? this.assets,
     );
@@ -148,6 +153,7 @@ class Project extends Equatable {
         'width': width,
         'height': height,
         'thumbnailPath': thumbnailPath,
+        'layoutConfig': layoutConfig.toJson(),
         'tracks': tracks.map((t) => t.toJson()).toList(),
         'assets': assets.map((a) => a.toJson()).toList(),
       };
@@ -162,6 +168,9 @@ class Project extends Equatable {
         width: (json['width'] as num?)?.toInt() ?? 1920,
         height: (json['height'] as num?)?.toInt() ?? 1080,
         thumbnailPath: json['thumbnailPath'] as String?,
+        layoutConfig: json['layoutConfig'] != null
+            ? VideoLayoutConfig.fromJson(json['layoutConfig'] as Map<String, dynamic>)
+            : const VideoLayoutConfig(),
         tracks: (json['tracks'] as List<dynamic>?)
                 ?.map((t) => Track.fromJson(t as Map<String, dynamic>))
                 .toList() ??
@@ -173,5 +182,18 @@ class Project extends Equatable {
       );
 
   @override
-  List<Object?> get props => [id, title, createdAt, updatedAt, durationMs, fps, width, height, thumbnailPath, tracks, assets];
+  List<Object?> get props => [
+        id,
+        title,
+        createdAt,
+        updatedAt,
+        durationMs,
+        fps,
+        width,
+        height,
+        thumbnailPath,
+        layoutConfig,
+        tracks,
+        assets,
+      ];
 }

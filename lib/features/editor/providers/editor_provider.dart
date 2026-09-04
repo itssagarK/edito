@@ -16,6 +16,9 @@ enum EditorTool {
   enhance,
   chromaKey,
   imageEditor,
+  layout,
+  assets,
+  imageOverlay,
 }
 
 class EditorState {
