@@ -10,6 +10,8 @@ import '../../../audio/models/audio_effects_config.dart';
 import '../../../color_grading/models/color_grading_config.dart';
 import '../../../color_grading/services/color_filter_compiler_service.dart';
 import '../../../enhancement/models/video_enhancement_config.dart';
+import '../../../highlight/models/character_highlight_config.dart';
+import '../../../highlight/services/character_highlight_compiler_service.dart';
 import '../../../../models/clip.dart';
 import '../../../../models/media_asset.dart';
 import '../../../overlays/models/text_overlay_config.dart';
@@ -363,6 +365,8 @@ class RealtimePreviewViewport extends ConsumerWidget {
           colorFilter: ColorFilter.matrix(colorMatrix),
           child: contentWidget,
         ),
+        if (clip.characterHighlight.isEnabled)
+          _buildCharacterHighlightOverlay(clip.characterHighlight),
         // Live Floating HUD Badges
         Positioned(
           left: 12,
@@ -488,6 +492,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                   child: Text(
                     clip.imageOverlay.isPiP ? '🖼️ PiP ACTIVE' : '🏷️ BADGE ACTIVE',
                     style: const TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              if (clip.characterHighlight.isEnabled)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Color(clip.characterHighlight.highlightColor)),
+                  ),
+                  child: Text(
+                    CharacterHighlightCompilerService.getHighlightBadge(clip.characterHighlight),
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: Color(clip.characterHighlight.highlightColor),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
             ],
@@ -799,6 +820,16 @@ class RealtimePreviewViewport extends ConsumerWidget {
     }
   }
 
+  Widget _buildCharacterHighlightOverlay(CharacterHighlightConfig config) {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _CharacterHighlightPainter(config),
+        ),
+      ),
+    );
+  }
+
   static VideoLayoutRatio _mapPresetToLayoutRatio(AspectRatioPreset preset) {
     switch (preset) {
       case AspectRatioPreset.ratio16x9:
@@ -861,4 +892,96 @@ class _SafeGuidesPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _CharacterHighlightPainter extends CustomPainter {
+  final CharacterHighlightConfig config;
+
+  const _CharacterHighlightPainter(this.config);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0) return;
+
+    final center = Offset(
+      size.width * config.characterCenterX,
+      size.height * config.characterCenterY,
+    );
+
+    final maxDim = size.longestSide;
+    final radius = (config.spotlightRadius * maxDim * 0.7).clamp(30.0, maxDim);
+    final feather = (config.feather * radius).clamp(10.0, radius);
+
+    final bgColor = Color(config.backgroundColor);
+    final hlColor = Color(config.highlightColor);
+    final dim = config.backgroundDimming.clamp(0.0, 1.0);
+
+    final rect = Offset.zero & size;
+
+    if (config.mode == CharacterHighlightMode.neonAura) {
+      // Background tint/dim wash
+      final bgPaint = Paint()
+        ..shader = RadialGradient(
+          center: Alignment(
+            config.characterCenterX * 2 - 1,
+            config.characterCenterY * 2 - 1,
+          ),
+          radius: (radius / (size.shortestSide / 2)).clamp(0.1, 2.5),
+          colors: [
+            hlColor.withOpacity((0.05 * config.highlightIntensity).clamp(0.0, 1.0)),
+            hlColor.withOpacity((0.35 * config.highlightIntensity).clamp(0.0, 1.0)),
+            bgColor.withOpacity(dim * 0.85),
+            bgColor.withOpacity(dim),
+          ],
+          stops: const [0.0, 0.45, 0.75, 1.0],
+        ).createShader(rect);
+      canvas.drawRect(rect, bgPaint);
+
+      // Neon aura ring around character
+      final auraPaint = Paint()
+        ..color = hlColor.withOpacity((0.6 * config.highlightIntensity).clamp(0.0, 0.95))
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = (6.0 * config.highlightIntensity).clamp(2.0, 16.0)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, feather * 0.5);
+      canvas.drawCircle(center, radius * 0.5, auraPaint);
+    } else if (config.mode == CharacterHighlightMode.bwBackground) {
+      // Desaturated/darkened background with spotlight center
+      final bgPaint = Paint()
+        ..shader = RadialGradient(
+          center: Alignment(
+            config.characterCenterX * 2 - 1,
+            config.characterCenterY * 2 - 1,
+          ),
+          radius: (radius / (size.shortestSide / 2)).clamp(0.1, 2.5),
+          colors: [
+            Colors.transparent,
+            bgColor.withOpacity(dim * 0.4),
+            bgColor.withOpacity(dim * 0.9),
+          ],
+          stops: const [0.0, 0.55, 1.0],
+        ).createShader(rect);
+      canvas.drawRect(rect, bgPaint);
+    } else {
+      // spotlight and solidBgWash
+      final bgPaint = Paint()
+        ..shader = RadialGradient(
+          center: Alignment(
+            config.characterCenterX * 2 - 1,
+            config.characterCenterY * 2 - 1,
+          ),
+          radius: (radius / (size.shortestSide / 2)).clamp(0.1, 2.5),
+          colors: [
+            hlColor.withOpacity((0.08 * config.highlightIntensity).clamp(0.0, 0.3)),
+            bgColor.withOpacity(dim * 0.5),
+            bgColor.withOpacity(dim),
+          ],
+          stops: const [0.0, 0.5, 1.0],
+        ).createShader(rect);
+      canvas.drawRect(rect, bgPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CharacterHighlightPainter oldDelegate) =>
+      oldDelegate.config != config;
 }

@@ -19,6 +19,7 @@ enum EditorTool {
   layout,
   assets,
   imageOverlay,
+  highlight,
 }
 
 class EditorState {

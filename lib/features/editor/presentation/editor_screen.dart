@@ -13,6 +13,7 @@ import '../../chroma/presentation/widgets/chroma_key_sheet.dart';
 import '../../color_grading/presentation/widgets/color_grading_sheet.dart';
 import '../../enhancement/presentation/widgets/video_enhancement_sheet.dart';
 import '../../export/presentation/widgets/export_settings_modal.dart';
+import '../../highlight/presentation/widgets/character_highlight_sheet.dart';
 import '../../home/providers/project_list_provider.dart';
 import '../../image_editor/presentation/widgets/asset_library_sheet.dart';
 import '../../image_editor/presentation/widgets/image_editor_sheet.dart';
@@ -227,6 +228,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
       case EditorTool.imageOverlay:
         _openImageOverlayModal();
+        break;
+
+      case EditorTool.highlight:
+        _openCharacterHighlightModal();
         break;
 
       default:
@@ -477,6 +482,20 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   void _openImageOverlayModal() {
     final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Overlay / PiP');
     ImageOverlaySheet.show(
+      context,
+      clip: targetClip,
+      onSave: (updatedClip) {
+        final project = ref.read(editorProvider).project!;
+        final updatedProject = project.updateClip(updatedClip);
+        ref.read(editorProvider.notifier).updateProject(updatedProject);
+        ref.read(projectListProvider.notifier).updateProject(updatedProject);
+      },
+    );
+  }
+
+  void _openCharacterHighlightModal() {
+    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Highlight & BG');
+    CharacterHighlightSheet.show(
       context,
       clip: targetClip,
       onSave: (updatedClip) {

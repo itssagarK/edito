@@ -11,6 +11,8 @@ import 'package:edito/features/color_grading/services/color_filter_compiler_serv
 import 'package:edito/features/enhancement/models/video_enhancement_config.dart';
 import 'package:edito/features/export/models/export_preset.dart';
 import 'package:edito/features/export/services/ffmpeg_command_builder.dart';
+import 'package:edito/features/highlight/models/character_highlight_config.dart';
+import 'package:edito/features/highlight/services/character_highlight_compiler_service.dart';
 import 'package:edito/features/image_editor/models/creative_asset.dart';
 import 'package:edito/features/image_editor/models/image_overlay_config.dart';
 import 'package:edito/features/image_editor/models/video_layout_config.dart';
@@ -415,6 +417,73 @@ void main() {
       expect(frame.activeOverlays.length, equals(2));
       expect(frame.activeOverlays.any((c) => c.textOverlay.text == 'Title Segment'), isTrue);
       expect(frame.activeOverlays.any((c) => c.imageOverlay.assetLabel == 'HOT TOPIC'), isTrue);
+    });
+
+    test('10. CharacterHighlightCompilerService generates valid vignette & colorbalance filters', () {
+      const spotlightConfig = CharacterHighlightConfig(
+        isEnabled: true,
+        mode: CharacterHighlightMode.spotlight,
+        highlightColor: 0xFF00FFCC,
+        backgroundColor: 0xFF4A00E0,
+        characterCenterX: 0.50,
+        characterCenterY: 0.45,
+      );
+      final filter = CharacterHighlightCompilerService.generateFFmpegFilter(spotlightConfig);
+      expect(filter, contains('vignette='));
+      expect(filter, contains('x0=w*0.50:y0=h*0.45'));
+      expect(filter, contains('colorbalance='));
+
+      const neonConfig = CharacterHighlightConfig(
+        isEnabled: true,
+        mode: CharacterHighlightMode.neonAura,
+        backgroundColor: 0xFF141419,
+      );
+      final neonFilter = CharacterHighlightCompilerService.generateFFmpegFilter(neonConfig);
+      expect(neonFilter, contains('eq=contrast='));
+      expect(neonFilter, contains('vignette='));
+
+      final badge = CharacterHighlightCompilerService.getHighlightBadge(spotlightConfig);
+      expect(badge, contains('CHARACTER SPOTLIGHT'));
+    });
+
+    test('11. FFmpegCommandBuilder compiles character highlight filter into export chain', () {
+      final clipWithHighlight = Clip(
+        id: 'clip_hl',
+        assetId: 'asset_1',
+        trackId: 'track_v',
+        startTimeMs: 0,
+        durationMs: 6000,
+        sourceInMs: 0,
+        sourceOutMs: 6000,
+        characterHighlight: const CharacterHighlightConfig(
+          isEnabled: true,
+          mode: CharacterHighlightMode.solidBgWash,
+          backgroundColor: 0xFF004D40,
+        ),
+      );
+
+      final project = Project(
+        id: 'p_hl',
+        title: 'Highlight Export Test',
+        createdAt: now,
+        updatedAt: now,
+        durationMs: 6000,
+        assets: [testAsset],
+        tracks: [
+          Track(
+            id: 'track_v',
+            name: 'Video',
+            type: TrackType.video,
+            order: 0,
+            clips: [clipWithHighlight],
+          ),
+        ],
+      );
+
+      final args = FFmpegCommandBuilder.buildArguments(project, const ExportConfiguration());
+      final filterComplex = args[args.indexOf('-filter_complex') + 1];
+      expect(filterComplex, contains('vignette='));
+      expect(filterComplex, contains('colorbalance='));
     });
   });
 }

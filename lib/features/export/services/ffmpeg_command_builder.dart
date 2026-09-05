@@ -5,6 +5,7 @@ import '../../../models/track.dart';
 import '../../audio/services/ai_voice_enhancer_service.dart';
 import '../../color_grading/services/color_filter_compiler_service.dart';
 import '../../enhancement/services/ai_video_enhancer_service.dart';
+import '../../highlight/services/character_highlight_compiler_service.dart';
 import '../../overlays/services/overlay_compiler_service.dart';
 import '../../smoothing/services/ai_video_smoother_service.dart';
 import '../../transitions/models/transition_type.dart';
@@ -131,6 +132,18 @@ class FFmpegCommandBuilder {
           final smootherFilters = AIVideoSmootherService.generateFFmpegFilters(clip.smoother);
           if (smootherFilters.isNotEmpty) {
             vFilters.addAll(smootherFilters);
+          }
+
+          // Character Highlight & Background Color Customizer
+          if (clip.characterHighlight.isEnabled) {
+            final highlightFilter = CharacterHighlightCompilerService.generateFFmpegFilter(
+              clip.characterHighlight,
+              targetWidth: targetW,
+              targetHeight: targetH,
+            );
+            if (highlightFilter.isNotEmpty) {
+              vFilters.add(highlightFilter);
+            }
           }
 
           filterComplexSegments.add('[$inputIdx:v]${vFilters.join(',')} [$vLabel]');
