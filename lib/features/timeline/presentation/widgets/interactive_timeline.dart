@@ -7,6 +7,7 @@ import '../../../../models/track.dart';
 import '../../services/timeline_editing_service.dart';
 import 'timeline_track_lane.dart';
 import 'timeline_context_bar.dart';
+import 'timeline_clip_widget.dart';
 
 class InteractiveTimeline extends StatefulWidget {
   final Project project;
