@@ -39,8 +39,8 @@ Get the official compiled release APK and install it directly on any Android dev
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.13/app-release.apk">
-        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.13%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
+      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.14/app-release.apk">
+        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.14%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
       </a>
       <br>
       <sub><b>Target:</b> <code>ARM64-v8a</code>, <code>ARMeabi-v7a</code>, <code>x86_64</code> &nbsp;•&nbsp; <b>Min SDK:</b> Android 7.0+ (API 24+) &nbsp;•&nbsp; <b>Target SDK:</b> Android 16 (API 36)</sub>
@@ -48,7 +48,7 @@ Get the official compiled release APK and install it directly on any Android dev
   </tr>
   <tr>
     <td align="center">
-      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.13"><b>v1.0.13 Production Release on GitHub</b></a>
+      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.14"><b>v1.0.14 Production Release on GitHub</b></a>
     </td>
   </tr>
 </table>
@@ -56,6 +56,13 @@ Get the official compiled release APK and install it directly on any Android dev
 ---
 
 ## 🌟 Key Features
+
+### 🚀 Synchronized Multi-Track Timeline & Unified Overlay Export Engine (v1.0.14)
+- **Unified Timeline Coordinate System:** Solved timeline desynchronization by unifying the Top Ruler, all multi-track clip lanes, and the playhead into a single synchronized coordinate canvas. Horizontal scrolling moves all tracks, tick marks, and the playhead in 100% unison.
+- **Dynamic Auto-Follow Playhead:** Automatically and smoothly scrolls the timeline horizontally during continuous video playback and seeking so the playhead needle never leaves the viewport.
+- **Canvas Click-to-Seek:** Tapping anywhere on the top ruler or empty track areas instantly seeks to that precise millisecond timestamp with frame-accurate video update.
+- **Dedicated Overlay Tracks in Export:** Badges, PiP images, and stickers on dedicated overlay tracks are compiled with timed `drawtext` box filters and burned seamlessly into the exported MP4 video stream.
+- **Multi-Overlay Compositing:** Real-time preview viewport simultaneously renders multiple concurrent overlays (text titles, auto-captions, and sticker badges) across distinct tracks.
 
 ### 💎 Full Feature Verification & Real Rendering Pipeline (v1.0.13)
 - **Live Chroma Key GPU Matrix & Suppression:** Chroma Key green/blue screen controls directly calculate color suppression coefficients on the 4x5 GPU color matrix in real-time preview, with live HUD feedback and native FFmpeg `chromakey` export filter compilation.

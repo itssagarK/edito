@@ -172,11 +172,13 @@ class FFmpegCommandBuilder {
     }
 
     // Concatenate / Mix Streams
-    final hasTextTracks = project.tracks
+    final hasOverlaysOrText = project.tracks
         .where((t) => !t.isHidden && (t.type == TrackType.text || t.type == TrackType.overlay))
-        .any((t) => t.clips.any((c) => c.textOverlay.text.trim().isNotEmpty));
+        .any((t) => t.clips.any((c) =>
+            c.textOverlay.text.trim().isNotEmpty ||
+            (c.imageOverlay.isEnabled && c.imageOverlay.assetLabel.trim().isNotEmpty)));
 
-    final baseVideoLabel = hasTextTracks ? '[vconcat]' : '[vout]';
+    final baseVideoLabel = hasOverlaysOrText ? '[vconcat]' : '[vout]';
 
     if (videoStreamLabels.isNotEmpty) {
       final hasTransitions = project.tracks
@@ -222,22 +224,30 @@ class FFmpegCommandBuilder {
       filterComplexSegments.add('color=c=black:s=${targetW}x${targetH}:d=1 $baseVideoLabel');
     }
 
-    // Burn-in overlay titles & captions from text tracks
-    if (hasTextTracks) {
-      final textFilters = <String>[];
+    // Burn-in overlay titles, captions & sticker badges from text/overlay tracks
+    if (hasOverlaysOrText) {
+      final overlayFilters = <String>[];
       for (final track in project.tracks) {
         if (track.isHidden) continue;
         if (track.type == TrackType.text || track.type == TrackType.overlay) {
           for (final clip in track.clips) {
             final drawText = OverlayCompilerService.generateFFmpegDrawText(clip, clip.textOverlay);
             if (drawText.isNotEmpty) {
-              textFilters.add(drawText);
+              overlayFilters.add(drawText);
+            }
+            if (clip.imageOverlay.isEnabled && clip.imageOverlay.assetLabel.trim().isNotEmpty) {
+              final sanitizedLabel = clip.imageOverlay.assetLabel.replaceAll("'", "\\'").replaceAll(':', '\\:');
+              final posX = (clip.imageOverlay.positionX * 0.85).toStringAsFixed(2);
+              final posY = (clip.imageOverlay.positionY * 0.85).toStringAsFixed(2);
+              final startSec = (clip.startTimeMs / 1000.0).toStringAsFixed(2);
+              final endSec = ((clip.startTimeMs + clip.durationMs) / 1000.0).toStringAsFixed(2);
+              overlayFilters.add("drawtext=text='$sanitizedLabel':enable='between(t,$startSec,$endSec)':x=w*$posX:y=h*$posY:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.85:boxborderw=6");
             }
           }
         }
       }
-      if (textFilters.isNotEmpty) {
-        filterComplexSegments.add('$baseVideoLabel ${textFilters.join(',')} [vout]');
+      if (overlayFilters.isNotEmpty) {
+        filterComplexSegments.add('$baseVideoLabel ${overlayFilters.join(',')} [vout]');
       } else {
         filterComplexSegments.add('$baseVideoLabel null [vout]');
       }

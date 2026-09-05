@@ -277,5 +277,144 @@ void main() {
         }
       }
     });
+
+    test('7. Dedicated Overlay Track Sticker Badges compile into export filter chain', () {
+      final clip1 = const Clip(
+        id: 'clip_v1',
+        assetId: 'asset_1',
+        trackId: 'track_v',
+        startTimeMs: 0,
+        durationMs: 6000,
+        sourceInMs: 0,
+        sourceOutMs: 6000,
+      );
+
+      final overlayClip = const Clip(
+        id: 'clip_o1',
+        assetId: '',
+        trackId: 'track_overlay',
+        startTimeMs: 1000,
+        durationMs: 4000,
+        sourceInMs: 0,
+        sourceOutMs: 4000,
+        imageOverlay: ImageOverlayConfig(
+          isEnabled: true,
+          assetLabel: 'VERIFIED CREATOR',
+          positionX: 0.8,
+          positionY: 0.2,
+        ),
+      );
+
+      final project = Project(
+        id: 'p_test',
+        title: 'Overlay Track Test',
+        createdAt: now,
+        updatedAt: now,
+        durationMs: 6000,
+        assets: [testAsset],
+        tracks: [
+          Track(
+            id: 'track_v',
+            name: 'Video',
+            type: TrackType.video,
+            order: 0,
+            clips: [clip1],
+          ),
+          Track(
+            id: 'track_overlay',
+            name: 'Overlays',
+            type: TrackType.overlay,
+            order: 1,
+            clips: [overlayClip],
+          ),
+        ],
+      );
+
+      const config = ExportConfiguration(
+        resolution: ResolutionPreset.fhd1080p,
+        framerate: FrameratePreset.fps30,
+        codec: CodecPreset.h264,
+        quality: QualityPreset.balanced,
+      );
+
+      final cmd = FFmpegCommandBuilder.buildCommandString(project, config);
+      expect(cmd, contains('drawtext=text='));
+      expect(cmd, contains('VERIFIED CREATOR'));
+      expect(cmd, contains('between(t,1.00,5.00)'));
+    });
+
+    test('8. Compositor evaluates both image overlays and text overlays on multi-track projects', () {
+      final textClip = Clip(
+        id: 'clip_t1',
+        assetId: '',
+        trackId: 'track_text',
+        startTimeMs: 500,
+        durationMs: 3000,
+        sourceInMs: 0,
+        sourceOutMs: 3000,
+        textOverlay: const TextOverlayConfig(text: 'Title Segment'),
+      );
+
+      final badgeClip = const Clip(
+        id: 'clip_b1',
+        assetId: '',
+        trackId: 'track_overlay',
+        startTimeMs: 1000,
+        durationMs: 2500,
+        sourceInMs: 0,
+        sourceOutMs: 2500,
+        imageOverlay: ImageOverlayConfig(
+          isEnabled: true,
+          assetLabel: 'HOT TOPIC',
+        ),
+      );
+
+      final project = Project(
+        id: 'p_multi',
+        title: 'Multi-Overlay Test',
+        createdAt: now,
+        updatedAt: now,
+        durationMs: 6000,
+        assets: [testAsset],
+        tracks: [
+          Track(
+            id: 'track_v',
+            name: 'Video',
+            type: TrackType.video,
+            order: 0,
+            clips: [
+              Clip(
+                id: 'clip_v1',
+                assetId: 'asset_1',
+                trackId: 'track_v',
+                startTimeMs: 0,
+                durationMs: 6000,
+                sourceInMs: 0,
+                sourceOutMs: 6000,
+              ),
+            ],
+          ),
+          Track(
+            id: 'track_text',
+            name: 'Text',
+            type: TrackType.text,
+            order: 1,
+            clips: [textClip],
+          ),
+          Track(
+            id: 'track_overlay',
+            name: 'Overlay',
+            type: TrackType.overlay,
+            order: 2,
+            clips: [badgeClip],
+          ),
+        ],
+      );
+
+      final frame = TimelineCompositorService.evaluateFrame(project, 1500);
+      expect(frame.activeOverlays.length, equals(2));
+      expect(frame.activeOverlays.any((c) => c.textOverlay.text == 'Title Segment'), isTrue);
+      expect(frame.activeOverlays.any((c) => c.imageOverlay.assetLabel == 'HOT TOPIC'), isTrue);
+    });
   });
 }

@@ -48,12 +48,30 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
   }
 
   @override
+  void didUpdateWidget(covariant InteractiveTimeline oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.playheadPositionMs != oldWidget.playheadPositionMs && _horizontalScrollController.hasClients) {
+      final pps = AppConstants.timelinePixelsPerSecond * widget.zoomScale;
+      final playheadPx = (widget.playheadPositionMs / 1000.0) * pps;
+      final currentScroll = _horizontalScrollController.offset;
+      final viewportWidth = _horizontalScrollController.position.viewportDimension;
+
+      // Auto-follow playhead during playback or long seeks
+      if (playheadPx > currentScroll + viewportWidth - 60) {
+        _horizontalScrollController.jumpTo((playheadPx - viewportWidth / 3).clamp(0.0, _horizontalScrollController.position.maxScrollExtent));
+      } else if (playheadPx < currentScroll) {
+        _horizontalScrollController.jumpTo((playheadPx - 40).clamp(0.0, _horizontalScrollController.position.maxScrollExtent));
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final pps = AppConstants.timelinePixelsPerSecond * widget.zoomScale;
     final totalDurationMs = widget.project.durationMs > 0 ? widget.project.durationMs : 30000;
-    final timelineWidth = (totalDurationMs / 1000.0) * pps + 600; // Buffer for dragging
+    final timelineWidth = (totalDurationMs / 1000.0) * pps + 800; // Buffer for dragging
 
-    final playheadX = (widget.playheadPositionMs / 1000.0) * pps + AppConstants.timelineHeaderWidth;
+    final totalTracksHeight = 32.0 + (widget.project.tracks.length * (AppConstants.timelineTrackHeight + 8.0)) + 60.0;
 
     return GestureDetector(
       onScaleStart: (details) {
@@ -67,151 +85,265 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
       },
       child: Container(
         color: AppColors.background,
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                // Top Ruler Bar
-                Container(
-                  height: 32,
-                  decoration: const BoxDecoration(
-                    color: AppColors.surfaceElevated,
-                    border: Border(
-                      top: BorderSide(color: AppColors.border),
-                      bottom: BorderSide(color: AppColors.border),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      // Header Placeholder
-                      Container(
-                        width: AppConstants.timelineHeaderWidth,
-                        color: AppColors.surfaceElevated,
-                        alignment: Alignment.center,
-                        child: Text('Tracks', style: AppTypography.labelSmall),
-                      ),
-                      // Interactive Ruler
-                      Expanded(
-                        child: SingleChildScrollView(
-                          controller: _horizontalScrollController,
-                          scrollDirection: Axis.horizontal,
-                          physics: const ClampingScrollPhysics(),
-                          child: GestureDetector(
-                            onTapDown: (details) {
-                              _handleRulerTap(details.localPosition.dx, pps);
-                            },
-                            onHorizontalDragUpdate: (details) {
-                              _handleRulerDrag(details.localPosition.dx, pps);
-                            },
-                            child: CustomPaint(
-                              size: Size(timelineWidth, 32),
-                              painter: _TimelineRulerPainter(pps: pps, totalDurationMs: totalDurationMs),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Multi-Track Lanes
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    itemCount: widget.project.tracks.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == widget.project.tracks.length) {
-                        return _buildAddTrackRow();
-                      }
-
-                      final track = widget.project.tracks[index];
-                      return TimelineTrackLane(
-                        track: track,
-                        pps: pps,
-                        totalWidth: timelineWidth,
-                        selectedClipId: widget.selectedClipId,
-                        onSelectClip: (clipId) {
-                          widget.onSelectClip(clipId, trackId: track.id);
-                        },
-                        onTrimClipLeft: (clipId, dx) {
-                          _handleTrimLeft(clipId, dx, pps);
-                        },
-                        onTrimClipRight: (clipId, dx) {
-                          _handleTrimRight(clipId, dx, pps);
-                        },
-                        onMoveClip: (clipId, dx) {
-                          _handleMoveClip(clipId, track.id, dx, pps);
-                        },
-                        onToggleMute: () {
-                          final updated = track.copyWith(isMuted: !track.isMuted);
-                          widget.onProjectMutated(widget.project.copyWith(
-                            tracks: widget.project.tracks.map((t) => t.id == updated.id ? updated : t).toList(),
-                          ));
-                        },
-                        onToggleLock: () {
-                          final updated = track.copyWith(isLocked: !track.isLocked);
-                          widget.onProjectMutated(widget.project.copyWith(
-                            tracks: widget.project.tracks.map((t) => t.id == updated.id ? updated : t).toList(),
-                          ));
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-
-            // Playhead Vertical Line & Needle
-            Positioned(
-              left: playheadX,
-              top: 0,
-              bottom: 0,
-              child: IgnorePointer(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          physics: const ClampingScrollPhysics(),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Fixed Left Track Headers Column
+              SizedBox(
+                width: AppConstants.timelineHeaderWidth,
                 child: Column(
                   children: [
+                    // Corner Header
                     Container(
-                      width: 14,
-                      height: 12,
+                      height: 32,
                       decoration: const BoxDecoration(
-                        color: AppColors.playhead,
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(4),
-                          bottomRight: Radius.circular(4),
+                        color: AppColors.surfaceElevated,
+                        border: Border(
+                          top: BorderSide(color: AppColors.border),
+                          bottom: BorderSide(color: AppColors.border),
+                          right: BorderSide(color: AppColors.border),
                         ),
                       ),
-                      child: const Center(
-                        child: Icon(Icons.arrow_drop_down, size: 12, color: Colors.white),
-                      ),
+                      alignment: Alignment.center,
+                      child: Text('Tracks', style: AppTypography.labelSmall),
                     ),
-                    Expanded(
-                      child: Container(
-                        width: AppConstants.playheadWidth,
-                        color: AppColors.playhead,
+                    // Track Control Headers
+                    ...widget.project.tracks.map((track) {
+                      return Container(
+                        height: AppConstants.timelineTrackHeight,
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceElevated,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: track.isLocked ? AppColors.accentWarm.withOpacity(0.4) : AppColors.border,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  track.type == TrackType.video
+                                      ? Icons.videocam
+                                      : (track.type == TrackType.audio ? Icons.audiotrack : Icons.title),
+                                  size: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                                const SizedBox(width: 3),
+                                Flexible(
+                                  child: Text(
+                                    track.name,
+                                    style: AppTypography.labelSmall,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Mute
+                                InkWell(
+                                  onTap: () {
+                                    final updated = track.copyWith(isMuted: !track.isMuted);
+                                    widget.onProjectMutated(widget.project.copyWith(
+                                      tracks: widget.project.tracks.map((t) => t.id == updated.id ? updated : t).toList(),
+                                    ));
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(2.0),
+                                    child: Icon(
+                                      track.isMuted ? Icons.volume_off : Icons.volume_up,
+                                      size: 14,
+                                      color: track.isMuted ? AppColors.accentWarm : AppColors.textMuted,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                // Lock
+                                InkWell(
+                                  onTap: () {
+                                    final updated = track.copyWith(isLocked: !track.isLocked);
+                                    widget.onProjectMutated(widget.project.copyWith(
+                                      tracks: widget.project.tracks.map((t) => t.id == updated.id ? updated : t).toList(),
+                                    ));
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(2.0),
+                                    child: Icon(
+                                      track.isLocked ? Icons.lock : Icons.lock_open,
+                                      size: 14,
+                                      color: track.isLocked ? AppColors.accentGold : AppColors.textMuted,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    // Add Track Header Placeholder
+                    SizedBox(
+                      height: 48,
+                      child: Center(
+                        child: IconButton(
+                          icon: const Icon(Icons.add_circle_outline, size: 20, color: AppColors.accent),
+                          onPressed: widget.onAddMedia,
+                          tooltip: 'Add Track',
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
 
-            // Floating Context Action Bar when a clip is selected
-            if (widget.selectedClipId != null)
-              Positioned(
-                top: 38,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: TimelineContextBar(
-                    onSplit: _handleSplitSelectedClip,
-                    onDuplicate: _handleDuplicateSelectedClip,
-                    onDelete: _handleDeleteSelectedClip,
-                    onTrimHeadToPlayhead: _handleTrimHeadToPlayhead,
-                    onTrimTailToPlayhead: _handleTrimTailToPlayhead,
-                    onDeselect: () => widget.onSelectClip(null),
+              // 2. Synchronized Horizontal Timeline Canvas (Ruler + All Tracks + Playhead Line)
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: _horizontalScrollController,
+                  scrollDirection: Axis.horizontal,
+                  physics: const ClampingScrollPhysics(),
+                  child: SizedBox(
+                    width: timelineWidth,
+                    height: totalTracksHeight,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Column of Ruler & Track Clip Surfaces
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Top Ruler
+                            Container(
+                              height: 32,
+                              decoration: const BoxDecoration(
+                                color: AppColors.surfaceElevated,
+                                border: Border(
+                                  top: BorderSide(color: AppColors.border),
+                                  bottom: BorderSide(color: AppColors.border),
+                                ),
+                              ),
+                              child: GestureDetector(
+                                onTapDown: (details) => _handleRulerTap(details.localPosition.dx, pps),
+                                onHorizontalDragUpdate: (details) => _handleRulerDrag(details.localPosition.dx, pps),
+                                child: CustomPaint(
+                                  size: Size(timelineWidth, 32),
+                                  painter: _TimelineRulerPainter(pps: pps, totalDurationMs: totalDurationMs),
+                                ),
+                              ),
+                            ),
+
+                            // Track Clip Lanes
+                            ...widget.project.tracks.map((track) {
+                              return Container(
+                                height: AppConstants.timelineTrackHeight,
+                                margin: const EdgeInsets.symmetric(vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: track.isLocked ? AppColors.accentWarm.withOpacity(0.3) : AppColors.border.withOpacity(0.5),
+                                  ),
+                                ),
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.translucent,
+                                  onTapDown: (details) {
+                                    final rawMs = ((details.localPosition.dx / pps) * 1000).toInt();
+                                    final snappedMs = TimelineEditingService.calculateSnapTime(widget.project, rawMs);
+                                    widget.onSeek(snappedMs);
+                                  },
+                                  child: Stack(
+                                    alignment: Alignment.centerLeft,
+                                    children: track.clips.map((clip) {
+                                      final clipX = (clip.startTimeMs / 1000.0) * pps;
+                                      return Positioned(
+                                        left: clipX,
+                                        child: TimelineClipWidget(
+                                          clip: clip,
+                                          trackType: track.type,
+                                          pps: pps,
+                                          isSelected: widget.selectedClipId == clip.id,
+                                          onTap: () => widget.onSelectClip(clip.id, trackId: track.id),
+                                          onTrimLeft: (dx) => _handleTrimLeft(clip.id, dx, pps),
+                                          onTrimRight: (dx) => _handleTrimRight(clip.id, dx, pps),
+                                          onDragMove: (dx) => _handleMoveClip(clip.id, track.id, dx, pps),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              );
+                            }),
+
+                            // Add Media Button Row
+                            _buildAddTrackRow(),
+                          ],
+                        ),
+
+                        // Playhead Vertical Line & Needle
+                        Positioned(
+                          left: (widget.playheadPositionMs / 1000.0) * pps,
+                          top: 0,
+                          bottom: 0,
+                          child: IgnorePointer(
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 14,
+                                  height: 12,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.playhead,
+                                    borderRadius: BorderRadius.only(
+                                      bottomLeft: Radius.circular(4),
+                                      bottomRight: Radius.circular(4),
+                                    ),
+                                  ),
+                                  child: const Center(
+                                    child: Icon(Icons.arrow_drop_down, size: 12, color: Colors.white),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Container(
+                                    width: AppConstants.playheadWidth,
+                                    color: AppColors.playhead,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Floating Context Bar when clip is selected
+                        if (widget.selectedClipId != null)
+                          Positioned(
+                            top: 36,
+                            left: ((widget.playheadPositionMs / 1000.0) * pps - 120).clamp(10.0, timelineWidth - 280),
+                            child: TimelineContextBar(
+                              onSplit: _handleSplitSelectedClip,
+                              onDuplicate: _handleDuplicateSelectedClip,
+                              onDelete: _handleDeleteSelectedClip,
+                              onTrimHeadToPlayhead: _handleTrimHeadToPlayhead,
+                              onTrimTailToPlayhead: _handleTrimTailToPlayhead,
+                              onDeselect: () => widget.onSelectClip(null),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );

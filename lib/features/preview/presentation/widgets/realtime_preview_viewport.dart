@@ -174,7 +174,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
                           ),
                         ),
 
-                        // 2. Picture-in-Picture & Creative Asset Badges / Image Overlays
+                        // 2. Picture-in-Picture & Creative Asset Badges / Image Overlays on Primary Clip
                         if (currentFrame?.primaryVideoClip != null && currentFrame!.primaryVideoClip!.imageOverlay.isEnabled)
                           _buildImageOverlayWidget(currentFrame.primaryVideoClip!.imageOverlay),
 
@@ -182,12 +182,19 @@ class RealtimePreviewViewport extends ConsumerWidget {
                         if (currentFrame?.primaryVideoClip != null)
                           _buildTransitionOverlay(currentFrame!.primaryVideoClip!, currentPositionMs),
 
-                        // 4. Text & Graphic Overlays
+                        // 4. Multi-Track Overlays (Text Titles, Captions, PiP, Badges, Stickers)
                         if (currentFrame != null && currentFrame.activeOverlays.isNotEmpty)
-                          ...currentFrame.activeOverlays.map((overlayClip) {
-                            final offsetMs = currentPositionMs - overlayClip.startTimeMs;
-                            final evaluatedText = OverlayCompilerService.evaluateOverlayAt(overlayClip, offsetMs);
-                            return _buildTextOverlayWidget(evaluatedText);
+                          ...currentFrame.activeOverlays.expand((overlayClip) {
+                            final widgets = <Widget>[];
+                            if (overlayClip.imageOverlay.isEnabled) {
+                              widgets.add(_buildImageOverlayWidget(overlayClip.imageOverlay));
+                            }
+                            if (overlayClip.textOverlay.text.trim().isNotEmpty) {
+                              final offsetMs = currentPositionMs - overlayClip.startTimeMs;
+                              final evaluatedText = OverlayCompilerService.evaluateOverlayAt(overlayClip, offsetMs);
+                              widgets.add(_buildTextOverlayWidget(evaluatedText));
+                            }
+                            return widgets;
                           }),
 
                         // Safe-Zone Grid Overlays (90% action safe, 80% title safe)
