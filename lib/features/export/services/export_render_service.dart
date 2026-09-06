@@ -202,7 +202,7 @@ class ExportRenderService {
             for (final clip in track.clips) {
               final asset = project.assets.firstWhere(
                 (a) => a.id == clip.assetId,
-                orElse: () => MediaAsset(id: '', path: '', fileName: '', type: MediaType.video),
+                orElse: () => const MediaAsset(id: '', path: '', fileName: '', type: MediaType.video, durationMs: 0),
               );
               if (asset.path.isNotEmpty) {
                 clipsData.add({

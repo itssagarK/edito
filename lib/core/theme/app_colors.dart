@@ -13,6 +13,7 @@ class AppColors {
   static const Color accent = Color(0xFF00CEC9);
   static const Color accentWarm = Color(0xFFFF7675);
   static const Color accentGold = Color(0xFFFDCB6E);
+  static const Color error = Color(0xFFFF4757);
 
   // Timeline Tracks
   static const Color videoTrack = Color(0xFF3867D6);
