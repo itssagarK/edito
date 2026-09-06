@@ -485,5 +485,67 @@ void main() {
       expect(filterComplex, contains('vignette='));
       expect(filterComplex, contains('colorbalance='));
     });
+
+    test('12. FFmpegCommandBuilder generates high-quality rendering flags & audio limiter safeguards', () {
+      final project = Project(
+        id: 'p_hq',
+        title: 'HQ Render Test',
+        createdAt: now,
+        updatedAt: now,
+        durationMs: 6000,
+        assets: [testAsset],
+        tracks: [
+          Track(
+            id: 'track_v',
+            name: 'Video',
+            type: TrackType.video,
+            order: 0,
+            clips: [
+              Clip(
+                id: 'clip_v1',
+                assetId: 'asset_1',
+                trackId: 'track_v',
+                startTimeMs: 0,
+                durationMs: 6000,
+                sourceInMs: 0,
+                sourceOutMs: 6000,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      const ultraConfig = ExportConfiguration(
+        quality: ExportQuality.ultra,
+        codec: ExportCodec.h264,
+      );
+      final ultraArgs = FFmpegCommandBuilder.buildArguments(project, ultraConfig);
+
+      // Verify Lanczos scaling
+      final filterComplex = ultraArgs[ultraArgs.indexOf('-filter_complex') + 1];
+      expect(filterComplex, contains('flags=lanczos'));
+      expect(filterComplex, contains('alimiter=limit=0.95'));
+
+      // Verify High Profile, bt709 colorimetry and 320k audio
+      expect(ultraArgs, contains('-profile:v'));
+      expect(ultraArgs, contains('high'));
+      expect(ultraArgs, contains('-colorspace'));
+      expect(ultraArgs, contains('bt709'));
+      expect(ultraArgs, contains('-movflags'));
+      expect(ultraArgs, contains('+faststart'));
+      expect(ultraArgs, contains('320k'));
+      expect(ultraArgs, contains('14')); // CRF 14 for ultra
+    });
+
+    test('13. Export presets correctly configure CRF and studio audio bitrates', () {
+      expect(ExportQuality.ultra.crf, equals(14));
+      expect(ExportQuality.high.crf, equals(18));
+      expect(ExportQuality.standard.crf, equals(23));
+
+      expect(ExportResolution.res8k.width, equals(7680));
+      expect(ExportResolution.res4k.width, equals(3840));
+      expect(ExportResolution.res1080p.width, equals(1920));
+      expect(ExportResolution.res720p.width, equals(1280));
+    });
   });
 }

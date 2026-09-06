@@ -39,8 +39,8 @@ Get the official compiled release APK and install it directly on any Android dev
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.15/app-release.apk">
-        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.15%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
+      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.16/app-release.apk">
+        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.16%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
       </a>
       <br>
       <sub><b>Target:</b> <code>ARM64-v8a</code>, <code>ARMeabi-v7a</code>, <code>x86_64</code> &nbsp;•&nbsp; <b>Min SDK:</b> Android 7.0+ (API 24+) &nbsp;•&nbsp; <b>Target SDK:</b> Android 16 (API 36)</sub>
@@ -48,7 +48,7 @@ Get the official compiled release APK and install it directly on any Android dev
   </tr>
   <tr>
     <td align="center">
-      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.15"><b>v1.0.15 Production Release on GitHub</b></a>
+      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.16"><b>v1.0.16 Production Release on GitHub</b></a>
     </td>
   </tr>
 </table>
@@ -56,6 +56,13 @@ Get the official compiled release APK and install it directly on any Android dev
 ---
 
 ## 🌟 Key Features
+
+### 🎬 High-Quality Multi-Tier Render Engine & Android MediaStore Gallery Saving (v1.0.16)
+- **Multi-Tier Video Render Architecture:** True production-grade rendering pipeline combining high-quality FFmpeg filter complexes with native Android hardware `MediaExtractor` and `MediaMuxer` fallback engines.
+- **Microsecond Hardware Trimming & Assembly:** Blazing-fast lossless multi-clip trimming and hardware MP4 container muxing directly utilizing Android MediaCodec hardware blocks with zero frame drops or visual artifacts.
+- **Enhanced Android MediaStore Metadata Indexing:** Every exported video is saved to `Movies/Edito/` with comprehensive `ContentValues` metadata—including true video duration, width, height, bitrate, and creation timestamps—ensuring instant recognition, accurate duration labels, and sharp thumbnail generation across Google Photos, Samsung Gallery, and social media pickers.
+- **Pristine High-Bitrate Video & Studio Audio:** Enhanced with Lanczos down/up-scaling (`flags=lanczos`), H.264 High Profile (`level 4.2`), Rec.709 colorimetry (`bt709`), FastStart atom positioning (`-movflags +faststart`), and true-peak brickwall audio limiters (`alimiter=limit=0.95`) with studio 48kHz stereo AAC up to 320 kbps.
+- **Dual-Path Persistence:** Preserves both verified internal app storage paths (for immediate zero-permission sharing via WhatsApp/Instagram) and public device gallery locations.
 
 ### 🌟 Character Highlight & Background Color Customizer (v1.0.15)
 - **Subject / Character Spotlight:** Spotlight focus on subjects in the frame with customizable $(X, Y)$ focal center, spotlight radius, and soft feathering.

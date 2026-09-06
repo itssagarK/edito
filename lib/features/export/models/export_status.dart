@@ -18,6 +18,7 @@ class ExportProgress extends Equatable {
   final int etaRemainingMs;
   final String statusMessage;
   final String? outputPath;
+  final String? savedGalleryPath;
   final String? errorMessage;
   final double? outputFileSizeMb;
 
@@ -30,6 +31,7 @@ class ExportProgress extends Equatable {
     this.etaRemainingMs = 0,
     this.statusMessage = 'Ready',
     this.outputPath,
+    this.savedGalleryPath,
     this.errorMessage,
     this.outputFileSizeMb,
   });
@@ -45,6 +47,7 @@ class ExportProgress extends Equatable {
     int? etaRemainingMs,
     String? statusMessage,
     String? outputPath,
+    String? savedGalleryPath,
     String? errorMessage,
     double? outputFileSizeMb,
   }) {
@@ -57,6 +60,7 @@ class ExportProgress extends Equatable {
       etaRemainingMs: etaRemainingMs ?? this.etaRemainingMs,
       statusMessage: statusMessage ?? this.statusMessage,
       outputPath: outputPath ?? this.outputPath,
+      savedGalleryPath: savedGalleryPath ?? this.savedGalleryPath,
       errorMessage: errorMessage ?? this.errorMessage,
       outputFileSizeMb: outputFileSizeMb ?? this.outputFileSizeMb,
     );
@@ -72,6 +76,7 @@ class ExportProgress extends Equatable {
         etaRemainingMs,
         statusMessage,
         outputPath,
+        savedGalleryPath,
         errorMessage,
         outputFileSizeMb,
       ];

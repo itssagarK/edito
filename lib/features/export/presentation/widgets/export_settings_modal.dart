@@ -240,7 +240,16 @@ class ExportSettingsModal extends ConsumerWidget {
                       ExportSuccessDialog.show(
                         context,
                         outputPath: outputPath,
-                        fileSizeMb: estimatedSizeMb,
+                        galleryPath: progress.savedGalleryPath,
+                        fileSizeMb: progress.outputFileSizeMb ?? estimatedSizeMb,
+                      );
+                    } else if (progress.status == ExportStatus.failed) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Export failed: ${progress.errorMessage ?? "Unknown error"}'),
+                          backgroundColor: AppColors.error,
+                        ),
                       );
                     }
                   }

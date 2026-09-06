@@ -8,18 +8,50 @@ class GallerySaveResult {
   final bool isSuccess;
   final String? savedPath;
   final String? mediaUri;
+  final int? fileSize;
+  final int? durationMs;
+  final int? width;
+  final int? height;
   final String? errorMessage;
 
   const GallerySaveResult({
     required this.isSuccess,
     this.savedPath,
     this.mediaUri,
+    this.fileSize,
+    this.durationMs,
+    this.width,
+    this.height,
     this.errorMessage,
   });
 }
 
 class GallerySaverService {
   static const MethodChannel _channel = MethodChannel('com.edito.app/gallery');
+
+  /// Renders/assembles project video clips on Android hardware via MediaExtractor & MediaMuxer
+  static Future<Map<String, dynamic>?> renderProjectVideo({
+    required List<Map<String, dynamic>> clips,
+    required String outputPath,
+    int targetWidth = 1920,
+    int targetHeight = 1080,
+  }) async {
+    if (!Platform.isAndroid) return null;
+    try {
+      final result = await _channel.invokeMethod<Map>('renderProjectVideo', {
+        'clips': clips,
+        'outputPath': outputPath,
+        'targetWidth': targetWidth,
+        'targetHeight': targetHeight,
+      });
+      if (result != null && result['success'] == true) {
+        return Map<String, dynamic>.from(result);
+      }
+    } catch (e) {
+      debugPrint('Native renderProjectVideo channel error: $e');
+    }
+    return null;
+  }
 
   /// Saves a rendered video to the Android Gallery / MediaStore (Movies/Edito)
   static Future<GallerySaveResult> saveVideoToGallery(
@@ -35,9 +67,17 @@ class GallerySaverService {
       );
     }
 
+    final sourceSize = file.lengthSync();
+    if (sourceSize == 0) {
+      return GallerySaveResult(
+        isSuccess: false,
+        errorMessage: 'Source file is empty (0 bytes)',
+      );
+    }
+
     final videoTitle = title ?? p.basenameWithoutExtension(filePath);
 
-    // 1. Primary: Use native Android MediaStore channel
+    // 1. Primary: Use native Android MediaStore channel with full metadata
     if (Platform.isAndroid) {
       try {
         final result = await _channel.invokeMethod<Map>('saveVideoToGallery', {
@@ -49,11 +89,20 @@ class GallerySaverService {
         if (result != null && result['success'] == true) {
           final savedPath = result['path'] as String?;
           final uri = result['uri'] as String?;
-          debugPrint('Successfully saved video to MediaStore: $savedPath ($uri)');
+          final duration = (result['durationMs'] as num?)?.toInt();
+          final width = (result['width'] as num?)?.toInt();
+          final height = (result['height'] as num?)?.toInt();
+          final size = (result['fileSize'] as num?)?.toInt() ?? sourceSize;
+
+          debugPrint('Successfully saved high quality video to MediaStore: $savedPath ($uri)');
           return GallerySaveResult(
             isSuccess: true,
             savedPath: savedPath ?? filePath,
             mediaUri: uri,
+            fileSize: size,
+            durationMs: duration,
+            width: width,
+            height: height,
           );
         }
       } catch (e) {
@@ -97,6 +146,7 @@ class GallerySaverService {
       return GallerySaveResult(
         isSuccess: true,
         savedPath: targetPath,
+        fileSize: sourceSize,
       );
     } catch (e) {
       return GallerySaveResult(

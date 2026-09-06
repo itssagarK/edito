@@ -7,18 +7,20 @@ import '../../services/gallery_saver_service.dart';
 
 class ExportSuccessDialog extends StatefulWidget {
   final String outputPath;
+  final String? galleryPath;
   final double fileSizeMb;
 
   const ExportSuccessDialog({
     super.key,
     required this.outputPath,
+    this.galleryPath,
     required this.fileSizeMb,
   });
 
-  static void show(BuildContext context, {required String outputPath, required double fileSizeMb}) {
+  static void show(BuildContext context, {required String outputPath, String? galleryPath, required double fileSizeMb}) {
     showDialog(
       context: context,
-      builder: (context) => ExportSuccessDialog(outputPath: outputPath, fileSizeMb: fileSizeMb),
+      builder: (context) => ExportSuccessDialog(outputPath: outputPath, galleryPath: galleryPath, fileSizeMb: fileSizeMb),
     );
   }
 
@@ -37,9 +39,10 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
     final actualSizeMb = exists ? (file.lengthSync() / (1024 * 1024)) : widget.fileSizeMb;
     final displaySize = double.parse(actualSizeMb.toStringAsFixed(2));
 
-    final isGalleryPath = widget.outputPath.contains('Movies') ||
-        widget.outputPath.contains('DCIM') ||
-        widget.outputPath.contains('Edito');
+    final effectiveGalleryPath = widget.galleryPath ?? widget.outputPath;
+    final isGalleryPath = effectiveGalleryPath.contains('Movies') ||
+        effectiveGalleryPath.contains('DCIM') ||
+        effectiveGalleryPath.contains('Edito');
 
     return Dialog(
       backgroundColor: AppColors.surfaceElevated,
@@ -127,7 +130,7 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
                   Text('Gallery Location', style: AppTypography.labelSmall),
                   const SizedBox(height: 2),
                   Text(
-                    widget.outputPath,
+                    effectiveGalleryPath,
                     style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary, fontSize: 10),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,

@@ -87,7 +87,7 @@ class FFmpegCommandBuilder {
           final innerH = (targetH - (padPx * 2)).clamp(32, targetH);
           final bgHex = '0x${layout.backgroundColor.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
 
-          vFilters.add('scale=$innerW:$innerH:force_original_aspect_ratio=decrease');
+          vFilters.add('scale=$innerW:$innerH:force_original_aspect_ratio=decrease:flags=lanczos');
           vFilters.add('pad=$targetW:$targetH:(ow-iw)/2:(oh-ih)/2:color=$bgHex');
           vFilters.add('setsar=1');
 
@@ -268,7 +268,7 @@ class FFmpegCommandBuilder {
 
     if (audioStreamLabels.isNotEmpty) {
       filterComplexSegments.add(
-        '${audioStreamLabels.join('')} amix=inputs=${audioStreamLabels.length}:normalize=0 [aout]',
+        '${audioStreamLabels.join('')} amix=inputs=${audioStreamLabels.length}:normalize=0,alimiter=limit=0.95:attack=5:release=50:asc=1 [aout]',
       );
     }
 
@@ -281,18 +281,40 @@ class FFmpegCommandBuilder {
     }
 
     // 4. Video & Audio Encoding Parameters
+    final isH264 = config.codec == ExportCodec.h264;
+    final crfValue = config.quality.crf;
+
     args.addAll([
       '-c:v', config.codec.ffmpegEncoder,
       '-preset', 'medium',
-      '-crf', config.quality.crf.toString(),
+      '-crf', crfValue.toString(),
       '-pix_fmt', 'yuv420p',
       '-r', config.framerate.fpsValue.toString(),
     ]);
 
+    if (isH264) {
+      args.addAll([
+        '-profile:v', 'high',
+        '-level:v', '4.2',
+        '-colorspace', 'bt709',
+        '-color_primaries', 'bt709',
+        '-color_trc', 'bt709',
+      ]);
+    } else {
+      args.addAll([
+        '-tag:v', 'hvc1',
+      ]);
+    }
+
     if (audioStreamLabels.isNotEmpty) {
+      final audioBitrate = config.quality == ExportQuality.ultra
+          ? '320k'
+          : (config.quality == ExportQuality.high ? '256k' : '192k');
       args.addAll([
         '-c:a', 'aac',
-        '-b:a', '192k',
+        '-b:a', audioBitrate,
+        '-ar', '48000',
+        '-ac', '2',
       ]);
     }
 
