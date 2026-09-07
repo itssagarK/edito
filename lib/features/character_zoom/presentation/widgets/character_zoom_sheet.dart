@@ -508,10 +508,11 @@ class _CharacterZoomSheetState extends State<CharacterZoomSheet> with SingleTick
                     ],
                   ),
                 ),
-              );
-            },
-          ),
-        ],
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
