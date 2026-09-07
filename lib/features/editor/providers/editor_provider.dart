@@ -20,6 +20,7 @@ enum EditorTool {
   assets,
   imageOverlay,
   highlight,
+  characterZoom,
 }
 
 class EditorState {

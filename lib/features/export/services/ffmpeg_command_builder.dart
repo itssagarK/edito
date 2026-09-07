@@ -3,6 +3,7 @@ import '../../../models/media_asset.dart';
 import '../../../models/project.dart';
 import '../../../models/track.dart';
 import '../../audio/services/ai_voice_enhancer_service.dart';
+import '../../character_zoom/services/character_zoom_compiler_service.dart';
 import '../../color_grading/services/color_filter_compiler_service.dart';
 import '../../enhancement/services/ai_video_enhancer_service.dart';
 import '../../highlight/services/character_highlight_compiler_service.dart';
@@ -143,6 +144,19 @@ class FFmpegCommandBuilder {
             );
             if (highlightFilter.isNotEmpty) {
               vFilters.add(highlightFilter);
+            }
+          }
+
+          // Main Character Zoom-In & Focus Framing
+          if (clip.characterZoom.isEnabled) {
+            final zoomFilter = CharacterZoomCompilerService.generateFFmpegFilter(
+              clip.characterZoom,
+              clipDurationMs: clip.durationMs,
+              targetWidth: targetW,
+              targetHeight: targetH,
+            );
+            if (zoomFilter.isNotEmpty) {
+              vFilters.add(zoomFilter);
             }
           }
 

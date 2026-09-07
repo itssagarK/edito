@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../features/audio/models/audio_effects_config.dart';
+import '../features/character_zoom/models/character_zoom_config.dart';
 import '../features/chroma/models/chroma_key_config.dart';
 import '../features/color_grading/models/color_grading_config.dart';
 import '../features/highlight/models/character_highlight_config.dart';
@@ -33,6 +34,7 @@ class Clip extends Equatable {
   final ChromaKeyConfig chromaKey;
   final ImageOverlayConfig imageOverlay;
   final CharacterHighlightConfig characterHighlight;
+  final CharacterZoomConfig characterZoom;
   final List<Keyframe> keyframes;
 
   const Clip({
@@ -57,6 +59,7 @@ class Clip extends Equatable {
     this.chromaKey = const ChromaKeyConfig(),
     this.imageOverlay = const ImageOverlayConfig(),
     this.characterHighlight = const CharacterHighlightConfig(),
+    this.characterZoom = const CharacterZoomConfig(),
     this.keyframes = const [],
   });
 
@@ -82,6 +85,7 @@ class Clip extends Equatable {
     ChromaKeyConfig? chromaKey,
     ImageOverlayConfig? imageOverlay,
     CharacterHighlightConfig? characterHighlight,
+    CharacterZoomConfig? characterZoom,
     List<Keyframe>? keyframes,
   }) {
     return Clip(
@@ -106,6 +110,7 @@ class Clip extends Equatable {
       chromaKey: chromaKey ?? this.chromaKey,
       imageOverlay: imageOverlay ?? this.imageOverlay,
       characterHighlight: characterHighlight ?? this.characterHighlight,
+      characterZoom: characterZoom ?? this.characterZoom,
       keyframes: keyframes ?? this.keyframes,
     );
   }
@@ -132,6 +137,7 @@ class Clip extends Equatable {
         'chromaKey': chromaKey.toJson(),
         'imageOverlay': imageOverlay.toJson(),
         'characterHighlight': characterHighlight.toJson(),
+        'characterZoom': characterZoom.toJson(),
         'keyframes': keyframes.map((k) => k.toJson()).toList(),
       };
 
@@ -180,6 +186,10 @@ class Clip extends Equatable {
             ? CharacterHighlightConfig.fromJson(
                 json['characterHighlight'] as Map<String, dynamic>)
             : const CharacterHighlightConfig(),
+        characterZoom: json['characterZoom'] != null
+            ? CharacterZoomConfig.fromJson(
+                json['characterZoom'] as Map<String, dynamic>)
+            : const CharacterZoomConfig(),
         keyframes: (json['keyframes'] as List<dynamic>?)
                 ?.map((k) => Keyframe.fromJson(k as Map<String, dynamic>))
                 .toList() ??
@@ -209,6 +219,7 @@ class Clip extends Equatable {
         chromaKey,
         imageOverlay,
         characterHighlight,
+        characterZoom,
         keyframes,
       ];
 }

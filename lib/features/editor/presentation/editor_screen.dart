@@ -9,6 +9,7 @@ import '../../../models/track.dart';
 import '../providers/editor_provider.dart';
 import '../../audio/presentation/widgets/audio_mixer_sheet.dart';
 import '../../captions/presentation/widgets/caption_manager_sheet.dart';
+import '../../character_zoom/presentation/widgets/character_zoom_sheet.dart';
 import '../../chroma/presentation/widgets/chroma_key_sheet.dart';
 import '../../color_grading/presentation/widgets/color_grading_sheet.dart';
 import '../../enhancement/presentation/widgets/video_enhancement_sheet.dart';
@@ -232,6 +233,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
       case EditorTool.highlight:
         _openCharacterHighlightModal();
+        break;
+
+      case EditorTool.characterZoom:
+        _openCharacterZoomModal();
         break;
 
       default:
@@ -496,6 +501,20 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   void _openCharacterHighlightModal() {
     final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Highlight & BG');
     CharacterHighlightSheet.show(
+      context,
+      clip: targetClip,
+      onSave: (updatedClip) {
+        final project = ref.read(editorProvider).project!;
+        final updatedProject = project.updateClip(updatedClip);
+        ref.read(editorProvider.notifier).updateProject(updatedProject);
+        ref.read(projectListProvider.notifier).updateProject(updatedProject);
+      },
+    );
+  }
+
+  void _openCharacterZoomModal() {
+    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Character Zoom');
+    CharacterZoomSheet.show(
       context,
       clip: targetClip,
       onSave: (updatedClip) {

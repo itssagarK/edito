@@ -5,6 +5,8 @@ import 'package:edito/models/clip.dart';
 import 'package:edito/models/media_asset.dart';
 import 'package:edito/models/project.dart';
 import 'package:edito/models/track.dart';
+import 'package:edito/features/character_zoom/models/character_zoom_config.dart';
+import 'package:edito/features/character_zoom/services/character_zoom_compiler_service.dart';
 import 'package:edito/features/chroma/models/chroma_key_config.dart';
 import 'package:edito/features/color_grading/models/color_grading_config.dart';
 import 'package:edito/features/color_grading/services/color_filter_compiler_service.dart';
@@ -546,6 +548,89 @@ void main() {
       expect(ExportResolution.res4k.width, equals(3840));
       expect(ExportResolution.res1080p.width, equals(1920));
       expect(ExportResolution.res720p.width, equals(1280));
+    });
+
+    test('14. Main Character Zoom-In compiles valid FFmpeg crop/lanczos filters and interpolates viewport scale', () {
+      const config = CharacterZoomConfig(
+        isEnabled: true,
+        mode: CharacterZoomMode.cinematicPushIn,
+        targetZoom: 1.5,
+        startZoom: 1.0,
+        characterCenterX: 0.5,
+        characterCenterY: 0.35,
+        animationDurationSec: 2.0,
+        startDelaySec: 0.5,
+        addFocusVignette: true,
+        addSubjectAura: true,
+      );
+
+      // Verify serialization
+      final json = config.toJson();
+      final parsed = CharacterZoomConfig.fromJson(json);
+      expect(parsed, equals(config));
+
+      // Verify FFmpeg filter compilation
+      final ffmpegFilter = CharacterZoomCompilerService.generateFFmpegFilter(
+        config,
+        clipDurationMs: 6000,
+        targetWidth: 1920,
+        targetHeight: 1080,
+      );
+      expect(ffmpegFilter, contains('crop='));
+      expect(ffmpegFilter, contains('scale=1920:1080:flags=lanczos'));
+      expect(ffmpegFilter, contains('vignette='));
+      expect(ffmpegFilter, contains('eq='));
+
+      // Verify static Punch-In mode filter
+      const punchInConfig = CharacterZoomConfig(
+        isEnabled: true,
+        mode: CharacterZoomMode.punchIn,
+        targetZoom: 1.4,
+      );
+      final punchFilter = CharacterZoomCompilerService.generateFFmpegFilter(punchInConfig);
+      expect(punchFilter, contains("crop=w='iw/1.40'"));
+      expect(punchFilter, contains('flags=lanczos'));
+
+      // Verify Viewport scale interpolation
+      final startScale = CharacterZoomCompilerService.calculateCurrentScale(
+        config,
+        currentClipTimeMs: 0,
+        clipDurationMs: 6000,
+      );
+      expect(startScale, equals(1.0));
+
+      final midScale = CharacterZoomCompilerService.calculateCurrentScale(
+        config,
+        currentClipTimeMs: 1500, // 1.0s elapsed into 2.0s duration -> 50% progress
+        clipDurationMs: 6000,
+      );
+      expect(midScale, greaterThan(1.0));
+      expect(midScale, lessThanOrEqualTo(1.5));
+
+      final endScale = CharacterZoomCompilerService.calculateCurrentScale(
+        config,
+        currentClipTimeMs: 3000,
+        clipDurationMs: 6000,
+      );
+      expect(endScale, equals(1.5));
+
+      // Verify Clip model integration
+      final clip = Clip(
+        id: 'c_zoom',
+        assetId: 'asset_1',
+        trackId: 'track_v',
+        startTimeMs: 0,
+        durationMs: 6000,
+        sourceInMs: 0,
+        sourceOutMs: 6000,
+        characterZoom: config,
+      );
+      expect(clip.characterZoom.isEnabled, isTrue);
+      expect(clip.characterZoom.targetZoom, equals(1.5));
+
+      final clipJson = clip.toJson();
+      final reconstitutedClip = Clip.fromJson(clipJson);
+      expect(reconstitutedClip.characterZoom, equals(config));
     });
   });
 }

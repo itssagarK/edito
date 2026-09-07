@@ -10,6 +10,8 @@ import '../../../audio/models/audio_effects_config.dart';
 import '../../../color_grading/models/color_grading_config.dart';
 import '../../../color_grading/services/color_filter_compiler_service.dart';
 import '../../../enhancement/models/video_enhancement_config.dart';
+import '../../../character_zoom/models/character_zoom_config.dart';
+import '../../../character_zoom/services/character_zoom_compiler_service.dart';
 import '../../../highlight/models/character_highlight_config.dart';
 import '../../../highlight/services/character_highlight_compiler_service.dart';
 import '../../../../models/clip.dart';
@@ -358,13 +360,34 @@ class RealtimePreviewViewport extends ConsumerWidget {
       contentWidget = _buildPlaceholderContent(frame, clip, asset);
     }
 
+    Widget videoContent = ColorFiltered(
+      colorFilter: ColorFilter.matrix(colorMatrix),
+      child: contentWidget,
+    );
+
+    if (clip.characterZoom.isEnabled) {
+      final currentClipTimeMs = frame.sourceFrameTimeMs - clip.sourceInMs;
+      final currentScale = CharacterZoomCompilerService.calculateCurrentScale(
+        clip.characterZoom,
+        currentClipTimeMs: currentClipTimeMs > 0 ? currentClipTimeMs : 0,
+        clipDurationMs: clip.durationMs,
+      );
+      final cx = clip.characterZoom.characterCenterX;
+      final cy = clip.characterZoom.characterCenterY;
+
+      videoContent = ClipRect(
+        child: Transform.scale(
+          scale: currentScale,
+          alignment: Alignment((cx - 0.5) * 2.0, (cy - 0.5) * 2.0),
+          child: videoContent,
+        ),
+      );
+    }
+
     return Stack(
       fit: StackFit.expand,
       children: [
-        ColorFiltered(
-          colorFilter: ColorFilter.matrix(colorMatrix),
-          child: contentWidget,
-        ),
+        videoContent,
         if (clip.characterHighlight.isEnabled)
           _buildCharacterHighlightOverlay(clip.characterHighlight),
         // Live Floating HUD Badges
@@ -507,6 +530,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 9,
                       color: Color(clip.characterHighlight.highlightColor),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.characterZoom.isEnabled)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.accent),
+                  ),
+                  child: Text(
+                    CharacterZoomCompilerService.getZoomBadge(clip.characterZoom),
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: AppColors.accent,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
