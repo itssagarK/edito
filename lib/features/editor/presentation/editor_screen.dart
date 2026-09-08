@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide Clip;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../models/clip.dart';
 import '../../../models/media_asset.dart';
 import '../../../models/project.dart';
