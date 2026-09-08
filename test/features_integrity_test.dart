@@ -22,6 +22,8 @@ import 'package:edito/features/image_editor/services/asset_library_service.dart'
 import 'package:edito/features/overlays/models/text_overlay_config.dart';
 import 'package:edito/features/preview/models/aspect_ratio_preset.dart';
 import 'package:edito/features/preview/services/timeline_compositor_service.dart';
+import 'package:edito/features/editor/presentation/widgets/docked_tool_panel.dart';
+import 'package:edito/features/editor/providers/editor_provider.dart';
 import 'package:edito/features/transitions/models/transition_type.dart';
 import 'package:edito/features/transitions/services/transition_compiler_service.dart';
 
@@ -631,6 +633,82 @@ void main() {
       final clipJson = clip.toJson();
       final reconstitutedClip = Clip.fromJson(clipJson);
       expect(reconstitutedClip.characterZoom, equals(config));
+    });
+
+    testWidgets('15. Docked Tool Panel mounts adaptively without modal obstruction and binds real-time updates', (tester) async {
+      final sampleClip = Clip(
+        id: 'clip_dock_1',
+        assetId: 'asset_1',
+        trackId: 'track_v',
+        startTimeMs: 0,
+        durationMs: 6000,
+        sourceInMs: 0,
+        sourceOutMs: 6000,
+      );
+
+      final sampleProject = Project(
+        id: 'p_dock_test',
+        title: 'Dock Test',
+        createdAt: now,
+        updatedAt: now,
+        durationMs: 6000,
+        assets: [testAsset],
+        tracks: [
+          Track(
+            id: 'track_v',
+            name: 'Video',
+            type: TrackType.video,
+            order: 0,
+            clips: [sampleClip],
+          ),
+        ],
+      );
+
+      Clip? updatedClipResult;
+      Project? updatedProjectResult;
+      bool closed = false;
+      bool reverted = false;
+      bool peekToggled = false;
+
+      // Build DockedToolPanel inside a test harness
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DockedToolPanel(
+              tool: EditorTool.color,
+              clip: sampleClip,
+              project: sampleProject,
+              onSaveClip: (c) => updatedClipResult = c,
+              onSaveProject: (p) => updatedProjectResult = p,
+              onClose: () => closed = true,
+              onRevert: () => reverted = true,
+              onTogglePeek: () => peekToggled = true,
+              isPeekMode: false,
+            ),
+          ),
+        ),
+      );
+
+      // Verify LIVE badge and Tool header rendered
+      expect(find.text('LIVE'), findsOneWidget);
+      expect(find.text('Color & Looks'), findsOneWidget);
+      expect(find.text('Peek'), findsOneWidget);
+      expect(find.text('Done'), findsOneWidget);
+
+      // Tap Peek button
+      await tester.tap(find.text('Peek'));
+      await tester.pump();
+      expect(peekToggled, isTrue);
+
+      // Tap Done button
+      await tester.tap(find.text('Done'));
+      await tester.pump();
+      expect(closed, isTrue);
+
+      // Tap Revert button (Icons.refresh)
+      await tester.tap(find.byIcon(Icons.refresh));
+      await tester.pump();
+      expect(reverted, isTrue);
     });
   });
 }

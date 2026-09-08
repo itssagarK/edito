@@ -32,6 +32,7 @@ import '../../timeline/services/timeline_editing_service.dart';
 import '../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import 'widgets/editor_app_bar.dart';
 import 'widgets/editing_toolbar.dart';
+import 'widgets/docked_tool_panel.dart';
 
 class EditorScreen extends ConsumerStatefulWidget {
   const EditorScreen({super.key});
@@ -41,6 +42,11 @@ class EditorScreen extends ConsumerStatefulWidget {
 }
 
 class _EditorScreenState extends ConsumerState<EditorScreen> {
+  EditorTool? _activeDockedTool;
+  Clip? _initialClipBeforeEdit;
+  Project? _initialProjectBeforeEdit;
+  bool _isPeekMode = false;
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +68,29 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       );
     }
 
+    final isDocked = _activeDockedTool != null;
+    final isPeeking = isDocked && _isPeekMode;
+
+    Clip? dockedClip;
+    if (isDocked) {
+      if (_initialClipBeforeEdit != null) {
+        for (final track in project.tracks) {
+          for (final c in track.clips) {
+            if (c.id == _initialClipBeforeEdit!.id) {
+              dockedClip = c;
+              break;
+            }
+          }
+          if (dockedClip != null) break;
+        }
+      }
+      dockedClip ??= _findTargetClip();
+      if (dockedClip == null && project.tracks.isNotEmpty && project.tracks.first.clips.isNotEmpty) {
+        dockedClip = project.tracks.first.clips.first;
+      }
+      dockedClip ??= _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Edit');
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -73,8 +102,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
               canUndo: editorState.canUndo,
               canRedo: editorState.canRedo,
               onBack: () {
-                ref.read(playbackClockServiceProvider).pause();
-                Navigator.pop(context);
+                if (_activeDockedTool != null) {
+                  setState(() {
+                    _activeDockedTool = null;
+                    _initialClipBeforeEdit = null;
+                    _initialProjectBeforeEdit = null;
+                    _isPeekMode = false;
+                  });
+                  ref.read(editorProvider.notifier).setActiveTool(EditorTool.select);
+                } else {
+                  ref.read(playbackClockServiceProvider).pause();
+                  Navigator.pop(context);
+                }
               },
               onUndo: () {
                 ref.read(editorProvider.notifier).undo();
@@ -103,7 +142,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
             // Real-Time Video Preview Viewport
             Expanded(
-              flex: 4,
+              flex: isPeeking ? 10 : 4,
               child: RealtimePreviewViewport(
                 currentPositionMs: editorState.playheadPositionMs,
                 totalDurationMs: project.durationMs > 0 ? project.durationMs : 10000,
@@ -120,45 +159,156 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
               ),
             ),
 
-            // Multi-Track Interactive Timeline
-            Expanded(
-              flex: 5,
-              child: InteractiveTimeline(
-                project: project,
-                playheadPositionMs: editorState.playheadPositionMs,
-                zoomScale: editorState.zoomScale,
-                selectedClipId: editorState.selectedClipId,
-                onSeek: (positionMs) {
-                  ref.read(previewPlaybackProvider.notifier).seek(positionMs);
+            // Multi-Track Interactive Timeline or Docked Tool Panel
+            if (!isPeeking)
+              Expanded(
+                flex: 5,
+                child: isDocked
+                    ? DockedToolPanel(
+                        tool: _activeDockedTool!,
+                        clip: dockedClip!,
+                        project: project,
+                        onSaveClip: (updatedClip) {
+                          final proj = ref.read(editorProvider).project!;
+                          final updatedProject = proj.updateClip(updatedClip);
+                          ref.read(editorProvider.notifier).updateProject(updatedProject);
+                          ref.read(projectListProvider.notifier).updateProject(updatedProject);
+                        },
+                        onSaveProject: (updatedProject) {
+                          ref.read(editorProvider.notifier).updateProject(updatedProject);
+                          ref.read(projectListProvider.notifier).updateProject(updatedProject);
+                        },
+                        onClose: () {
+                          setState(() {
+                            _activeDockedTool = null;
+                            _initialClipBeforeEdit = null;
+                            _initialProjectBeforeEdit = null;
+                            _isPeekMode = false;
+                          });
+                          ref.read(editorProvider.notifier).setActiveTool(EditorTool.select);
+                        },
+                        onRevert: () {
+                          if (_initialProjectBeforeEdit != null) {
+                            ref.read(editorProvider.notifier).updateProject(_initialProjectBeforeEdit!);
+                            ref.read(projectListProvider.notifier).updateProject(_initialProjectBeforeEdit!);
+                          } else if (_initialClipBeforeEdit != null) {
+                            final proj = ref.read(editorProvider).project!;
+                            final updatedProject = proj.updateClip(_initialClipBeforeEdit!);
+                            ref.read(editorProvider.notifier).updateProject(updatedProject);
+                            ref.read(projectListProvider.notifier).updateProject(updatedProject);
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('↺ Changes reverted to initial state'),
+                              duration: Duration(milliseconds: 900),
+                              backgroundColor: AppColors.surfaceElevated,
+                            ),
+                          );
+                        },
+                        onTogglePeek: () {
+                          setState(() {
+                            _isPeekMode = !_isPeekMode;
+                          });
+                        },
+                        isPeekMode: _isPeekMode,
+                      )
+                    : InteractiveTimeline(
+                        project: project,
+                        playheadPositionMs: editorState.playheadPositionMs,
+                        zoomScale: editorState.zoomScale,
+                        selectedClipId: editorState.selectedClipId,
+                        onSeek: (positionMs) {
+                          ref.read(previewPlaybackProvider.notifier).seek(positionMs);
+                        },
+                        onZoomChanged: (zoom) {
+                          ref.read(editorProvider.notifier).setZoom(zoom);
+                        },
+                        onSelectClip: (clipId, {trackId}) {
+                          ref.read(editorProvider.notifier).selectClip(clipId, trackId: trackId);
+                        },
+                        onProjectMutated: (updatedProject) {
+                          ref.read(editorProvider.notifier).updateProject(updatedProject);
+                          ref.read(projectListProvider.notifier).updateProject(updatedProject);
+                        },
+                        onAddMedia: () {
+                          MediaPickerSheet.show(context);
+                        },
+                      ),
+              ),
+
+            // Bottom Area: Live Peek Pill or Toolbar
+            if (isPeeking)
+              Container(
+                height: 52,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: const BoxDecoration(
+                  color: AppColors.surfaceElevated,
+                  border: Border(top: BorderSide(color: AppColors.border, width: 1.2)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.visibility, color: AppColors.accent, size: 14),
+                              SizedBox(width: 6),
+                              Text(
+                                'LIVE PEEK',
+                                style: TextStyle(
+                                  color: AppColors.accent,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Full Canvas Active',
+                          style: AppTypography.labelMedium.copyWith(color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        minimumSize: const Size(0, 32),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: () {
+                        setState(() => _isPeekMode = false);
+                      },
+                      icon: const Icon(Icons.tune, size: 14),
+                      label: const Text('Restore Controls', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              )
+            else if (!isDocked)
+              // Bottom Editing Toolbar
+              EditingToolbar(
+                activeTool: editorState.activeTool,
+                hasSelectedClip: editorState.selectedClipId != null,
+                onSelectTool: (tool) {
+                  ref.read(editorProvider.notifier).setActiveTool(tool);
+                  _handleToolAction(tool);
                 },
-                onZoomChanged: (zoom) {
-                  ref.read(editorProvider.notifier).setZoom(zoom);
-                },
-                onSelectClip: (clipId, {trackId}) {
-                  ref.read(editorProvider.notifier).selectClip(clipId, trackId: trackId);
-                },
-                onProjectMutated: (updatedProject) {
-                  ref.read(editorProvider.notifier).updateProject(updatedProject);
-                  ref.read(projectListProvider.notifier).updateProject(updatedProject);
-                },
-                onAddMedia: () {
+                onAddTrack: () {
                   MediaPickerSheet.show(context);
                 },
               ),
-            ),
-
-            // Bottom Editing Toolbar
-            EditingToolbar(
-              activeTool: editorState.activeTool,
-              hasSelectedClip: editorState.selectedClipId != null,
-              onSelectTool: (tool) {
-                ref.read(editorProvider.notifier).setActiveTool(tool);
-                _handleToolAction(tool);
-              },
-              onAddTrack: () {
-                MediaPickerSheet.show(context);
-              },
-            ),
           ],
         ),
       ),
@@ -310,18 +460,19 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     );
   }
 
+  void _openDockedTool(EditorTool tool, {TrackType trackType = TrackType.video, String purpose = 'Edit'}) {
+    final targetClip = _findOrCreateTargetClip(trackType: trackType, purpose: purpose);
+    final currentProject = ref.read(editorProvider).project;
+    setState(() {
+      _activeDockedTool = tool;
+      _initialClipBeforeEdit = targetClip;
+      _initialProjectBeforeEdit = currentProject;
+      _isPeekMode = false;
+    });
+  }
+
   void _openTextEditorModal() {
-    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Text');
-    TextEditorSheet.show(
-      context,
-      clip: targetClip,
-      onSave: (updatedClip) {
-        final project = ref.read(editorProvider).project!;
-        final updatedProject = project.updateClip(updatedClip);
-        ref.read(editorProvider.notifier).updateProject(updatedProject);
-        ref.read(projectListProvider.notifier).updateProject(updatedProject);
-      },
-    );
+    _openDockedTool(EditorTool.text, trackType: TrackType.video, purpose: 'Text');
   }
 
   void _openCaptionsModal() {
@@ -356,87 +507,27 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   }
 
   void _openSpeedModal() {
-    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Speed');
-    SpeedRampingSheet.show(
-      context,
-      clip: targetClip,
-      onSave: (updatedClip) {
-        final project = ref.read(editorProvider).project!;
-        final updatedProject = project.updateClip(updatedClip);
-        ref.read(editorProvider.notifier).updateProject(updatedProject);
-        ref.read(projectListProvider.notifier).updateProject(updatedProject);
-      },
-    );
+    _openDockedTool(EditorTool.speed, trackType: TrackType.video, purpose: 'Speed');
   }
 
   void _openColorGradingModal() {
-    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Color');
-    ColorGradingSheet.show(
-      context,
-      clip: targetClip,
-      onSave: (updatedClip) {
-        final project = ref.read(editorProvider).project!;
-        final updatedProject = project.updateClip(updatedClip);
-        ref.read(editorProvider.notifier).updateProject(updatedProject);
-        ref.read(projectListProvider.notifier).updateProject(updatedProject);
-      },
-    );
+    _openDockedTool(EditorTool.color, trackType: TrackType.video, purpose: 'Color');
   }
 
   void _openAudioToolsModal() {
-    final targetClip = _findOrCreateTargetClip(trackType: TrackType.audio, purpose: 'Audio');
-    AudioMixerSheet.show(
-      context,
-      clip: targetClip,
-      onSave: (updatedClip) {
-        final project = ref.read(editorProvider).project!;
-        final updatedProject = project.updateClip(updatedClip);
-        ref.read(editorProvider.notifier).updateProject(updatedProject);
-        ref.read(projectListProvider.notifier).updateProject(updatedProject);
-      },
-    );
+    _openDockedTool(EditorTool.audio, trackType: TrackType.audio, purpose: 'Audio');
   }
 
   void _openEnhancementModal() {
-    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: '8K Enhance');
-    VideoEnhancementSheet.show(
-      context,
-      clip: targetClip,
-      onSave: (updatedClip) {
-        final project = ref.read(editorProvider).project!;
-        final updatedProject = project.updateClip(updatedClip);
-        ref.read(editorProvider.notifier).updateProject(updatedProject);
-        ref.read(projectListProvider.notifier).updateProject(updatedProject);
-      },
-    );
+    _openDockedTool(EditorTool.enhance, trackType: TrackType.video, purpose: '8K Enhance');
   }
 
   void _openSmootherModal() {
-    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Smoother');
-    VideoSmootherSheet.show(
-      context,
-      clip: targetClip,
-      onSave: (updatedClip) {
-        final project = ref.read(editorProvider).project!;
-        final updatedProject = project.updateClip(updatedClip);
-        ref.read(editorProvider.notifier).updateProject(updatedProject);
-        ref.read(projectListProvider.notifier).updateProject(updatedProject);
-      },
-    );
+    _openDockedTool(EditorTool.smooth, trackType: TrackType.video, purpose: 'Smoother');
   }
 
   void _openChromaKeyModal() {
-    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Green Screen');
-    ChromaKeySheet.show(
-      context,
-      clip: targetClip,
-      onSave: (updatedClip) {
-        final project = ref.read(editorProvider).project!;
-        final updatedProject = project.updateClip(updatedClip);
-        ref.read(editorProvider.notifier).updateProject(updatedProject);
-        ref.read(projectListProvider.notifier).updateProject(updatedProject);
-      },
-    );
+    _openDockedTool(EditorTool.chromaKey, trackType: TrackType.video, purpose: 'Green Screen');
   }
 
   void _openImageEditorModal() {
@@ -456,15 +547,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   void _openVideoLayoutModal() {
     final project = ref.read(editorProvider).project;
     if (project == null) return;
-
-    VideoLayoutSheet.show(
-      context,
-      project: project,
-      onSave: (updatedProject) {
-        ref.read(editorProvider.notifier).updateProject(updatedProject);
-        ref.read(projectListProvider.notifier).updateProject(updatedProject);
-      },
-    );
+    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Layout');
+    setState(() {
+      _activeDockedTool = EditorTool.layout;
+      _initialClipBeforeEdit = targetClip;
+      _initialProjectBeforeEdit = project;
+      _isPeekMode = false;
+    });
   }
 
   void _openAssetLibraryModal() {
@@ -485,45 +574,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   }
 
   void _openImageOverlayModal() {
-    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Overlay / PiP');
-    ImageOverlaySheet.show(
-      context,
-      clip: targetClip,
-      onSave: (updatedClip) {
-        final project = ref.read(editorProvider).project!;
-        final updatedProject = project.updateClip(updatedClip);
-        ref.read(editorProvider.notifier).updateProject(updatedProject);
-        ref.read(projectListProvider.notifier).updateProject(updatedProject);
-      },
-    );
+    _openDockedTool(EditorTool.imageOverlay, trackType: TrackType.video, purpose: 'Overlay / PiP');
   }
 
   void _openCharacterHighlightModal() {
-    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Highlight & BG');
-    CharacterHighlightSheet.show(
-      context,
-      clip: targetClip,
-      onSave: (updatedClip) {
-        final project = ref.read(editorProvider).project!;
-        final updatedProject = project.updateClip(updatedClip);
-        ref.read(editorProvider.notifier).updateProject(updatedProject);
-        ref.read(projectListProvider.notifier).updateProject(updatedProject);
-      },
-    );
+    _openDockedTool(EditorTool.highlight, trackType: TrackType.video, purpose: 'Highlight & BG');
   }
 
   void _openCharacterZoomModal() {
-    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Character Zoom');
-    CharacterZoomSheet.show(
-      context,
-      clip: targetClip,
-      onSave: (updatedClip) {
-        final project = ref.read(editorProvider).project!;
-        final updatedProject = project.updateClip(updatedClip);
-        ref.read(editorProvider.notifier).updateProject(updatedProject);
-        ref.read(projectListProvider.notifier).updateProject(updatedProject);
-      },
-    );
+    _openDockedTool(EditorTool.characterZoom, trackType: TrackType.video, purpose: 'Character Zoom');
   }
 
   Clip? _findTargetClip() {

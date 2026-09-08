@@ -8,19 +8,28 @@ import '../../models/text_overlay_config.dart';
 class TextEditorSheet extends StatefulWidget {
   final Clip clip;
   final Function(Clip updatedClip) onSave;
+  final bool isDocked;
+  final VoidCallback? onDone;
 
   const TextEditorSheet({
     super.key,
     required this.clip,
     required this.onSave,
+    this.isDocked = false,
+    this.onDone,
   });
 
-  static Future<void> show(BuildContext context, {required Clip clip, required Function(Clip) onSave}) {
+  static Future<void> show(BuildContext context, {
+    required Clip clip,
+    required Function(Clip) onSave,
+    VoidCallback? onDone,
+  }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => TextEditorSheet(clip: clip, onSave: onSave),
+      barrierColor: Colors.black.withOpacity(0.15),
+      builder: (context) => TextEditorSheet(clip: clip, onSave: onSave, onDone: onDone),
     );
   }
 
@@ -58,49 +67,50 @@ class _TextEditorSheetState extends State<TextEditorSheet> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.78,
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        border: Border(top: BorderSide(color: AppColors.border, width: 1.5)),
+      height: widget.isDocked ? null : MediaQuery.of(context).size.height * 0.55,
+      decoration: BoxDecoration(
+        color: widget.isDocked ? Colors.transparent : AppColors.surface,
+        borderRadius: widget.isDocked ? BorderRadius.zero : const BorderRadius.vertical(top: Radius.circular(20)),
+        border: widget.isDocked ? null : const Border(top: BorderSide(color: AppColors.border, width: 1.5)),
       ),
       child: Column(
         children: [
-          // Drag handle & Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 16, 4),
-            child: Column(
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.textMuted.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(2),
+          if (!widget.isDocked)
+            // Drag handle & Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 16, 4),
+              child: Column(
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.textMuted.withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.title, color: AppColors.textTrack, size: 22),
-                        const SizedBox(width: 8),
-                        Text('Text & Motion Titles', style: AppTypography.titleLarge),
-                      ],
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.check, color: AppColors.accent, size: 22),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.title, color: AppColors.textTrack, size: 22),
+                          const SizedBox(width: 8),
+                          Text('Text & Motion Titles', style: AppTypography.titleLarge),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.check, color: AppColors.accent, size: 22),
+                        onPressed: widget.onDone ?? () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
 
           // Live Text Field
           Padding(

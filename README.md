@@ -39,8 +39,8 @@ Get the official compiled release APK and install it directly on any Android dev
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.17/app-release.apk">
-        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.17%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
+      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.18/app-release.apk">
+        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.18%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
       </a>
       <br>
       <sub><b>Target:</b> <code>ARM64-v8a</code>, <code>ARMeabi-v7a</code>, <code>x86_64</code> &nbsp;•&nbsp; <b>Min SDK:</b> Android 7.0+ (API 24+) &nbsp;•&nbsp; <b>Target SDK:</b> Android 16 (API 36)</sub>
@@ -48,7 +48,7 @@ Get the official compiled release APK and install it directly on any Android dev
   </tr>
   <tr>
     <td align="center">
-      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.17"><b>v1.0.17 Production Release on GitHub</b></a>
+      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.18"><b>v1.0.18 Production Release on GitHub</b></a>
     </td>
   </tr>
 </table>
@@ -56,6 +56,13 @@ Get the official compiled release APK and install it directly on any Android dev
 ---
 
 ## 🌟 Key Features
+
+### 👁️ Unobscured Live Editing Panels & Live Peek Mode (v1.0.18)
+- **Zero-Interference Viewport Architecture:** Intrusive 85% full-screen modal sheets are replaced by modern docked tool panels seated directly beneath the video player, ensuring the preview canvas is never blocked during edits.
+- **Uncompromised Real-Time Feedback:** All 11 core editing suites—**Color Grading & Looks**, **Main Character Zoom-In**, **Character Highlight & Background Replacer**, **Chroma Key Green Screen**, **Speed Ramping Curves**, **Video Smoother**, **Voice & Audio Mixer**, **8K AI Detail Upscaler**, **Text & Motion Titles**, **Overlay & Picture-in-Picture**, and **Video Aspect Ratio & Layout**—render parameter adjustments directly to the video canvas with zero lag or modal barrier darkening.
+- **Full Viewport Interactivity While Adjusting:** Creators can play, pause, seek, and scrub across the timeline while tweaking slider values and switching looks.
+- **Live Peek Mode (`👁️ Peek`):** One-tap canvas expansion collapses the controls into a sleek 52px status pill, expanding the video viewport to over 90% screen height for zero-interference full-screen inspection. Tapping `Restore Controls` instantly restores the panel.
+- **One-Tap Instant Revert (`↺`) & Done (`✓`):** Safe, non-destructive editing workflow allowing instant rollback to pre-edit parameters or seamless commit back to the multi-track timeline.
 
 ### 🎯 Main Character Zoom-In & Focus Framing (v1.0.17)
 - **Interactive Character Reticle & Focal Point Targeting:** Tap or drag anywhere on the live video frame canvas to set the character's precise $(X, Y)$ focus coordinates (face, chest, Rule of Thirds anchors).

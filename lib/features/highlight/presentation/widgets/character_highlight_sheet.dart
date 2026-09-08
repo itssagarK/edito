@@ -7,17 +7,22 @@ import '../../models/character_highlight_config.dart';
 class CharacterHighlightSheet extends StatefulWidget {
   final Clip clip;
   final Function(Clip updatedClip) onSave;
+  final bool isDocked;
+  final VoidCallback? onDone;
 
   const CharacterHighlightSheet({
     super.key,
     required this.clip,
     required this.onSave,
+    this.isDocked = false,
+    this.onDone,
   });
 
   static Future<void> show(BuildContext context, {required Clip clip, required Function(Clip) onSave}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      barrierColor: Colors.black.withOpacity(0.15),
       backgroundColor: Colors.transparent,
       builder: (context) => CharacterHighlightSheet(clip: clip, onSave: onSave),
     );
@@ -72,50 +77,58 @@ class _CharacterHighlightSheetState extends State<CharacterHighlightSheet> with 
 
   @override
   Widget build(BuildContext context) {
+    final double? sheetHeight = widget.isDocked ? null : MediaQuery.of(context).size.height * 0.48;
+
     return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
+      height: sheetHeight,
+      decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        border: Border(top: BorderSide(color: AppColors.border, width: 1.5)),
+        borderRadius: widget.isDocked ? BorderRadius.zero : const BorderRadius.vertical(top: Radius.circular(20)),
+        border: const Border(top: BorderSide(color: AppColors.border, width: 1.5)),
       ),
       child: Column(
         children: [
-          // Drag handle & Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 16, 4),
-            child: Column(
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.textMuted.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(2),
+          if (!widget.isDocked)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 16, 4),
+              child: Column(
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.textMuted.withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.person_pin_circle_outlined, color: AppColors.accent, size: 22),
-                        const SizedBox(width: 8),
-                        Text('Character Highlight & BG', style: AppTypography.titleLarge),
-                      ],
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.check, color: AppColors.accent, size: 22),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.person_pin_circle_outlined, color: AppColors.accent, size: 22),
+                          const SizedBox(width: 8),
+                          Text('Character Highlight & BG', style: AppTypography.titleLarge),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.check, color: AppColors.accent, size: 22),
+                        onPressed: () {
+                          if (widget.onDone != null) {
+                            widget.onDone!();
+                          } else {
+                            Navigator.pop(context);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
 
           // Master Switch
           SwitchListTile(
