@@ -86,3 +86,24 @@ Edito/
 - **Phase 8:** FFmpeg Export Pipeline (Multi-format, 4K/1080p) 🟢 *(Done)*
 - **Phase 9:** Performance Optimization, Proxy Rendering & Undo/Redo 🟢 *(Done)*
 - **Phase 10:** Production Release & Distribution (`v1.0.0`) 🟢 *(Done)*
+
+---
+
+## 4. Pipeline Audit & Stabilization (Post v1.0.19)
+
+In depth end-to-end trace and stabilization conducted across UI, Preview Compositor, and Native FFmpeg Export:
+
+1. **State Unification & Gatekeeper Fixes**:
+   - `ColorGradingConfig.isGraded`: Corrected to evaluate custom HSL shifts and tone curves so single-tab adjustments activate render pipelines.
+   - Exposure math unified between preview matrix and FFmpeg `eq` filter using identical `0.15` EV scale factors.
+2. **Preview Compositor Enhancements**:
+   - Real-time vignette rendering added to `RealtimePreviewViewport` via radial alpha gradient to visually match FFmpeg export output.
+   - Zero-overhead hardware texture fast path preserved when clips are un-graded identity.
+3. **FFmpeg Export Pipeline Fixes**:
+   - **Filter Order Clash Resolved**: `chromakey` is now applied *before* color grading/LUTs/vignette filters, ensuring color adjustments do not corrupt the raw keying threshold.
+   - **Keyframe Motion Interpolation**: Added piecewise linear time-based interpolation to `OverlayCompilerService.generateFFmpegDrawText`, animating coordinates over export timeline.
+   - **Custom Font & Box Styling**: Retains selected text ARGB hex color (`fontcolor=0x...`) and background box padding/alpha.
+   - **PTS Scope Fix**: Added `isClipRelative` mode to `generateFFmpegDrawText` to resolve timestamp mismatch when burning text directly onto pre-concatenated video clips.
+4. **Separability**:
+   - Preview shader/viewport and FFmpeg command builder modifications are preserved in separate, isolated git commits.
+
