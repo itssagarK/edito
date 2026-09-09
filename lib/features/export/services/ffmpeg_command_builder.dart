@@ -92,20 +92,20 @@ class FFmpegCommandBuilder {
           vFilters.add('pad=$targetW:$targetH:(ow-iw)/2:(oh-ih)/2:color=$bgHex');
           vFilters.add('setsar=1');
 
+          // Chroma Key / Green Screen Removal (applied BEFORE color grading so raw green color is keyed cleanly)
+          if (clip.chromaKey.isEnabled) {
+            final hex = '0x${clip.chromaKey.keyColor.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+            vFilters.add('chromakey=color=$hex:similarity=${clip.chromaKey.similarity.toStringAsFixed(2)}:blend=${clip.chromaKey.smoothness.toStringAsFixed(2)}');
+          }
+
           // Color Grading & Looks filter
           final colorFilter = ColorFilterCompilerService.generateFFmpegFilter(clip.colorGrading);
           if (colorFilter.isNotEmpty) {
             vFilters.add(colorFilter);
           }
 
-          // Chroma Key / Green Screen Removal
-          if (clip.chromaKey.isEnabled) {
-            final hex = '0x${clip.chromaKey.keyColor.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
-            vFilters.add('chromakey=color=$hex:similarity=${clip.chromaKey.similarity.toStringAsFixed(2)}:blend=${clip.chromaKey.smoothness.toStringAsFixed(2)}');
-          }
-
-          // Text Titles & DrawText Burn-In
-          final drawTextFilter = OverlayCompilerService.generateFFmpegDrawText(clip, clip.textOverlay);
+          // Text Titles & DrawText Burn-In (clip-relative coordinates since PTS was reset to 0 by setpts)
+          final drawTextFilter = OverlayCompilerService.generateFFmpegDrawText(clip, clip.textOverlay, isClipRelative: true);
           if (drawTextFilter.isNotEmpty) {
             vFilters.add(drawTextFilter);
           }

@@ -1,4 +1,5 @@
 import '../../../models/clip.dart';
+import '../models/keyframe.dart';
 import '../models/text_overlay_config.dart';
 
 class OverlayCompilerService {
@@ -49,29 +50,83 @@ class OverlayCompilerService {
     return config;
   }
 
+  /// Builds a piecewise linear interpolation expression for FFmpeg filter evaluation across keyframes
+  static String _buildInterpolatedExpr(
+    List<Keyframe> kfs,
+    double Function(Keyframe) getter,
+    String tExpr,
+    double fallback,
+  ) {
+    if (kfs.isEmpty) return fallback.toStringAsFixed(2);
+    if (kfs.length == 1) return getter(kfs.first).toStringAsFixed(2);
+
+    final sorted = List<Keyframe>.from(kfs)..sort((a, b) => a.timeOffsetMs.compareTo(b.timeOffsetMs));
+
+    String expr = getter(sorted.last).toStringAsFixed(2);
+    for (int i = sorted.length - 2; i >= 0; i--) {
+      final k0 = sorted[i];
+      final k1 = sorted[i + 1];
+      final t0 = (k0.timeOffsetMs / 1000.0).toStringAsFixed(2);
+      final t1 = (k1.timeOffsetMs / 1000.0).toStringAsFixed(2);
+      final v0 = getter(k0).toStringAsFixed(2);
+      final v1 = getter(k1).toStringAsFixed(2);
+      final dt = ((k1.timeOffsetMs - k0.timeOffsetMs) / 1000.0);
+      final dtStr = dt > 0 ? dt.toStringAsFixed(2) : '1.0';
+
+      final lerp = '$v0+($v1-$v0)*($tExpr-$t0)/$dtStr';
+      expr = 'if(lt($tExpr,$t1),$lerp,$expr)';
+    }
+
+    final firstT0 = (sorted.first.timeOffsetMs / 1000.0).toStringAsFixed(2);
+    final firstV0 = getter(sorted.first).toStringAsFixed(2);
+    return 'if(lt($tExpr,$firstT0),$firstV0,$expr)';
+  }
+
   /// Generates the FFmpeg drawtext filter string for rendering text titles during export
-  static String generateFFmpegDrawText(Clip clip, TextOverlayConfig config) {
+  static String generateFFmpegDrawText(
+    Clip clip,
+    TextOverlayConfig config, {
+    bool isClipRelative = false,
+  }) {
     if (config.text.trim().isEmpty) return '';
 
     final sanitizedText = config.text.replaceAll("'", "\\'").replaceAll(':', '\\:');
-    final startSec = (clip.startTimeMs / 1000.0).toStringAsFixed(2);
-    final endSec = ((clip.startTimeMs + clip.durationMs) / 1000.0).toStringAsFixed(2);
+    final startSec = isClipRelative ? '0.00' : (clip.startTimeMs / 1000.0).toStringAsFixed(2);
+    final endSec = isClipRelative
+        ? (clip.durationMs / 1000.0).toStringAsFixed(2)
+        : ((clip.startTimeMs + clip.durationMs) / 1000.0).toStringAsFixed(2);
+
+    final tExpr = isClipRelative ? 't' : '(t-$startSec)';
 
     final size = config.fontSize.toInt();
-    final xExpr = '(w-text_w)*${config.positionX.toStringAsFixed(2)}';
-    final yExpr = '(h-text_h)*${config.positionY.toStringAsFixed(2)}';
+    final xFactor = clip.keyframes.isNotEmpty
+        ? _buildInterpolatedExpr(clip.keyframes, (k) => k.positionX, tExpr, config.positionX)
+        : config.positionX.toStringAsFixed(2);
+    final yFactor = clip.keyframes.isNotEmpty
+        ? _buildInterpolatedExpr(clip.keyframes, (k) => k.positionY, tExpr, config.positionY)
+        : config.positionY.toStringAsFixed(2);
+
+    final xExpr = clip.keyframes.isNotEmpty ? '(w-text_w)*($xFactor)' : '(w-text_w)*$xFactor';
+    final yExpr = clip.keyframes.isNotEmpty ? '(h-text_h)*($yFactor)' : '(h-text_h)*$yFactor';
+
+    final fontColorHex = (config.textColor & 0x00FFFFFF) == 0x00FFFFFF
+        ? 'white'
+        : '0x${(config.textColor & 0x00FFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
     final filters = <String>[
       "drawtext=text='$sanitizedText'",
       "fontsize=$size",
-      "fontcolor=white",
+      "fontcolor=$fontColorHex",
       "x=$xExpr",
       "y=$yExpr",
       "enable='between(t,$startSec,$endSec)'",
     ];
 
     if (config.backgroundColor != null) {
-      filters.add("box=1:boxcolor=black@0.5:boxborderw=8");
+      final bg = config.backgroundColor!;
+      final hex = '0x${(bg & 0x00FFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+      final alpha = (((bg >> 24) & 0xFF) / 255.0).clamp(0.0, 1.0);
+      filters.add("box=1:boxcolor=$hex@${alpha.toStringAsFixed(2)}:boxborderw=8");
     }
 
     return filters.join(':');
