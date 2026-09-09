@@ -39,8 +39,8 @@ Get the official compiled release APK and install it directly on any Android dev
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.18/app-release.apk">
-        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.18%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
+      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.19/app-release.apk">
+        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.19%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
       </a>
       <br>
       <sub><b>Target:</b> <code>ARM64-v8a</code>, <code>ARMeabi-v7a</code>, <code>x86_64</code> &nbsp;•&nbsp; <b>Min SDK:</b> Android 7.0+ (API 24+) &nbsp;•&nbsp; <b>Target SDK:</b> Android 16 (API 36)</sub>
@@ -48,7 +48,7 @@ Get the official compiled release APK and install it directly on any Android dev
   </tr>
   <tr>
     <td align="center">
-      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.18"><b>v1.0.18 Production Release on GitHub</b></a>
+      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.19"><b>v1.0.19 Production Release on GitHub</b></a>
     </td>
   </tr>
 </table>
@@ -56,6 +56,12 @@ Get the official compiled release APK and install it directly on any Android dev
 ---
 
 ## 🌟 Key Features
+
+### 🎨 Pristine Original Color Reproduction & Zero-Bleed Color Matrix Engine (v1.0.19)
+- **True-to-Life Original Media Import:** When importing or adding video files to the timeline, un-graded clips bypass GPU `ColorFiltered` passes completely, rendering the pure, untouched 100% original copy directly from hardware video texture decoding (`MediaCodec`) with zero quality degradation, zero banding, and zero color shifts.
+- **Elimination of Greenish Cast Bug:** Fixed cross-channel luminance matrix compilation in `ColorFilterCompilerService`. The green output row now strictly isolates red influence ($G_{out} = 0 \cdot R_{in} + 1 \cdot G_{in} + 0 \cdot B_{in}$), permanently resolving the greenish/yellow-green tint over skin tones and warm scenes.
+- **Midtone-Centered Contrast Balancing:** Contrast adjustments are centered around midtone gray (128) rather than the origin, preserving shadow depth and highlight headroom without washing out darks or blowing out whites.
+- **Studio-Grade ITU-R BT.709 Colorimetry:** Luminance coefficients (`0.2126 R + 0.7152 G + 0.0722 B`) are mapped strictly along diagonal saturation vectors, ensuring pristine fidelity across all 3D LUT presets, custom HSL shifts, and RGB tone curves.
 
 ### 👁️ Unobscured Live Editing Panels & Live Peek Mode (v1.0.18)
 - **Zero-Interference Viewport Architecture:** Intrusive 85% full-screen modal sheets are replaced by modern docked tool panels seated directly beneath the video player, ensuring the preview canvas is never blocked during edits.

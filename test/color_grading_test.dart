@@ -55,6 +55,36 @@ void main() {
       expect(matrix[18], equals(1.0)); // Alpha channel identity
     });
 
+    test('ColorFilterCompilerService default grade produces pure identity matrix with zero greenish bleed', () {
+      const defaultGrade = ColorGradingConfig();
+      expect(ColorFilterCompilerService.isIdentity(defaultGrade), isTrue);
+
+      final matrix = ColorFilterCompilerService.compileColorMatrix(defaultGrade);
+
+      expect(matrix.length, equals(20));
+      expect(matrix, equals(ColorFilterCompilerService.identityMatrix));
+
+      // Assert diagonal elements are 1.0 (R, G, B, A)
+      expect(matrix[0], equals(1.0)); // R->R
+      expect(matrix[6], equals(1.0)); // G->G
+      expect(matrix[12], equals(1.0)); // B->B
+      expect(matrix[18], equals(1.0)); // A->A
+
+      // Assert cross-channel elements are strictly 0.0 (prevents greenish tone)
+      expect(matrix[1], equals(0.0)); // G->R
+      expect(matrix[2], equals(0.0)); // B->R
+      expect(matrix[5], equals(0.0)); // R->G (must NEVER be 1.0)
+      expect(matrix[7], equals(0.0)); // B->G
+      expect(matrix[10], equals(0.0)); // R->B (must NEVER be 1.0)
+      expect(matrix[11], equals(0.0)); // G->B
+
+      // Offsets
+      expect(matrix[4], equals(0.0)); // R offset
+      expect(matrix[9], equals(0.0)); // G offset
+      expect(matrix[14], equals(0.0)); // B offset
+      expect(matrix[19], equals(0.0)); // A offset
+    });
+
     test('ColorFilterCompilerService generates accurate FFmpeg filter strings', () {
       const config = ColorGradingConfig(
         contrast: 1.25,

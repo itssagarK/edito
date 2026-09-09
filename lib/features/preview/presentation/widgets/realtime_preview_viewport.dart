@@ -309,13 +309,12 @@ class RealtimePreviewViewport extends ConsumerWidget {
 
     final clip = frame.primaryVideoClip!;
     final asset = frame.primaryAsset;
-    final colorMatrix = ColorFilterCompilerService.compileColorMatrix(
+    final bool isPlayable = asset != null && VideoPlaybackBridgeService.isPlayablePath(asset.path);
+    final bool needsColorFilter = !ColorFilterCompilerService.isIdentity(
       clip.colorGrading,
       chromaKey: clip.chromaKey,
       enhancement: clip.enhancement,
     );
-
-    final bool isPlayable = asset != null && VideoPlaybackBridgeService.isPlayablePath(asset.path);
 
     Widget contentWidget;
 
@@ -360,10 +359,18 @@ class RealtimePreviewViewport extends ConsumerWidget {
       contentWidget = _buildPlaceholderContent(frame, clip, asset);
     }
 
-    Widget videoContent = ColorFiltered(
-      colorFilter: ColorFilter.matrix(colorMatrix),
-      child: contentWidget,
-    );
+    Widget videoContent = needsColorFilter
+        ? ColorFiltered(
+            colorFilter: ColorFilter.matrix(
+              ColorFilterCompilerService.compileColorMatrix(
+                clip.colorGrading,
+                chromaKey: clip.chromaKey,
+                enhancement: clip.enhancement,
+              ),
+            ),
+            child: contentWidget,
+          )
+        : contentWidget;
 
     if (clip.characterZoom.isEnabled) {
       final currentClipTimeMs = frame.sourceFrameTimeMs - clip.sourceInMs;

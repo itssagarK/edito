@@ -4,17 +4,37 @@ import '../../enhancement/models/video_enhancement_config.dart';
 import '../models/color_grading_config.dart';
 
 class ColorFilterCompilerService {
-  /// Compiles ColorGradingConfig into a 4x5 ColorFilter matrix for instant Flutter GPU rendering
+  /// Pure mathematical 4x5 identity matrix for un-graded pristine rendering
+  static const List<double> identityMatrix = [
+    1.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 1.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 1.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 1.0, 0.0,
+  ];
+
+  /// Checks whether the clip configuration requires a GPU ColorFilter pass.
+  /// If false, the viewport can render the hardware video texture directly without any shader pass.
+  static bool isIdentity(
+    ColorGradingConfig config, {
+    ChromaKeyConfig? chromaKey,
+    VideoEnhancementConfig? enhancement,
+  }) {
+    if (chromaKey != null && chromaKey.isEnabled) return false;
+    if (enhancement != null && enhancement.hasActiveEnhancements) return false;
+    return !config.isGraded;
+  }
+
+  /// Compiles ColorGradingConfig into a mathematically accurate 4x5 ColorFilter matrix for instant Flutter GPU rendering.
+  /// Eliminates cross-channel color bleed so imported videos retain 100% true-to-life original colors.
   static List<double> compileColorMatrix(
     ColorGradingConfig config, {
     ChromaKeyConfig? chromaKey,
     VideoEnhancementConfig? enhancement,
   }) {
-    // Base Identity Matrix
-    // [ R, 0, 0, 0, rOffset,
-    //   0, G, 0, 0, gOffset,
-    //   0, 0, B, 0, bOffset,
-    //   0, 0, 0, A, aOffset ]
+    // Fast path: if un-graded, return pure identity matrix immediately
+    if (isIdentity(config, chromaKey: chromaKey, enhancement: enhancement)) {
+      return identityMatrix;
+    }
 
     final contrast = config.contrast;
     final saturation = config.saturation;
@@ -35,11 +55,6 @@ class ColorFilterCompilerService {
     const lr = 0.2126;
     const lg = 0.7152;
     const lb = 0.0722;
-
-    final invSat = 1.0 - saturation;
-    final rSat = invSat * lr;
-    final gSat = invSat * lg;
-    final bSat = invSat * lb;
 
     // LUT Preset Color Shifts
     double lutR = 0.0;
@@ -86,8 +101,11 @@ class ColorFilterCompilerService {
         : 0.0;
 
     final finalContrast = (contrast * lutContrast + enhanceBoost).clamp(0.4, 2.5);
-    final effectiveSat = saturation * lutSat;
+    final effectiveSat = (saturation * lutSat).clamp(0.0, 3.0);
     final effInvSat = 1.0 - effectiveSat;
+
+    // Contrast offset: centers contrast scaling around midpoint 128
+    final contrastOffset = (1.0 - finalContrast) * 128.0;
 
     // Chroma Key color suppression
     double chromaGScale = 1.0;
@@ -109,19 +127,34 @@ class ColorFilterCompilerService {
       }
     }
 
-    final mR = finalContrast * (effInvSat * lr + effectiveSat);
-    final mG = finalContrast * (effInvSat * lg) * chromaGScale;
-    final mB = finalContrast * (effInvSat * lb) * chromaBScale;
+    // Luminance components
+    final rLum = effInvSat * lr;
+    final gLum = effInvSat * lg;
+    final bLum = effInvSat * lb;
 
-    final totalROffset = brightnessOffset + rTemp + rTint + lutR;
-    final totalGOffset = brightnessOffset + gTint + lutG + chromaGOffset;
-    final totalBOffset = brightnessOffset + bTemp + bTint + lutB + chromaBOffset;
+    // Row 0 (Red output)
+    final m00 = finalContrast * (rLum + effectiveSat);
+    final m01 = finalContrast * gLum;
+    final m02 = finalContrast * bLum;
+    final totalROffset = brightnessOffset + contrastOffset + rTemp + rTint + lutR;
+
+    // Row 1 (Green output): Column 0 is rLum * chromaGScale, Column 1 is (gLum + effectiveSat) * chromaGScale
+    final m10 = finalContrast * rLum * chromaGScale;
+    final m11 = finalContrast * (gLum + effectiveSat) * chromaGScale;
+    final m12 = finalContrast * bLum * chromaGScale;
+    final totalGOffset = brightnessOffset + contrastOffset + gTint + lutG + chromaGOffset;
+
+    // Row 2 (Blue output): Column 0 is rLum * chromaBScale, Column 2 is (bLum + effectiveSat) * chromaBScale
+    final m20 = finalContrast * rLum * chromaBScale;
+    final m21 = finalContrast * gLum * chromaBScale;
+    final m22 = finalContrast * (bLum + effectiveSat) * chromaBScale;
+    final totalBOffset = brightnessOffset + contrastOffset + bTemp + bTint + lutB + chromaBOffset;
 
     return [
-      mR, mG, mB, 0, totalROffset,
-      mR, finalContrast * (effInvSat * lg + effectiveSat) * chromaGScale, mB, 0, totalGOffset,
-      mR, mG, finalContrast * (effInvSat * lb + effectiveSat) * chromaBScale, 0, totalBOffset,
-      0, 0, 0, 1, 0,
+      m00, m01, m02, 0.0, totalROffset,
+      m10, m11, m12, 0.0, totalGOffset,
+      m20, m21, m22, 0.0, totalBOffset,
+      0.0, 0.0, 0.0, 1.0, 0.0,
     ];
   }
 

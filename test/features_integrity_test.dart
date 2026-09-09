@@ -710,5 +710,24 @@ void main() {
       await tester.pump();
       expect(reverted, isTrue);
     });
+
+    test('16. Un-graded imported clips produce exact mathematical identity matrix with zero cross-channel greenish bleed', () {
+      const defaultGrade = ColorGradingConfig();
+      expect(ColorFilterCompilerService.isIdentity(defaultGrade), isTrue);
+
+      final matrix = ColorFilterCompilerService.compileColorMatrix(defaultGrade);
+      expect(matrix, equals(ColorFilterCompilerService.identityMatrix));
+
+      // Row 1 Column 0 (R->G) must be strictly 0.0 to prevent greenish tone on import
+      expect(matrix[5], equals(0.0));
+      // Row 2 Column 0 (R->B) must be strictly 0.0
+      expect(matrix[10], equals(0.0));
+
+      // Test with slight saturation or contrast adjustment
+      const tweakedGrade = ColorGradingConfig(contrast: 1.1, saturation: 1.1);
+      final tweakedMatrix = ColorFilterCompilerService.compileColorMatrix(tweakedGrade);
+      expect(tweakedMatrix.length, equals(20));
+      expect(tweakedMatrix[5], isNot(equals(tweakedMatrix[0]))); // R->G should NOT equal R->R
+    });
   });
 }
