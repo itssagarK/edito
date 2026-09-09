@@ -38,7 +38,7 @@ class ColorFilterCompilerService {
 
     final contrast = config.contrast;
     final saturation = config.saturation;
-    final brightnessOffset = (config.brightness + (config.exposure * 0.18)) * 128.0;
+    final brightnessOffset = (config.brightness + (config.exposure * 0.15)) * 128.0;
 
     // Temperature (Cool <-> Warm)
     final tempShift = (config.temperature / 100.0) * 30.0;

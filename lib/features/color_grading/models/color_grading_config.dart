@@ -142,7 +142,15 @@ class ColorGradingConfig extends Equatable {
       highlights != 0.0 ||
       shadows != 0.0 ||
       vignette != 0.0 ||
-      activeLut != LutPreset.none;
+      activeLut != LutPreset.none ||
+      hsl.values.any((h) => h.hue != 0.0 || h.saturation != 0.0 || h.luminance != 0.0) ||
+      _isCurveCustomized(masterCurve);
+
+  static bool _isCurveCustomized(List<CurvePoint> points) {
+    if (points.isEmpty) return false;
+    if (points.length != 2) return true;
+    return points[0].x != 0.0 || points[0].y != 0.0 || points[1].x != 1.0 || points[1].y != 1.0;
+  }
 
   ColorGradingConfig copyWith({
     double? exposure,

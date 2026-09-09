@@ -372,6 +372,32 @@ class RealtimePreviewViewport extends ConsumerWidget {
           )
         : contentWidget;
 
+    if (clip.colorGrading.vignette > 0.0) {
+      final vignetteIntensity = clip.colorGrading.vignette.clamp(0.0, 1.0);
+      videoContent = Stack(
+        fit: StackFit.passthrough,
+        children: [
+          videoContent,
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    radius: 0.85,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(vignetteIntensity * 0.85),
+                    ],
+                    stops: const [0.5, 1.0],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     if (clip.characterZoom.isEnabled) {
       final currentClipTimeMs = frame.sourceFrameTimeMs - clip.sourceInMs;
       final currentScale = CharacterZoomCompilerService.calculateCurrentScale(
