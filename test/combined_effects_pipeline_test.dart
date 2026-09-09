@@ -196,14 +196,36 @@ void main() {
       // 2. Verify Chroma Key filter is present for clip 1
       expect(filterGraph, contains('chromakey=color=0x00FF00:similarity=0.25:blend=0.15'));
 
-      // 3. Expose Architectural Gaps in Filter Graph:
-      // a) Clips are concatenated sequentially (concat=n=2:v=1:a=0) rather than composited via overlay
-      expect(filterGraph, contains('concat=n=2:v=1:a=0'));
+      // 3. Verify Layered Overlay Compositing (not sequential concatenation)
+      expect(filterGraph, isNot(contains('concat=n=2:v=1:a=0')));
+      expect(filterGraph, contains('[v0][v1] overlay=enable=\'between(t,0.00,8.00)\':eof_action=pass [vcomp1]'));
+      expect(filterGraph, contains('format=yuva420p')); // Preserves alpha for overlay
+      expect(filterGraph, contains('format=yuv420p [vout]')); // Converts to yuv420p at final output
 
-      // 3. Verify Keyframe Motion and Custom Styling in Filter Graph:
+      // 4. Verify Keyframe Motion, Custom Styling, and 1080p Proportional Font Scaling (32 * 1.5 = 48)
       expect(filterGraph, contains("drawtext=text='Hero Intro'"));
+      expect(filterGraph, contains('fontsize=48')); // Proportionally scaled from 32 (720p) to 48 (1080p)
       expect(filterGraph, contains('fontcolor=0xFFCC00')); // Custom gold color (0xFFFFCC00) preserved
       expect(filterGraph, contains('(w-text_w)*(if(lt((t-0.00)')); // Keyframe motion expression generated!
+
+      // 5. Verify 720p and 4K Resolution Font Scaling & Duration Matching
+      const config720p = ExportConfiguration(
+        resolution: ExportResolution.res720p,
+        outputPath: '/storage/exports/test_720p.mp4',
+      );
+      final args720p = FFmpegCommandBuilder.buildArguments(combinedProject, config720p);
+      final graph720p = args720p[args720p.indexOf('-filter_complex') + 1];
+      expect(graph720p, contains('fontsize=32')); // Base 720p font size
+      expect(graph720p, contains('[v0][v1] overlay='));
+
+      const config4k = ExportConfiguration(
+        resolution: ExportResolution.res4k,
+        outputPath: '/storage/exports/test_4k.mp4',
+      );
+      final args4k = FFmpegCommandBuilder.buildArguments(combinedProject, config4k);
+      final graph4k = args4k[args4k.indexOf('-filter_complex') + 1];
+      expect(graph4k, contains('fontsize=96')); // 3x scaled at 4K (32 * 3.0 = 96)
+      expect(graph4k, contains('[v0][v1] overlay='));
     });
   });
 }

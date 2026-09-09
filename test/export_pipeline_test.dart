@@ -111,7 +111,7 @@ void main() {
       // Video trims & scaling
       expect(filterGraph, contains('trim=start=1.000:end=7.000'));
       expect(filterGraph, contains('scale=1920:1080:force_original_aspect_ratio=decrease'));
-      expect(filterGraph, contains('concat=n=1:v=1:a=0 [vout]'));
+      expect(filterGraph, contains('format=yuv420p [vout]'));
 
       // Audio trims & AI voice filter & mix
       expect(filterGraph, contains('atrim=start=1.000:end=7.000'));
@@ -199,7 +199,7 @@ void main() {
       final filterIdx = args.indexOf('-filter_complex');
       final filterGraph = args[filterIdx + 1];
 
-      expect(filterGraph, contains('[vconcat]'));
+      expect(filterGraph, contains('[v0] drawtext=text=\'Viral Subtitle\''));
       expect(filterGraph, contains('drawtext=text=\'Viral Subtitle\''));
       expect(filterGraph, contains('[vout]'));
     });

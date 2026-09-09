@@ -87,8 +87,13 @@ class OverlayCompilerService {
     Clip clip,
     TextOverlayConfig config, {
     bool isClipRelative = false,
+    int outputHeight = 720,
+    int referenceHeight = 720,
   }) {
     if (config.text.trim().isEmpty) return '';
+
+    final scale = outputHeight / referenceHeight;
+    final size = (config.fontSize * scale).round().clamp(6, 500);
 
     final sanitizedText = config.text.replaceAll("'", "\\'").replaceAll(':', '\\:');
     final startSec = isClipRelative ? '0.00' : (clip.startTimeMs / 1000.0).toStringAsFixed(2);
@@ -98,7 +103,6 @@ class OverlayCompilerService {
 
     final tExpr = isClipRelative ? 't' : '(t-$startSec)';
 
-    final size = config.fontSize.toInt();
     final xFactor = clip.keyframes.isNotEmpty
         ? _buildInterpolatedExpr(clip.keyframes, (k) => k.positionX, tExpr, config.positionX)
         : config.positionX.toStringAsFixed(2);
@@ -122,11 +126,21 @@ class OverlayCompilerService {
       "enable='between(t,$startSec,$endSec)'",
     ];
 
+    if (config.strokeWidth > 0.0) {
+      final strokeW = (config.strokeWidth * scale).round().clamp(1, 50);
+      filters.add("borderw=$strokeW");
+      if (config.strokeColor != null) {
+        final strokeHex = '0x${(config.strokeColor! & 0x00FFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+        filters.add("bordercolor=$strokeHex");
+      }
+    }
+
     if (config.backgroundColor != null) {
       final bg = config.backgroundColor!;
       final hex = '0x${(bg & 0x00FFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
       final alpha = (((bg >> 24) & 0xFF) / 255.0).clamp(0.0, 1.0);
-      filters.add("box=1:boxcolor=$hex@${alpha.toStringAsFixed(2)}:boxborderw=8");
+      final boxBorderW = (8 * scale).round().clamp(1, 100);
+      filters.add("box=1:boxcolor=$hex@${alpha.toStringAsFixed(2)}:boxborderw=$boxBorderW");
     }
 
     return filters.join(':');
