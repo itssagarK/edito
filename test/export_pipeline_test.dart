@@ -116,7 +116,8 @@ void main() {
       // Audio trims & AI voice filter & mix
       expect(filterGraph, contains('atrim=start=1.000:end=7.000'));
       expect(filterGraph, contains('afftdn=nr=18.8:nf=-45'));
-      expect(filterGraph, contains('amix=inputs=2:normalize=0 [aout]'));
+      expect(filterGraph, contains('aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo'));
+      expect(filterGraph, contains('amix=inputs=2:normalize=0,alimiter=limit=0.95:attack=5:release=50:asc=1 [aout]'));
 
       // Encoders and output
       expect(args, contains('libx264'));

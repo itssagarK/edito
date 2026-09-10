@@ -92,6 +92,7 @@ class FFmpegCommandBuilder {
 
         final vFilters = <String>[
           'trim=start=$startSec:end=$endSec',
+          'fps=fps=${config.framerate.fpsValue}:round=near',
         ];
 
         // On upper tracks (tIdx > 0), align PTS to timeline start time for frame-accurate overlay
@@ -106,26 +107,27 @@ class FFmpegCommandBuilder {
           vFilters.add('setpts=PTS/${speed.toStringAsFixed(2)}');
         }
 
+        // Chroma Key / Green Screen Removal (applied BEFORE scale/pad so native resolution pixels are keyed without Lanczos interpolation fringing)
+        if (clip.chromaKey.isEnabled) {
+          final hex = '0x${clip.chromaKey.keyColor.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+          vFilters.add('chromakey=color=$hex:similarity=${clip.chromaKey.similarity.toStringAsFixed(2)}:blend=${clip.chromaKey.smoothness.toStringAsFixed(2)}');
+          vFilters.add('format=yuva420p');
+        } else if (tIdx > 0) {
+          // Upper track - convert to yuva420p before padding so letterbox/pillarbox areas are transparent
+          vFilters.add('format=yuva420p');
+        }
+
         // Scale & Pad with Video Layout Canvas Framing & Background
         final layout = project.layoutConfig;
         final padPx = layout.framePadding.round();
         final innerW = (targetW - (padPx * 2)).clamp(32, targetW);
         final innerH = (targetH - (padPx * 2)).clamp(32, targetH);
         final bgHex = '0x${layout.backgroundColor.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+        final padColor = tIdx > 0 ? 'black@0' : bgHex;
 
         vFilters.add('scale=$innerW:$innerH:force_original_aspect_ratio=decrease:flags=lanczos');
-        vFilters.add('pad=$targetW:$targetH:(ow-iw)/2:(oh-ih)/2:color=$bgHex');
+        vFilters.add('pad=$targetW:$targetH:(ow-iw)/2:(oh-ih)/2:color=$padColor');
         vFilters.add('setsar=1');
-
-        // Chroma Key / Green Screen Removal (applied BEFORE color grading so raw green color is keyed cleanly)
-        if (clip.chromaKey.isEnabled) {
-          final hex = '0x${clip.chromaKey.keyColor.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
-          vFilters.add('chromakey=color=$hex:similarity=${clip.chromaKey.similarity.toStringAsFixed(2)}:blend=${clip.chromaKey.smoothness.toStringAsFixed(2)}');
-          vFilters.add('format=yuva420p');
-        } else if (tIdx > 0) {
-          // Upper track - preserve alpha channel for clean compositing
-          vFilters.add('format=yuva420p');
-        }
 
         // Color Grading & Looks filter
         final colorFilter = ColorFilterCompilerService.generateFFmpegFilter(clip.colorGrading);
@@ -246,6 +248,14 @@ class FFmpegCommandBuilder {
       if (track.isHidden || track.isMuted) continue;
       for (final clip in track.clips) {
         if (clip.isMuted || clip.assetId.isEmpty) continue;
+
+        // Conditional audio binding: check cached hasAudio on MediaAsset without re-probing
+        final asset = project.assets.firstWhere(
+          (a) => a.id == clip.assetId,
+          orElse: () => const MediaAsset(id: '', path: '', fileName: '', type: MediaType.video, durationMs: 0),
+        );
+        if (!asset.hasAudio) continue;
+
         final inputIdx = assetIndexMap[clip.assetId] ?? 0;
         final startSec = (clip.sourceInMs / 1000.0).toStringAsFixed(3);
         final endSec = (clip.sourceOutMs / 1000.0).toStringAsFixed(3);
@@ -254,11 +264,16 @@ class FFmpegCommandBuilder {
         final aLabel = 'a$audioClipCounter';
         final aFilters = <String>[
           'atrim=start=$startSec:end=$endSec',
-          'asetpts=PTS-STARTPTS',
         ];
 
         if (speed != 1.0) {
           aFilters.add('atempo=${speed.toStringAsFixed(2)}');
+        }
+
+        // Frame-accurate timeline synchronization: reset PTS then delay by clip.startTimeMs for amix alignment
+        aFilters.add('asetpts=PTS-STARTPTS');
+        if (clip.startTimeMs > 0) {
+          aFilters.add('adelay=${clip.startTimeMs}|${clip.startTimeMs}:all=1');
         }
 
         final effectiveVolume = clip.audioEffects.isDuckingEnabled
@@ -273,6 +288,9 @@ class FFmpegCommandBuilder {
         if (effectChain.isNotEmpty) {
           aFilters.add(effectChain);
         }
+
+        // Format harmonization (48kHz sample rate, fltp, stereo)
+        aFilters.add('aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo');
 
         filterComplexSegments.add('[$inputIdx:a]${aFilters.join(',')} [$aLabel]');
         audioStreamLabels.add('[$aLabel]');

@@ -193,8 +193,11 @@ void main() {
       expect(filterGraph, contains('curves=r='));
       expect(filterGraph, contains('vignette=angle=0.42'));
 
-      // 2. Verify Chroma Key filter is present for clip 1
-      expect(filterGraph, contains('chromakey=color=0x00FF00:similarity=0.25:blend=0.15'));
+      // 2. Verify Chroma Key filter is present for clip 1 and executes BEFORE scale/pad
+      expect(filterGraph, contains('chromakey=color=0x00FF00:similarity=0.25:blend=0.15,format=yuva420p'));
+      final chromaIdx = filterGraph.indexOf('chromakey=color=0x00FF00');
+      final clip1ScaleIdx = filterGraph.indexOf('scale=1920:1080', chromaIdx);
+      expect(clip1ScaleIdx, isNot(-1)); // chromakey occurs before scale in stream [1:v]!
 
       // 3. Verify Layered Overlay Compositing (not sequential concatenation)
       expect(filterGraph, isNot(contains('concat=n=2:v=1:a=0')));
@@ -202,13 +205,19 @@ void main() {
       expect(filterGraph, contains('format=yuva420p')); // Preserves alpha for overlay
       expect(filterGraph, contains('format=yuv420p [vout]')); // Converts to yuv420p at final output
 
-      // 4. Verify Keyframe Motion, Custom Styling, and 1080p Proportional Font Scaling (32 * 1.5 = 48)
+      // 4. Verify Frame-Accurate Audio Pipeline with Timeline Synchronization & Brickwall Limiter
+      expect(filterGraph, contains('asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo [a0]'));
+      expect(filterGraph, contains('asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo [a1]'));
+      expect(filterGraph, contains('[a0][a1] amix=inputs=2:normalize=0,alimiter=limit=0.95:attack=5:release=50:asc=1 [aout]'));
+      expect(args, contains('[aout]'));
+
+      // 5. Verify Keyframe Motion, Custom Styling, and 1080p Proportional Font Scaling (32 * 1.5 = 48)
       expect(filterGraph, contains("drawtext=text='Hero Intro'"));
       expect(filterGraph, contains('fontsize=48')); // Proportionally scaled from 32 (720p) to 48 (1080p)
       expect(filterGraph, contains('fontcolor=0xFFCC00')); // Custom gold color (0xFFFFCC00) preserved
       expect(filterGraph, contains('(w-text_w)*(if(lt((t-0.00)')); // Keyframe motion expression generated!
 
-      // 5. Verify 720p and 4K Resolution Font Scaling & Duration Matching
+      // 6. Verify 720p and 4K Resolution Font Scaling & Duration Matching
       const config720p = ExportConfiguration(
         resolution: ExportResolution.res720p,
         outputPath: '/storage/exports/test_720p.mp4',

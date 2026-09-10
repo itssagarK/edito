@@ -121,8 +121,8 @@ class OverlayCompilerService {
       "drawtext=text='$sanitizedText'",
       "fontsize=$size",
       "fontcolor=$fontColorHex",
-      "x=$xExpr",
-      "y=$yExpr",
+      "x='$xExpr'",
+      "y='$yExpr'",
       "enable='between(t,$startSec,$endSec)'",
     ];
 

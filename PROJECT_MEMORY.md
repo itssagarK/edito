@@ -107,3 +107,28 @@ In depth end-to-end trace and stabilization conducted across UI, Preview Composi
 4. **Separability**:
    - Preview shader/viewport and FFmpeg command builder modifications are preserved in separate, isolated git commits.
 
+---
+
+## 5. Multi-Track Compositing, Chromakey Reordering & Audio Synchronization (Audit & Fixes)
+
+1. **Multi-Track Layered Overlay Compositing**:
+   - Replaced flawed sequential `concat` filter logic across multi-track exports with a proper layered overlay chain (`overlay=enable='between(t,START,END)':eof_action=pass`).
+   - Base video track (Track 0) renders as the background canvas. Upper tracks composite on top with alpha transparency preserved (`format=yuva420p`), preventing multi-track exports from doubling duration or rendering green screen actors as black boxes.
+2. **Proportional Font & Expression Quoting**:
+   - Scaled text overlay font size proportionally based on target resolution height (`fontsize = (baseFontSize * outputHeight / 720).round()`), ensuring consistent typography across 720p, 1080p, and 4K renders.
+   - Single-quoted `x='$xExpr'` and `y='$yExpr'` in `OverlayCompilerService` to prevent FFmpeg's filterchain parser from interpreting internal commas in piecewise linear keyframe expressions (`if(lt(...))`) as filter delimiters.
+3. **Chromakey Pre-Scale Reordering (Order B)**:
+   - Moved `chromakey` and `format=yuva420p` BEFORE `scale=...:flags=lanczos` and `pad` in `FFmpegCommandBuilder`.
+   - Testing proved that Lanczos scaling before keying blends `#00FF00` background pixels with subject edges, creating an intermediate contaminated border ($\Delta G = +50$ green channel fringe at boundary pixels).
+   - Keying at native source resolution first generates a pristine alpha matte; Lanczos scaling subsequently resamples color and alpha in unison without edge bleeding.
+4. **Audio Pipeline Stabilization & Timeline Synchronization**:
+   - **Cached Audio Presence (`hasAudio`)**: Added `hasAudio: bool` to the `MediaAsset` model, probed once during import via `MetadataProbeService` (using `ffprobe` when available) and cached directly on the model. This eliminates re-probing on export and prevents `Stream specifier ':a' matches no streams` crashes when exporting projects with audio-less video.
+   - **Timeline Synchronization**: Audio filter chain reads the exact same `clip.startTimeMs` field as video PTS (`asetpts=PTS-STARTPTS+($timelineOffsetSec/TB)`), ensuring zero risk of audio and video drifting to different timeline offsets.
+   - **Format Harmonization & Limiter**: Added `aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo` before `amix` to standardize sample rates across heterogeneous inputs, maintaining the brickwall limiter ceiling (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
+5. **Stress Test Hardening Across Non-Trivial Timeline Shapes**:
+   - **Audio Delay Synchronization (`adelay`)**: Identified that FFmpeg's `amix` filter ignores packet PTS timestamps and starts consuming input streams immediately from sample 0. For clips starting mid-timeline (`startTimeMs > 0`), added `adelay=${clip.startTimeMs}|${clip.startTimeMs}:all=1` to prepend accurate silence samples, ensuring frame-accurate synchronization with video PTS.
+   - **Transparent Padding for Aspect Ratio Mismatches (`black@0`)**: Upper video tracks with different aspect ratios (e.g. 9:16 portrait on a 16:9 canvas) previously used opaque black padding, occluding the underlying background canvas. Upper tracks (`tIdx > 0`) now convert to `yuva420p` prior to padding and apply `color=black@0` (transparent padding).
+   - **Per-Input Framerate Normalization (`fps=fps=...:round=near`)**: Added input-level frame rate harmonization matching target export FPS to prevent jitter and frame drops during layered `overlay` evaluation when mixing heterogeneous sources (e.g. 24fps cinema + 30fps screen).
+   - **Stress Test Suite**: Added 5 dedicated regression test cases in `test/multi_track_stress_test.dart` verifying multi-layer z-order, offset audio sync, silent asset omission, fps harmonization, and transparent pillarboxing.
+
+

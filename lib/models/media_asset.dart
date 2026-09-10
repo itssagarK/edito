@@ -14,6 +14,7 @@ class MediaAsset extends Equatable {
   final int fileSize;
   final String? thumbnailPath;
   final String? proxyPath;
+  final bool hasAudio;
 
   const MediaAsset({
     required this.id,
@@ -27,6 +28,7 @@ class MediaAsset extends Equatable {
     this.fileSize = 0,
     this.thumbnailPath,
     this.proxyPath,
+    this.hasAudio = true,
   });
 
   bool get is4kOrHigher => width >= 3840 || height >= 2160;
@@ -44,6 +46,7 @@ class MediaAsset extends Equatable {
     int? fileSize,
     String? thumbnailPath,
     String? proxyPath,
+    bool? hasAudio,
   }) {
     return MediaAsset(
       id: id ?? this.id,
@@ -57,6 +60,7 @@ class MediaAsset extends Equatable {
       fileSize: fileSize ?? this.fileSize,
       thumbnailPath: thumbnailPath ?? this.thumbnailPath,
       proxyPath: proxyPath ?? this.proxyPath,
+      hasAudio: hasAudio ?? this.hasAudio,
     );
   }
 
@@ -72,6 +76,7 @@ class MediaAsset extends Equatable {
         'fileSize': fileSize,
         'thumbnailPath': thumbnailPath,
         'proxyPath': proxyPath,
+        'hasAudio': hasAudio,
       };
 
   factory MediaAsset.fromJson(Map<String, dynamic> json) => MediaAsset(
@@ -86,8 +91,9 @@ class MediaAsset extends Equatable {
         fileSize: (json['fileSize'] as num?)?.toInt() ?? 0,
         thumbnailPath: json['thumbnailPath'] as String?,
         proxyPath: json['proxyPath'] as String?,
+        hasAudio: json['hasAudio'] as bool? ?? (json['type'] != 'image'),
       );
 
   @override
-  List<Object?> get props => [id, path, fileName, type, durationMs, width, height, fps, fileSize, thumbnailPath, proxyPath];
+  List<Object?> get props => [id, path, fileName, type, durationMs, width, height, fps, fileSize, thumbnailPath, proxyPath, hasAudio];
 }

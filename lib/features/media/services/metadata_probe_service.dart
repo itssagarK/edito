@@ -20,10 +20,24 @@ class MetadataProbeService {
     int width = 0;
     int height = 0;
     double fps = 30.0;
+    bool hasAudio = true;
 
     switch (type) {
       case MediaType.video:
         if (fileExists) {
+          try {
+            final probeRes = await Process.run('ffprobe', [
+              '-v', 'error',
+              '-select_streams', 'a',
+              '-show_entries', 'stream=index',
+              '-of', 'csv=p=0',
+              filePath,
+            ]);
+            if (probeRes.exitCode == 0) {
+              hasAudio = (probeRes.stdout as String).trim().isNotEmpty;
+            }
+          } catch (_) {}
+
           try {
             final controller = VideoPlayerController.file(file);
             await controller.initialize();
@@ -53,6 +67,7 @@ class MetadataProbeService {
         break;
 
       case MediaType.audio:
+        hasAudio = true;
         if (fileExists) {
           try {
             final controller = VideoPlayerController.file(file);
@@ -72,6 +87,7 @@ class MetadataProbeService {
         break;
 
       case MediaType.image:
+        hasAudio = false;
         durationMs = 4000; // Images get default 4.0s timeline duration
         width = 1920;
         height = 1080;
@@ -90,6 +106,7 @@ class MetadataProbeService {
       fps: fps,
       fileSize: fileSize,
       thumbnailPath: thumbPath,
+      hasAudio: hasAudio,
     );
   }
 
