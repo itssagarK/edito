@@ -339,7 +339,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
       contentWidget = ValueListenableBuilder<VideoPlayerController?>(
         valueListenable: bridge.activeVideoController,
         builder: (context, controller, child) {
-          if (controller != null && controller.value.isInitialized) {
+          if (controller != null && controller.value.isInitialized && !controller.value.hasError) {
             final double videoRatio = controller.value.aspectRatio > 0
                 ? controller.value.aspectRatio
                 : (asset.width > 0 && asset.height > 0 ? asset.width / asset.height : frame.aspectRatio.ratio);
@@ -347,7 +347,12 @@ class RealtimePreviewViewport extends ConsumerWidget {
             return Center(
               child: AspectRatio(
                 aspectRatio: videoRatio,
-                child: VideoPlayer(controller),
+                child: ClipRect(
+                  child: Container(
+                    color: Colors.black,
+                    child: VideoPlayer(controller),
+                  ),
+                ),
               ),
             );
           }

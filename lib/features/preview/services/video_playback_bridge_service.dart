@@ -14,6 +14,11 @@ class VideoPlaybackBridgeService {
   bool _isInitializingVideo = false;
   bool _isInitializingAudio = false;
 
+  bool _hasPendingVideoSync = false;
+  CompositorFrame? _pendingVideoFrame;
+  bool _pendingVideoIsPlaying = false;
+  int _pendingVideoTimestampMs = 0;
+
   final ValueNotifier<VideoPlayerController?> activeVideoController = ValueNotifier(null);
   final ValueNotifier<bool> isVideoReady = ValueNotifier(false);
 
@@ -87,7 +92,14 @@ class VideoPlaybackBridgeService {
 
     // If video path changed or controller is null, initialize new controller
     if (_currentVideoPath != asset.path || _videoController == null) {
-      if (_isInitializingVideo) return; // Prevent concurrent re-entry
+      if (_isInitializingVideo) {
+        // Queue latest sync request while initialization completes
+        _hasPendingVideoSync = true;
+        _pendingVideoFrame = frame;
+        _pendingVideoIsPlaying = isPlaying;
+        _pendingVideoTimestampMs = timestampMs;
+        return;
+      }
       _isInitializingVideo = true;
       _currentVideoPath = asset.path;
       isVideoReady.value = false;
@@ -112,6 +124,31 @@ class VideoPlaybackBridgeService {
           return;
         }
 
+        // Configure initial volume & speed
+        final effectiveVolume = clip.isMuted
+            ? 0.0
+            : (clip.volume *
+                (clip.audioEffects.isDuckingEnabled ? clip.audioEffects.duckingAttenuation : 1.0) *
+                (clip.audioEffects.isLoudVoiceEnabled ? clip.audioEffects.voiceBoost : 1.0))
+                .clamp(0.0, 1.0);
+        await newController.setVolume(effectiveVolume);
+        await newController.setPlaybackSpeed(clip.speed.clamp(0.25, 4.0));
+
+        // Prime the player: seek explicitly to target frame so ExoPlayer decodes and paints the first frame
+        // onto the native Android SurfaceTexture before publishing to the UI.
+        // This eliminates uninitialized YUV (0,0,0) green frame / green screen artifacts on import.
+        final clipLocalMs = timestampMs - clip.startTimeMs + clip.sourceInMs;
+        final maxVideoMs = newController.value.duration.inMilliseconds;
+        final targetVideoMs = clipLocalMs.clamp(0, maxVideoMs).toInt();
+        final targetDuration = Duration(milliseconds: targetVideoMs);
+        await newController.seekTo(targetDuration);
+
+        if (isPlaying) {
+          await newController.play();
+        } else {
+          await newController.pause();
+        }
+
         _videoController = newController;
         activeVideoController.value = newController;
         isVideoReady.value = true;
@@ -124,6 +161,14 @@ class VideoPlaybackBridgeService {
         return;
       } finally {
         _isInitializingVideo = false;
+        if (_hasPendingVideoSync && !_isDisposed) {
+          _hasPendingVideoSync = false;
+          final pFrame = _pendingVideoFrame;
+          final pPlaying = _pendingVideoIsPlaying;
+          final pTime = _pendingVideoTimestampMs;
+          _pendingVideoFrame = null;
+          _syncVideoClip(pFrame, pPlaying, pTime);
+        }
       }
     }
 
@@ -153,7 +198,7 @@ class VideoPlaybackBridgeService {
         // Paused / Scrubbing mode: seek precisely to target frame
         final currentPos = _videoController!.value.position;
         final driftMs = (currentPos.inMilliseconds - targetDuration.inMilliseconds).abs();
-        if (driftMs > 80) {
+        if (driftMs > 30) {
           await _videoController!.seekTo(targetDuration);
         }
         if (_videoController!.value.isPlaying) {

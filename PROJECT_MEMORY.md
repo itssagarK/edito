@@ -131,4 +131,24 @@ In depth end-to-end trace and stabilization conducted across UI, Preview Composi
    - **Per-Input Framerate Normalization (`fps=fps=...:round=near`)**: Added input-level frame rate harmonization matching target export FPS to prevent jitter and frame drops during layered `overlay` evaluation when mixing heterogeneous sources (e.g. 24fps cinema + 30fps screen).
    - **Stress Test Suite**: Added 5 dedicated regression test cases in `test/multi_track_stress_test.dart` verifying multi-layer z-order, offset audio sync, silent asset omission, fps harmonization, and transparent pillarboxing.
 
+---
+
+## 6. Video Import Loading & Green Frame / Unintended LUT Display Resolution
+
+Comprehensive investigation and resolution of the gallery import issue where imported videos appeared with a greenish tint or green LUT appearance:
+
+1. **Root Cause Identification**:
+   - **Uninitialized Android SurfaceTexture / GraphicBuffer**: On Android, when `VideoPlayerController.initialize()` completes, ExoPlayer is prepared but has not decoded/rendered frame 0 into the native `SurfaceTexture`. Unrendered GraphicBuffers in YUV colorspace default to $(Y=0, U=0, V=0)$, which converts mathematically to RGB $(0, 135, 0)$ — an opaque green rectangle.
+   - **Skipped Initial Seek**: Because initial position and target duration both started at 0ms (`driftMs == 0 <= 80ms`) and playback was paused, the initial `seekTo` was bypassed. ExoPlayer never painted frame 0, leaving the green buffer visible on screen like a solid green LUT.
+   - **Scoped Storage & Content URI Expiry**: Gallery picks returning transient `content://` URIs suffered permission revocation and MediaCodec file descriptor lockouts during background initialization.
+   - **Starter Reel Residuals**: Creating a project with demo placeholder clips loaded a default `LutPreset.tealAndOrange` on the demo track, which lingered if placeholders were incompletely purged upon importing user clips.
+2. **Key Fixes Implemented**:
+   - **Explicit Initial Frame Priming**: Immediately after `newController.initialize()` in `VideoPlaybackBridgeService`, an explicit `seekTo(targetDuration)` is awaited before publishing the controller to `activeVideoController.value`. This forces ExoPlayer to decode and paint the first frame to the native `SurfaceTexture` before the widget renders.
+   - **Pending Sync Queue**: Added `_hasPendingVideoSync` queue to ensure seek and scrub events requested while `_isInitializingVideo` is active are not dropped. Reduced paused scrub tolerance from 80ms to 30ms for instant frame updates.
+   - **Persistent Local File Storage**: In `MediaPickerService`, introduced `_persistPickedFile` to safely copy picked gallery/camera videos and photos into the app's persistent cache (`media_<uuid>.mp4`), guaranteeing local file existence, direct OS file descriptor access, and immunity to Android scoped storage URI revocation.
+   - **MediaCodec Hardware Decoder Release Grace Period**: In `MetadataProbeService`, added a 60ms delay after disposing probe controllers to ensure Android's asynchronous `MediaCodec` hardware decoder releases fully before the playback controller initializes.
+   - **Starter Reel Cleanup & Playhead Reset**: In `MediaImportNotifier`, extended `isPlaceholderPath` to identify all demo clips (`starter_scene.mp4`, `Scene_Clip.mp4`, `Audio_Soundtrack.mp3`, `sample_*`), wiping demo tracks and resetting playhead to 0ms across both editor and preview providers when the first user video is imported.
+   - **Viewport Stride Artifacts & Error Handling**: In `RealtimePreviewViewport`, wrapped `VideoPlayer` with `ClipRect` and an underlying black background container to eliminate GPU stride artifacts, and added `!controller.value.hasError` check.
+   - **Color Matrix Bypass Verification**: Updated `ColorFilterCompilerService.isIdentity` to ensure vignette-only configurations (rendered via radial gradient) do not activate a GPU color filter matrix pass.
+
 

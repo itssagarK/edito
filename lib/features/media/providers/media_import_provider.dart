@@ -115,6 +115,14 @@ class MediaImportNotifier extends StateNotifier<AsyncValue<List<MediaAsset>>> {
     if (project == null) return;
 
     // Check if the current project only contains starter/placeholder clips
+    final isPlaceholderPath = (String? path) {
+      if (path == null || path.isEmpty) return true;
+      return path == 'starter_scene.mp4' ||
+          path == 'Scene_Clip.mp4' ||
+          path == 'Audio_Soundtrack.mp3' ||
+          path.startsWith('sample_');
+    };
+
     final hasOnlyPlaceholderClips = project.tracks.every((t) => t.clips.every((c) {
       MediaAsset? asset;
       for (final a in project!.assets) {
@@ -124,7 +132,7 @@ class MediaImportNotifier extends StateNotifier<AsyncValue<List<MediaAsset>>> {
         }
       }
       if (asset == null) return true;
-      return asset.path == 'starter_scene.mp4' || asset.path.startsWith('sample_');
+      return isPlaceholderPath(asset.path);
     }));
 
     if (hasOnlyPlaceholderClips && targetType == TrackType.video) {
@@ -156,8 +164,10 @@ class MediaImportNotifier extends StateNotifier<AsyncValue<List<MediaAsset>>> {
       project = project.addTrack(targetTrack);
     }
 
-    // Insert at 0ms if track is empty, or at current playhead position
-    int insertionPositionMs = targetTrack.clips.isEmpty ? 0 : editorState.playheadPositionMs;
+    // Insert at 0ms if track is empty/cleared, or at current playhead position
+    int insertionPositionMs = (hasOnlyPlaceholderClips || targetTrack.clips.isEmpty)
+        ? 0
+        : editorState.playheadPositionMs;
     Clip? firstNewClip;
 
     for (final asset in assets) {
@@ -184,6 +194,7 @@ class MediaImportNotifier extends StateNotifier<AsyncValue<List<MediaAsset>>> {
 
     // Auto-select and jump playhead to the newly imported clip and force frame sync
     if (firstNewClip != null) {
+      _ref.read(editorProvider.notifier).seek(firstNewClip.startTimeMs);
       _ref.read(editorProvider.notifier).selectClip(firstNewClip.id, trackId: targetTrack.id);
       _ref.read(previewPlaybackProvider.notifier).seek(firstNewClip.startTimeMs);
       _ref.read(previewPlaybackProvider.notifier).syncCurrentFrame();

@@ -85,6 +85,27 @@ void main() {
       expect(matrix[19], equals(0.0)); // A offset
     });
 
+    test('ColorFilterCompilerService treats vignette-only config as matrix identity', () {
+      const vignetteOnly = ColorGradingConfig(vignette: 0.5);
+      expect(ColorFilterCompilerService.isIdentity(vignetteOnly), isTrue);
+    });
+
+    test('ColorFilterCompilerService treats active LUT as non-identity', () {
+      const lutGraded = ColorGradingConfig(activeLut: LutPreset.tealAndOrange);
+      expect(ColorFilterCompilerService.isIdentity(lutGraded), isFalse);
+    });
+
+    test('ColorFilterCompilerService treats customized curve as non-identity', () {
+      const curveGraded = ColorGradingConfig(
+        masterCurve: [
+          CurvePoint(0.0, 0.0),
+          CurvePoint(0.4, 0.6),
+          CurvePoint(1.0, 1.0),
+        ],
+      );
+      expect(ColorFilterCompilerService.isIdentity(curveGraded), isFalse);
+    });
+
     test('ColorFilterCompilerService generates accurate FFmpeg filter strings', () {
       const config = ColorGradingConfig(
         contrast: 1.25,

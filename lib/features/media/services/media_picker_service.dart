@@ -11,6 +11,37 @@ import 'metadata_probe_service.dart';
 class MediaPickerService {
   final ImagePicker _imagePicker = ImagePicker();
 
+  /// Safely copies picked file to app's persistent temporary storage to guarantee a real file path on disk,
+  /// avoiding content:// URI scoped storage permission expiration and hardware decoder failures.
+  static Future<String> _persistPickedFile(XFile xFile, String fallbackExt) async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final originalExt = p.extension(xFile.path);
+      final ext = originalExt.isNotEmpty ? originalExt : fallbackExt;
+      final targetPath = p.join(tempDir.path, 'media_${const Uuid().v4()}$ext');
+      final targetFile = File(targetPath);
+
+      if (xFile.path.startsWith('content://')) {
+        final bytes = await xFile.readAsBytes();
+        await targetFile.writeAsBytes(bytes, flush: true);
+        return targetFile.path;
+      }
+
+      final sourceFile = File(xFile.path);
+      if (await sourceFile.exists()) {
+        await sourceFile.copy(targetPath);
+        return targetPath;
+      } else {
+        final bytes = await xFile.readAsBytes();
+        await targetFile.writeAsBytes(bytes, flush: true);
+        return targetFile.path;
+      }
+    } catch (e) {
+      debugPrint('Failed to persist picked file: $e, using original path');
+      return xFile.path;
+    }
+  }
+
   /// Picks a video from the system gallery (Google Photos, Samsung Gallery, etc.)
   Future<List<MediaAsset>> pickVideoFromGallery() async {
     try {
@@ -20,7 +51,8 @@ class MediaPickerService {
       );
       if (picked == null) return [];
 
-      final asset = await MetadataProbeService.probeFile(picked.path, MediaType.video);
+      final persistentPath = await _persistPickedFile(picked, '.mp4');
+      final asset = await MetadataProbeService.probeFile(persistentPath, MediaType.video);
       return [asset];
     } catch (e) {
       debugPrint('pickVideoFromGallery error: $e');
@@ -37,7 +69,8 @@ class MediaPickerService {
       );
       if (picked == null) return [];
 
-      final asset = await MetadataProbeService.probeFile(picked.path, MediaType.video);
+      final persistentPath = await _persistPickedFile(picked, '.mp4');
+      final asset = await MetadataProbeService.probeFile(persistentPath, MediaType.video);
       return [asset];
     } catch (e) {
       debugPrint('recordVideoWithCamera error: $e');
@@ -132,7 +165,8 @@ class MediaPickerService {
         if (pickedList.isNotEmpty) {
           final assets = <MediaAsset>[];
           for (final xFile in pickedList) {
-            final asset = await MetadataProbeService.probeFile(xFile.path, MediaType.image);
+            final persistentPath = await _persistPickedFile(xFile, '.jpg');
+            final asset = await MetadataProbeService.probeFile(persistentPath, MediaType.image);
             assets.add(asset);
           }
           return assets;
@@ -141,7 +175,8 @@ class MediaPickerService {
 
       final picked = await _imagePicker.pickImage(source: ImageSource.gallery);
       if (picked == null) return [];
-      final asset = await MetadataProbeService.probeFile(picked.path, MediaType.image);
+      final persistentPath = await _persistPickedFile(picked, '.jpg');
+      final asset = await MetadataProbeService.probeFile(persistentPath, MediaType.image);
       return [asset];
     } catch (e) {
       debugPrint('pickImages error: $e');
@@ -154,7 +189,8 @@ class MediaPickerService {
     try {
       final picked = await _imagePicker.pickImage(source: ImageSource.camera);
       if (picked == null) return [];
-      final asset = await MetadataProbeService.probeFile(picked.path, MediaType.image);
+      final persistentPath = await _persistPickedFile(picked, '.jpg');
+      final asset = await MetadataProbeService.probeFile(persistentPath, MediaType.image);
       return [asset];
     } catch (e) {
       debugPrint('capturePhotoWithCamera error: $e');

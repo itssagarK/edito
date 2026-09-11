@@ -39,7 +39,9 @@ class MetadataProbeService {
           } catch (_) {}
 
           try {
-            final controller = VideoPlayerController.file(file);
+            final controller = filePath.startsWith('content://')
+                ? VideoPlayerController.contentUri(Uri.parse(filePath))
+                : VideoPlayerController.file(file);
             await controller.initialize();
             final d = controller.value.duration.inMilliseconds;
             if (d > 0) durationMs = d;
@@ -53,6 +55,8 @@ class MetadataProbeService {
               height = 1080;
             }
             await controller.dispose();
+            // Allow native Android MediaCodec hardware decoder to release before playback engine initializes
+            await Future.delayed(const Duration(milliseconds: 60));
           } catch (_) {
             durationMs = 10000;
             width = 1920;

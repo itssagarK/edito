@@ -21,7 +21,22 @@ class ColorFilterCompilerService {
   }) {
     if (chromaKey != null && chromaKey.isEnabled) return false;
     if (enhancement != null && enhancement.hasActiveEnhancements) return false;
-    return !config.isGraded;
+
+    // Vignette is rendered via radial gradient overlay, not color matrix.
+    // Only engage GPU ColorFiltered matrix pass if true color grading is active.
+    final hasColorAdjustments = config.exposure != 0.0 ||
+        config.contrast != 1.0 ||
+        config.saturation != 1.0 ||
+        config.brightness != 0.0 ||
+        config.temperature != 0.0 ||
+        config.tint != 0.0 ||
+        config.highlights != 0.0 ||
+        config.shadows != 0.0 ||
+        config.activeLut != LutPreset.none ||
+        config.hsl.values.any((h) => h.hue != 0.0 || h.saturation != 0.0 || h.luminance != 0.0) ||
+        ColorGradingConfig.isCurveCustomized(config.masterCurve);
+
+    return !hasColorAdjustments;
   }
 
   /// Compiles ColorGradingConfig into a mathematically accurate 4x5 ColorFilter matrix for instant Flutter GPU rendering.
