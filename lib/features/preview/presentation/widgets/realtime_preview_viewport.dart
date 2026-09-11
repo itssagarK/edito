@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -196,7 +197,11 @@ class RealtimePreviewViewport extends ConsumerWidget {
                             if (overlayClip.textOverlay.text.trim().isNotEmpty) {
                               final offsetMs = currentPositionMs - overlayClip.startTimeMs;
                               final evaluatedText = OverlayCompilerService.evaluateOverlayAt(overlayClip, offsetMs);
-                              widgets.add(_buildTextOverlayWidget(evaluatedText));
+                              widgets.add(_buildTextOverlayWidget(
+                                evaluatedText,
+                                clipOffsetMs: offsetMs,
+                                clipDurationMs: overlayClip.durationMs,
+                              ));
                             }
                             return widgets;
                           }),
@@ -639,51 +644,217 @@ class RealtimePreviewViewport extends ConsumerWidget {
     );
   }
 
-  Widget _buildTextOverlayWidget(TextOverlayConfig config) {
+  TextStyle _resolveOverlayTextStyle(TextOverlayConfig config) {
+    final name = config.fontFamily.trim().toLowerCase().replaceAll(' ', '');
+    final weight = config.isBold ? FontWeight.w800 : FontWeight.w500;
+    final fontStyle = config.isItalic ? FontStyle.italic : FontStyle.normal;
+    final decoration = config.isUnderline ? TextDecoration.underline : TextDecoration.none;
+    final spacing = config.letterSpacing;
+    final color = Color(config.textColor);
+
+    try {
+      switch (name) {
+        case 'anton':
+          return GoogleFonts.anton(fontSize: config.fontSize, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
+        case 'bebasneue':
+          return GoogleFonts.bebasNeue(fontSize: config.fontSize, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
+        case 'montserrat':
+          return GoogleFonts.montserrat(fontSize: config.fontSize, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
+        case 'poppins':
+          return GoogleFonts.poppins(fontSize: config.fontSize, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
+        case 'oswald':
+          return GoogleFonts.oswald(fontSize: config.fontSize, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
+        case 'jetbrainsmono':
+          return GoogleFonts.jetbrainsMono(fontSize: config.fontSize, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
+        case 'caveat':
+          return GoogleFonts.caveat(fontSize: config.fontSize, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
+        case 'pacifico':
+          return GoogleFonts.pacifico(fontSize: config.fontSize, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
+        case 'permanentmarker':
+          return GoogleFonts.permanentMarker(fontSize: config.fontSize, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
+        case 'roboto':
+          return GoogleFonts.roboto(fontSize: config.fontSize, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
+        case 'inter':
+        default:
+          return GoogleFonts.inter(fontSize: config.fontSize, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
+      }
+    } catch (_) {
+      return TextStyle(
+        fontFamily: config.fontFamily,
+        fontSize: config.fontSize,
+        fontWeight: weight,
+        fontStyle: fontStyle,
+        decoration: decoration,
+        letterSpacing: spacing,
+        color: color,
+      );
+    }
+  }
+
+  Widget _buildTextOverlayWidget(
+    TextOverlayConfig config, {
+    int clipOffsetMs = 0,
+    int clipDurationMs = 2500,
+  }) {
     if (config.text.trim().isEmpty) return const SizedBox.shrink();
+
+    // 1. Process Text Transformation (e.g. ALL CAPS)
+    String fullText = config.isUppercase ? config.text.toUpperCase() : config.text;
+    String displayText = fullText;
+
+    // 2. Evaluate Dynamic Animation Parameters
+    double animScale = 1.0;
+    double animOpacity = 1.0;
+    double animOffsetY = 0.0;
+
+    final progress = clipDurationMs > 0 ? (clipOffsetMs / clipDurationMs).clamp(0.0, 1.0) : 1.0;
+
+    switch (config.animationType) {
+      case TextAnimationType.none:
+        break;
+
+      case TextAnimationType.fadeIn:
+        if (clipOffsetMs < 300) {
+          animOpacity = (clipOffsetMs / 300.0).clamp(0.0, 1.0);
+        } else if (clipDurationMs - clipOffsetMs < 200) {
+          animOpacity = ((clipDurationMs - clipOffsetMs) / 200.0).clamp(0.0, 1.0);
+        }
+        break;
+
+      case TextAnimationType.popScale:
+        if (clipOffsetMs < 280) {
+          final t = (clipOffsetMs / 280.0).clamp(0.0, 1.0);
+          animScale = t < 0.6 ? (t / 0.6) * 1.25 : 1.25 - ((t - 0.6) / 0.4) * 0.25;
+          animOpacity = (t * 2.0).clamp(0.0, 1.0);
+        }
+        break;
+
+      case TextAnimationType.bounce:
+        if (clipOffsetMs < 360) {
+          final t = (clipOffsetMs / 360.0).clamp(0.0, 1.0);
+          animScale = 1.0 + 0.35 * math.sin(t * 3.14159);
+          animOpacity = (t * 2.5).clamp(0.0, 1.0);
+        }
+        break;
+
+      case TextAnimationType.slideUp:
+        if (clipOffsetMs < 300) {
+          final t = (clipOffsetMs / 300.0).clamp(0.0, 1.0);
+          final ease = 1.0 - math.pow(1.0 - t, 2.0);
+          animOffsetY = (1.0 - ease) * 28.0;
+          animOpacity = t;
+        }
+        break;
+
+      case TextAnimationType.zoomIn:
+        if (clipOffsetMs < 350) {
+          final t = (clipOffsetMs / 350.0).clamp(0.0, 1.0);
+          animScale = 0.5 + 0.5 * t;
+          animOpacity = t;
+        }
+        break;
+
+      case TextAnimationType.shimmer:
+        final tSec = clipOffsetMs / 1000.0;
+        animScale = 1.0 + 0.03 * math.sin(tSec * 6.28);
+        animOpacity = 0.88 + 0.12 * math.cos(tSec * 6.28);
+        break;
+
+      case TextAnimationType.karaoke:
+        final phase = ((clipOffsetMs % 500) / 500.0);
+        animScale = 1.0 + 0.07 * math.sin(phase * 3.14159);
+        break;
+
+      case TextAnimationType.typewriter:
+        final typeDur = (clipDurationMs * 0.70).clamp(500, 3000).toDouble();
+        final t = (clipOffsetMs / typeDur).clamp(0.0, 1.0);
+        final visibleCount = (t * fullText.length).ceil().clamp(0, fullText.length);
+        displayText = fullText.substring(0, visibleCount);
+        break;
+    }
+
+    final effectiveScale = (config.scale * animScale).clamp(0.1, 5.0);
+    final effectiveOpacity = (config.opacity * animOpacity).clamp(0.0, 1.0);
 
     return Align(
       alignment: Alignment(
         (config.positionX * 2.0) - 1.0,
         (config.positionY * 2.0) - 1.0,
       ),
-      child: Transform.scale(
-        scale: config.scale,
-        child: Transform.rotate(
-          angle: config.rotation * (3.14159 / 180.0),
-          child: Opacity(
-            opacity: config.opacity.clamp(0.0, 1.0),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: config.backgroundColor != null ? Color(config.backgroundColor!) : Colors.transparent,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Builder(
-                builder: (context) {
-                  TextStyle style;
-                  try {
-                    style = GoogleFonts.getFont(
-                      config.fontFamily == 'Inter' ? 'Inter' : (config.fontFamily == 'JetBrainsMono' ? 'JetBrains Mono' : 'Roboto'),
-                      fontSize: config.fontSize,
-                      fontWeight: FontWeight.bold,
-                      color: Color(config.textColor),
-                      shadows: const [
-                        Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2)),
-                      ],
+      child: Transform.translate(
+        offset: Offset(0, animOffsetY),
+        child: Transform.scale(
+          scale: effectiveScale,
+          child: Transform.rotate(
+            angle: config.rotation * (3.14159 / 180.0),
+            child: Opacity(
+              opacity: effectiveOpacity,
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: config.boxPadding,
+                  vertical: config.boxPadding * 0.45,
+                ),
+                decoration: BoxDecoration(
+                  color: config.backgroundColor != null ? Color(config.backgroundColor!) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(config.boxCornerRadius),
+                ),
+                child: Builder(
+                  builder: (context) {
+                    final baseStyle = _resolveOverlayTextStyle(config);
+                    final shadows = <Shadow>[
+                      if (config.shadowColor != null)
+                        Shadow(
+                          color: Color(config.shadowColor!),
+                          blurRadius: config.shadowBlur,
+                          offset: const Offset(0, 2),
+                        )
+                      else
+                        const Shadow(
+                          color: Colors.black87,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                    ];
+
+                    if (config.strokeWidth > 0.0 && config.strokeColor != null) {
+                      return Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Stroke Outline Layer
+                          Text(
+                            displayText,
+                            textAlign: TextAlign.center,
+                            style: baseStyle.copyWith(
+                              foreground: Paint()
+                                ..style = PaintingStyle.stroke
+                                ..strokeWidth = config.strokeWidth * 2
+                                ..strokeJoin = StrokeJoin.round
+                                ..color = Color(config.strokeColor!),
+                            ),
+                          ),
+                          // Filled Foreground Layer
+                          Text(
+                            displayText,
+                            textAlign: TextAlign.center,
+                            style: baseStyle.copyWith(
+                              color: Color(config.textColor),
+                              shadows: shadows,
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Text(
+                      displayText,
+                      textAlign: TextAlign.center,
+                      style: baseStyle.copyWith(
+                        color: Color(config.textColor),
+                        shadows: shadows,
+                      ),
                     );
-                  } catch (_) {
-                    style = TextStyle(
-                      fontSize: config.fontSize,
-                      fontWeight: FontWeight.bold,
-                      color: Color(config.textColor),
-                      shadows: const [
-                        Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2)),
-                      ],
-                    );
-                  }
-                  return Text(config.text, style: style);
-                },
+                  },
+                ),
               ),
             ),
           ),

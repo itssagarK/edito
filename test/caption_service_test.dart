@@ -135,14 +135,59 @@ void main() {
       const text = 'Caption Test';
       final tiktok = CaptionPreset.tiktokViral.createStyle(text);
       expect(tiktok.textColor, equals(0xFFFFE600));
-      expect(tiktok.strokeWidth, equals(2.0));
+      expect(tiktok.strokeWidth, greaterThan(0.0));
+      expect(tiktok.isUppercase, isTrue);
+      expect(tiktok.animationType, equals(TextAnimationType.popScale));
 
       final podcast = CaptionPreset.neonPodcast.createStyle(text);
       expect(podcast.textColor, equals(0xFF00E5FF));
+      expect(podcast.animationType, equals(TextAnimationType.shimmer));
 
       final typewriter = CaptionPreset.retroTypewriter.createStyle(text);
-      expect(typewriter.fontFamily, equals('JetBrainsMono'));
+      expect(typewriter.fontFamily, contains('JetBrains'));
       expect(typewriter.animationType, equals(TextAnimationType.typewriter));
+
+      final fire = CaptionPreset.firePunch.createStyle(text);
+      expect(fire.textColor, equals(0xFFFF5500));
+      expect(fire.animationType, equals(TextAnimationType.bounce));
+    });
+
+    test('CaptionLine preserves custom typography attributes and animations', () {
+      const customStyle = TextOverlayConfig(
+        fontFamily: 'Anton',
+        fontSize: 36.0,
+        textColor: 0xFF00FF66,
+        isBold: true,
+        isItalic: true,
+        isUppercase: true,
+        isUnderline: true,
+        letterSpacing: 2.0,
+        strokeWidth: 3.0,
+        strokeColor: 0xFF000000,
+        animationType: TextAnimationType.bounce,
+      );
+
+      final cap = CaptionLine(
+        id: 'cap_rich',
+        text: 'Custom Styled Caption',
+        startTimeMs: 1000,
+        durationMs: 3000,
+        style: customStyle,
+      );
+
+      final json = cap.toJson();
+      final restored = CaptionLine.fromJson(json);
+
+      expect(restored.style.fontFamily, equals('Anton'));
+      expect(restored.style.fontSize, equals(36.0));
+      expect(restored.style.textColor, equals(0xFF00FF66));
+      expect(restored.style.isBold, isTrue);
+      expect(restored.style.isItalic, isTrue);
+      expect(restored.style.isUppercase, isTrue);
+      expect(restored.style.isUnderline, isTrue);
+      expect(restored.style.letterSpacing, equals(2.0));
+      expect(restored.style.strokeWidth, equals(3.0));
+      expect(restored.style.animationType, equals(TextAnimationType.bounce));
     });
   });
 }

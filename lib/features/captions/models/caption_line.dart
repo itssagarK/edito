@@ -5,8 +5,11 @@ enum CaptionPreset {
   tiktokViral,
   cinematicSubtitle,
   neonPodcast,
+  firePunch,
+  comicHero,
   minimalWhite,
   retroTypewriter,
+  pastelAesthetic,
 }
 
 extension CaptionPresetExtension on CaptionPreset {
@@ -18,10 +21,16 @@ extension CaptionPresetExtension on CaptionPreset {
         return '🎬 Cinema Subtitle';
       case CaptionPreset.neonPodcast:
         return '🎙️ Neon Podcast';
+      case CaptionPreset.firePunch:
+        return '🔥 Fire Punch';
+      case CaptionPreset.comicHero:
+        return '💥 Comic Hero';
       case CaptionPreset.minimalWhite:
         return '💬 Minimal Clean';
       case CaptionPreset.retroTypewriter:
         return '⌨️ Retro Typewriter';
+      case CaptionPreset.pastelAesthetic:
+        return '🌸 Pastel Dream';
     }
   }
 
@@ -30,41 +39,86 @@ extension CaptionPresetExtension on CaptionPreset {
       case CaptionPreset.tiktokViral:
         return TextOverlayConfig(
           text: text,
-          fontFamily: 'Inter',
-          fontSize: 28.0,
+          fontFamily: 'Anton',
+          fontSize: 30.0,
           textColor: 0xFFFFE600, // Vibrant Yellow
-          backgroundColor: 0xCC000000,
+          backgroundColor: 0xDD000000,
           strokeColor: 0xFF000000,
-          strokeWidth: 2.0,
+          strokeWidth: 2.5,
           positionX: 0.5,
           positionY: 0.82,
           animationType: TextAnimationType.popScale,
+          isBold: true,
+          isUppercase: true,
+          boxCornerRadius: 8.0,
+          boxPadding: 10.0,
         );
 
       case CaptionPreset.cinematicSubtitle:
         return TextOverlayConfig(
           text: text,
-          fontFamily: 'Inter',
+          fontFamily: 'Montserrat',
           fontSize: 22.0,
           textColor: 0xFFFFFFFF,
-          backgroundColor: 0x99000000,
+          backgroundColor: 0x88000000,
           positionX: 0.5,
           positionY: 0.86,
           animationType: TextAnimationType.fadeIn,
+          isBold: false,
+          letterSpacing: 1.2,
+          boxCornerRadius: 4.0,
         );
 
       case CaptionPreset.neonPodcast:
         return TextOverlayConfig(
           text: text,
-          fontFamily: 'Inter',
+          fontFamily: 'Poppins',
           fontSize: 26.0,
           textColor: 0xFF00E5FF, // Cyan
-          backgroundColor: 0xDD111827,
+          backgroundColor: 0xEE0B132B,
           strokeColor: 0xFF00B0FF,
           strokeWidth: 1.5,
           positionX: 0.5,
           positionY: 0.80,
           animationType: TextAnimationType.shimmer,
+          isBold: true,
+          boxCornerRadius: 10.0,
+          boxPadding: 10.0,
+        );
+
+      case CaptionPreset.firePunch:
+        return TextOverlayConfig(
+          text: text,
+          fontFamily: 'Bebas Neue',
+          fontSize: 32.0,
+          textColor: 0xFFFF5500, // Blaze Orange
+          backgroundColor: 0xDD180000,
+          strokeColor: 0xFFFFD700, // Gold stroke
+          strokeWidth: 2.0,
+          positionX: 0.5,
+          positionY: 0.82,
+          animationType: TextAnimationType.bounce,
+          isBold: true,
+          isUppercase: true,
+          boxCornerRadius: 6.0,
+          boxPadding: 8.0,
+        );
+
+      case CaptionPreset.comicHero:
+        return TextOverlayConfig(
+          text: text,
+          fontFamily: 'Permanent Marker',
+          fontSize: 28.0,
+          textColor: 0xFFFFD700, // Golden Yellow
+          backgroundColor: 0xEE000000,
+          strokeColor: 0xFF000000,
+          strokeWidth: 3.0,
+          positionX: 0.5,
+          positionY: 0.82,
+          animationType: TextAnimationType.popScale,
+          isBold: true,
+          isUppercase: true,
+          boxCornerRadius: 12.0,
         );
 
       case CaptionPreset.minimalWhite:
@@ -77,18 +131,39 @@ extension CaptionPresetExtension on CaptionPreset {
           positionX: 0.5,
           positionY: 0.84,
           animationType: TextAnimationType.none,
+          isBold: true,
+          shadowColor: 0xDD000000,
+          shadowBlur: 6.0,
         );
 
       case CaptionPreset.retroTypewriter:
         return TextOverlayConfig(
           text: text,
-          fontFamily: 'JetBrainsMono',
+          fontFamily: 'JetBrains Mono',
           fontSize: 20.0,
           textColor: 0xFFF5F6FA,
           backgroundColor: 0xEE1E293B,
           positionX: 0.5,
           positionY: 0.85,
           animationType: TextAnimationType.typewriter,
+          isBold: false,
+          letterSpacing: 0.5,
+          boxCornerRadius: 4.0,
+        );
+
+      case CaptionPreset.pastelAesthetic:
+        return TextOverlayConfig(
+          text: text,
+          fontFamily: 'Caveat',
+          fontSize: 28.0,
+          textColor: 0xFFFF85A1, // Pastel Pink
+          backgroundColor: 0xCC2A1B3D,
+          positionX: 0.5,
+          positionY: 0.84,
+          animationType: TextAnimationType.zoomIn,
+          isBold: true,
+          boxCornerRadius: 14.0,
+          boxPadding: 12.0,
         );
     }
   }

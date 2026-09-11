@@ -83,5 +83,51 @@ void main() {
       expect(filterStr, contains("enable='between(t,1.00,6.00)'"));
       expect(filterStr, contains('box=1'));
     });
+
+    test('OverlayCompilerService compiles animations and typography transforms into FFmpeg expressions', () {
+      const clip = Clip(
+        id: 'c_anim',
+        assetId: 'a1',
+        trackId: 't1',
+        startTimeMs: 2000,
+        durationMs: 4000,
+        sourceInMs: 0,
+        sourceOutMs: 4000,
+      );
+
+      // 1. Pop & Scale with uppercase and outline
+      const popConfig = TextOverlayConfig(
+        text: 'viral caption',
+        fontSize: 32.0,
+        isUppercase: true,
+        animationType: TextAnimationType.popScale,
+        strokeWidth: 2.0,
+        strokeColor: 0xFF000000,
+        shadowColor: 0xCC000000,
+      );
+
+      final popFilter = OverlayCompilerService.generateFFmpegDrawText(clip, popConfig);
+      expect(popFilter, contains("text='VIRAL CAPTION'"));
+      expect(popFilter, contains('32*if(lt('));
+      expect(popFilter, contains('borderw=2'));
+      expect(popFilter, contains('bordercolor=0x000000'));
+      expect(popFilter, contains('shadowcolor=0x000000'));
+
+      // 2. Smooth fade in
+      const fadeConfig = TextOverlayConfig(
+        text: 'Cinema Fade',
+        animationType: TextAnimationType.fadeIn,
+      );
+      final fadeFilter = OverlayCompilerService.generateFFmpegDrawText(clip, fadeConfig);
+      expect(fadeFilter, contains('alpha='));
+
+      // 3. Punchy bounce
+      const bounceConfig = TextOverlayConfig(
+        text: 'Bounce punch',
+        animationType: TextAnimationType.bounce,
+      );
+      final bounceFilter = OverlayCompilerService.generateFFmpegDrawText(clip, bounceConfig);
+      expect(bounceFilter, contains('sin('));
+    });
   });
 }

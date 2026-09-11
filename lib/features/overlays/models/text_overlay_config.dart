@@ -6,7 +6,10 @@ enum TextAnimationType {
   slideUp,
   typewriter,
   popScale,
+  bounce,
   shimmer,
+  zoomIn,
+  karaoke,
 }
 
 extension TextAnimationTypeExtension on TextAnimationType {
@@ -21,9 +24,15 @@ extension TextAnimationTypeExtension on TextAnimationType {
       case TextAnimationType.typewriter:
         return 'Typewriter Machine';
       case TextAnimationType.popScale:
-        return 'Pop & Scale In';
+        return 'Pop & Scale In (TikTok)';
+      case TextAnimationType.bounce:
+        return 'Punchy Bounce';
       case TextAnimationType.shimmer:
         return 'Golden Shimmer Glow';
+      case TextAnimationType.zoomIn:
+        return 'Dramatic Zoom In';
+      case TextAnimationType.karaoke:
+        return 'Karaoke Word Pulse';
     }
   }
 }
@@ -42,6 +51,15 @@ class TextOverlayConfig extends Equatable {
   final double rotation;         // in degrees
   final double opacity;
   final TextAnimationType animationType;
+  final bool isBold;
+  final bool isItalic;
+  final bool isUnderline;
+  final bool isUppercase;
+  final double letterSpacing;
+  final int? shadowColor;
+  final double shadowBlur;
+  final double boxCornerRadius;
+  final double boxPadding;
 
   const TextOverlayConfig({
     this.text = '',
@@ -57,6 +75,15 @@ class TextOverlayConfig extends Equatable {
     this.rotation = 0.0,
     this.opacity = 1.0,
     this.animationType = TextAnimationType.fadeIn,
+    this.isBold = true,
+    this.isItalic = false,
+    this.isUnderline = false,
+    this.isUppercase = false,
+    this.letterSpacing = 0.0,
+    this.shadowColor,
+    this.shadowBlur = 4.0,
+    this.boxCornerRadius = 6.0,
+    this.boxPadding = 8.0,
   });
 
   bool get isEnabled => text.trim().isNotEmpty;
@@ -75,6 +102,15 @@ class TextOverlayConfig extends Equatable {
     double? rotation,
     double? opacity,
     TextAnimationType? animationType,
+    bool? isBold,
+    bool? isItalic,
+    bool? isUnderline,
+    bool? isUppercase,
+    double? letterSpacing,
+    int? shadowColor,
+    double? shadowBlur,
+    double? boxCornerRadius,
+    double? boxPadding,
   }) {
     return TextOverlayConfig(
       text: text ?? this.text,
@@ -90,6 +126,15 @@ class TextOverlayConfig extends Equatable {
       rotation: rotation ?? this.rotation,
       opacity: opacity ?? this.opacity,
       animationType: animationType ?? this.animationType,
+      isBold: isBold ?? this.isBold,
+      isItalic: isItalic ?? this.isItalic,
+      isUnderline: isUnderline ?? this.isUnderline,
+      isUppercase: isUppercase ?? this.isUppercase,
+      letterSpacing: letterSpacing ?? this.letterSpacing,
+      shadowColor: shadowColor ?? this.shadowColor,
+      shadowBlur: shadowBlur ?? this.shadowBlur,
+      boxCornerRadius: boxCornerRadius ?? this.boxCornerRadius,
+      boxPadding: boxPadding ?? this.boxPadding,
     );
   }
 
@@ -107,6 +152,15 @@ class TextOverlayConfig extends Equatable {
         'rotation': rotation,
         'opacity': opacity,
         'animationType': animationType.name,
+        'isBold': isBold,
+        'isItalic': isItalic,
+        'isUnderline': isUnderline,
+        'isUppercase': isUppercase,
+        'letterSpacing': letterSpacing,
+        'shadowColor': shadowColor,
+        'shadowBlur': shadowBlur,
+        'boxCornerRadius': boxCornerRadius,
+        'boxPadding': boxPadding,
       };
 
   factory TextOverlayConfig.fromJson(Map<String, dynamic> json) => TextOverlayConfig(
@@ -126,6 +180,15 @@ class TextOverlayConfig extends Equatable {
           (e) => e.name == json['animationType'],
           orElse: () => TextAnimationType.none,
         ),
+        isBold: json['isBold'] as bool? ?? true,
+        isItalic: json['isItalic'] as bool? ?? false,
+        isUnderline: json['isUnderline'] as bool? ?? false,
+        isUppercase: json['isUppercase'] as bool? ?? false,
+        letterSpacing: (json['letterSpacing'] as num?)?.toDouble() ?? 0.0,
+        shadowColor: (json['shadowColor'] as num?)?.toInt(),
+        shadowBlur: (json['shadowBlur'] as num?)?.toDouble() ?? 4.0,
+        boxCornerRadius: (json['boxCornerRadius'] as num?)?.toDouble() ?? 6.0,
+        boxPadding: (json['boxPadding'] as num?)?.toDouble() ?? 8.0,
       );
 
   @override
@@ -143,5 +206,14 @@ class TextOverlayConfig extends Equatable {
         rotation,
         opacity,
         animationType,
+        isBold,
+        isItalic,
+        isUnderline,
+        isUppercase,
+        letterSpacing,
+        shadowColor,
+        shadowBlur,
+        boxCornerRadius,
+        boxPadding,
       ];
 }

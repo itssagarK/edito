@@ -95,7 +95,8 @@ class OverlayCompilerService {
     final scale = outputHeight / referenceHeight;
     final size = (config.fontSize * scale).round().clamp(6, 500);
 
-    final sanitizedText = config.text.replaceAll("'", "\\'").replaceAll(':', '\\:');
+    final rawText = config.isUppercase ? config.text.toUpperCase() : config.text;
+    final sanitizedText = rawText.replaceAll("'", "\\'").replaceAll(':', '\\:');
     final startSec = isClipRelative ? '0.00' : (clip.startTimeMs / 1000.0).toStringAsFixed(2);
     final endSec = isClipRelative
         ? (clip.durationMs / 1000.0).toStringAsFixed(2)
@@ -110,21 +111,59 @@ class OverlayCompilerService {
         ? _buildInterpolatedExpr(clip.keyframes, (k) => k.positionY, tExpr, config.positionY)
         : config.positionY.toStringAsFixed(2);
 
-    final xExpr = clip.keyframes.isNotEmpty ? '(w-text_w)*($xFactor)' : '(w-text_w)*$xFactor';
-    final yExpr = clip.keyframes.isNotEmpty ? '(h-text_h)*($yFactor)' : '(h-text_h)*$yFactor';
+    String xExpr = clip.keyframes.isNotEmpty ? '(w-text_w)*($xFactor)' : '(w-text_w)*$xFactor';
+    String yExpr = clip.keyframes.isNotEmpty ? '(h-text_h)*($yFactor)' : '(h-text_h)*$yFactor';
 
     final fontColorHex = (config.textColor & 0x00FFFFFF) == 0x00FFFFFF
         ? 'white'
         : '0x${(config.textColor & 0x00FFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
+    // Handle dynamic animations in FFmpeg expressions
+    String sizeExpr = '$size';
+    String? alphaExpr;
+
+    switch (config.animationType) {
+      case TextAnimationType.popScale:
+        sizeExpr = "'$size*if(lt($tExpr,0.28),1+0.25*(1-($tExpr/0.28)),1.0)'";
+        break;
+      case TextAnimationType.bounce:
+        sizeExpr = "'$size*if(lt($tExpr,0.36),1+0.35*sin(($tExpr/0.36)*3.14159),1.0)'";
+        break;
+      case TextAnimationType.zoomIn:
+        sizeExpr = "'$size*if(lt($tExpr,0.35),0.5+0.5*($tExpr/0.35),1.0)'";
+        break;
+      case TextAnimationType.fadeIn:
+        final clipDurSec = (clip.durationMs / 1000.0).toStringAsFixed(2);
+        alphaExpr = "'if(lt($tExpr,0.30),$tExpr/0.30,if(gt($tExpr,$clipDurSec-0.20),($clipDurSec-$tExpr)/0.20,1.0))'";
+        break;
+      case TextAnimationType.slideUp:
+        final slidePx = (28 * scale).round();
+        yExpr = "$yExpr+if(lt($tExpr,0.30),(1-($tExpr/0.30))*$slidePx,0)";
+        alphaExpr = "'if(lt($tExpr,0.30),$tExpr/0.30,1.0)'";
+        break;
+      case TextAnimationType.shimmer:
+        alphaExpr = "'0.88+0.12*cos($tExpr*6.28)'";
+        break;
+      case TextAnimationType.karaoke:
+        sizeExpr = "'$size*(1+0.07*sin(mod($tExpr,0.5)/0.5*3.14159))'";
+        break;
+      case TextAnimationType.typewriter:
+      case TextAnimationType.none:
+        break;
+    }
+
     final filters = <String>[
       "drawtext=text='$sanitizedText'",
-      "fontsize=$size",
+      "fontsize=$sizeExpr",
       "fontcolor=$fontColorHex",
       "x='$xExpr'",
       "y='$yExpr'",
       "enable='between(t,$startSec,$endSec)'",
     ];
+
+    if (alphaExpr != null) {
+      filters.add("alpha=$alphaExpr");
+    }
 
     if (config.strokeWidth > 0.0) {
       final strokeW = (config.strokeWidth * scale).round().clamp(1, 50);
@@ -135,11 +174,16 @@ class OverlayCompilerService {
       }
     }
 
+    if (config.shadowColor != null) {
+      final shadowHex = '0x${(config.shadowColor! & 0x00FFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+      filters.add("shadowcolor=$shadowHex:shadowx=2:shadowy=2");
+    }
+
     if (config.backgroundColor != null) {
       final bg = config.backgroundColor!;
       final hex = '0x${(bg & 0x00FFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
       final alpha = (((bg >> 24) & 0xFF) / 255.0).clamp(0.0, 1.0);
-      final boxBorderW = (8 * scale).round().clamp(1, 100);
+      final boxBorderW = (config.boxPadding * scale).round().clamp(1, 100);
       filters.add("box=1:boxcolor=$hex@${alpha.toStringAsFixed(2)}:boxborderw=$boxBorderW");
     }
 

@@ -151,4 +151,27 @@ Comprehensive investigation and resolution of the gallery import issue where imp
    - **Viewport Stride Artifacts & Error Handling**: In `RealtimePreviewViewport`, wrapped `VideoPlayer` with `ClipRect` and an underlying black background container to eliminate GPU stride artifacts, and added `!controller.value.hasError` check.
    - **Color Matrix Bypass Verification**: Updated `ColorFilterCompilerService.isIdentity` to ensure vignette-only configurations (rendered via radial gradient) do not activate a GPU color filter matrix pass.
 
+---
+
+## 7. Caption Studio & Typography Engine (Phase 7 & 8 Overhaul)
+
+Comprehensive enhancement of the captioning suite with professional short-form styling, typography, animations, and export compilation:
+
+1. **Rich Typography & Styling Attributes (`TextOverlayConfig`)**:
+   - Added `isBold`, `isItalic`, `isUnderline`, `isUppercase`, and `letterSpacing` for complete text formatting.
+   - Added outline stroke parameters (`strokeWidth`, `strokeColor`) and background box styling (`boxCornerRadius`, `boxPadding`).
+   - Added drop shadow customization (`shadowColor`, `shadowBlur`).
+2. **Animation Pipeline**:
+   - Expanded `TextAnimationType` to include: `none`, `popScale` (TikTok/Reels pop), `bounce` (punchy spring bounce), `fadeIn` (smooth cinematic fade), `slideUp`, `typewriter` (character-by-character reveal), `shimmer` (glow pulse), `zoomIn` (dramatic scale), and `karaoke` (word pulse).
+   - Real-time preview animation in `RealtimePreviewViewport` based on elapsed clip offset.
+   - FFmpeg `drawtext` expression compilation in `OverlayCompilerService` generating mathematical `fontsize`, `alpha`, and coordinate transforms.
+3. **Caption Studio UI (`CaptionManagerSheet`)**:
+   - **Live Animated Preview Canvas**: Displays the active caption in a simulated player box with a repeating 2.5-second animation loop.
+   - **Font Picker**: Scrollable selector for 11 popular fonts (`Anton`, `Inter`, `Bebas Neue`, `Montserrat`, `Poppins`, `Roboto`, `Oswald`, `JetBrains Mono`, `Permanent Marker`, `Caveat`, `Pacifico`).
+   - **Font Size & Quick Chips**: Slider from 14pt to 64pt with quick size buttons (`S 18`, `M 24`, `L 30`, `XL 38`, `XXL 48`).
+   - **Color Palettes**: 10 text color swatches, 9 background box styles, and 6 outline stroke colors.
+   - **Typography Toggles**: One-tap toggles for Bold, Italic, ALL CAPS, and Underline.
+   - **Preset Carousel**: 8 one-tap presets (`TikTok Viral`, `Cinema Subtitle`, `Neon Podcast`, `Fire Punch`, `Comic Hero`, `Minimal Clean`, `Retro Typewriter`, `Pastel Dream`).
+   - **Global or Per-Line Application**: "Apply to All" toggle allowing uniform project styling or distinct individual line customizations.
+
 
