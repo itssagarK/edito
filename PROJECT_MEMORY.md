@@ -174,4 +174,31 @@ Comprehensive enhancement of the captioning suite with professional short-form s
    - **Preset Carousel**: 8 one-tap presets (`TikTok Viral`, `Cinema Subtitle`, `Neon Podcast`, `Fire Punch`, `Comic Hero`, `Minimal Clean`, `Retro Typewriter`, `Pastel Dream`).
    - **Global or Per-Line Application**: "Apply to All" toggle allowing uniform project styling or distinct individual line customizations.
 
+---
+
+## 8. Dedicated Borders & Frames Studio and Header & Footer Studio (v1.0.22 Release)
+
+Two dedicated, professional editing modules introduced separately into the primary editor toolbar to empower short-form creators with viral social styling, card frames, cinematic borders, and news/podcast banners:
+
+1. **Borders & Frames Studio (`VideoBorderConfig`, `VideoBorderSheet`, `VideoBorderCompilerService`)**:
+   - **Styles Supported**: Solid frame border, glowing neon aura with customizable intensity & spread, dual-color gradient border, floating rounded card, 35mm motion picture film strip with sprocket perforations, vintage Polaroid photo frame with thick bottom margin, cinematic widescreen letterbox bars, and retro CRT television curved bezel.
+   - **Full Parameter Control**: Border thickness/width slider (2px to 48px) with quick-selection chips (`4px`, `10px`, `18px`, `28px`, `40px`), corner rounding/radius (0px to 48px), opacity slider, primary & secondary 10-swatch color pickers, and glow intensity slider (0.0 to 2.0).
+   - **One-Tap Presets**: Neon Cyan Glow, Gold Luxury Frame, 35mm Film Strip, Vintage Polaroid, Cinematic Letterbox, Rounded Card, Clean Minimalist, Retro TV Bezel.
+   - **Realtime Preview & HUD**: Dynamic custom painters (`_GradientBorderPainter`, `_FilmStripBorderPainter`) in `RealtimePreviewViewport` with instant playback response and floating HUD status badge.
+   - **FFmpeg Filter Compilation**: Proportional resolution scaling against 720p baseline generating layered `drawbox` chains with alpha blending (`yuva420p` compatible).
+
+2. **Header & Footer Studio (`HeaderFooterConfig`, `HeaderFooterSheet`, `HeaderFooterCompilerService`)**:
+   - **Dedicated Dual Banners**: Top hook headline/header banner and bottom social CTA/handle footer banner designed for TikTok, Reels, YouTube Shorts, and podcasts.
+   - **Styles & Effects**: Solid banner, gradient strip, glassmorphic frosted translucent, floating pill badge, neon border accent, and minimal transparent.
+   - **Typography & Formatting**: Full Google Fonts support (`Inter`, `Montserrat`, `Anton`, `Poppins`, `Oswald`, `Bebas Neue`, `Roboto`, `Playfair Display`), font size sliders with proportional resolution scaling, font and background color pickers, bold & uppercase switches.
+   - **Badges & Animations**: Leading emoji badge picker for headers (🔥, 🔴, 🎙️, 💡, ⚡, 🎬, etc.) and footer icon badges (📲, 📢, 💬, 🔔, 👤, etc.), with entrance animation options (`fadeIn`, `slideIn`, `pulse`, `none`).
+   - **One-Tap Presets**: Viral Social Reels, Breaking News Alert, Podcast Studio, Cinema Letterbox, YouTube Tutorial, Aesthetic Pastel Quote.
+   - **Export Engine**: Compiles into parameterized FFmpeg `drawbox` and `drawtext` filters with animated entrance expressions (`y=if(lt(t,0.3),...)`) for frame-accurate renders across 720p, 1080p, and 4K exports.
+
+3. **Domain Model & Toolbar Integration**:
+   - Integrated `VideoBorderConfig` and `HeaderFooterConfig` directly onto `Clip` domain model with zero-overhead `const` defaults.
+   - Added `EditorTool.borders` and `EditorTool.headerFooter` as separate tools in `EditingToolbar` and `editor_screen.dart`, providing dedicated modals with interactive live previews and "Apply to All Clips" global toggles.
+   - Verified via comprehensive test suite in `test/borders_and_header_footer_test.dart`.
+
+
 

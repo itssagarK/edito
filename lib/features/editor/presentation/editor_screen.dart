@@ -9,12 +9,14 @@ import '../../../models/project.dart';
 import '../../../models/track.dart';
 import '../providers/editor_provider.dart';
 import '../../audio/presentation/widgets/audio_mixer_sheet.dart';
+import '../../borders/presentation/widgets/video_border_sheet.dart';
 import '../../captions/presentation/widgets/caption_manager_sheet.dart';
 import '../../character_zoom/presentation/widgets/character_zoom_sheet.dart';
 import '../../chroma/presentation/widgets/chroma_key_sheet.dart';
 import '../../color_grading/presentation/widgets/color_grading_sheet.dart';
 import '../../enhancement/presentation/widgets/video_enhancement_sheet.dart';
 import '../../export/presentation/widgets/export_settings_modal.dart';
+import '../../header_footer/presentation/widgets/header_footer_sheet.dart';
 import '../../highlight/presentation/widgets/character_highlight_sheet.dart';
 import '../../home/providers/project_list_provider.dart';
 import '../../image_editor/presentation/widgets/asset_library_sheet.dart';
@@ -390,6 +392,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openCharacterZoomModal();
         break;
 
+      case EditorTool.borders:
+        _openBordersModal();
+        break;
+
+      case EditorTool.headerFooter:
+        _openHeaderFooterModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -584,6 +594,54 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openCharacterZoomModal() {
     _openDockedTool(EditorTool.characterZoom, trackType: TrackType.video, purpose: 'Character Zoom');
+  }
+
+  void _openBordersModal() {
+    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Borders & Frames');
+    VideoBorderSheet.show(
+      context,
+      clip: targetClip,
+      onSave: (updatedClip, {bool applyToAll = false}) {
+        final project = ref.read(editorProvider).project!;
+        Project updatedProject;
+        if (applyToAll) {
+          final updatedTracks = project.tracks.map((track) {
+            if (track.type != TrackType.video) return track;
+            final updatedClips = track.clips.map((c) => c.copyWith(border: updatedClip.border)).toList();
+            return track.copyWith(clips: updatedClips);
+          }).toList();
+          updatedProject = project.copyWith(tracks: updatedTracks);
+        } else {
+          updatedProject = project.updateClip(updatedClip);
+        }
+        ref.read(editorProvider.notifier).updateProject(updatedProject);
+        ref.read(projectListProvider.notifier).updateProject(updatedProject);
+      },
+    );
+  }
+
+  void _openHeaderFooterModal() {
+    final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Header & Footer');
+    HeaderFooterSheet.show(
+      context,
+      clip: targetClip,
+      onSave: (updatedClip, {bool applyToAll = false}) {
+        final project = ref.read(editorProvider).project!;
+        Project updatedProject;
+        if (applyToAll) {
+          final updatedTracks = project.tracks.map((track) {
+            if (track.type != TrackType.video) return track;
+            final updatedClips = track.clips.map((c) => c.copyWith(headerFooter: updatedClip.headerFooter)).toList();
+            return track.copyWith(clips: updatedClips);
+          }).toList();
+          updatedProject = project.copyWith(tracks: updatedTracks);
+        } else {
+          updatedProject = project.updateClip(updatedClip);
+        }
+        ref.read(editorProvider.notifier).updateProject(updatedProject);
+        ref.read(projectListProvider.notifier).updateProject(updatedProject);
+      },
+    );
   }
 
   Clip? _findTargetClip() {

@@ -21,6 +21,8 @@ enum EditorTool {
   imageOverlay,
   highlight,
   characterZoom,
+  borders,
+  headerFooter,
 }
 
 class EditorState {

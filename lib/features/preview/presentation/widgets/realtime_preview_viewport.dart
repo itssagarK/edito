@@ -8,11 +8,15 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/timecode_formatter.dart';
 import '../../../audio/models/audio_effects_config.dart';
+import '../../../borders/models/video_border_config.dart';
+import '../../../borders/services/video_border_compiler_service.dart';
 import '../../../color_grading/models/color_grading_config.dart';
 import '../../../color_grading/services/color_filter_compiler_service.dart';
 import '../../../enhancement/models/video_enhancement_config.dart';
 import '../../../character_zoom/models/character_zoom_config.dart';
 import '../../../character_zoom/services/character_zoom_compiler_service.dart';
+import '../../../header_footer/models/header_footer_config.dart';
+import '../../../header_footer/services/header_footer_compiler_service.dart';
 import '../../../highlight/models/character_highlight_config.dart';
 import '../../../highlight/services/character_highlight_compiler_service.dart';
 import '../../../../models/clip.dart';
@@ -433,6 +437,10 @@ class RealtimePreviewViewport extends ConsumerWidget {
         videoContent,
         if (clip.characterHighlight.isEnabled)
           _buildCharacterHighlightOverlay(clip.characterHighlight),
+        if (clip.border.isEnabled)
+          _buildVideoBorderOverlay(clip.border),
+        if (clip.headerFooter.hasActiveOverlay)
+          _buildHeaderFooterOverlay(clip.headerFooter),
         // Live Floating HUD Badges
         Positioned(
           left: 12,
@@ -587,6 +595,40 @@ class RealtimePreviewViewport extends ConsumerWidget {
                   ),
                   child: Text(
                     CharacterZoomCompilerService.getZoomBadge(clip.characterZoom),
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: AppColors.accent,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.border.isEnabled)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Color(clip.border.primaryColor)),
+                  ),
+                  child: Text(
+                    VideoBorderCompilerService.getBorderBadge(clip.border),
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: Color(clip.border.primaryColor),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.headerFooter.hasActiveOverlay)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.accent),
+                  ),
+                  child: Text(
+                    HeaderFooterCompilerService.getHeaderFooterBadge(clip.headerFooter),
                     style: const TextStyle(
                       fontSize: 9,
                       color: AppColors.accent,
@@ -1079,6 +1121,289 @@ class RealtimePreviewViewport extends ConsumerWidget {
     );
   }
 
+  Widget _buildVideoBorderOverlay(VideoBorderConfig config) {
+    if (!config.isEnabled) return const SizedBox.shrink();
+
+    final primary = Color(config.primaryColor).withOpacity(config.opacity);
+    final secondary = Color(config.secondaryColor).withOpacity(config.opacity);
+
+    switch (config.style) {
+      case VideoBorderStyle.solid:
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: primary, width: config.borderWidth),
+                borderRadius: BorderRadius.circular(config.borderRadius),
+              ),
+            ),
+          ),
+        );
+
+      case VideoBorderStyle.neonGlow:
+        final glow = config.glowIntensity.clamp(0.0, 1.0);
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: primary, width: config.borderWidth),
+                borderRadius: BorderRadius.circular(config.borderRadius),
+                boxShadow: [
+                  BoxShadow(
+                    color: primary.withOpacity(glow * 0.8),
+                    blurRadius: glow * 18,
+                    spreadRadius: config.borderWidth * 0.5,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+
+      case VideoBorderStyle.gradient:
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: CustomPaint(
+              painter: _GradientBorderPainter(
+                primaryColor: primary,
+                secondaryColor: secondary,
+                borderWidth: config.borderWidth,
+                borderRadius: config.borderRadius,
+              ),
+            ),
+          ),
+        );
+
+      case VideoBorderStyle.roundedCard:
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: Container(
+              margin: EdgeInsets.all(config.borderWidth * 0.6),
+              decoration: BoxDecoration(
+                border: Border.all(color: primary, width: config.borderWidth),
+                borderRadius: BorderRadius.circular(config.borderRadius.clamp(8.0, 48.0)),
+              ),
+            ),
+          ),
+        );
+
+      case VideoBorderStyle.film35mm:
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: CustomPaint(
+              painter: _FilmStripBorderPainter(
+                borderColor: primary,
+                borderWidth: config.borderWidth.clamp(14.0, 60.0),
+              ),
+            ),
+          ),
+        );
+
+      case VideoBorderStyle.polaroid:
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: primary, width: config.borderWidth),
+                  left: BorderSide(color: primary, width: config.borderWidth),
+                  right: BorderSide(color: primary, width: config.borderWidth),
+                  bottom: BorderSide(color: primary, width: config.borderWidth * 3.2),
+                ),
+              ),
+            ),
+          ),
+        );
+
+      case VideoBorderStyle.cinematicLetterbox:
+        final barHeight = (config.borderWidth * 2.2).clamp(16.0, 120.0);
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(height: barHeight, width: double.infinity, color: primary),
+                Container(height: barHeight, width: double.infinity, color: primary),
+              ],
+            ),
+          ),
+        );
+
+      case VideoBorderStyle.retroTv:
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: primary, width: config.borderWidth * 1.5),
+                borderRadius: BorderRadius.circular(config.borderRadius.clamp(24.0, 60.0)),
+              ),
+            ),
+          ),
+        );
+    }
+  }
+
+  Widget _buildHeaderFooterOverlay(HeaderFooterConfig config) {
+    if (!config.hasActiveOverlay) return const SizedBox.shrink();
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Stack(
+          children: [
+            // Top Header
+            if (config.isHeaderEnabled && config.headerText.isNotEmpty)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: config.headerHeight,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: Color(config.headerBackgroundColor),
+                    border: config.headerStyle == HeaderFooterStyle.neonAccent
+                        ? const Border(bottom: BorderSide(color: Color(0xFF00E5FF), width: 2.5))
+                        : null,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (config.headerEmoji.isNotEmpty) ...[
+                            Text(config.headerEmoji, style: TextStyle(fontSize: (config.headerFontSize * 0.8).clamp(10.0, 32.0))),
+                            const SizedBox(width: 6),
+                          ],
+                          Flexible(
+                            child: Text(
+                              config.isHeaderUppercase ? config.headerText.toUpperCase() : config.headerText,
+                              style: _resolveHeaderFooterTextStyle(
+                                fontFamily: config.headerFont,
+                                fontSize: config.headerFontSize,
+                                color: Color(config.headerTextColor),
+                                isBold: config.isHeaderBold,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (config.headerSubtext.isNotEmpty)
+                        Text(
+                          config.headerSubtext,
+                          style: _resolveHeaderFooterTextStyle(
+                            fontFamily: config.headerFont,
+                            fontSize: (config.headerFontSize * 0.55).clamp(9.0, 16.0),
+                            color: Color(config.headerTextColor).withOpacity(0.8),
+                            isBold: false,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+
+            // Bottom Footer
+            if (config.isFooterEnabled && config.footerText.isNotEmpty)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: config.footerHeight,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: Color(config.footerBackgroundColor),
+                    border: config.footerStyle == HeaderFooterStyle.neonAccent
+                        ? const Border(top: BorderSide(color: Color(0xFF00E5FF), width: 2.5))
+                        : null,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (config.footerIcon.isNotEmpty) ...[
+                            Text(config.footerIcon, style: TextStyle(fontSize: (config.footerFontSize * 0.8).clamp(10.0, 28.0))),
+                            const SizedBox(width: 6),
+                          ],
+                          Flexible(
+                            child: Text(
+                              config.isFooterUppercase ? config.footerText.toUpperCase() : config.footerText,
+                              style: _resolveHeaderFooterTextStyle(
+                                fontFamily: config.footerFont,
+                                fontSize: config.footerFontSize,
+                                color: Color(config.footerTextColor),
+                                isBold: config.isFooterBold,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (config.footerSubtext.isNotEmpty)
+                        Text(
+                          config.footerSubtext,
+                          style: _resolveHeaderFooterTextStyle(
+                            fontFamily: config.footerFont,
+                            fontSize: (config.footerFontSize * 0.65).clamp(8.0, 14.0),
+                            color: Color(config.footerTextColor).withOpacity(0.8),
+                            isBold: false,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static TextStyle _resolveHeaderFooterTextStyle({
+    required String fontFamily,
+    required double fontSize,
+    required Color color,
+    required bool isBold,
+  }) {
+    final name = fontFamily.trim().toLowerCase().replaceAll(' ', '');
+    final weight = isBold ? FontWeight.bold : FontWeight.normal;
+    try {
+      switch (name) {
+        case 'anton':
+          return GoogleFonts.anton(fontSize: fontSize, fontWeight: weight, color: color);
+        case 'bebasneue':
+          return GoogleFonts.bebasNeue(fontSize: fontSize, fontWeight: weight, color: color);
+        case 'montserrat':
+          return GoogleFonts.montserrat(fontSize: fontSize, fontWeight: weight, color: color);
+        case 'poppins':
+          return GoogleFonts.poppins(fontSize: fontSize, fontWeight: weight, color: color);
+        case 'oswald':
+          return GoogleFonts.oswald(fontSize: fontSize, fontWeight: weight, color: color);
+        case 'roboto':
+          return GoogleFonts.roboto(fontSize: fontSize, fontWeight: weight, color: color);
+        case 'inter':
+        default:
+          return GoogleFonts.inter(fontSize: fontSize, fontWeight: weight, color: color);
+      }
+    } catch (_) {
+      return TextStyle(fontFamily: fontFamily, fontSize: fontSize, fontWeight: weight, color: color);
+    }
+  }
+
   static VideoLayoutRatio _mapPresetToLayoutRatio(AspectRatioPreset preset) {
     switch (preset) {
       case AspectRatioPreset.ratio16x9:
@@ -1234,3 +1559,93 @@ class _CharacterHighlightPainter extends CustomPainter {
   bool shouldRepaint(covariant _CharacterHighlightPainter oldDelegate) =>
       oldDelegate.config != config;
 }
+
+class _GradientBorderPainter extends CustomPainter {
+  final Color primaryColor;
+  final Color secondaryColor;
+  final double borderWidth;
+  final double borderRadius;
+
+  const _GradientBorderPainter({
+    required this.primaryColor,
+    required this.secondaryColor,
+    required this.borderWidth,
+    required this.borderRadius,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(
+      rect.deflate(borderWidth / 2),
+      Radius.circular(borderRadius),
+    );
+    final paint = Paint()
+      ..shader = LinearGradient(
+        colors: [primaryColor, secondaryColor],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = borderWidth;
+    canvas.drawRRect(rrect, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _GradientBorderPainter oldDelegate) =>
+      oldDelegate.primaryColor != primaryColor ||
+      oldDelegate.secondaryColor != secondaryColor ||
+      oldDelegate.borderWidth != borderWidth ||
+      oldDelegate.borderRadius != borderRadius;
+}
+
+class _FilmStripBorderPainter extends CustomPainter {
+  final Color borderColor;
+  final double borderWidth;
+
+  const _FilmStripBorderPainter({
+    required this.borderColor,
+    required this.borderWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final framePaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.fill;
+
+    // Left and right border bands
+    canvas.drawRect(Rect.fromLTWH(0, 0, borderWidth, size.height), framePaint);
+    canvas.drawRect(Rect.fromLTWH(size.width - borderWidth, 0, borderWidth, size.height), framePaint);
+
+    // Film perforations
+    final holePaint = Paint()..color = Colors.black;
+    final holeWidth = borderWidth * 0.45;
+    final holeHeight = borderWidth * 0.6;
+    final spacing = holeHeight * 1.5;
+
+    double y = spacing * 0.5;
+    while (y + holeHeight < size.height) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH((borderWidth - holeWidth) / 2, y, holeWidth, holeHeight),
+          const Radius.circular(2),
+        ),
+        holePaint,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(size.width - borderWidth + (borderWidth - holeWidth) / 2, y, holeWidth, holeHeight),
+          const Radius.circular(2),
+        ),
+        holePaint,
+      );
+      y += spacing;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _FilmStripBorderPainter oldDelegate) =>
+      oldDelegate.borderColor != borderColor || oldDelegate.borderWidth != borderWidth;
+}
+

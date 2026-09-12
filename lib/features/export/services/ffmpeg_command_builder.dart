@@ -3,9 +3,11 @@ import '../../../models/media_asset.dart';
 import '../../../models/project.dart';
 import '../../../models/track.dart';
 import '../../audio/services/ai_voice_enhancer_service.dart';
+import '../../borders/services/video_border_compiler_service.dart';
 import '../../character_zoom/services/character_zoom_compiler_service.dart';
 import '../../color_grading/services/color_filter_compiler_service.dart';
 import '../../enhancement/services/ai_video_enhancer_service.dart';
+import '../../header_footer/services/header_footer_compiler_service.dart';
 import '../../highlight/services/character_highlight_compiler_service.dart';
 import '../../overlays/services/overlay_compiler_service.dart';
 import '../../smoothing/services/ai_video_smoother_service.dart';
@@ -196,6 +198,31 @@ class FFmpegCommandBuilder {
           );
           if (zoomFilter.isNotEmpty) {
             vFilters.add(zoomFilter);
+          }
+        }
+
+        // Borders & Frames (solid, neon glow, gradient, 35mm film, polaroid, letterbox, retro TV)
+        if (clip.border.isEnabled) {
+          final borderFilter = VideoBorderCompilerService.generateFFmpegFilter(
+            clip.border,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (borderFilter.isNotEmpty) {
+            vFilters.add(borderFilter);
+          }
+        }
+
+        // Header & Footer Burn-in Banners
+        if (clip.headerFooter.hasActiveOverlay) {
+          final headerFooterFilter = HeaderFooterCompilerService.generateFFmpegFilter(
+            clip.headerFooter,
+            clipDurationMs: clip.durationMs,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (headerFooterFilter.isNotEmpty) {
+            vFilters.add(headerFooterFilter);
           }
         }
 
