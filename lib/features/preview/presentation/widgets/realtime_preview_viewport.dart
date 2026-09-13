@@ -15,6 +15,8 @@ import '../../../color_grading/services/color_filter_compiler_service.dart';
 import '../../../enhancement/models/video_enhancement_config.dart';
 import '../../../character_zoom/models/character_zoom_config.dart';
 import '../../../character_zoom/services/character_zoom_compiler_service.dart';
+import '../../../hd_converter/models/hd_converter_config.dart';
+import '../../../hd_converter/services/hd_converter_service.dart';
 import '../../../header_footer/models/header_footer_config.dart';
 import '../../../header_footer/services/header_footer_compiler_service.dart';
 import '../../../highlight/models/character_highlight_config.dart';
@@ -632,6 +634,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 9,
                       color: AppColors.accent,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.hdConverter.isEnabled)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF00E5FF)),
+                  ),
+                  child: Text(
+                    HdConverterService.getHdBadge(clip.hdConverter),
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFF00E5FF),
                       fontWeight: FontWeight.bold,
                     ),
                   ),

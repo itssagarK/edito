@@ -4,6 +4,7 @@ import '../features/borders/models/video_border_config.dart';
 import '../features/character_zoom/models/character_zoom_config.dart';
 import '../features/chroma/models/chroma_key_config.dart';
 import '../features/color_grading/models/color_grading_config.dart';
+import '../features/hd_converter/models/hd_converter_config.dart';
 import '../features/header_footer/models/header_footer_config.dart';
 import '../features/highlight/models/character_highlight_config.dart';
 import '../features/image_editor/models/image_overlay_config.dart';
@@ -39,6 +40,7 @@ class Clip extends Equatable {
   final CharacterZoomConfig characterZoom;
   final VideoBorderConfig border;
   final HeaderFooterConfig headerFooter;
+  final HdConverterConfig hdConverter;
   final List<Keyframe> keyframes;
 
   const Clip({
@@ -66,6 +68,7 @@ class Clip extends Equatable {
     this.characterZoom = const CharacterZoomConfig(),
     this.border = const VideoBorderConfig(),
     this.headerFooter = const HeaderFooterConfig(),
+    this.hdConverter = const HdConverterConfig(),
     this.keyframes = const [],
   });
 
@@ -94,6 +97,7 @@ class Clip extends Equatable {
     CharacterZoomConfig? characterZoom,
     VideoBorderConfig? border,
     HeaderFooterConfig? headerFooter,
+    HdConverterConfig? hdConverter,
     List<Keyframe>? keyframes,
   }) {
     return Clip(
@@ -121,6 +125,7 @@ class Clip extends Equatable {
       characterZoom: characterZoom ?? this.characterZoom,
       border: border ?? this.border,
       headerFooter: headerFooter ?? this.headerFooter,
+      hdConverter: hdConverter ?? this.hdConverter,
       keyframes: keyframes ?? this.keyframes,
     );
   }
@@ -150,6 +155,7 @@ class Clip extends Equatable {
         'characterZoom': characterZoom.toJson(),
         'border': border.toJson(),
         'headerFooter': headerFooter.toJson(),
+        'hdConverter': hdConverter.toJson(),
         'keyframes': keyframes.map((k) => k.toJson()).toList(),
       };
 
@@ -208,6 +214,9 @@ class Clip extends Equatable {
         headerFooter: json['headerFooter'] != null
             ? HeaderFooterConfig.fromJson(json['headerFooter'] as Map<String, dynamic>)
             : const HeaderFooterConfig(),
+        hdConverter: json['hdConverter'] != null
+            ? HdConverterConfig.fromJson(json['hdConverter'] as Map<String, dynamic>)
+            : const HdConverterConfig(),
         keyframes: (json['keyframes'] as List<dynamic>?)
                 ?.map((k) => Keyframe.fromJson(k as Map<String, dynamic>))
                 .toList() ??
@@ -240,6 +249,7 @@ class Clip extends Equatable {
         characterZoom,
         border,
         headerFooter,
+        hdConverter,
         keyframes,
       ];
 }

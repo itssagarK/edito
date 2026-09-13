@@ -3,11 +3,13 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
 import '../../models/color_grading_config.dart';
+import 'color_scopes_widget.dart';
+import 'color_wheel_widget.dart';
 import 'tone_curve_editor.dart';
 
 class ColorGradingSheet extends StatefulWidget {
   final Clip clip;
-  final Function(Clip updatedClip) onSave;
+  final Function(Clip updatedClip, {bool applyToAll}) onSave;
   final bool isDocked;
   final VoidCallback? onDone;
 
@@ -19,13 +21,22 @@ class ColorGradingSheet extends StatefulWidget {
     this.onDone,
   });
 
-  static Future<void> show(BuildContext context, {required Clip clip, required Function(Clip) onSave}) {
+  static Future<void> show(
+    BuildContext context, {
+    required Clip clip,
+    required Function(Clip updatedClip, {bool applyToAll}) onSave,
+    VoidCallback? onDone,
+  }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       barrierColor: Colors.black.withOpacity(0.15),
       backgroundColor: Colors.transparent,
-      builder: (context) => ColorGradingSheet(clip: clip, onSave: onSave),
+      builder: (context) => ColorGradingSheet(
+        clip: clip,
+        onSave: onSave,
+        onDone: onDone,
+      ),
     );
   }
 
@@ -37,11 +48,12 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
   late TabController _tabController;
   late ColorGradingConfig _config;
   String _selectedHslColor = 'red';
+  bool _applyToAll = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _config = widget.clip.colorGrading;
   }
 
@@ -53,12 +65,26 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
 
   void _applyChange() {
     final updated = widget.clip.copyWith(colorGrading: _config);
-    widget.onSave(updated);
+    widget.onSave(updated, applyToAll: _applyToAll);
+  }
+
+  void _updateConfig(ColorGradingConfig Function(ColorGradingConfig) updater) {
+    setState(() {
+      _config = updater(_config);
+    });
+    _applyChange();
+  }
+
+  void _resetAll() {
+    setState(() {
+      _config = const ColorGradingConfig();
+    });
+    _applyChange();
   }
 
   @override
   Widget build(BuildContext context) {
-    final double? sheetHeight = widget.isDocked ? null : MediaQuery.of(context).size.height * 0.48;
+    final double? sheetHeight = widget.isDocked ? null : MediaQuery.of(context).size.height * 0.62;
 
     return Container(
       height: sheetHeight,
@@ -71,7 +97,7 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
         children: [
           if (!widget.isDocked)
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 16, 4),
+              padding: const EdgeInsets.fromLTRB(20, 10, 16, 4),
               child: Column(
                 children: [
                   Center(
@@ -84,7 +110,7 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -92,28 +118,27 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
                         children: [
                           const Icon(Icons.palette_outlined, color: AppColors.accent, size: 22),
                           const SizedBox(width: 8),
-                          Text('Color Presets & Grading', style: AppTypography.titleLarge),
+                          Text('Pro Color Grading', style: AppTypography.titleLarge),
                         ],
                       ),
                       Row(
                         children: [
+                          if (_config.isGraded)
+                            TextButton(
+                              onPressed: _resetAll,
+                              child: const Text('Reset', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                            ),
                           IconButton(
-                            icon: const Icon(Icons.refresh, color: AppColors.textMuted, size: 20),
-                            tooltip: 'Reset Colors',
+                            icon: const Icon(Icons.check, color: AppColors.accent, size: 24),
                             onPressed: () {
-                              setState(() => _config = const ColorGradingConfig());
                               _applyChange();
+                              widget.onDone?.call();
+                              Navigator.pop(context);
                             },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.check, color: AppColors.accent, size: 22),
-                            onPressed: () {
-                              if (widget.onDone != null) {
-                                widget.onDone!();
-                              } else {
-                                Navigator.pop(context);
-                              }
-                            },
+                            tooltip: 'Done',
+                            style: IconButton.styleFrom(
+                              backgroundColor: AppColors.accent.withOpacity(0.15),
+                            ),
                           ),
                         ],
                       ),
@@ -123,9 +148,12 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
               ),
             ),
 
-          // Tabs
+          // Real-time RGB Waveform Scopes Monitor
+          ColorScopesWidget(config: _config),
+
+          // Tab Bar: Looks | Wheels | Adjust | Curves | HSL
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
               color: AppColors.surfaceElevated,
               borderRadius: BorderRadius.circular(10),
@@ -140,24 +168,66 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
               dividerColor: Colors.transparent,
               labelColor: Colors.white,
               unselectedLabelColor: AppColors.textMuted,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
               tabs: const [
-                Tab(text: 'Basic'),
-                Tab(text: 'Color Looks'),
-                Tab(text: 'HSL'),
-                Tab(text: 'Curves'),
+                Tab(icon: Icon(Icons.auto_awesome, size: 14), text: 'Looks'),
+                Tab(icon: Icon(Icons.donut_large, size: 14), text: 'Wheels'),
+                Tab(icon: Icon(Icons.tune, size: 14), text: 'Adjust'),
+                Tab(icon: Icon(Icons.show_chart, size: 14), text: 'Curves'),
+                Tab(icon: Icon(Icons.color_lens_outlined, size: 14), text: 'HSL'),
               ],
             ),
           ),
 
+          // Tab Views
           Expanded(
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildBasicAdjustmentsTab(),
-                _buildLutPresetsTab(),
-                _buildHslTab(),
+                _buildLooksTab(),
+                _buildColorWheelsTab(),
+                _buildAdjustTab(),
                 _buildCurvesTab(),
+                _buildHslTab(),
+              ],
+            ),
+          ),
+
+          // Bottom Bar: Apply to All
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceElevated,
+              border: Border(top: BorderSide(color: AppColors.border)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _applyToAll,
+                      activeColor: AppColors.accent,
+                      onChanged: (val) {
+                        setState(() => _applyToAll = val ?? false);
+                        _applyChange();
+                      },
+                    ),
+                    const Text('Apply grade to all clips', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                  ],
+                ),
+                Text(
+                  _config.isGraded
+                      ? (_config.activeLut != LutPreset.none
+                          ? '${_config.activeLut.name.toUpperCase()} GRADED'
+                          : 'PRO GRADED')
+                      : 'ORIGINAL',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: _config.isGraded ? AppColors.accent : AppColors.textMuted,
+                  ),
+                ),
               ],
             ),
           ),
@@ -166,284 +236,386 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
     );
   }
 
-  Widget _buildBasicAdjustmentsTab() {
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+  // --- LOOKS (PRESETS) TAB ---
+  Widget _buildLooksTab() {
+    return Column(
       children: [
-        _buildSlider(
-          label: 'Exposure',
-          value: _config.exposure,
-          min: -2.0,
-          max: 2.0,
-          displayValue: '${_config.exposure > 0 ? '+' : ''}${_config.exposure.toStringAsFixed(1)} EV',
-          onChanged: (v) {
-            setState(() => _config = _config.copyWith(exposure: v));
-            _applyChange();
-          },
-        ),
-        _buildSlider(
-          label: 'Contrast',
-          value: _config.contrast,
-          min: 0.5,
-          max: 1.5,
-          displayValue: '${(_config.contrast * 100).toInt()}%',
-          onChanged: (v) {
-            setState(() => _config = _config.copyWith(contrast: v));
-            _applyChange();
-          },
-        ),
-        _buildSlider(
-          label: 'Saturation',
-          value: _config.saturation,
-          min: 0.0,
-          max: 2.0,
-          displayValue: '${(_config.saturation * 100).toInt()}%',
-          onChanged: (v) {
-            setState(() => _config = _config.copyWith(saturation: v));
-            _applyChange();
-          },
-        ),
-        _buildSlider(
-          label: 'Temperature (Cool ↔ Warm)',
-          value: _config.temperature,
-          min: -100.0,
-          max: 100.0,
-          displayValue: '${_config.temperature.toInt()}',
-          activeColor: _config.temperature > 0 ? AppColors.accentGold : AppColors.accent,
-          onChanged: (v) {
-            setState(() => _config = _config.copyWith(temperature: v));
-            _applyChange();
-          },
-        ),
-        _buildSlider(
-          label: 'Tint (Green ↔ Magenta)',
-          value: _config.tint,
-          min: -100.0,
-          max: 100.0,
-          displayValue: '${_config.tint.toInt()}',
-          onChanged: (v) {
-            setState(() => _config = _config.copyWith(tint: v));
-            _applyChange();
-          },
-        ),
-        _buildSlider(
-          label: 'Vignette',
-          value: _config.vignette,
-          min: 0.0,
-          max: 1.0,
-          displayValue: '${(_config.vignette * 100).toInt()}%',
-          onChanged: (v) {
-            setState(() => _config = _config.copyWith(vignette: v));
-            _applyChange();
-          },
-        ),
-      ],
-    );
-  }
+        if (_config.activeLut != LutPreset.none)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+            child: Row(
+              children: [
+                const Text('LUT Intensity', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textMuted)),
+                Expanded(
+                  child: Slider(
+                    value: _config.lutIntensity,
+                    min: 0.0,
+                    max: 1.0,
+                    activeColor: AppColors.accent,
+                    onChanged: (val) => _updateConfig((c) => c.copyWith(lutIntensity: val)),
+                  ),
+                ),
+                Text('${(_config.lutIntensity * 100).round()}%', style: const TextStyle(fontSize: 11, color: AppColors.accent)),
+              ],
+            ),
+          ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(12),
+            itemCount: LutPreset.values.length,
+            itemBuilder: (context, index) {
+              final preset = LutPreset.values[index];
+              final isSelected = _config.activeLut == preset;
 
-  Widget _buildLutPresetsTab() {
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      children: [
-        // Intensity Slider
-        if (_config.activeLut != LutPreset.none) ...[
-          _buildSlider(
-            label: 'LUT Blend Intensity',
-            value: _config.lutIntensity,
-            min: 0.0,
-            max: 1.0,
-            displayValue: '${(_config.lutIntensity * 100).toInt()}%',
-            onChanged: (v) {
-              setState(() => _config = _config.copyWith(lutIntensity: v));
-              _applyChange();
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                color: isSelected ? AppColors.primary.withOpacity(0.2) : AppColors.surfaceElevated,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: BorderSide(
+                    color: isSelected ? AppColors.accent : AppColors.border,
+                    width: isSelected ? 1.5 : 1.0,
+                  ),
+                ),
+                child: ListTile(
+                  dense: true,
+                  title: Text(
+                    preset.label,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: isSelected ? AppColors.accent : Colors.white,
+                    ),
+                  ),
+                  subtitle: Text(
+                    preset.description,
+                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  ),
+                  trailing: isSelected
+                      ? const Icon(Icons.check_circle, color: AppColors.accent, size: 20)
+                      : null,
+                  onTap: () {
+                    _updateConfig((c) => c.copyWith(activeLut: preset));
+                  },
+                ),
+              );
             },
           ),
-          const SizedBox(height: 12),
-        ],
-
-        // Presets Grid
-        ...LutPreset.values.map((preset) {
-          final isSelected = _config.activeLut == preset;
-
-          return Card(
-            margin: const EdgeInsets.only(bottom: 10),
-            color: isSelected ? AppColors.primary.withOpacity(0.15) : AppColors.surfaceElevated,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                color: isSelected ? AppColors.primary : AppColors.border,
-                width: isSelected ? 2 : 1,
-              ),
-            ),
-            child: ListTile(
-              onTap: () {
-                setState(() => _config = _config.copyWith(activeLut: preset));
-                _applyChange();
-              },
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : AppColors.surface,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  preset == LutPreset.none ? Icons.block : Icons.auto_awesome,
-                  color: isSelected ? Colors.white : AppColors.primaryLight,
-                  size: 20,
-                ),
-              ),
-              title: Text(preset.label, style: AppTypography.titleMedium),
-              subtitle: Text(preset.description, style: AppTypography.labelSmall),
-              trailing: isSelected
-                  ? const Icon(Icons.check_circle, color: AppColors.accent, size: 22)
-                  : null,
-            ),
-          );
-        }),
+        ),
       ],
     );
   }
 
+  // --- 3-WAY COLOR WHEELS TAB ---
+  Widget _buildColorWheelsTab() {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: ColorWheelWidget(
+                label: 'LIFT (SHADOWS)',
+                value: _config.lift,
+                accentColor: const Color(0xFF00E5FF),
+                onChanged: (val) => _updateConfig((c) => c.copyWith(lift: val)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ColorWheelWidget(
+                label: 'GAMMA (MIDS)',
+                value: _config.gamma,
+                accentColor: const Color(0xFFFFD700),
+                onChanged: (val) => _updateConfig((c) => c.copyWith(gamma: val)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: ColorWheelWidget(
+                label: 'GAIN (HIGHLIGHTS)',
+                value: _config.gain,
+                accentColor: const Color(0xFFFF007F),
+                onChanged: (val) => _updateConfig((c) => c.copyWith(gain: val)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ColorWheelWidget(
+                label: 'OFFSET (GLOBAL)',
+                value: _config.offset,
+                accentColor: AppColors.accent,
+                onChanged: (val) => _updateConfig((c) => c.copyWith(offset: val)),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // --- PRO ADJUST TAB ---
+  Widget _buildAdjustTab() {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      children: [
+        _buildSliderRow(
+          'Exposure',
+          _config.exposure,
+          -2.0,
+          2.0,
+          (val) => _updateConfig((c) => c.copyWith(exposure: val)),
+          unit: 'EV',
+        ),
+        _buildSliderRow(
+          'Contrast',
+          _config.contrast,
+          0.5,
+          1.5,
+          (val) => _updateConfig((c) => c.copyWith(contrast: val)),
+        ),
+        _buildSliderRow(
+          'Saturation',
+          _config.saturation,
+          0.0,
+          2.0,
+          (val) => _updateConfig((c) => c.copyWith(saturation: val)),
+        ),
+        _buildSliderRow(
+          'Temperature',
+          _config.temperature,
+          -100.0,
+          100.0,
+          (val) => _updateConfig((c) => c.copyWith(temperature: val)),
+          unit: 'K',
+        ),
+        _buildSliderRow(
+          'Tint',
+          _config.tint,
+          -100.0,
+          100.0,
+          (val) => _updateConfig((c) => c.copyWith(tint: val)),
+        ),
+        _buildSliderRow(
+          'Highlights',
+          _config.highlights,
+          -1.0,
+          1.0,
+          (val) => _updateConfig((c) => c.copyWith(highlights: val)),
+        ),
+        _buildSliderRow(
+          'Shadows',
+          _config.shadows,
+          -1.0,
+          1.0,
+          (val) => _updateConfig((c) => c.copyWith(shadows: val)),
+        ),
+        _buildSliderRow(
+          'Whites',
+          _config.whites,
+          -1.0,
+          1.0,
+          (val) => _updateConfig((c) => c.copyWith(whites: val)),
+        ),
+        _buildSliderRow(
+          'Blacks',
+          _config.blacks,
+          -1.0,
+          1.0,
+          (val) => _updateConfig((c) => c.copyWith(blacks: val)),
+        ),
+        _buildSliderRow(
+          'Film Fade (Lifted Blacks)',
+          _config.fade,
+          0.0,
+          1.0,
+          (val) => _updateConfig((c) => c.copyWith(fade: val)),
+        ),
+        _buildSliderRow(
+          'Clarity (Midtone Contrast)',
+          _config.clarity,
+          0.5,
+          1.5,
+          (val) => _updateConfig((c) => c.copyWith(clarity: val)),
+        ),
+        _buildSliderRow(
+          'Vignette',
+          _config.vignette,
+          0.0,
+          1.0,
+          (val) => _updateConfig((c) => c.copyWith(vignette: val)),
+        ),
+      ],
+    );
+  }
+
+  // --- CURVES TAB ---
+  Widget _buildCurvesTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        children: [
+          ToneCurveEditor(
+            points: _config.masterCurve,
+            onChanged: (newPoints) {
+              _updateConfig((c) => c.copyWith(masterCurve: newPoints));
+            },
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Tap on the graph to add control points. Drag to shape the S-curve response.',
+            style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- HSL 8-CHANNEL TAB ---
   Widget _buildHslTab() {
     final colors = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'magenta'];
-    final colorMap = {
-      'red': Colors.red,
-      'orange': Colors.orange,
-      'yellow': Colors.amber,
-      'green': Colors.green,
-      'cyan': Colors.cyan,
-      'blue': Colors.blue,
-      'purple': Colors.purple,
-      'magenta': Colors.pink,
-    };
+    final activeShift = _config.hsl[_selectedHslColor] ?? const HslShift();
 
-    final currentHsl = _config.hsl[_selectedHslColor] ?? const HslShift();
-
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+    return Column(
       children: [
-        // Color Picker Chips
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: colors.map((col) {
-            final isSelected = _selectedHslColor == col;
-            final dotColor = colorMap[col]!;
+        // Color Selector Swatches
+        Container(
+          height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: colors.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final colorName = colors[index];
+              final isSelected = _selectedHslColor == colorName;
+              final color = _getHslColor(colorName);
 
-            return ChoiceChip(
-              avatar: CircleAvatar(backgroundColor: dotColor, radius: 6),
-              label: Text(col.toUpperCase()),
-              selected: isSelected,
-              selectedColor: AppColors.primary,
-              backgroundColor: AppColors.surfaceElevated,
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-              onSelected: (selected) {
-                if (selected) setState(() => _selectedHslColor = col);
-              },
-            );
-          }).toList(),
+              return GestureDetector(
+                onTap: () => setState(() => _selectedHslColor = colorName),
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? Colors.white : Colors.transparent,
+                      width: 2.5,
+                    ),
+                  ),
+                  child: isSelected
+                      ? const Icon(Icons.check, size: 18, color: Colors.white)
+                      : null,
+                ),
+              );
+            },
+          ),
         ),
+        const Divider(color: AppColors.border),
 
-        const SizedBox(height: 20),
-
-        // Hue Slider
-        _buildSlider(
-          label: '${_selectedHslColor.toUpperCase()} Hue Shift',
-          value: currentHsl.hue,
-          min: -180.0,
-          max: 180.0,
-          displayValue: '${currentHsl.hue.toInt()}°',
-          onChanged: (v) {
-            final updatedHsl = Map<String, HslShift>.from(_config.hsl);
-            updatedHsl[_selectedHslColor] = currentHsl.copyWith(hue: v);
-            setState(() => _config = _config.copyWith(hsl: updatedHsl));
-            _applyChange();
-          },
-        ),
-
-        // Saturation Slider
-        _buildSlider(
-          label: '${_selectedHslColor.toUpperCase()} Saturation',
-          value: currentHsl.saturation,
-          min: -1.0,
-          max: 1.0,
-          displayValue: '${(currentHsl.saturation * 100).toInt()}%',
-          onChanged: (v) {
-            final updatedHsl = Map<String, HslShift>.from(_config.hsl);
-            updatedHsl[_selectedHslColor] = currentHsl.copyWith(saturation: v);
-            setState(() => _config = _config.copyWith(hsl: updatedHsl));
-            _applyChange();
-          },
-        ),
-
-        // Luminance Slider
-        _buildSlider(
-          label: '${_selectedHslColor.toUpperCase()} Luminance',
-          value: currentHsl.luminance,
-          min: -1.0,
-          max: 1.0,
-          displayValue: '${(currentHsl.luminance * 100).toInt()}%',
-          onChanged: (v) {
-            final updatedHsl = Map<String, HslShift>.from(_config.hsl);
-            updatedHsl[_selectedHslColor] = currentHsl.copyWith(luminance: v);
-            setState(() => _config = _config.copyWith(hsl: updatedHsl));
-            _applyChange();
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCurvesTab() {
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      children: [
-        Text('Master RGB Tone Curve', style: AppTypography.titleMedium),
-        const SizedBox(height: 4),
-        Text('Drag points on the grid to shape contrast & shadows', style: AppTypography.bodyMedium),
-        ToneCurveEditor(
-          points: _config.masterCurve,
-          onPointsChanged: (newPoints) {
-            setState(() => _config = _config.copyWith(masterCurve: newPoints));
-            _applyChange();
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSlider({
-    required String label,
-    required double value,
-    required double min,
-    required double max,
-    required String displayValue,
-    Color activeColor = AppColors.primary,
-    required Function(double) onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        // HSL Sliders
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             children: [
-              Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textPrimary)),
-              Text(displayValue, style: AppTypography.timecode.copyWith(fontSize: 12, color: AppColors.accent)),
+              _buildSliderRow(
+                'Hue Shift',
+                activeShift.hue,
+                -180.0,
+                180.0,
+                (val) => _updateHslShift(activeShift.copyWith(hue: val)),
+                unit: '°',
+              ),
+              _buildSliderRow(
+                'Saturation',
+                activeShift.saturation,
+                -1.0,
+                1.0,
+                (val) => _updateHslShift(activeShift.copyWith(saturation: val)),
+              ),
+              _buildSliderRow(
+                'Luminance',
+                activeShift.luminance,
+                -1.0,
+                1.0,
+                (val) => _updateHslShift(activeShift.copyWith(luminance: val)),
+              ),
             ],
           ),
-          Slider(
-            value: value.clamp(min, max),
-            min: min,
-            max: max,
-            activeColor: activeColor,
-            inactiveColor: AppColors.surfaceElevated,
-            onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+
+  void _updateHslShift(HslShift shift) {
+    final updatedMap = Map<String, HslShift>.from(_config.hsl);
+    updatedMap[_selectedHslColor] = shift;
+    _updateConfig((c) => c.copyWith(hsl: updatedMap));
+  }
+
+  Color _getHslColor(String name) {
+    switch (name) {
+      case 'red': return const Color(0xFFFF2A2A);
+      case 'orange': return const Color(0xFFFF8C00);
+      case 'yellow': return const Color(0xFFFFD700);
+      case 'green': return const Color(0xFF00FF66);
+      case 'cyan': return const Color(0xFF00E5FF);
+      case 'blue': return const Color(0xFF2979FF);
+      case 'purple': return const Color(0xFF9C27B0);
+      case 'magenta': return const Color(0xFFFF007F);
+      default: return Colors.white;
+    }
+  }
+
+  Widget _buildSliderRow(
+    String label,
+    double value,
+    double min,
+    double max,
+    ValueChanged<double> onChanged, {
+    String unit = '',
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+            ),
+          ),
+          Expanded(
+            child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 3,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+              ),
+              child: Slider(
+                value: value.clamp(min, max),
+                min: min,
+                max: max,
+                activeColor: AppColors.accent,
+                inactiveColor: AppColors.surfaceElevated,
+                onChanged: onChanged,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 44,
+            child: Text(
+              '${value >= 0 && min < 0 ? "+" : ""}${value.toStringAsFixed(1)}$unit',
+              textAlign: TextAlign.right,
+              style: const TextStyle(fontSize: 11, color: Colors.white),
+            ),
           ),
         ],
       ),

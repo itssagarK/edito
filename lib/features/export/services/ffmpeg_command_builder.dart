@@ -7,6 +7,7 @@ import '../../borders/services/video_border_compiler_service.dart';
 import '../../character_zoom/services/character_zoom_compiler_service.dart';
 import '../../color_grading/services/color_filter_compiler_service.dart';
 import '../../enhancement/services/ai_video_enhancer_service.dart';
+import '../../hd_converter/services/hd_converter_service.dart';
 import '../../header_footer/services/header_footer_compiler_service.dart';
 import '../../highlight/services/character_highlight_compiler_service.dart';
 import '../../overlays/services/overlay_compiler_service.dart';
@@ -223,6 +224,18 @@ class FFmpegCommandBuilder {
           );
           if (headerFooterFilter.isNotEmpty) {
             vFilters.add(headerFooterFilter);
+          }
+        }
+
+        // HD Video Converter & Detail Upscaler
+        if (clip.hdConverter.isEnabled) {
+          final hdFilters = HdConverterService.generateFFmpegFilters(
+            clip.hdConverter,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (hdFilters.isNotEmpty) {
+            vFilters.addAll(hdFilters);
           }
         }
 

@@ -23,6 +23,7 @@ enum EditorTool {
   characterZoom,
   borders,
   headerFooter,
+  hdConverter,
 }
 
 class EditorState {

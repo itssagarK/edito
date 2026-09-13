@@ -16,6 +16,7 @@ import '../../chroma/presentation/widgets/chroma_key_sheet.dart';
 import '../../color_grading/presentation/widgets/color_grading_sheet.dart';
 import '../../enhancement/presentation/widgets/video_enhancement_sheet.dart';
 import '../../export/presentation/widgets/export_settings_modal.dart';
+import '../../hd_converter/presentation/widgets/hd_converter_sheet.dart';
 import '../../header_footer/presentation/widgets/header_footer_sheet.dart';
 import '../../highlight/presentation/widgets/character_highlight_sheet.dart';
 import '../../home/providers/project_list_provider.dart';
@@ -400,6 +401,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openHeaderFooterModal();
         break;
 
+      case EditorTool.hdConverter:
+        _openHdConverterModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -531,6 +536,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openEnhancementModal() {
     _openDockedTool(EditorTool.enhance, trackType: TrackType.video, purpose: '8K Enhance');
+  }
+
+  void _openHdConverterModal() {
+    _openDockedTool(EditorTool.hdConverter, trackType: TrackType.video, purpose: 'HD Converter');
   }
 
   void _openSmootherModal() {

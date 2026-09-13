@@ -200,5 +200,42 @@ Two dedicated, professional editing modules introduced separately into the prima
    - Added `EditorTool.borders` and `EditorTool.headerFooter` as separate tools in `EditingToolbar` and `editor_screen.dart`, providing dedicated modals with interactive live previews and "Apply to All Clips" global toggles.
    - Verified via comprehensive test suite in `test/borders_and_header_footer_test.dart`.
 
+---
 
+## 9. Professional Color Grading Suite & HD Video Converter Studio (v1.0.23 Release)
 
+Two major flagship video engineering suites added to empower mobile filmmakers, content creators, and post-production workflows:
+
+1. **Professional Color Grading Suite (`lib/features/color_grading/`)**:
+   - **3-Way Color Wheels (`ColorWheelWidget`, `ColorWheelValue`)**:
+     - Lift (Shadows / Pedestal), Gamma (Midtones), Gain (Highlights), and Offset (Global Master) wheels.
+     - Interactive 2D chromatic puck dragging with angle ($0^\circ-360^\circ$), saturation ($0.0-1.0$), and vertical luminance slider ($-1.0$ to $+1.0$).
+     - Dead-zone center snap for easy neutralization and one-tap reset per wheel.
+   - **Live RGB Waveform Scopes Monitor (`ColorScopesWidget`)**:
+     - Real-time custom-painted 0–100 IRE grid displaying R, G, and B channel waveform curves that react dynamically to exposure, contrast, temperature, tint, lift, gamma, and gain adjustments.
+   - **13 Film Stock & Cinematic Look Presets**:
+     - Arri Alexa Log-C, Kodak Portra 500T, Fuji Velvia 50, Bleach Bypass, Matrix Emerald, Fuji Eterna, Commercial Pop, Vintage 70s, Blockbuster Teal & Orange, Warm Golden Hour, Moody Cyberpunk, Noir B&W, and Natural Standard.
+     - Global LUT intensity slider ($0.0-1.0$) for precise blend control.
+   - **Pro Tonality & Dynamic Adjustments**:
+     - Added dedicated `whites`, `blacks`, `fade` (filmic black point lift), `clarity` (midtone contrast enhancement), and `sharpness` sliders alongside exposure, contrast, saturation, temperature, tint, highlights, shadows, and vignette.
+   - **Dual Engine Pipeline**:
+     - Real-time 4x5 Rec.709 GPU color matrix compiled via `ColorFilterCompilerService.buildColorMatrix` for 60fps viewport preview.
+     - Export filter compilation generating native FFmpeg `colorbalance` (shadows, midtones, highlights) and `curves` filters for deterministic render fidelity.
+
+2. **HD Video Converter Studio (`lib/features/hd_converter/`)**:
+   - **Dedicated Upscaling & Video Enhancement**:
+     - Target resolutions: 720p HD ($1280\times720$), 1080p Full HD ($1920\times1080$), 1440p 2K QHD ($2560\times1440$), 4K Ultra HD ($3840\times2160$), and 8K Cinema UHD ($7680\times4320$).
+     - Advanced scaling algorithms: Lanczos 3-Lobe Sinc (`scale=...:flags=lanczos`), Bicubic Spline (`scale=...:flags=bicubic`), Super-Res Detail Synthesizer (`flags=lanczos+accurate_rnd`), Bilinear Fast (`flags=bilinear`).
+   - **Pro Processing & Restoration Pipeline**:
+     - **AI Noise Reduction (`denoiseLevel`)**: Temporal 3D spatio-temporal de-noising (`hqdn3d`).
+     - **Social/MPEG Deblocking (`deblock`)**: Eliminates macroblock compression artifacts from social media downloads (`deblock=filter=weak:block=4`).
+     - **Super-Resolution Detail Clarity (`clarity`) & Edge Sharpening (`sharpenAmount`)**: High-pass unsharp masking (`unsharp=5:5:...`).
+     - **Dynamic Range Contrast Expansion (`dynamicRangeBoost`)**: Gamma and contrast remapping (`eq=contrast=...:gamma=...`).
+   - **Interactive Studio UI (`HdConverterSheet`)**:
+     - Live Before/After split-screen slider card showing real-time comparison.
+     - 5 one-tap optimization presets: *Social Media Viral 1080p*, *Cinematic 4K Remaster*, *Vintage Clean & Denoise*, *Anime & Animation Crisp*, *Fast 720p Mobile Share*.
+     - Viewport HUD status badge (`💎 1080p FHD CONVERTED`, `💎 4K UHD CONVERTED`, etc.) reflecting converter state.
+   - **Architecture & Export Integration**:
+     - `HdConverterConfig` integrated onto `Clip` domain model with `const` defaults.
+     - Chained in `FFmpegCommandBuilder` with optimal filter ordering: deblock & denoise first, followed by scale & pad, unsharp detail synthesis, and dynamic range boost.
+     - Fully verified by test suite `test/color_grading_and_hd_converter_test.dart`.

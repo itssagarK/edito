@@ -3,12 +3,14 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
 import '../../../../models/project.dart';
+import '../../../../models/track.dart';
 import '../../providers/editor_provider.dart';
 import '../../../audio/presentation/widgets/audio_mixer_sheet.dart';
 import '../../../character_zoom/presentation/widgets/character_zoom_sheet.dart';
 import '../../../chroma/presentation/widgets/chroma_key_sheet.dart';
 import '../../../color_grading/presentation/widgets/color_grading_sheet.dart';
 import '../../../enhancement/presentation/widgets/video_enhancement_sheet.dart';
+import '../../../hd_converter/presentation/widgets/hd_converter_sheet.dart';
 import '../../../highlight/presentation/widgets/character_highlight_sheet.dart';
 import '../../../image_editor/presentation/widgets/image_overlay_sheet.dart';
 import '../../../image_editor/presentation/widgets/video_layout_sheet.dart';
@@ -43,7 +45,9 @@ class DockedToolPanel extends StatelessWidget {
   String get _toolTitle {
     switch (tool) {
       case EditorTool.color:
-        return 'Color & Looks';
+        return 'Pro Color Grading';
+      case EditorTool.hdConverter:
+        return 'HD Video Converter';
       case EditorTool.characterZoom:
         return 'Main Character Zoom-In';
       case EditorTool.highlight:
@@ -73,6 +77,8 @@ class DockedToolPanel extends StatelessWidget {
     switch (tool) {
       case EditorTool.color:
         return Icons.palette_outlined;
+      case EditorTool.hdConverter:
+        return Icons.high_quality;
       case EditorTool.characterZoom:
         return Icons.center_focus_strong;
       case EditorTool.highlight:
@@ -231,8 +237,37 @@ class DockedToolPanel extends StatelessWidget {
       case EditorTool.color:
         return ColorGradingSheet(
           clip: clip,
-          onSave: onSaveClip,
+          onSave: (updatedClip, {bool applyToAll = false}) {
+            if (applyToAll) {
+              final updatedTracks = project.tracks.map((track) {
+                if (track.type != TrackType.video) return track;
+                final updatedClips = track.clips.map((c) => c.copyWith(colorGrading: updatedClip.colorGrading)).toList();
+                return track.copyWith(clips: updatedClips);
+              }).toList();
+              onSaveProject(project.copyWith(tracks: updatedTracks));
+            } else {
+              onSaveClip(updatedClip);
+            }
+          },
           isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.hdConverter:
+        return HdConverterSheet(
+          clip: clip,
+          onSave: (updatedClip, {bool applyToAll = false}) {
+            if (applyToAll) {
+              final updatedTracks = project.tracks.map((track) {
+                if (track.type != TrackType.video) return track;
+                final updatedClips = track.clips.map((c) => c.copyWith(hdConverter: updatedClip.hdConverter)).toList();
+                return track.copyWith(clips: updatedClips);
+              }).toList();
+              onSaveProject(project.copyWith(tracks: updatedTracks));
+            } else {
+              onSaveClip(updatedClip);
+            }
+          },
           onDone: onClose,
         );
 
