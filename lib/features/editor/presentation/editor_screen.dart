@@ -405,6 +405,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openHdConverterModal();
         break;
 
+      case EditorTool.mask:
+        _openMaskModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -651,6 +655,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         ref.read(projectListProvider.notifier).updateProject(updatedProject);
       },
     );
+  }
+
+  void _openMaskModal() {
+    _openDockedTool(EditorTool.mask, trackType: TrackType.video, purpose: 'Masking');
   }
 
   Clip? _findTargetClip() {

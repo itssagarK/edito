@@ -35,6 +35,7 @@ class EditingToolbar extends StatelessWidget {
       _ToolItem(EditorTool.imageOverlay, 'Overlay / PiP', Icons.picture_in_picture_alt_outlined),
       _ToolItem(EditorTool.imageEditor, 'Cover / Thumb', Icons.photo_size_select_actual_outlined),
       _ToolItem(EditorTool.chromaKey, 'Chroma Key', Icons.blur_linear),
+      _ToolItem(EditorTool.mask, 'Mask', Icons.masks),
       _ToolItem(EditorTool.highlight, 'Highlight & BG', Icons.person_pin_circle_outlined),
       _ToolItem(EditorTool.characterZoom, 'Character Zoom', Icons.center_focus_strong),
       _ToolItem(EditorTool.borders, 'Borders & Frames', Icons.border_outer),

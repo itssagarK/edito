@@ -21,6 +21,8 @@ import '../../../header_footer/models/header_footer_config.dart';
 import '../../../header_footer/services/header_footer_compiler_service.dart';
 import '../../../highlight/models/character_highlight_config.dart';
 import '../../../highlight/services/character_highlight_compiler_service.dart';
+import '../../../masking/models/mask_config.dart';
+import '../../../masking/presentation/widgets/mask_clipper.dart';
 import '../../../../models/clip.dart';
 import '../../../../models/media_asset.dart';
 import '../../../overlays/models/text_overlay_config.dart';
@@ -433,6 +435,13 @@ class RealtimePreviewViewport extends ConsumerWidget {
       );
     }
 
+    if (clip.mask.isActive) {
+      videoContent = MaskPreviewWrapper(
+        config: clip.mask,
+        child: videoContent,
+      );
+    }
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -542,6 +551,19 @@ class RealtimePreviewViewport extends ConsumerWidget {
                   child: Text(
                     '🟢 CHROMA KEY (${((clip.chromaKey.keyColorValue >> 8) & 0xFF > 120) ? "GREEN" : "BLUE"} SCREEN)',
                     style: const TextStyle(fontSize: 9, color: Color(0xFF00FF66), fontWeight: FontWeight.bold),
+                  ),
+                ),
+              if (clip.mask.isActive)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFFFFB300)),
+                  ),
+                  child: Text(
+                    '🎭 MASK: ${clip.mask.type.name.toUpperCase()}${clip.mask.inverted ? " (INV)" : ""}',
+                    style: const TextStyle(fontSize: 9, color: Color(0xFFFFB300), fontWeight: FontWeight.bold),
                   ),
                 ),
               if (clip.transitionIn.isEnabled)

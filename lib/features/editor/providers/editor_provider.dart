@@ -24,6 +24,7 @@ enum EditorTool {
   borders,
   headerFooter,
   hdConverter,
+  mask,
 }
 
 class EditorState {

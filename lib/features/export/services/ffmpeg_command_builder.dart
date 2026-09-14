@@ -10,6 +10,7 @@ import '../../enhancement/services/ai_video_enhancer_service.dart';
 import '../../hd_converter/services/hd_converter_service.dart';
 import '../../header_footer/services/header_footer_compiler_service.dart';
 import '../../highlight/services/character_highlight_compiler_service.dart';
+import '../../masking/services/mask_compiler_service.dart';
 import '../../overlays/services/overlay_compiler_service.dart';
 import '../../smoothing/services/ai_video_smoother_service.dart';
 import '../../transitions/models/transition_type.dart';
@@ -236,6 +237,18 @@ class FFmpegCommandBuilder {
           );
           if (hdFilters.isNotEmpty) {
             vFilters.addAll(hdFilters);
+          }
+        }
+
+        // Multi-Shape Masking (Linear, Radial, Rectangle, Film Strip, Heart, Star)
+        if (clip.mask.isActive) {
+          final maskFilters = MaskCompilerService.generateFFmpegFilters(
+            clip.mask,
+            outputWidth: targetW,
+            outputHeight: targetH,
+          );
+          if (maskFilters.isNotEmpty) {
+            vFilters.addAll(maskFilters);
           }
         }
 

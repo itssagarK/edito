@@ -11,6 +11,7 @@ import '../features/image_editor/models/image_overlay_config.dart';
 import '../features/enhancement/models/video_enhancement_config.dart';
 import '../features/overlays/models/keyframe.dart';
 import '../features/overlays/models/text_overlay_config.dart';
+import '../features/masking/models/mask_config.dart';
 import '../features/smoothing/models/video_smoother_config.dart';
 import '../features/speed/models/speed_curve_preset.dart';
 import '../features/transitions/models/transition_type.dart';
@@ -41,6 +42,7 @@ class Clip extends Equatable {
   final VideoBorderConfig border;
   final HeaderFooterConfig headerFooter;
   final HdConverterConfig hdConverter;
+  final MaskConfig mask;
   final List<Keyframe> keyframes;
 
   const Clip({
@@ -69,6 +71,7 @@ class Clip extends Equatable {
     this.border = const VideoBorderConfig(),
     this.headerFooter = const HeaderFooterConfig(),
     this.hdConverter = const HdConverterConfig(),
+    this.mask = const MaskConfig(),
     this.keyframes = const [],
   });
 
@@ -98,6 +101,7 @@ class Clip extends Equatable {
     VideoBorderConfig? border,
     HeaderFooterConfig? headerFooter,
     HdConverterConfig? hdConverter,
+    MaskConfig? mask,
     List<Keyframe>? keyframes,
   }) {
     return Clip(
@@ -126,6 +130,7 @@ class Clip extends Equatable {
       border: border ?? this.border,
       headerFooter: headerFooter ?? this.headerFooter,
       hdConverter: hdConverter ?? this.hdConverter,
+      mask: mask ?? this.mask,
       keyframes: keyframes ?? this.keyframes,
     );
   }
@@ -156,6 +161,7 @@ class Clip extends Equatable {
         'border': border.toJson(),
         'headerFooter': headerFooter.toJson(),
         'hdConverter': hdConverter.toJson(),
+        'mask': mask.toJson(),
         'keyframes': keyframes.map((k) => k.toJson()).toList(),
       };
 
@@ -217,6 +223,9 @@ class Clip extends Equatable {
         hdConverter: json['hdConverter'] != null
             ? HdConverterConfig.fromJson(json['hdConverter'] as Map<String, dynamic>)
             : const HdConverterConfig(),
+        mask: json['mask'] != null
+            ? MaskConfig.fromJson(json['mask'] as Map<String, dynamic>)
+            : const MaskConfig(),
         keyframes: (json['keyframes'] as List<dynamic>?)
                 ?.map((k) => Keyframe.fromJson(k as Map<String, dynamic>))
                 .toList() ??
@@ -250,6 +259,7 @@ class Clip extends Equatable {
         border,
         headerFooter,
         hdConverter,
+        mask,
         keyframes,
       ];
 }

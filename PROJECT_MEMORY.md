@@ -238,4 +238,40 @@ Two major flagship video engineering suites added to empower mobile filmmakers, 
    - **Architecture & Export Integration**:
      - `HdConverterConfig` integrated onto `Clip` domain model with `const` defaults.
      - Chained in `FFmpegCommandBuilder` with optimal filter ordering: deblock & denoise first, followed by scale & pad, unsharp detail synthesis, and dynamic range boost.
-     - Fully verified by test suite `test/color_grading_and_hd_converter_test.dart`.
+   - Fully verified by test suite `test/color_grading_and_hd_converter_test.dart`.
+
+---
+
+## 10. Multi-Shape Masking Studio & Pro Compositor (v1.0.24 Release)
+
+The first flagship pro-compositing module in Edito's high-end evolution, enabling creators to perform split screens, spotlights, floating video cards, anamorphic letterbox mattes, and creative cutouts:
+
+1. **Geometry & Shape Models (`lib/features/masking/models/mask_config.dart`)**:
+   - **Supported Mask Shapes**:
+     - `linear`: Split screen dividing plane with continuous rotation ($0^\circ-360^\circ$) and feathering.
+     - `radial`: Elliptical or circular spotlight focus with independent width/height radii.
+     - `rectangle`: Card mask with adjustable corner roundness ($0.0-1.0$, sharp box to capsule).
+     - `filmStrip`: 2.39:1 anamorphic letterbox bar cutout.
+     - `heart`: Smooth cubic-bezier heart cutout for creative aesthetic vlogs.
+     - `star`: 5-point geometric star matte for pop social videos.
+   - **Parameter Controls**:
+     - Normalized center positioning (`centerX`, `centerY` $\in [0.0, 1.0]$).
+     - Scale/dimensions (`width`, `height` $\in [0.05, 2.0]$).
+     - Rotation angle ($0^\circ-360^\circ$) with quick buttons ($0^\circ, 45^\circ, 90^\circ, 180^\circ, 270^\circ$).
+     - Edge feathering / softness falloff ($0.0-1.0$).
+     - Invert mask switch (cutout vs spotlight window).
+     - Master opacity slider ($0.0-1.0$).
+   - **7 One-Tap Presets**: *Split Horizontal*, *Split Vertical*, *Spotlight Circle*, *Rounded Card*, *Letterbox Cutout*, *Dreamy Heart*, *Pop Star*.
+
+2. **Dual-Engine Compositor**:
+   - **Real-Time Preview**:
+     - Vector path generation via `MaskCompilerService.buildMaskPath` wrapped in `MaskPreviewWrapper` / `MaskClipper`.
+     - Zero dropped frames at 60fps in the viewport canvas with real-time HUD status badge (`🎭 MASK: RADIAL`, `🎭 MASK: LINEAR (INV)`).
+   - **Native FFmpeg Export Pipeline**:
+     - Compiles into `format=yuva420p` + mathematical `geq` alpha channel expression (`geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='...'`).
+     - Evaluates rotated coordinates, elliptical distance falloff, linear edge sigmoid ramps, and inversion algebraically at native render resolution.
+     - Seamlessly composites with upper video tracks and project canvas background.
+
+3. **Editor Shell & Toolbar Integration**:
+   - Integrated as `EditorTool.mask` in primary `EditingToolbar` and `DockedToolPanel` with live peek mode and "Apply to all clips" support.
+   - Verified by comprehensive test suite in `test/masking_test.dart`.
