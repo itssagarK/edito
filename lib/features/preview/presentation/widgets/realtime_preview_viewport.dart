@@ -23,6 +23,8 @@ import '../../../highlight/models/character_highlight_config.dart';
 import '../../../highlight/services/character_highlight_compiler_service.dart';
 import '../../../masking/models/mask_config.dart';
 import '../../../masking/presentation/widgets/mask_clipper.dart';
+import '../../../blending/models/blend_mode_config.dart';
+import '../../../blending/presentation/widgets/blend_mode_wrapper.dart';
 import '../../../../models/clip.dart';
 import '../../../../models/media_asset.dart';
 import '../../../overlays/models/text_overlay_config.dart';
@@ -442,6 +444,13 @@ class RealtimePreviewViewport extends ConsumerWidget {
       );
     }
 
+    if (clip.blendMode.isEnabled) {
+      videoContent = BlendModeWrapper(
+        config: clip.blendMode,
+        child: videoContent,
+      );
+    }
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -564,6 +573,19 @@ class RealtimePreviewViewport extends ConsumerWidget {
                   child: Text(
                     '🎭 MASK: ${clip.mask.type.name.toUpperCase()}${clip.mask.inverted ? " (INV)" : ""}',
                     style: const TextStyle(fontSize: 9, color: Color(0xFFFFB300), fontWeight: FontWeight.bold),
+                  ),
+                ),
+              if (clip.blendMode.isEnabled)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF00E5FF)),
+                  ),
+                  child: Text(
+                    '✨ BLEND: ${clip.blendMode.mode.label.toUpperCase()} (${(clip.blendMode.opacity * 100).round()}%)',
+                    style: const TextStyle(fontSize: 9, color: Color(0xFF00E5FF), fontWeight: FontWeight.bold),
                   ),
                 ),
               if (clip.transitionIn.isEnabled)

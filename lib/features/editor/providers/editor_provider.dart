@@ -25,6 +25,7 @@ enum EditorTool {
   headerFooter,
   hdConverter,
   mask,
+  blend,
 }
 
 class EditorState {

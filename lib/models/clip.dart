@@ -11,6 +11,7 @@ import '../features/image_editor/models/image_overlay_config.dart';
 import '../features/enhancement/models/video_enhancement_config.dart';
 import '../features/overlays/models/keyframe.dart';
 import '../features/overlays/models/text_overlay_config.dart';
+import '../features/blending/models/blend_mode_config.dart';
 import '../features/masking/models/mask_config.dart';
 import '../features/smoothing/models/video_smoother_config.dart';
 import '../features/speed/models/speed_curve_preset.dart';
@@ -43,6 +44,7 @@ class Clip extends Equatable {
   final HeaderFooterConfig headerFooter;
   final HdConverterConfig hdConverter;
   final MaskConfig mask;
+  final BlendModeConfig blendMode;
   final List<Keyframe> keyframes;
 
   const Clip({
@@ -72,6 +74,7 @@ class Clip extends Equatable {
     this.headerFooter = const HeaderFooterConfig(),
     this.hdConverter = const HdConverterConfig(),
     this.mask = const MaskConfig(),
+    this.blendMode = const BlendModeConfig(),
     this.keyframes = const [],
   });
 
@@ -102,6 +105,7 @@ class Clip extends Equatable {
     HeaderFooterConfig? headerFooter,
     HdConverterConfig? hdConverter,
     MaskConfig? mask,
+    BlendModeConfig? blendMode,
     List<Keyframe>? keyframes,
   }) {
     return Clip(
@@ -131,6 +135,7 @@ class Clip extends Equatable {
       headerFooter: headerFooter ?? this.headerFooter,
       hdConverter: hdConverter ?? this.hdConverter,
       mask: mask ?? this.mask,
+      blendMode: blendMode ?? this.blendMode,
       keyframes: keyframes ?? this.keyframes,
     );
   }
@@ -162,6 +167,7 @@ class Clip extends Equatable {
         'headerFooter': headerFooter.toJson(),
         'hdConverter': hdConverter.toJson(),
         'mask': mask.toJson(),
+        'blendMode': blendMode.toJson(),
         'keyframes': keyframes.map((k) => k.toJson()).toList(),
       };
 
@@ -226,6 +232,9 @@ class Clip extends Equatable {
         mask: json['mask'] != null
             ? MaskConfig.fromJson(json['mask'] as Map<String, dynamic>)
             : const MaskConfig(),
+        blendMode: json['blendMode'] != null
+            ? BlendModeConfig.fromJson(json['blendMode'] as Map<String, dynamic>)
+            : const BlendModeConfig(),
         keyframes: (json['keyframes'] as List<dynamic>?)
                 ?.map((k) => Keyframe.fromJson(k as Map<String, dynamic>))
                 .toList() ??
@@ -260,6 +269,7 @@ class Clip extends Equatable {
         headerFooter,
         hdConverter,
         mask,
+        blendMode,
         keyframes,
       ];
 }

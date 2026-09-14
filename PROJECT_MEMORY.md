@@ -275,3 +275,34 @@ The first flagship pro-compositing module in Edito's high-end evolution, enablin
 3. **Editor Shell & Toolbar Integration**:
    - Integrated as `EditorTool.mask` in primary `EditingToolbar` and `DockedToolPanel` with live peek mode and "Apply to all clips" support.
    - Verified by comprehensive test suite in `test/masking_test.dart`.
+
+---
+
+## 11. Pro Blending Modes & Layer Compositor Studio (v1.0.25 Release)
+
+Photoshop and Premiere-style layer blending suite enabling creative multi-track compositing for light leaks, fire, dust, textures, film grunge, and sci-fi energy glows:
+
+1. **Blending Modes Supported (`lib/features/blending/models/blend_mode_config.dart`)**:
+   - **Categorized Modes**:
+     - **Standard**: `normal` (standard alpha layer stacking).
+     - **Lighten (Hides Black)**: `screen` (essential for light leaks, lens flares, fire, smoke, bokeh), `lighten`, `colorDodge` (super-charged neon magic & energy glows).
+     - **Darken (Hides White)**: `multiply` (essential for paper textures, film grain, dirty lens overlays), `darken`, `colorBurn` (deep burnt exposure).
+     - **Contrast**: `overlay` (rich cinematic contrast), `softLight` (diffused organic lighting), `hardLight` (punchy high contrast).
+     - **Inversion / FX**: `difference` (psychedelic chromatic inversion), `exclusion` (subtle tonal inversion).
+   - **Parameter Controls**:
+     - Layer Opacity slider ($0\%$ to $100\%$).
+     - Presets: *Light Leak (Screen 85%)*, *Shadows (Multiply 75%)*, *Cinematic (Overlay 80%)*, *Soft Glow (SoftLight 90%)*, *Magic Energy (ColorDodge 70%)*, *Psychedelic (Difference 100%)*.
+
+2. **Dual-Engine Compositing Pipeline**:
+   - **Real-Time GPU Preview**:
+     - Flutter hardware layer compositing via `_RenderLayerBlend` / `BlendModeWrapper` using `canvas.saveLayer(..., Paint()..blendMode = ...)`.
+     - Zero dropped frames at 60fps in the preview viewport with live HUD badge (`✨ BLEND: SCREEN (85%)`).
+   - **Native FFmpeg Export Pipeline**:
+     - Compiles two-input filtergraph via `BlendModeCompilerService.generateFFmpegLayerCompositor`.
+     - Uses native FFmpeg `blend=all_mode=...:all_opacity=...` for upper video tracks blended over the underlying canvas, or standard alpha `overlay` when in normal mode.
+     - In-stream opacity handling via `colorchannelmixer=aa=...`.
+
+3. **Editor Shell & Toolbar Integration**:
+   - Accessible via `EditorTool.blend` in primary `EditingToolbar` and `DockedToolPanel` with live peek mode and "Apply blend mode to all project clips" toggle.
+   - Verified by comprehensive test suite in `test/blending_test.dart`.
+

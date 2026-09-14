@@ -10,6 +10,7 @@ import '../../enhancement/services/ai_video_enhancer_service.dart';
 import '../../hd_converter/services/hd_converter_service.dart';
 import '../../header_footer/services/header_footer_compiler_service.dart';
 import '../../highlight/services/character_highlight_compiler_service.dart';
+import '../../blending/services/blend_mode_compiler_service.dart';
 import '../../masking/services/mask_compiler_service.dart';
 import '../../overlays/services/overlay_compiler_service.dart';
 import '../../smoothing/services/ai_video_smoother_service.dart';
@@ -252,6 +253,14 @@ class FFmpegCommandBuilder {
           }
         }
 
+        // Pro Blending in-stream layer opacity
+        if (clip.blendMode.isEnabled) {
+          final blendFilters = BlendModeCompilerService.generateInStreamFilters(clip.blendMode);
+          if (blendFilters.isNotEmpty) {
+            vFilters.addAll(blendFilters);
+          }
+        }
+
         filterComplexSegments.add('[$inputIdx:v]${vFilters.join(',')} [$vLabel]');
         trackClipLabels.add('[$vLabel]');
         clipCounter++;
@@ -364,9 +373,21 @@ class FFmpegCommandBuilder {
         final minStart = upperTrackClips.map((c) => c.startTimeMs).reduce((a, b) => a < b ? a : b) / 1000.0;
         final maxEnd = upperTrackClips.map((c) => c.startTimeMs + c.durationMs).reduce((a, b) => a > b ? a : b) / 1000.0;
         final compLabel = '[vcomp$t]';
-        filterComplexSegments.add(
-          '$currentVideoStream$upperTrackStream overlay=enable=\'between(t,${minStart.toStringAsFixed(2)},${maxEnd.toStringAsFixed(2)})\':eof_action=pass $compLabel',
+
+        // Check if upper track clips configure a custom blend mode
+        final activeBlendClip = upperTrackClips.firstWhere(
+          (c) => c.blendMode.isEnabled,
+          orElse: () => upperTrackClips.first,
         );
+
+        final compositorFilter = BlendModeCompilerService.generateFFmpegLayerCompositor(
+          config: activeBlendClip.blendMode,
+          baseLabel: currentVideoStream.replaceAll('[', '').replaceAll(']', ''),
+          overlayLabel: upperTrackStream.replaceAll('[', '').replaceAll(']', ''),
+          outputLabel: compLabel.replaceAll('[', '').replaceAll(']', ''),
+          enableExpression: 'between(t,${minStart.toStringAsFixed(2)},${maxEnd.toStringAsFixed(2)})',
+        );
+        filterComplexSegments.add(compositorFilter);
         currentVideoStream = compLabel;
       }
     }

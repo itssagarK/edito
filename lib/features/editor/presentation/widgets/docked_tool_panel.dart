@@ -13,6 +13,7 @@ import '../../../enhancement/presentation/widgets/video_enhancement_sheet.dart';
 import '../../../hd_converter/presentation/widgets/hd_converter_sheet.dart';
 import '../../../highlight/presentation/widgets/character_highlight_sheet.dart';
 import '../../../masking/presentation/widgets/mask_sheet.dart';
+import '../../../blending/presentation/widgets/blend_mode_sheet.dart';
 import '../../../image_editor/presentation/widgets/image_overlay_sheet.dart';
 import '../../../image_editor/presentation/widgets/video_layout_sheet.dart';
 import '../../../overlays/presentation/widgets/text_editor_sheet.dart';
@@ -57,6 +58,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'Chroma Key Green Screen';
       case EditorTool.mask:
         return 'Multi-Shape Masking Studio';
+      case EditorTool.blend:
+        return 'Pro Blending Modes';
       case EditorTool.speed:
         return 'Speed Ramping & Curve';
       case EditorTool.smooth:
@@ -90,6 +93,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.blur_linear;
       case EditorTool.mask:
         return Icons.masks;
+      case EditorTool.blend:
+        return Icons.layers;
       case EditorTool.speed:
         return Icons.speed;
       case EditorTool.smooth:
@@ -308,6 +313,24 @@ class DockedToolPanel extends StatelessWidget {
               final updatedTracks = project.tracks.map((track) {
                 if (track.type != TrackType.video) return track;
                 final updatedClips = track.clips.map((c) => c.copyWith(mask: updatedClip.mask)).toList();
+                return track.copyWith(clips: updatedClips);
+              }).toList();
+              onSaveProject(project.copyWith(tracks: updatedTracks));
+            } else {
+              onSaveClip(updatedClip);
+            }
+          },
+          onDone: onClose,
+        );
+
+      case EditorTool.blend:
+        return BlendModeSheet(
+          clip: clip,
+          onSave: (updatedClip, {bool applyToAll = false}) {
+            if (applyToAll) {
+              final updatedTracks = project.tracks.map((track) {
+                if (track.type != TrackType.video) return track;
+                final updatedClips = track.clips.map((c) => c.copyWith(blendMode: updatedClip.blendMode)).toList();
                 return track.copyWith(clips: updatedClips);
               }).toList();
               onSaveProject(project.copyWith(tracks: updatedTracks));
