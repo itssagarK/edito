@@ -413,6 +413,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openBlendModal();
         break;
 
+      case EditorTool.keyframes:
+        _openKeyframesModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -667,6 +671,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openBlendModal() {
     _openDockedTool(EditorTool.blend, trackType: TrackType.video, purpose: 'Blend Mode');
+  }
+
+  void _openKeyframesModal() {
+    _openDockedTool(EditorTool.keyframes, trackType: TrackType.video, purpose: 'Keyframes');
   }
 
   Clip? _findTargetClip() {

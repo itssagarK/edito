@@ -306,3 +306,45 @@ Photoshop and Premiere-style layer blending suite enabling creative multi-track 
    - Accessible via `EditorTool.blend` in primary `EditingToolbar` and `DockedToolPanel` with live peek mode and "Apply blend mode to all project clips" toggle.
    - Verified by comprehensive test suite in `test/blending_test.dart`.
 
+---
+
+## 12. Universal Transform Keyframing Suite (v1.0.26 Release)
+
+CapCut Pro and After Effects style universal keyframing engine allowing fine-grained spatial and opacity animations on any timeline clip:
+
+1. **Universal Keyframe Model & Easing Math (`lib/features/overlays/models/keyframe.dart`)**:
+   - **Keyframe Attributes**: `timeOffsetMs`, `positionX` ($0.0-1.0$), `positionY` ($0.0-1.0$), `scale` ($0.1-5.0$), `rotation` ($-360^\circ$ to $+360^\circ$), `opacity` ($0.0-1.0$), and `easing`.
+   - **Supported Easing Curves**:
+     - `linear`: Standard constant-velocity interpolation ($t$).
+     - `easeIn`: Quadratic acceleration ($t^2$).
+     - `easeOut`: Quadratic deceleration ($1 - (1-t)^2$).
+     - `easeInOut`: S-curve smooth cinematic transition ($2t^2$ / $1 - (-2t+2)^2/2$).
+     - `bounce`: Elastic spring overshoot bounce simulation.
+
+2. **Evaluator & Presets Engine (`lib/features/keyframes/services/keyframe_evaluator_service.dart`)**:
+   - Time-indexed binary search and continuous curve evaluation via `evaluateTransformAt(keyframes, offsetMs)`.
+   - **6 One-Tap Cinematic Presets**:
+     - *Ken Burns Zoom In*: Subtle documentary slow zoom ($1.0 \to 1.3\times$).
+     - *Slow Zoom Out*: Cinematic establishing pullback ($1.35 \to 1.0\times$).
+     - *Slide In Left*: Dynamic entry pan from screen edge ($X: -0.5 \to 0.5$).
+     - *Spin & Pop*: High-energy social media hook zoom with rotational spin ($0^\circ \to 360^\circ$).
+     - *Cinematic Fade*: Atmospheric fade in and fade out ($0.0 \to 1.0 \to 0.0$).
+     - *Dutch Angle Roll*: Dramatic action tilt ($-15^\circ \to +15^\circ$).
+
+3. **Dual-Engine Animation Execution**:
+   - **Real-Time Preview Canvas**:
+     - `KeyframeTransformWrapper` computes real-time affine matrix transforms, fractional translation, scaling, and Skia opacity on every frame tick (60fps).
+     - Integrated inside `RealtimePreviewViewport` with live viewport HUD status badge (`💎 KEYFRAMES (N)`).
+   - **Deterministic FFmpeg Export Compiler**:
+     - `KeyframeEvaluatorService.generateFFmpegTransformFilters` dynamically generates nested piecewise linear FFmpeg expressions (`if(between(t,...),...)`).
+     - Constructs native video filters: `scale=eval=frame:w='...':h='...'`, `rotate=a='...':ow='...':oh='...'`, and `pad` / translation coordinates.
+
+4. **Dedicated Keyframe Studio UI Sheet (`lib/features/keyframes/presentation/widgets/keyframe_studio_sheet.dart`)**:
+   - Interactive mini timeline scrubber showing diamond markers $(\diamond)$ for all placed keyframes.
+   - Stepper jump buttons $(\blacktriangleleft \diamond / \diamond \blacktriangleright)$ to navigate directly between keyframe points.
+   - Add/Remove diamond toggle button $(\diamond^+ / \diamond^-)$ with real-time detection at current playhead.
+   - Sliders for Scale, Rotation, Position X, Position Y, and Opacity.
+   - Easing curve selector chips and One-Tap Preset horizontal carousel.
+   - Accessible from Editor Toolbar and docked panel via `EditorTool.keyframes`.
+   - Verified by comprehensive test suite in `test/keyframe_suite_test.dart`.
+

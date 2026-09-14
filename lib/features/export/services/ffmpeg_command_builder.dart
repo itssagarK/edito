@@ -11,6 +11,7 @@ import '../../hd_converter/services/hd_converter_service.dart';
 import '../../header_footer/services/header_footer_compiler_service.dart';
 import '../../highlight/services/character_highlight_compiler_service.dart';
 import '../../blending/services/blend_mode_compiler_service.dart';
+import '../../keyframes/services/keyframe_evaluator_service.dart';
 import '../../masking/services/mask_compiler_service.dart';
 import '../../overlays/services/overlay_compiler_service.dart';
 import '../../smoothing/services/ai_video_smoother_service.dart';
@@ -258,6 +259,19 @@ class FFmpegCommandBuilder {
           final blendFilters = BlendModeCompilerService.generateInStreamFilters(clip.blendMode);
           if (blendFilters.isNotEmpty) {
             vFilters.addAll(blendFilters);
+          }
+        }
+
+        // Universal Keyframe Transforms (animated opacity, rotation, scale)
+        if (clip.keyframes.isNotEmpty) {
+          final kfFilters = KeyframeEvaluatorService.generateFFmpegTransformFilters(
+            clip.keyframes,
+            clipDurationMs: clip.durationMs,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (kfFilters.isNotEmpty) {
+            vFilters.addAll(kfFilters);
           }
         }
 

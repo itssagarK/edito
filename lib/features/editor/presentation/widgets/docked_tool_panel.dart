@@ -14,6 +14,7 @@ import '../../../hd_converter/presentation/widgets/hd_converter_sheet.dart';
 import '../../../highlight/presentation/widgets/character_highlight_sheet.dart';
 import '../../../masking/presentation/widgets/mask_sheet.dart';
 import '../../../blending/presentation/widgets/blend_mode_sheet.dart';
+import '../../../keyframes/presentation/widgets/keyframe_studio_sheet.dart';
 import '../../../image_editor/presentation/widgets/image_overlay_sheet.dart';
 import '../../../image_editor/presentation/widgets/video_layout_sheet.dart';
 import '../../../overlays/presentation/widgets/text_editor_sheet.dart';
@@ -60,6 +61,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'Multi-Shape Masking Studio';
       case EditorTool.blend:
         return 'Pro Blending Modes';
+      case EditorTool.keyframes:
+        return 'Universal Keyframe Studio';
       case EditorTool.speed:
         return 'Speed Ramping & Curve';
       case EditorTool.smooth:
@@ -95,6 +98,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.masks;
       case EditorTool.blend:
         return Icons.layers;
+      case EditorTool.keyframes:
+        return Icons.animation;
       case EditorTool.speed:
         return Icons.speed;
       case EditorTool.smooth:
@@ -338,6 +343,13 @@ class DockedToolPanel extends StatelessWidget {
               onSaveClip(updatedClip);
             }
           },
+          onDone: onClose,
+        );
+
+      case EditorTool.keyframes:
+        return KeyframeStudioSheet(
+          clip: clip,
+          onSave: onSaveClip,
           onDone: onClose,
         );
 

@@ -25,6 +25,7 @@ import '../../../masking/models/mask_config.dart';
 import '../../../masking/presentation/widgets/mask_clipper.dart';
 import '../../../blending/models/blend_mode_config.dart';
 import '../../../blending/presentation/widgets/blend_mode_wrapper.dart';
+import '../../../keyframes/presentation/widgets/keyframe_transform_wrapper.dart';
 import '../../../../models/clip.dart';
 import '../../../../models/media_asset.dart';
 import '../../../overlays/models/text_overlay_config.dart';
@@ -451,6 +452,15 @@ class RealtimePreviewViewport extends ConsumerWidget {
       );
     }
 
+    if (clip.keyframes.isNotEmpty) {
+      final clipOffsetMs = (frame.sourceFrameTimeMs - clip.sourceInMs).clamp(0, clip.durationMs);
+      videoContent = KeyframeTransformWrapper(
+        clip: clip,
+        clipOffsetMs: clipOffsetMs,
+        child: videoContent,
+      );
+    }
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -586,6 +596,19 @@ class RealtimePreviewViewport extends ConsumerWidget {
                   child: Text(
                     '✨ BLEND: ${clip.blendMode.mode.label.toUpperCase()} (${(clip.blendMode.opacity * 100).round()}%)',
                     style: const TextStyle(fontSize: 9, color: Color(0xFF00E5FF), fontWeight: FontWeight.bold),
+                  ),
+                ),
+              if (clip.keyframes.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFFE040FB)),
+                  ),
+                  child: Text(
+                    '💎 KEYFRAMES (${clip.keyframes.length})',
+                    style: const TextStyle(fontSize: 9, color: Color(0xFFE040FB), fontWeight: FontWeight.bold),
                   ),
                 ),
               if (clip.transitionIn.isEnabled)

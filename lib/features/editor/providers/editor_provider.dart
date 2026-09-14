@@ -26,6 +26,7 @@ enum EditorTool {
   hdConverter,
   mask,
   blend,
+  keyframes,
 }
 
 class EditorState {
