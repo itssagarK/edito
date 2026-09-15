@@ -3,6 +3,7 @@ import '../../../models/media_asset.dart';
 import '../../../models/project.dart';
 import '../../../models/track.dart';
 import '../../audio/services/ai_voice_enhancer_service.dart';
+import '../../audio/services/audio_ducking_service.dart';
 import '../../borders/services/video_border_compiler_service.dart';
 import '../../character_zoom/services/character_zoom_compiler_service.dart';
 import '../../chroma/services/chroma_key_compiler_service.dart';
@@ -381,15 +382,21 @@ class FFmpegCommandBuilder {
           aFilters.add('adelay=${clip.startTimeMs}|${clip.startTimeMs}:all=1');
         }
 
-        final effectiveVolume = clip.audioEffects.isDuckingEnabled
-            ? clip.volume * clip.audioEffects.duckingAttenuation
-            : clip.volume;
+        final duckingFilter = AudioDuckingService.buildDuckingVolumeFilter(
+          project: project,
+          backgroundClip: clip,
+          baseVolume: clip.volume,
+        );
 
         final effectChain = AIVoiceEnhancerService.generateFFmpegFilter(
           clip.audioEffects,
-          baseVolume: effectiveVolume,
+          baseVolume: duckingFilter.isNotEmpty ? 1.0 : clip.volume,
+          clipDurationMs: clip.durationMs,
         );
 
+        if (duckingFilter.isNotEmpty) {
+          aFilters.add(duckingFilter);
+        }
         if (effectChain.isNotEmpty) {
           aFilters.add(effectChain);
         }

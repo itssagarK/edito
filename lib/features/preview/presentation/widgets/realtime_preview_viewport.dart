@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/timecode_formatter.dart';
 import '../../../audio/models/audio_effects_config.dart';
+import '../../../audio/services/ai_voice_enhancer_service.dart';
 import '../../../borders/models/video_border_config.dart';
 import '../../../borders/services/video_border_compiler_service.dart';
 import '../../../color_grading/models/color_grading_config.dart';
@@ -528,20 +529,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
                   ),
                 ),
-              if (clip.audioEffects.isLoudVoiceEnabled)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.primaryLight),
-                  ),
-                  child: const Text(
-                    '🔥 LOUD VOICE',
-                    style: TextStyle(fontSize: 9, color: AppColors.primaryLight, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (clip.audioEffects.modulationPreset != VoiceModulationPreset.natural)
+              if (AIVoiceEnhancerService.getAudioBadge(clip.audioEffects).isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
@@ -550,7 +538,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     border: Border.all(color: AppColors.audioTrack),
                   ),
                   child: Text(
-                    clip.audioEffects.modulationPreset.label.toUpperCase(),
+                    AIVoiceEnhancerService.getAudioBadge(clip.audioEffects),
                     style: const TextStyle(fontSize: 9, color: AppColors.audioTrack, fontWeight: FontWeight.bold),
                   ),
                 ),

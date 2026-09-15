@@ -476,3 +476,54 @@ Hollywood and broadcast-level green/blue/luma keying engine with mathematical co
    - Precision sliders for Similarity, Edge Smoothness, Spill Suppression, and Edge Choke.
    - Verified by comprehensive test suite in `test/chroma_suite_test.dart`.
 
+---
+
+## 16. Audio Ducking, Voice Isolation & Parametric EQ Studio (v1.0.30 Release)
+
+Broadcast-level mastering, dynamic sidechain auto-ducking, AI voice isolation, and parametric 3-band equalizer studio:
+
+1. **Audio Effects & Equalizer Configuration (`lib/features/audio/models/audio_effects_config.dart`)**:
+   - **Vocal Isolation Modes (`VocalIsolationMode`)**:
+     - `none`: Flat pass without isolation filtering.
+     - `cleanSpeech`: Speech presence enhancement with adaptive de-noising.
+     - `isolateVocals`: Aggressive formant bandpass ($95\text{Hz}-8.5\text{kHz}$), speech formant amplification ($1.2\text{kHz}$ & $2.8\text{kHz}$), and deep neural FFT noise gating (`afftdn=nr=...:nf=-50`).
+     - `removeVocals`: Center-channel cancellation (`stereotools=mlev=0.04:slev=1.35`) for karaoke and instrumental backing track creation.
+   - **Parametric Equalizer Presets (`EqualizerPreset`)**:
+     - `flat`: Neutral uncolored response.
+     - `podcastWarmth`: Low $+4.5\text{dB}$ ($120\text{Hz}$), Mid $+2.5\text{dB}$ ($3\text{kHz}$), High $+1.5\text{dB}$ ($10\text{kHz}$), HPF $80\text{Hz}$.
+     - `bassBoost`: Low $+7.0\text{dB}$ ($90\text{Hz}$), Mid $-1.0\text{dB}$ ($1\text{kHz}$).
+     - `trebleSparkle`: High $+6.5\text{dB}$ ($12\text{kHz}$), Mid $+1.5\text{dB}$ ($3.5\text{kHz}$).
+     - `vocalAir`: High $+5.0\text{dB}$ ($12\text{kHz}$), Mid $+3.0\text{dB}$ ($4\text{kHz}$), Low $-2.0\text{dB}$.
+     - `telephone`: Low $-12\text{dB}$, High $-12\text{dB}$, Mid $+6\text{dB}$ ($1.8\text{kHz}$), HPF $400\text{Hz}$, LPF $3.5\text{kHz}$.
+     - `deMuddy`: Mid $-4.5\text{dB}$ ($450\text{Hz}$ boxiness cut), High $+2.0\text{dB}$, HPF $80\text{Hz}$.
+     - `custom`: Fully free-form interactive frequency and gain curve.
+   - **Smart Auto-Ducking Controls**:
+     - `isDuckingEnabled`: Dynamic speech-aware sidechain volume lowering.
+     - `duckingAttenuation`: Attenuation depth ($0.05-0.60$, default $0.30$ / $-10\text{dB}$).
+     - `duckingAttackMs`: Fade-in attack ramp ($10-300\text{ms}$).
+     - `duckingReleaseMs`: Recovery release ramp ($50-1200\text{ms}$).
+   - **Sibilance De-Esser**:
+     - `deEsserIntensity`: Frequency-specific compressor ($4\text{kHz}-8\text{kHz}$) reducing harsh 's' and 't' transients (`deesser=i=...:m=0.5:f=0.5:s=o`).
+   - **Voice Booster & Limiter Safeguard**:
+     - Master pre-amp boost up to $+15\text{dB}$ with strict true-peak brickwall ceiling (`alimiter=limit=0.95:attack=5:release=50:asc=1`) preventing digital clipping.
+
+2. **Mathematical Audio Processing Engines**:
+   - **Dynamic Ducking Engine (`AudioDuckingService`)**:
+     - `getForegroundSpeechIntervals`: Aggregates active speech intervals from foreground video tracks and merges near-contiguous boundaries.
+     - `calculateDuckingFactor`: Computes real-time smooth attack/release ramps for live viewport playback and timeline scrubbing.
+     - `buildDuckingVolumeFilter`: Compiles exact frame-evaluated FFmpeg volume expressions (`volume=eval=frame:volume='if(between(t,...),...)'`) during multi-track export.
+   - **Filterchain Compiler (`AIVoiceEnhancerService`)**:
+     - Compiles chained biquad equalizers, high-pass and low-pass cuts, vocal isolation formants, de-esser, compand compressors, and volume envelopes.
+     - `getAudioBadge`: Emits live viewport HUD badges (`🎙️ VOCAL ISOLATE (80%)`, `🎵 INSTRUMENTAL`, `🎚️ EQ: PODCAST WARMTH`, `🦆 AUTO-DUCKING`).
+
+3. **Interactive Visual Curve Canvas (`ParametricEQCurveWidget`)**:
+   - Logarithmic frequency axis ($20\text{Hz}-20\text{kHz}$) with grid markers at $100\text{Hz}, 1\text{kHz}, 10\text{kHz}$.
+   - dB gain axis ($-15\text{dB} \to +15\text{dB}$) with $0\text{dB}$ center reference line.
+   - Real-time biquad response curve with neon glow gradient stroke and filled area.
+   - Touch-draggable interactive node handles for Low Shelf, Mid Bell, and High Shelf with floating tooltip metrics.
+
+4. **Multi-Tab Studio Sheet (`AudioMixerSheet`)**:
+   - 4 dedicated tabs: **🎚️ EQ Studio**, **🎙️ Vocal Studio**, **🦆 Ducking & Levels**, and **🔥 Voice FX & Booster**.
+   - Verified by comprehensive test suite in `test/audio_suite_test.dart`.
+
+

@@ -2,40 +2,95 @@ import 'dart:math';
 import '../models/audio_effects_config.dart';
 
 class AIVoiceEnhancerService {
-  /// Generates the FFmpeg audio filter chain for voice enhancement, loudness boost & modulation
-  static String generateFFmpegFilter(AudioEffectsConfig config, {double baseVolume = 1.0}) {
+  /// Generates the FFmpeg audio filter chain for voice enhancement, parametric EQ, isolation & modulation
+  static String generateFFmpegFilter(
+    AudioEffectsConfig config, {
+    double baseVolume = 1.0,
+    int? clipDurationMs,
+  }) {
     final filters = <String>[];
 
-    // 1. Voice Enhancement / De-noising
-    if (config.isVoiceEnhancerEnabled) {
-      // High-pass filter (cuts low rumble below 80Hz)
-      filters.add('highpass=f=80');
+    // 1. Vocal Isolation & Noise Suppression Engine
+    switch (config.vocalIsolationMode) {
+      case VocalIsolationMode.isolateVocals:
+        // Multi-band formant bandpass & aggressive neural noise gating
+        filters.add('highpass=f=95');
+        filters.add('equalizer=f=2800:width_type=q:width=1.2:g=4.5');
+        filters.add('equalizer=f=1200:width_type=q:width=1.0:g=3.0');
+        final nrDb = (config.vocalIsolationIntensity * 32.0).toStringAsFixed(1);
+        filters.add('afftdn=nr=$nrDb:nf=-50');
+        filters.add('compand=attacks=0.01:decays=0.1:points=-80/-80|-32/-16|0/-1');
+        filters.add('lowpass=f=8500');
+        break;
 
-      // Adaptive speech equalizer (clarity boost around 2.5kHz - 4kHz)
-      if (config.voiceClarityGain != 1.0) {
-        final gainDb = (config.voiceClarityGain - 1.0) * 8.0; // 0.0 -> -8dB, 2.0 -> +8dB
-        filters.add('equalizer=f=3200:width_type=o:width=1.5:g=${gainDb.toStringAsFixed(1)}');
+      case VocalIsolationMode.removeVocals:
+        // Center channel cancellation: cancels mono center dialogue while retaining stereo instrumental ambience
+        filters.add('stereotools=mlev=0.04:slev=1.35');
+        break;
+
+      case VocalIsolationMode.cleanSpeech:
+      case VocalIsolationMode.none:
+        if (config.isVoiceEnhancerEnabled || config.vocalIsolationMode == VocalIsolationMode.cleanSpeech) {
+          filters.add('highpass=f=80');
+          if (config.voiceClarityGain != 1.0) {
+            final gainDb = (config.voiceClarityGain - 1.0) * 8.0;
+            filters.add('equalizer=f=3200:width_type=o:width=1.5:g=${gainDb.toStringAsFixed(1)}');
+          }
+          final noiseReductionDb = (config.denoiseIntensity * 25.0).toStringAsFixed(1);
+          filters.add('afftdn=nr=$noiseReductionDb:nf=-45');
+          filters.add('lowpass=f=12000');
+        }
+        break;
+    }
+
+    // 2. Sibilance De-Esser (4kHz - 8kHz frequency compression)
+    if (config.deEsserIntensity > 0.0) {
+      final intensity = config.deEsserIntensity.clamp(0.1, 1.0);
+      filters.add('deesser=i=${intensity.toStringAsFixed(2)}:m=0.5:f=0.5:s=o');
+    }
+
+    // 3. Parametric Equalizer Suite (HPF + Low Shelf + Mid Bell + High Shelf + LPF)
+    if (config.isEqualizerEnabled) {
+      // High-Pass Filter (Low cut)
+      if (config.highPassCutoff > 20.0) {
+        filters.add('highpass=f=${config.highPassCutoff.toInt()}');
       }
 
-      // De-noise filter (FFmpeg afftdn speech model)
-      final noiseReductionDb = (config.denoiseIntensity * 25.0).toStringAsFixed(1);
-      filters.add('afftdn=nr=$noiseReductionDb:nf=-45');
+      // Low Shelf / Bass Band
+      if (config.eqLowGain.abs() > 0.05) {
+        final gainStr = config.eqLowGain > 0 ? '+${config.eqLowGain.toStringAsFixed(1)}' : config.eqLowGain.toStringAsFixed(1);
+        filters.add('equalizer=f=${config.eqLowFreq.toInt()}:width_type=q:width=0.7:g=$gainStr');
+      }
 
-      // Low-pass filter (cuts high-pitch hiss above 12kHz)
-      filters.add('lowpass=f=12000');
+      // Mid Bell / Presence Band
+      if (config.eqMidGain.abs() > 0.05) {
+        final gainStr = config.eqMidGain > 0 ? '+${config.eqMidGain.toStringAsFixed(1)}' : config.eqMidGain.toStringAsFixed(1);
+        filters.add('equalizer=f=${config.eqMidFreq.toInt()}:width_type=q:width=${config.eqMidQ.toStringAsFixed(2)}:g=$gainStr');
+      }
+
+      // High Shelf / Air Band
+      if (config.eqHighGain.abs() > 0.05) {
+        final gainStr = config.eqHighGain > 0 ? '+${config.eqHighGain.toStringAsFixed(1)}' : config.eqHighGain.toStringAsFixed(1);
+        filters.add('equalizer=f=${config.eqHighFreq.toInt()}:width_type=q:width=0.7:g=$gainStr');
+      }
+
+      // Low-Pass Filter (High cut)
+      if (config.lowPassCutoff < 20000.0) {
+        filters.add('lowpass=f=${config.lowPassCutoff.toInt()}');
+      }
+    } else {
+      // Legacy Vocal EQ: Bass Resonance & Treble Air
+      if (config.bassEnhance != 1.0) {
+        final bassDb = (config.bassEnhance - 1.0) * 8.0;
+        filters.add('equalizer=f=120:width_type=o:width=1.2:g=${bassDb.toStringAsFixed(1)}');
+      }
+      if (config.trebleCrisp != 1.0) {
+        final trebleDb = (config.trebleCrisp - 1.0) * 8.0;
+        filters.add('equalizer=f=5000:width_type=o:width=1.4:g=${trebleDb.toStringAsFixed(1)}');
+      }
     }
 
-    // 2. Custom Vocal EQ: Bass Resonance & Treble Air
-    if (config.bassEnhance != 1.0) {
-      final bassDb = (config.bassEnhance - 1.0) * 8.0;
-      filters.add('equalizer=f=120:width_type=o:width=1.2:g=${bassDb.toStringAsFixed(1)}');
-    }
-    if (config.trebleCrisp != 1.0) {
-      final trebleDb = (config.trebleCrisp - 1.0) * 8.0;
-      filters.add('equalizer=f=5000:width_type=o:width=1.4:g=${trebleDb.toStringAsFixed(1)}');
-    }
-
-    // 3. Voice Modulation Presets
+    // 4. Voice Modulation Presets
     switch (config.modulationPreset) {
       case VoiceModulationPreset.studioBroadcast:
         filters.add('equalizer=f=120:width_type=o:width=1.2:g=3.5');
@@ -75,7 +130,7 @@ class AIVoiceEnhancerService {
         break;
     }
 
-    // 4. Loud & Clear Voice Booster (Gain Boost + Dynamic Compressor & True-Peak Limiter)
+    // 5. Loud & Clear Voice Booster (Gain Boost + Dynamic Compressor & True-Peak Limiter)
     if (config.isLoudVoiceEnabled) {
       final boost = config.voiceBoost.clamp(1.0, 3.0);
       filters.add('volume=${boost.toStringAsFixed(2)}');
@@ -83,13 +138,18 @@ class AIVoiceEnhancerService {
       filters.add('alimiter=limit=0.95:attack=5:release=50:asc=1');
     }
 
-    // 5. Fade In Envelope
+    // 6. Volume Envelopes (Fade In & Fade Out)
     if (config.fadeInMs > 0) {
       final fadeInSec = (config.fadeInMs / 1000.0).toStringAsFixed(2);
       filters.add('afade=t=in:st=0:d=$fadeInSec');
     }
+    if (config.fadeOutMs > 0 && clipDurationMs != null && clipDurationMs > config.fadeOutMs) {
+      final fadeOutSec = (config.fadeOutMs / 1000.0).toStringAsFixed(2);
+      final startFadeSec = ((clipDurationMs - config.fadeOutMs) / 1000.0).toStringAsFixed(2);
+      filters.add('afade=t=out:st=$startFadeSec:d=$fadeOutSec');
+    }
 
-    // 6. Base Volume Multiplier
+    // 7. Base Volume Multiplier
     if (baseVolume != 1.0) {
       filters.add('volume=${baseVolume.toStringAsFixed(2)}');
     }
@@ -100,9 +160,17 @@ class AIVoiceEnhancerService {
   /// Evaluates estimated speech clarity score (0% to 100%)
   static int calculateClarityScore(AudioEffectsConfig config) {
     int score = 50;
-    if (config.isVoiceEnhancerEnabled) {
+    if (config.vocalIsolationMode == VocalIsolationMode.isolateVocals) {
+      score += (config.vocalIsolationIntensity * 40).round();
+    } else if (config.vocalIsolationMode == VocalIsolationMode.cleanSpeech || config.isVoiceEnhancerEnabled) {
       score += (config.denoiseIntensity * 25).round();
       score += ((config.voiceClarityGain / 2.0) * 20).round();
+    }
+    if (config.deEsserIntensity > 0.0) {
+      score += 5;
+    }
+    if (config.isEqualizerEnabled) {
+      score += 5;
     }
     if (config.isLoudVoiceEnabled) {
       score += 5;
@@ -112,5 +180,32 @@ class AIVoiceEnhancerService {
       score += 10;
     }
     return score.clamp(0, 99);
+  }
+
+  /// Returns a concise HUD badge descriptor for real-time viewport display
+  static String getAudioBadge(AudioEffectsConfig config) {
+    if (config.vocalIsolationMode == VocalIsolationMode.isolateVocals) {
+      return '🎙️ VOCAL ISOLATE (${(config.vocalIsolationIntensity * 100).toInt()}%)';
+    }
+    if (config.vocalIsolationMode == VocalIsolationMode.removeVocals) {
+      return '🎵 INSTRUMENTAL (VOCAL REMOVED)';
+    }
+    if (config.isEqualizerEnabled) {
+      return '🎚️ EQ: ${config.equalizerPreset.label.toUpperCase()}';
+    }
+    if (config.isVoiceEnhancerEnabled || config.vocalIsolationMode == VocalIsolationMode.cleanSpeech) {
+      return '✨ AI SPEECH CLEAN (${calculateClarityScore(config)}%)';
+    }
+    if (config.isLoudVoiceEnabled) {
+      final db = ((config.voiceBoost - 1.0) * 10).toInt();
+      return '🔥 LOUD BOOSTER (+${db}dB)';
+    }
+    if (config.modulationPreset != VoiceModulationPreset.natural) {
+      return '🎙️ ${config.modulationPreset.label.toUpperCase()}';
+    }
+    if (config.isDuckingEnabled) {
+      return '🦆 AUTO-DUCKING (${(config.duckingAttenuation * 100).toInt()}%)';
+    }
+    return '';
   }
 }
