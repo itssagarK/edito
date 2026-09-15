@@ -7,6 +7,8 @@ class ChromaKeyConfig extends Equatable {
   final double similarity; // 0.05 to 0.60
   final double smoothness; // 0.0 to 0.40
   final double spill;      // 0.0 to 0.50
+  final double edgeChoke;  // 0.0 to 0.20
+  final bool isLumaKey;
 
   const ChromaKeyConfig({
     this.isEnabled = false,
@@ -14,6 +16,8 @@ class ChromaKeyConfig extends Equatable {
     this.similarity = 0.15,
     this.smoothness = 0.08,
     this.spill = 0.10,
+    this.edgeChoke = 0.0,
+    this.isLumaKey = false,
   });
 
   Color get keyColor => Color(keyColorValue);
@@ -24,6 +28,8 @@ class ChromaKeyConfig extends Equatable {
     double? similarity,
     double? smoothness,
     double? spill,
+    double? edgeChoke,
+    bool? isLumaKey,
   }) {
     return ChromaKeyConfig(
       isEnabled: isEnabled ?? this.isEnabled,
@@ -31,6 +37,8 @@ class ChromaKeyConfig extends Equatable {
       similarity: similarity ?? this.similarity,
       smoothness: smoothness ?? this.smoothness,
       spill: spill ?? this.spill,
+      edgeChoke: edgeChoke ?? this.edgeChoke,
+      isLumaKey: isLumaKey ?? this.isLumaKey,
     );
   }
 
@@ -40,6 +48,8 @@ class ChromaKeyConfig extends Equatable {
         'similarity': similarity,
         'smoothness': smoothness,
         'spill': spill,
+        'edgeChoke': edgeChoke,
+        'isLumaKey': isLumaKey,
       };
 
   factory ChromaKeyConfig.fromJson(Map<String, dynamic> json) => ChromaKeyConfig(
@@ -48,8 +58,10 @@ class ChromaKeyConfig extends Equatable {
         similarity: (json['similarity'] as num?)?.toDouble() ?? 0.15,
         smoothness: (json['smoothness'] as num?)?.toDouble() ?? 0.08,
         spill: (json['spill'] as num?)?.toDouble() ?? 0.10,
+        edgeChoke: (json['edgeChoke'] as num?)?.toDouble() ?? 0.0,
+        isLumaKey: json['isLumaKey'] as bool? ?? false,
       );
 
   @override
-  List<Object?> get props => [isEnabled, keyColorValue, similarity, smoothness, spill];
+  List<Object?> get props => [isEnabled, keyColorValue, similarity, smoothness, spill, edgeChoke, isLumaKey];
 }

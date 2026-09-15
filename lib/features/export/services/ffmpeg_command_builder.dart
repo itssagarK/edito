@@ -5,6 +5,7 @@ import '../../../models/track.dart';
 import '../../audio/services/ai_voice_enhancer_service.dart';
 import '../../borders/services/video_border_compiler_service.dart';
 import '../../character_zoom/services/character_zoom_compiler_service.dart';
+import '../../chroma/services/chroma_key_compiler_service.dart';
 import '../../color_grading/services/color_filter_compiler_service.dart';
 import '../../enhancement/services/ai_video_enhancer_service.dart';
 import '../../hd_converter/services/hd_converter_service.dart';
@@ -135,9 +136,8 @@ class FFmpegCommandBuilder {
 
         // Chroma Key / Green Screen Removal (applied BEFORE scale/pad so native resolution pixels are keyed without Lanczos interpolation fringing)
         if (clip.chromaKey.isEnabled) {
-          final hex = '0x${clip.chromaKey.keyColor.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
-          vFilters.add('chromakey=color=$hex:similarity=${clip.chromaKey.similarity.toStringAsFixed(2)}:blend=${clip.chromaKey.smoothness.toStringAsFixed(2)}');
-          vFilters.add('format=yuva420p');
+          final chromaFilters = ChromaKeyCompilerService.generateFFmpegFilters(clip.chromaKey);
+          vFilters.addAll(chromaFilters);
         } else if (tIdx > 0) {
           // Upper track - convert to yuva420p before padding so letterbox/pillarbox areas are transparent
           vFilters.add('format=yuva420p');

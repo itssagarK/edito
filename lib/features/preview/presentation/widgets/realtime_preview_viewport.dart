@@ -15,6 +15,9 @@ import '../../../color_grading/services/color_filter_compiler_service.dart';
 import '../../../enhancement/models/video_enhancement_config.dart';
 import '../../../character_zoom/models/character_zoom_config.dart';
 import '../../../character_zoom/services/character_zoom_compiler_service.dart';
+import '../../../chroma/models/chroma_key_config.dart';
+import '../../../chroma/services/chroma_key_compiler_service.dart';
+import '../../../chroma/presentation/widgets/chroma_key_preview_wrapper.dart';
 import '../../../hd_converter/models/hd_converter_config.dart';
 import '../../../hd_converter/services/hd_converter_service.dart';
 import '../../../header_footer/models/header_footer_config.dart';
@@ -438,6 +441,13 @@ class RealtimePreviewViewport extends ConsumerWidget {
       );
     }
 
+    if (clip.chromaKey.isEnabled) {
+      videoContent = ChromaKeyPreviewWrapper(
+        config: clip.chromaKey,
+        child: videoContent,
+      );
+    }
+
     if (clip.mask.isActive) {
       videoContent = MaskPreviewWrapper(
         config: clip.mask,
@@ -568,7 +578,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     border: Border.all(color: const Color(0xFF00FF66)),
                   ),
                   child: Text(
-                    '🟢 CHROMA KEY (${((clip.chromaKey.keyColorValue >> 8) & 0xFF > 120) ? "GREEN" : "BLUE"} SCREEN)',
+                    ChromaKeyCompilerService.getChromaBadge(clip.chromaKey),
                     style: const TextStyle(fontSize: 9, color: Color(0xFF00FF66), fontWeight: FontWeight.bold),
                   ),
                 ),

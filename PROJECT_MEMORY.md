@@ -438,3 +438,41 @@ CapCut Pro and Premiere Pro style dynamic speed curve ramping engine with optica
    - Quick toggles for Pitch Preservation and Optical-Flow Smooth Slow-Mo.
    - Verified by comprehensive test suite in `test/speed_suite_test.dart`.
 
+---
+
+## 15. Pro Chroma Key & Advanced Color Spill Suppressor Suite (v1.0.29 Release)
+
+Hollywood and broadcast-level green/blue/luma keying engine with mathematical color spill neutralization:
+
+1. **Enhanced Chroma & Luma Configuration (`lib/features/chroma/models/chroma_key_config.dart`)**:
+   - **Supported Keying Modes**:
+     - *Green Screen Studio*: Pure lime/chroma green keying (`0xFF00FF00`).
+     - *Blue Screen Stage*: Deep cobalt/stage blue keying (`0xFF0055FF`).
+     - *Cyber Cyan*: Electronic turquoise keying (`0xFF00FFFF`).
+     - *Magenta / Pink Stage*: Pop neon magenta keying (`0xFFFF0055`).
+     - *Luma Key Black (Fire/Smoke)*: Threshold keying of pure black backgrounds (`0xFF000000`).
+     - *Luma Key White (Clouds/Snow)*: Threshold keying of pure white backgrounds (`0xFFFFFFFF`).
+     - *Custom Eyedropper Hex*: Any 24-bit RGB keying target.
+   - **Parameter Controls**:
+     - `similarity`: Color sensitivity threshold ($0.05-0.50$).
+     - `smoothness`: Edge feathering & transition softness ($0.01-0.35$).
+     - `spill`: Color spill suppression intensity ($0.0-0.40$).
+     - `edgeChoke`: Inward border clipping ($0.0-0.20$).
+     - `isLumaKey`: Dedicated black/white luminance keying switch.
+
+2. **Dual-Engine Compositor & Spill Neutralizer (`lib/features/chroma/services/chroma_key_compiler_service.dart`)**:
+   - **Real-Time Preview Canvas (`ChromaKeyPreviewWrapper`)**:
+     - Computes a dynamic 4x5 Skia GPU color filter matrix via `generateSpillMatrix`.
+     - Attenuates green/blue channel reflections directly on actor skin, clothing, and hair in real-time (60fps).
+     - Live viewport HUD status badge: `🟢 CHROMA: GREEN (15%)`, `🔵 CHROMA: BLUE (20%)`, or `⚫ LUMA KEY: BLACK (25%)`.
+   - **Deterministic FFmpeg Export Compiler**:
+     - Keying occurs strictly *before* Lanczos scaling and padding to eliminate border interpolation fringing.
+     - Compiles `chromakey=color=$hex:similarity=...:blend=...` + `format=yuva420p`.
+     - Automatically chains `despill=type=green:mix=...:expand=0.1` or `despill=type=blue:mix=...` to remove green/blue halos on exported video.
+
+3. **Chroma Studio UI Sheet (`lib/features/chroma/presentation/widgets/chroma_key_sheet.dart`)**:
+   - 6 one-tap studio presets carousel (*Green Screen*, *Blue Screen*, *Cyber Cyan*, *Magenta*, *Luma Black*, *Luma White*).
+   - Hex color indicator with quick color button palette.
+   - Precision sliders for Similarity, Edge Smoothness, Spill Suppression, and Edge Choke.
+   - Verified by comprehensive test suite in `test/chroma_suite_test.dart`.
+

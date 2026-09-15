@@ -3,6 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
 import '../../models/chroma_key_config.dart';
+import '../../services/chroma_key_compiler_service.dart';
 
 class ChromaKeySheet extends StatefulWidget {
   final Clip clip;
@@ -46,9 +47,31 @@ class _ChromaKeySheetState extends State<ChromaKeySheet> {
     widget.onSave(updated);
   }
 
+  void _applyPreset({
+    required int colorValue,
+    required double similarity,
+    required double smoothness,
+    required double spill,
+    required double edgeChoke,
+    required bool isLumaKey,
+  }) {
+    setState(() {
+      _config = _config.copyWith(
+        isEnabled: true,
+        keyColorValue: colorValue,
+        similarity: similarity,
+        smoothness: smoothness,
+        spill: spill,
+        edgeChoke: edgeChoke,
+        isLumaKey: isLumaKey,
+      );
+    });
+    _applyChange();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final double? sheetHeight = widget.isDocked ? null : MediaQuery.of(context).size.height * 0.48;
+    final double? sheetHeight = widget.isDocked ? null : MediaQuery.of(context).size.height * 0.65;
 
     return Container(
       height: sheetHeight,
@@ -82,7 +105,7 @@ class _ChromaKeySheetState extends State<ChromaKeySheet> {
                         children: [
                           const Icon(Icons.blur_linear, color: AppColors.accent, size: 22),
                           const SizedBox(width: 8),
-                          Text('Chroma Key & Green Screen', style: AppTypography.titleLarge),
+                          Text('Chroma Key Studio', style: AppTypography.titleLarge),
                         ],
                       ),
                       IconButton(
@@ -107,18 +130,28 @@ class _ChromaKeySheetState extends State<ChromaKeySheet> {
               children: [
                 // Master Toggle Card
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceElevated,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: _config.isEnabled ? AppColors.accent.withOpacity(0.5) : AppColors.border,
                     ),
                   ),
                   child: SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Enable Chroma Key Removal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    subtitle: const Text('Isolates subject by making green or blue backgrounds transparent', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    dense: true,
+                    title: const Text('Enable Chroma Key Removal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    subtitle: Text(
+                      _config.isEnabled
+                          ? ChromaKeyCompilerService.getChromaBadge(_config)
+                          : 'Isolates subjects by keying green, blue, or luma backgrounds',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: _config.isEnabled ? AppColors.accent : AppColors.textSecondary,
+                        fontWeight: _config.isEnabled ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
                     value: _config.isEnabled,
                     activeColor: AppColors.accent,
                     onChanged: (val) {
@@ -127,26 +160,129 @@ class _ChromaKeySheetState extends State<ChromaKeySheet> {
                     },
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
 
                 if (_config.isEnabled) ...[
-                  // Color Selection Presets
-                  const Text('Key Color Selection', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
-                  const SizedBox(height: 10),
+                  // 1. One-Tap Studio Presets
+                  const Text('Studio Keying Presets', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 70,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        _buildPresetCard(
+                          title: 'Green Screen',
+                          color: const Color(0xFF00FF00),
+                          onTap: () => _applyPreset(
+                            colorValue: 0xFF00FF00,
+                            similarity: 0.15,
+                            smoothness: 0.08,
+                            spill: 0.15,
+                            edgeChoke: 0.0,
+                            isLumaKey: false,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildPresetCard(
+                          title: 'Blue Screen',
+                          color: const Color(0xFF0055FF),
+                          onTap: () => _applyPreset(
+                            colorValue: 0xFF0055FF,
+                            similarity: 0.18,
+                            smoothness: 0.10,
+                            spill: 0.15,
+                            edgeChoke: 0.0,
+                            isLumaKey: false,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildPresetCard(
+                          title: 'Cyber Cyan',
+                          color: const Color(0xFF00FFFF),
+                          onTap: () => _applyPreset(
+                            colorValue: 0xFF00FFFF,
+                            similarity: 0.20,
+                            smoothness: 0.12,
+                            spill: 0.10,
+                            edgeChoke: 0.0,
+                            isLumaKey: false,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildPresetCard(
+                          title: 'Magenta Stage',
+                          color: const Color(0xFFFF0055),
+                          onTap: () => _applyPreset(
+                            colorValue: 0xFFFF0055,
+                            similarity: 0.20,
+                            smoothness: 0.10,
+                            spill: 0.10,
+                            edgeChoke: 0.0,
+                            isLumaKey: false,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildPresetCard(
+                          title: 'Luma Black (Fire)',
+                          color: Colors.black,
+                          onTap: () => _applyPreset(
+                            colorValue: 0xFF000000,
+                            similarity: 0.25,
+                            smoothness: 0.15,
+                            spill: 0.0,
+                            edgeChoke: 0.0,
+                            isLumaKey: true,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildPresetCard(
+                          title: 'Luma White (Snow)',
+                          color: Colors.white,
+                          onTap: () => _applyPreset(
+                            colorValue: 0xFFFFFFFF,
+                            similarity: 0.25,
+                            smoothness: 0.15,
+                            spill: 0.0,
+                            edgeChoke: 0.0,
+                            isLumaKey: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 2. Color Selection Palette
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildColorButton(const Color(0xFF00FF00), 'Green Screen'),
-                      const SizedBox(width: 10),
-                      _buildColorButton(const Color(0xFF0055FF), 'Blue Screen'),
-                      const SizedBox(width: 10),
-                      _buildColorButton(const Color(0xFF00FFFF), 'Cyan Screen'),
-                      const SizedBox(width: 10),
-                      _buildColorButton(const Color(0xFFFF0055), 'Magenta'),
+                      const Text('Key Color Selection', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                      Text(
+                        '#${_config.keyColor.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
+                        style: AppTypography.timecode.copyWith(color: AppColors.accent, fontSize: 12),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _buildColorButton(const Color(0xFF00FF00), 'Green'),
+                      const SizedBox(width: 8),
+                      _buildColorButton(const Color(0xFF0055FF), 'Blue'),
+                      const SizedBox(width: 8),
+                      _buildColorButton(const Color(0xFF00FFFF), 'Cyan'),
+                      const SizedBox(width: 8),
+                      _buildColorButton(const Color(0xFFFF0055), 'Pink'),
+                      const SizedBox(width: 8),
+                      _buildColorButton(Colors.black, 'Black'),
+                      const SizedBox(width: 8),
+                      _buildColorButton(Colors.white, 'White'),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
 
-                  // Sliders
+                  // 3. Sliders
                   _buildSlider(
                     title: 'Similarity Threshold',
                     subtitle: 'Expands color sensitivity range',
@@ -187,6 +323,20 @@ class _ChromaKeySheetState extends State<ChromaKeySheet> {
                       _applyChange();
                     },
                   ),
+                  const SizedBox(height: 12),
+
+                  _buildSlider(
+                    title: 'Edge Choke / Inset',
+                    subtitle: 'Erodes outer borders to clip halo reflections',
+                    value: _config.edgeChoke,
+                    min: 0.0,
+                    max: 0.20,
+                    displayValue: '${(_config.edgeChoke * 100).round()}%',
+                    onChanged: (v) {
+                      setState(() => _config = _config.copyWith(edgeChoke: v));
+                      _applyChange();
+                    },
+                  ),
                 ],
               ],
             ),
@@ -196,47 +346,98 @@ class _ChromaKeySheetState extends State<ChromaKeySheet> {
     );
   }
 
+  Widget _buildPresetCard({
+    required String title,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final isSelected = _config.keyColorValue == color.value;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: onTap,
+      child: Container(
+        width: 105,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary.withOpacity(0.2) : AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white24),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? Colors.white : AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildColorButton(Color color, String label) {
     final isSelected = _config.keyColorValue == color.value;
+
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          setState(() => _config = _config.copyWith(keyColorValue: color.value));
+          setState(() {
+            _config = _config.copyWith(
+              keyColorValue: color.value,
+              isLumaKey: color == Colors.black || color == Colors.white,
+            );
+          });
           _applyChange();
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          height: 36,
           decoration: BoxDecoration(
-            color: color.withOpacity(isSelected ? 0.35 : 0.15),
-            borderRadius: BorderRadius.circular(12),
+            color: color,
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isSelected ? color : AppColors.border,
+              color: isSelected ? Colors.white : AppColors.border,
               width: isSelected ? 2.5 : 1.0,
             ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: color.withOpacity(0.4),
+                      blurRadius: 6,
+                    ),
+                  ]
+                : null,
           ),
-          child: Column(
-            children: [
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 1.5),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? Colors.white : AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+          child: isSelected
+              ? Center(
+                  child: Icon(
+                    Icons.check,
+                    size: 16,
+                    color: color.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+                  ),
+                )
+              : null,
         ),
       ),
     );
@@ -252,10 +453,10 @@ class _ChromaKeySheetState extends State<ChromaKeySheet> {
     required ValueChanged<double> onChanged,
   }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -265,15 +466,16 @@ class _ChromaKeySheetState extends State<ChromaKeySheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              Text(displayValue, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.accent)),
+              Text(displayValue, style: AppTypography.timecode.copyWith(color: AppColors.accent, fontSize: 12)),
             ],
           ),
-          Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+          Text(subtitle, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
           Slider(
-            value: value,
+            value: value.clamp(min, max),
             min: min,
             max: max,
             activeColor: AppColors.accent,
+            inactiveColor: AppColors.border,
             onChanged: onChanged,
           ),
         ],
