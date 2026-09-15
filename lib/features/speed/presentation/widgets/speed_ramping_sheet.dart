@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
+import '../../../color_grading/models/color_grading_config.dart';
 import '../../models/speed_curve_preset.dart';
+import '../../services/speed_ramping_service.dart';
+import 'speed_curve_graph_widget.dart';
 
 class SpeedRampingSheet extends StatefulWidget {
   final Clip clip;
@@ -41,6 +44,9 @@ class _SpeedRampingSheetState extends State<SpeedRampingSheet> with SingleTicker
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    if (widget.clip.speedCurve.type != SpeedCurveType.constant) {
+      _tabController.index = 1;
+    }
     _constantSpeed = widget.clip.speed;
     _speedCurve = widget.clip.speedCurve;
   }
@@ -53,8 +59,10 @@ class _SpeedRampingSheetState extends State<SpeedRampingSheet> with SingleTicker
 
   void _applyChange() {
     final sourceSpan = (widget.clip.sourceOutMs - widget.clip.sourceInMs).abs();
-    final newDuration = sourceSpan > 0 && _constantSpeed > 0
-        ? (sourceSpan / _constantSpeed).round().clamp(100, 3600000)
+    final effectiveSpeed = SpeedRampingService.calculateEffectiveAverageSpeed(_speedCurve, _constantSpeed);
+
+    final newDuration = sourceSpan > 0 && effectiveSpeed > 0
+        ? (sourceSpan / effectiveSpeed).round().clamp(100, 3600000)
         : widget.clip.durationMs;
 
     final updated = widget.clip.copyWith(
@@ -67,7 +75,7 @@ class _SpeedRampingSheetState extends State<SpeedRampingSheet> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
-    final double? sheetHeight = widget.isDocked ? null : MediaQuery.of(context).size.height * 0.48;
+    final double? sheetHeight = widget.isDocked ? null : MediaQuery.of(context).size.height * 0.65;
 
     return Container(
       height: sheetHeight,
@@ -101,7 +109,7 @@ class _SpeedRampingSheetState extends State<SpeedRampingSheet> with SingleTicker
                         children: [
                           const Icon(Icons.speed, color: AppColors.primaryLight, size: 22),
                           const SizedBox(width: 8),
-                          Text('Speed & Curves', style: AppTypography.titleLarge),
+                          Text('Speed & Curves Studio', style: AppTypography.titleLarge),
                         ],
                       ),
                       IconButton(
@@ -140,24 +148,45 @@ class _SpeedRampingSheetState extends State<SpeedRampingSheet> with SingleTicker
               labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
               tabs: const [
                 Tab(text: 'Standard Multiplier'),
-                Tab(text: 'Dynamic Curves'),
+                Tab(text: 'Dynamic Curves & Graph'),
               ],
             ),
           ),
 
-          // Pitch Correction Switch
+          // Toggles row: Pitch Correction & Smooth Slow-Mo
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Preserve Audio Pitch', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-              subtitle: const Text('Keeps natural tone without chipmunk / robot artifacts', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-              value: _speedCurve.enablePitchCorrection,
-              activeColor: AppColors.accent,
-              onChanged: (enabled) {
-                setState(() => _speedCurve = _speedCurve.copyWith(enablePitchCorrection: enabled));
-                _applyChange();
-              },
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+            child: Row(
+              children: [
+                Expanded(
+                  child: SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: const Text('Preserve Pitch', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    subtitle: const Text('Natural tone voice', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                    value: _speedCurve.enablePitchCorrection,
+                    activeColor: AppColors.accent,
+                    onChanged: (enabled) {
+                      setState(() => _speedCurve = _speedCurve.copyWith(enablePitchCorrection: enabled));
+                      _applyChange();
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: const Text('Smooth Slow-Mo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    subtitle: const Text('Optical flow blending', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                    value: _speedCurve.isSmoothSlowMo,
+                    activeColor: const Color(0xFF00E5FF),
+                    onChanged: (enabled) {
+                      setState(() => _speedCurve = _speedCurve.copyWith(isSmoothSlowMo: enabled));
+                      _applyChange();
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -185,7 +214,10 @@ class _SpeedRampingSheetState extends State<SpeedRampingSheet> with SingleTicker
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Playback Rate', style: AppTypography.titleMedium),
-            Text('${_constantSpeed}x', style: AppTypography.timecode.copyWith(color: AppColors.accent, fontSize: 14)),
+            Text(
+              '${_constantSpeed}x',
+              style: AppTypography.timecode.copyWith(color: AppColors.accent, fontSize: 16, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         Slider(
@@ -208,7 +240,7 @@ class _SpeedRampingSheetState extends State<SpeedRampingSheet> with SingleTicker
           spacing: 8,
           runSpacing: 8,
           children: speeds.map((s) {
-            final isSelected = _constantSpeed == s;
+            final isSelected = _constantSpeed == s && _speedCurve.type == SpeedCurveType.constant;
             return ChoiceChip(
               label: Text('${s}x'),
               selected: isSelected,
@@ -235,44 +267,92 @@ class _SpeedRampingSheetState extends State<SpeedRampingSheet> with SingleTicker
   }
 
   Widget _buildSpeedCurvesTab() {
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      children: SpeedCurveType.values.where((t) => t != SpeedCurveType.constant).map((curveType) {
-        final isSelected = _speedCurve.type == curveType;
+    final curvePresets = SpeedCurveType.values.where((t) => t != SpeedCurveType.constant).toList();
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 10),
-          color: isSelected ? AppColors.primary.withOpacity(0.15) : AppColors.surfaceElevated,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: isSelected ? AppColors.primary : AppColors.border,
-              width: isSelected ? 2 : 1,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      child: Column(
+        children: [
+          // Interactive Bezier Curve Canvas
+          SizedBox(
+            height: 170,
+            child: SpeedCurveGraphWidget(
+              config: _speedCurve,
+              onPointsChanged: (newPoints) {
+                setState(() {
+                  _speedCurve = _speedCurve.copyWith(
+                    type: SpeedCurveType.custom,
+                    curvePoints: newPoints,
+                  );
+                });
+                _applyChange();
+              },
             ),
           ),
-          child: ListTile(
-            onTap: () {
-              setState(() {
-                _speedCurve = _speedCurve.copyWith(
-                  type: curveType,
-                  curvePoints: curveType.defaultCurvePoints,
+          const SizedBox(height: 10),
+
+          // Horizontal Carousel of Curve Presets
+          SizedBox(
+            height: 75,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: curvePresets.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final presetType = curvePresets[index];
+                final isSelected = _speedCurve.type == presetType;
+
+                return InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () {
+                    setState(() {
+                      _speedCurve = _speedCurve.copyWith(
+                        type: presetType,
+                        curvePoints: presetType.defaultCurvePoints,
+                      );
+                    });
+                    _applyChange();
+                  },
+                  child: Container(
+                    width: 110,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.primary.withOpacity(0.2) : AppColors.surfaceElevated,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected ? AppColors.primary : AppColors.border,
+                        width: isSelected ? 1.5 : 1.0,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          presetType == SpeedCurveType.custom ? Icons.gesture : Icons.show_chart,
+                          size: 18,
+                          color: isSelected ? AppColors.primaryLight : AppColors.textMuted,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          presetType.label.split('(').first.trim(),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                            color: isSelected ? Colors.white : AppColors.textSecondary,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
                 );
-              });
-              _applyChange();
-            },
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : AppColors.surface,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.show_chart, color: isSelected ? Colors.white : AppColors.primaryLight, size: 20),
+              },
             ),
-            title: Text(curveType.label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-            trailing: isSelected ? const Icon(Icons.check_circle, color: AppColors.accent, size: 20) : null,
           ),
-        );
-      }).toList(),
+        ],
+      ),
     );
   }
 }

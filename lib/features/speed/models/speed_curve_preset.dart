@@ -7,6 +7,9 @@ enum SpeedCurveType {
   hero,
   bulletTime,
   jumpCut,
+  flashIn,
+  flashOut,
+  custom,
 }
 
 extension SpeedCurveTypeExtension on SpeedCurveType {
@@ -22,6 +25,12 @@ extension SpeedCurveTypeExtension on SpeedCurveType {
         return 'Bullet Time (Drop to 0.1x)';
       case SpeedCurveType.jumpCut:
         return 'Jump Cut Rush (3x Fast)';
+      case SpeedCurveType.flashIn:
+        return 'Flash In (5x ➔ Normal 1x)';
+      case SpeedCurveType.flashOut:
+        return 'Flash Out (Normal 1x ➔ 5x)';
+      case SpeedCurveType.custom:
+        return 'Custom Bezier Curve';
     }
   }
 
@@ -57,6 +66,27 @@ extension SpeedCurveTypeExtension on SpeedCurveType {
           const CurvePoint(0.6, 3.0),
           const CurvePoint(1.0, 1.0),
         ];
+      case SpeedCurveType.flashIn:
+        return [
+          const CurvePoint(0.0, 5.0),
+          const CurvePoint(0.3, 2.0),
+          const CurvePoint(0.6, 1.0),
+          const CurvePoint(1.0, 1.0),
+        ];
+      case SpeedCurveType.flashOut:
+        return [
+          const CurvePoint(0.0, 1.0),
+          const CurvePoint(0.4, 1.0),
+          const CurvePoint(0.7, 2.0),
+          const CurvePoint(1.0, 5.0),
+        ];
+      case SpeedCurveType.custom:
+        return [
+          const CurvePoint(0.0, 1.0),
+          const CurvePoint(0.3, 2.5),
+          const CurvePoint(0.7, 0.5),
+          const CurvePoint(1.0, 1.0),
+        ];
     }
   }
 }
@@ -65,12 +95,14 @@ class SpeedCurveConfig extends Equatable {
   final SpeedCurveType type;
   final double constantSpeed;
   final bool enablePitchCorrection;
+  final bool isSmoothSlowMo;
   final List<CurvePoint> curvePoints;
 
   const SpeedCurveConfig({
     this.type = SpeedCurveType.constant,
     this.constantSpeed = 1.0,
     this.enablePitchCorrection = true,
+    this.isSmoothSlowMo = false,
     this.curvePoints = const [CurvePoint(0.0, 1.0), CurvePoint(1.0, 1.0)],
   });
 
@@ -78,12 +110,14 @@ class SpeedCurveConfig extends Equatable {
     SpeedCurveType? type,
     double? constantSpeed,
     bool? enablePitchCorrection,
+    bool? isSmoothSlowMo,
     List<CurvePoint>? curvePoints,
   }) {
     return SpeedCurveConfig(
       type: type ?? this.type,
       constantSpeed: constantSpeed ?? this.constantSpeed,
       enablePitchCorrection: enablePitchCorrection ?? this.enablePitchCorrection,
+      isSmoothSlowMo: isSmoothSlowMo ?? this.isSmoothSlowMo,
       curvePoints: curvePoints ?? this.curvePoints,
     );
   }
@@ -92,6 +126,7 @@ class SpeedCurveConfig extends Equatable {
         'type': type.name,
         'constantSpeed': constantSpeed,
         'enablePitchCorrection': enablePitchCorrection,
+        'isSmoothSlowMo': isSmoothSlowMo,
         'curvePoints': curvePoints.map((p) => p.toJson()).toList(),
       };
 
@@ -106,10 +141,11 @@ class SpeedCurveConfig extends Equatable {
       ),
       constantSpeed: (json['constantSpeed'] as num?)?.toDouble() ?? 1.0,
       enablePitchCorrection: json['enablePitchCorrection'] as bool? ?? true,
+      isSmoothSlowMo: json['isSmoothSlowMo'] as bool? ?? false,
       curvePoints: points.isNotEmpty ? points : const [CurvePoint(0.0, 1.0), CurvePoint(1.0, 1.0)],
     );
   }
 
   @override
-  List<Object?> get props => [type, constantSpeed, enablePitchCorrection, curvePoints];
+  List<Object?> get props => [type, constantSpeed, enablePitchCorrection, isSmoothSlowMo, curvePoints];
 }

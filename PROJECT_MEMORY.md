@@ -396,3 +396,45 @@ Professional CapCut Pro, DaVinci Resolve, and Premiere Pro style clip manipulati
      - Accessible from Toolbar via `EditorTool.clipWorkflow` ('Clip Actions') and docked editing panel.
    - Verified by comprehensive test suite in `test/clip_workflow_test.dart`.
 
+---
+
+## 14. Cinematic Speed Curve Ramping Suite & Pitch Preservation (v1.0.28 Release)
+
+CapCut Pro and Premiere Pro style dynamic speed curve ramping engine with optical-flow motion interpolation and pitch preservation:
+
+1. **Enhanced Speed Presets & Data Model (`lib/features/speed/models/speed_curve_preset.dart`)**:
+   - **Supported Curve Presets (`SpeedCurveType`)**:
+     - `constant`: Uniform rate across whole clip ($0.1\times-10.0\times$).
+     - `montage`: Dynamic pulse ($2.0\times \to 0.4\times \to 2.0\times$) for action vlogs.
+     - `hero`: Classic hero shot ($1.0\times \to 0.25\times \to 1.0\times$) emphasizing dramatic moments.
+     - `bulletTime`: Extreme matrix-style time drop ($1.0\times \to 0.1\times \to 1.0\times$).
+     - `jumpCut`: Beat-matched rush ($3.0\times \to 1.0\times$).
+     - `flashIn`: High-speed entry transition ($5.0\times \to 1.0\times$).
+     - `flashOut`: Exponential acceleration rush ($1.0\times \to 5.0\times$).
+     - `custom`: Fully customizable multi-point Bezier curve.
+   - **Configuration Options (`SpeedCurveConfig`)**:
+     - `isSmoothSlowMo: bool`: Toggles optical-flow motion interpolation (`minterpolate`) for artifact-free ultra slow motion.
+     - `enablePitchCorrection: bool`: Toggles natural vocal pitch preservation vs vinyl record/tape pitch modulation.
+     - `curvePoints: List<CurvePoint>`: Normalized 2D coordinates ($X \in [0.0, 1.0]$, $Y \in [0.1, 8.0]$).
+
+2. **Mathematical Integration & Evaluation Engine (`lib/features/speed/services/speed_ramping_service.dart`)**:
+   - **Trapezoidal Integration**: `calculateSourceOffset` computes exact continuous media frames by integrating speed curves along the timeline: $\int_0^t v(\tau) d\tau$.
+   - **Effective Average Speed**: `calculateEffectiveAverageSpeed` determines exact timeline dilation factor for duration re-timing.
+   - **Audio Tempo Chaining (`generateAudioSpeedFilter`)**:
+     - Resolves FFmpeg's intrinsic `atempo` range limitation ($[0.5, 2.0]$) by safely chaining multiple stages (e.g. $4.0\times \to \text{atempo}=2.0,\text{atempo}=2.0$, $0.25\times \to \text{atempo}=0.5,\text{atempo}=0.5$).
+     - Pitch modulation mode (`enablePitchCorrection: false`) uses `asetrate=48000*SPEED,aresample=48000` for tape speed effects.
+   - **Video Filter Compilation (`generateFFmpegVideoSpeedFilters`)**:
+     - Produces deterministic `setpts=PTS/SPEED` expressions.
+     - Automatically chains `minterpolate=fps=FPS:mi_mode=mci:mc_mode=aobmc:vsbmc=1` when `isSmoothSlowMo` is active and speed $< 0.95\times$.
+
+3. **Interactive Visual Curve Editor (`lib/features/speed/presentation/widgets/speed_curve_graph_widget.dart`)**:
+   - Touch-draggable 2D graph with Catmull-Rom cubic spline interpolation and under-curve glowing gradient.
+   - Interactive handle nodes with touch detection radius and real-time numeric speed bubbles.
+   - 1.0x baseline reference line and speed markers ($0.5\times, 1.0\times, 2.0\times, 4.0\times$).
+   - Dynamic point addition $(+)$ and removal $(-)$.
+
+4. **Studio UI Sheet (`lib/features/speed/presentation/widgets/speed_ramping_sheet.dart`)**:
+   - Dual tabs: Standard Multiplier Slider ($0.1\times-8.0\times$) + Dynamic Curves Canvas & Presets Carousel.
+   - Quick toggles for Pitch Preservation and Optical-Flow Smooth Slow-Mo.
+   - Verified by comprehensive test suite in `test/speed_suite_test.dart`.
+

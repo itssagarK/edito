@@ -15,6 +15,7 @@ import '../../keyframes/services/keyframe_evaluator_service.dart';
 import '../../masking/services/mask_compiler_service.dart';
 import '../../overlays/services/overlay_compiler_service.dart';
 import '../../smoothing/services/ai_video_smoother_service.dart';
+import '../../speed/services/speed_ramping_service.dart';
 import '../../transitions/models/transition_type.dart';
 import '../../transitions/services/transition_compiler_service.dart';
 import '../models/export_preset.dart';
@@ -122,8 +123,13 @@ class FFmpegCommandBuilder {
           } else {
             vFilters.add('setpts=PTS-STARTPTS');
           }
-          if (speed != 1.0) {
-            vFilters.add('setpts=PTS/${speed.toStringAsFixed(2)}');
+          final speedFilters = SpeedRampingService.generateFFmpegVideoSpeedFilters(
+            clip.speedCurve,
+            clip.speed,
+            targetFps: config.framerate.fpsValue,
+          );
+          if (speedFilters.isNotEmpty) {
+            vFilters.addAll(speedFilters);
           }
         }
 
@@ -360,8 +366,13 @@ class FFmpegCommandBuilder {
           aFilters.add('areverse');
         }
 
-        if (speed != 1.0) {
-          aFilters.add('atempo=${speed.toStringAsFixed(2)}');
+        final effectiveAudioSpeed = SpeedRampingService.calculateEffectiveAverageSpeed(clip.speedCurve, clip.speed);
+        final audioSpeedFilter = SpeedRampingService.generateAudioSpeedFilter(
+          effectiveAudioSpeed,
+          enablePitchCorrection: clip.speedCurve.enablePitchCorrection,
+        );
+        if (audioSpeedFilter.isNotEmpty) {
+          aFilters.add(audioSpeedFilter);
         }
 
         // Frame-accurate timeline synchronization: reset PTS then delay by clip.startTimeMs for amix alignment
