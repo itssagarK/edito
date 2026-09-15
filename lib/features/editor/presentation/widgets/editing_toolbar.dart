@@ -22,6 +22,7 @@ class EditingToolbar extends StatelessWidget {
     final tools = [
       _ToolItem(EditorTool.split, 'Split', Icons.content_cut),
       _ToolItem(EditorTool.trim, 'Trim', Icons.crop),
+      _ToolItem(EditorTool.clipWorkflow, 'Clip Actions', Icons.movie_filter_outlined),
       _ToolItem(EditorTool.enhance, '8K Upscale', Icons.auto_awesome_motion),
       _ToolItem(EditorTool.hdConverter, 'HD Converter', Icons.high_quality),
       _ToolItem(EditorTool.smooth, 'Smoother', Icons.waves),

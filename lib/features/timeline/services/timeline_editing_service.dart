@@ -257,4 +257,233 @@ class TimelineEditingService {
 
     return closestPoint;
   }
+
+  /// Inserts a freeze frame clip at playhead position, splitting the clip and rippling subsequent clips
+  static Project? freezeFrame(
+    Project project,
+    String clipId,
+    int playheadMs, {
+    int freezeDurationMs = 3000,
+  }) {
+    Track? targetTrack;
+    Clip? targetClip;
+
+    for (final track in project.tracks) {
+      for (final clip in track.clips) {
+        if (clip.id == clipId) {
+          targetTrack = track;
+          targetClip = clip;
+          break;
+        }
+      }
+      if (targetClip != null) break;
+    }
+
+    if (targetTrack == null || targetClip == null) return null;
+
+    final clipStart = targetClip.startTimeMs;
+    final clipEnd = targetClip.startTimeMs + targetClip.durationMs;
+    final offsetMs = (playheadMs - clipStart).clamp(0, targetClip.durationMs);
+    final freezeSourceMs = targetClip.sourceInMs + (offsetMs * targetClip.speed).round();
+
+    final updatedClips = <Clip>[];
+
+    if (offsetMs > minClipDurationMs && offsetMs < targetClip.durationMs - minClipDurationMs) {
+      // Split mid-clip: First Half -> Freeze Frame -> Second Half
+      final firstHalf = targetClip.copyWith(
+        durationMs: offsetMs,
+        sourceOutMs: freezeSourceMs,
+      );
+
+      final freezeClip = Clip(
+        id: const Uuid().v4(),
+        assetId: targetClip.assetId,
+        trackId: targetTrack.id,
+        startTimeMs: playheadMs,
+        durationMs: freezeDurationMs,
+        sourceInMs: freezeSourceMs,
+        sourceOutMs: freezeSourceMs + 40,
+        volume: 0.0,
+        speed: 1.0,
+        isMuted: true,
+        isFreezeFrame: true,
+        freezeSourceMs: freezeSourceMs,
+        colorGrading: targetClip.colorGrading,
+        border: targetClip.border,
+        headerFooter: targetClip.headerFooter,
+        mask: targetClip.mask,
+        blendMode: targetClip.blendMode,
+      );
+
+      final secondHalf = Clip(
+        id: const Uuid().v4(),
+        assetId: targetClip.assetId,
+        trackId: targetTrack.id,
+        startTimeMs: playheadMs + freezeDurationMs,
+        durationMs: targetClip.durationMs - offsetMs,
+        sourceInMs: freezeSourceMs,
+        sourceOutMs: targetClip.sourceOutMs,
+        volume: targetClip.volume,
+        speed: targetClip.speed,
+        isMuted: targetClip.isMuted,
+        audioEffects: targetClip.audioEffects,
+        colorGrading: targetClip.colorGrading,
+        border: targetClip.border,
+        headerFooter: targetClip.headerFooter,
+        mask: targetClip.mask,
+        blendMode: targetClip.blendMode,
+      );
+
+      for (final clip in targetTrack.clips) {
+        if (clip.id == clipId) {
+          updatedClips.add(firstHalf);
+          updatedClips.add(freezeClip);
+          updatedClips.add(secondHalf);
+        } else if (clip.startTimeMs >= clipEnd) {
+          updatedClips.add(clip.copyWith(startTimeMs: clip.startTimeMs + freezeDurationMs));
+        } else {
+          updatedClips.add(clip);
+        }
+      }
+    } else if (offsetMs <= minClipDurationMs) {
+      // Insert at head of clip
+      final freezeClip = Clip(
+        id: const Uuid().v4(),
+        assetId: targetClip.assetId,
+        trackId: targetTrack.id,
+        startTimeMs: clipStart,
+        durationMs: freezeDurationMs,
+        sourceInMs: targetClip.sourceInMs,
+        sourceOutMs: targetClip.sourceInMs + 40,
+        volume: 0.0,
+        speed: 1.0,
+        isMuted: true,
+        isFreezeFrame: true,
+        freezeSourceMs: targetClip.sourceInMs,
+        colorGrading: targetClip.colorGrading,
+        border: targetClip.border,
+        headerFooter: targetClip.headerFooter,
+        mask: targetClip.mask,
+        blendMode: targetClip.blendMode,
+      );
+
+      for (final clip in targetTrack.clips) {
+        if (clip.id == clipId) {
+          updatedClips.add(freezeClip);
+          updatedClips.add(clip.copyWith(startTimeMs: clip.startTimeMs + freezeDurationMs));
+        } else if (clip.startTimeMs >= clipStart) {
+          updatedClips.add(clip.copyWith(startTimeMs: clip.startTimeMs + freezeDurationMs));
+        } else {
+          updatedClips.add(clip);
+        }
+      }
+    } else {
+      // Insert at tail of clip
+      final freezeClip = Clip(
+        id: const Uuid().v4(),
+        assetId: targetClip.assetId,
+        trackId: targetTrack.id,
+        startTimeMs: clipEnd,
+        durationMs: freezeDurationMs,
+        sourceInMs: targetClip.sourceOutMs > 40 ? targetClip.sourceOutMs - 40 : targetClip.sourceOutMs,
+        sourceOutMs: targetClip.sourceOutMs,
+        volume: 0.0,
+        speed: 1.0,
+        isMuted: true,
+        isFreezeFrame: true,
+        freezeSourceMs: targetClip.sourceOutMs > 40 ? targetClip.sourceOutMs - 40 : targetClip.sourceOutMs,
+        colorGrading: targetClip.colorGrading,
+        border: targetClip.border,
+        headerFooter: targetClip.headerFooter,
+        mask: targetClip.mask,
+        blendMode: targetClip.blendMode,
+      );
+
+      for (final clip in targetTrack.clips) {
+        if (clip.id == clipId) {
+          updatedClips.add(clip);
+          updatedClips.add(freezeClip);
+        } else if (clip.startTimeMs >= clipEnd) {
+          updatedClips.add(clip.copyWith(startTimeMs: clip.startTimeMs + freezeDurationMs));
+        } else {
+          updatedClips.add(clip);
+        }
+      }
+    }
+
+    final updatedTrack = targetTrack.copyWith(clips: updatedClips);
+    final updatedTracks = project.tracks.map((t) => t.id == updatedTrack.id ? updatedTrack : t).toList();
+
+    return project.copyWith(tracks: updatedTracks).recalculateDuration();
+  }
+
+  /// Toggles reverse video & audio playback for the specified clip
+  static Project? toggleReverseClip(Project project, String clipId) {
+    for (final track in project.tracks) {
+      for (final clip in track.clips) {
+        if (clip.id == clipId) {
+          final updated = clip.copyWith(isReversed: !clip.isReversed);
+          return project.updateClip(updated);
+        }
+      }
+    }
+    return null;
+  }
+
+  /// Extracts audio from a video clip onto a dedicated audio track
+  static Project? extractAudio(Project project, String clipId) {
+    Track? sourceTrack;
+    Clip? sourceClip;
+
+    for (final track in project.tracks) {
+      for (final clip in track.clips) {
+        if (clip.id == clipId) {
+          sourceTrack = track;
+          sourceClip = clip;
+          break;
+        }
+      }
+      if (sourceClip != null) break;
+    }
+
+    if (sourceTrack == null || sourceClip == null) return null;
+
+    // 1. Mute the original video clip
+    final updatedVideoClip = sourceClip.copyWith(isMuted: true, volume: 0.0);
+    var updatedProject = project.updateClip(updatedVideoClip);
+
+    // 2. Find existing audio track or create a new audio track
+    Track? targetAudioTrack;
+    final audioTracks = updatedProject.tracks.where((t) => t.type == TrackType.audio).toList();
+    if (audioTracks.isNotEmpty) {
+      targetAudioTrack = audioTracks.first;
+    } else {
+      targetAudioTrack = Track(
+        id: const Uuid().v4(),
+        name: 'Extracted Audio',
+        type: TrackType.audio,
+        order: updatedProject.tracks.length,
+        clips: const [],
+      );
+      updatedProject = updatedProject.addTrack(targetAudioTrack);
+    }
+
+    // 3. Create independent audio clip
+    final extractedClip = Clip(
+      id: const Uuid().v4(),
+      assetId: sourceClip.assetId,
+      trackId: targetAudioTrack.id,
+      startTimeMs: sourceClip.startTimeMs,
+      durationMs: sourceClip.durationMs,
+      sourceInMs: sourceClip.sourceInMs,
+      sourceOutMs: sourceClip.sourceOutMs,
+      volume: sourceClip.volume > 0 ? sourceClip.volume : 1.0,
+      speed: sourceClip.speed,
+      isMuted: false,
+      isReversed: sourceClip.isReversed,
+      audioEffects: sourceClip.audioEffects,
+    );
+
+    return updatedProject.addClipToTrack(targetAudioTrack.id, extractedClip).recalculateDuration();
+  }
 }

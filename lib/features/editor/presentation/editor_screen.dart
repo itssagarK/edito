@@ -417,6 +417,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openKeyframesModal();
         break;
 
+      case EditorTool.clipWorkflow:
+        _openClipWorkflowModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -675,6 +679,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openKeyframesModal() {
     _openDockedTool(EditorTool.keyframes, trackType: TrackType.video, purpose: 'Keyframes');
+  }
+
+  void _openClipWorkflowModal() {
+    _openDockedTool(EditorTool.clipWorkflow, trackType: TrackType.video, purpose: 'Clip Actions');
   }
 
   Clip? _findTargetClip() {

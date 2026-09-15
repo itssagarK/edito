@@ -5,6 +5,9 @@ import '../../../../core/theme/app_typography.dart';
 class TimelineContextBar extends StatelessWidget {
   final VoidCallback onSplit;
   final VoidCallback onDuplicate;
+  final VoidCallback? onFreezeFrame;
+  final VoidCallback? onReverse;
+  final VoidCallback? onExtractAudio;
   final VoidCallback onDelete;
   final VoidCallback onTrimHeadToPlayhead;
   final VoidCallback onTrimTailToPlayhead;
@@ -14,6 +17,9 @@ class TimelineContextBar extends StatelessWidget {
     super.key,
     required this.onSplit,
     required this.onDuplicate,
+    this.onFreezeFrame,
+    this.onReverse,
+    this.onExtractAudio,
     required this.onDelete,
     required this.onTrimHeadToPlayhead,
     required this.onTrimTailToPlayhead,
@@ -55,6 +61,33 @@ class TimelineContextBar extends StatelessWidget {
             onTap: onDuplicate,
             color: AppColors.textPrimary,
           ),
+          if (onFreezeFrame != null) ...[
+            const VerticalDivider(width: 12, indent: 8, endIndent: 8, color: AppColors.border),
+            _buildActionButton(
+              icon: Icons.ac_unit,
+              label: 'Freeze',
+              onTap: onFreezeFrame!,
+              color: const Color(0xFF00E5FF),
+            ),
+          ],
+          if (onReverse != null) ...[
+            const VerticalDivider(width: 12, indent: 8, endIndent: 8, color: AppColors.border),
+            _buildActionButton(
+              icon: Icons.replay,
+              label: 'Reverse',
+              onTap: onReverse!,
+              color: const Color(0xFFFF5252),
+            ),
+          ],
+          if (onExtractAudio != null) ...[
+            const VerticalDivider(width: 12, indent: 8, endIndent: 8, color: AppColors.border),
+            _buildActionButton(
+              icon: Icons.music_note,
+              label: 'Extract Audio',
+              onTap: onExtractAudio!,
+              color: AppColors.accent,
+            ),
+          ],
           const VerticalDivider(width: 12, indent: 8, endIndent: 8, color: AppColors.border),
           // Trim Head
           _buildActionButton(

@@ -189,12 +189,41 @@ class VideoPlaybackBridgeService {
       _videoController!.setPlaybackSpeed(clip.speed.clamp(0.25, 4.0));
 
       // Calculate target time within source video
-      final clipLocalMs = timestampMs - clip.startTimeMs + clip.sourceInMs;
+      final int clipLocalMs;
+      if (clip.isFreezeFrame) {
+        clipLocalMs = clip.freezeSourceMs ?? clip.sourceInMs;
+      } else if (clip.isReversed) {
+        final elapsedMs = ((timestampMs - clip.startTimeMs) * clip.speed).round();
+        clipLocalMs = clip.sourceOutMs - elapsedMs;
+      } else {
+        clipLocalMs = clip.sourceInMs + ((timestampMs - clip.startTimeMs) * clip.speed).round();
+      }
+
       final maxVideoMs = _videoController!.value.duration.inMilliseconds;
       final targetVideoMs = clipLocalMs.clamp(0, maxVideoMs).toInt();
       final targetDuration = Duration(milliseconds: targetVideoMs);
 
-      if (!isPlaying) {
+      if (clip.isFreezeFrame) {
+        // Freeze frame: keep player paused on exact frozen frame
+        if (_videoController!.value.isPlaying) {
+          await _videoController!.pause();
+        }
+        final currentPos = _videoController!.value.position;
+        final driftMs = (currentPos.inMilliseconds - targetDuration.inMilliseconds).abs();
+        if (driftMs > 30) {
+          await _videoController!.seekTo(targetDuration);
+        }
+      } else if (clip.isReversed) {
+        // Reversed clip: update position backwards on each tick
+        final currentPos = _videoController!.value.position;
+        final driftMs = (currentPos.inMilliseconds - targetDuration.inMilliseconds).abs();
+        if (driftMs > 30) {
+          await _videoController!.seekTo(targetDuration);
+        }
+        if (_videoController!.value.isPlaying) {
+          await _videoController!.pause();
+        }
+      } else if (!isPlaying) {
         // Paused / Scrubbing mode: seek precisely to target frame
         final currentPos = _videoController!.value.position;
         final driftMs = (currentPos.inMilliseconds - targetDuration.inMilliseconds).abs();

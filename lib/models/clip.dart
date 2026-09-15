@@ -46,6 +46,9 @@ class Clip extends Equatable {
   final MaskConfig mask;
   final BlendModeConfig blendMode;
   final List<Keyframe> keyframes;
+  final bool isReversed;
+  final bool isFreezeFrame;
+  final int? freezeSourceMs;
 
   const Clip({
     required this.id,
@@ -76,6 +79,9 @@ class Clip extends Equatable {
     this.mask = const MaskConfig(),
     this.blendMode = const BlendModeConfig(),
     this.keyframes = const [],
+    this.isReversed = false,
+    this.isFreezeFrame = false,
+    this.freezeSourceMs,
   });
 
   Clip copyWith({
@@ -107,6 +113,9 @@ class Clip extends Equatable {
     MaskConfig? mask,
     BlendModeConfig? blendMode,
     List<Keyframe>? keyframes,
+    bool? isReversed,
+    bool? isFreezeFrame,
+    int? freezeSourceMs,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -137,6 +146,9 @@ class Clip extends Equatable {
       mask: mask ?? this.mask,
       blendMode: blendMode ?? this.blendMode,
       keyframes: keyframes ?? this.keyframes,
+      isReversed: isReversed ?? this.isReversed,
+      isFreezeFrame: isFreezeFrame ?? this.isFreezeFrame,
+      freezeSourceMs: freezeSourceMs ?? this.freezeSourceMs,
     );
   }
 
@@ -169,6 +181,9 @@ class Clip extends Equatable {
         'mask': mask.toJson(),
         'blendMode': blendMode.toJson(),
         'keyframes': keyframes.map((k) => k.toJson()).toList(),
+        'isReversed': isReversed,
+        'isFreezeFrame': isFreezeFrame,
+        'freezeSourceMs': freezeSourceMs,
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -239,6 +254,9 @@ class Clip extends Equatable {
                 ?.map((k) => Keyframe.fromJson(k as Map<String, dynamic>))
                 .toList() ??
             const [],
+        isReversed: json['isReversed'] as bool? ?? false,
+        isFreezeFrame: json['isFreezeFrame'] as bool? ?? false,
+        freezeSourceMs: json['freezeSourceMs'] as int?,
       );
 
   @override
@@ -271,5 +289,8 @@ class Clip extends Equatable {
         mask,
         blendMode,
         keyframes,
+        isReversed,
+        isFreezeFrame,
+        freezeSourceMs,
       ];
 }

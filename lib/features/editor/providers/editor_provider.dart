@@ -27,6 +27,7 @@ enum EditorTool {
   mask,
   blend,
   keyframes,
+  clipWorkflow,
 }
 
 class EditorState {

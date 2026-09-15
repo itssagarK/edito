@@ -328,10 +328,13 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
                         if (widget.selectedClipId != null)
                           Positioned(
                             top: 36,
-                            left: ((widget.playheadPositionMs / 1000.0) * pps - 120).clamp(10.0, timelineWidth - 280),
+                            left: ((widget.playheadPositionMs / 1000.0) * pps - 160).clamp(10.0, timelineWidth - 360),
                             child: TimelineContextBar(
                               onSplit: _handleSplitSelectedClip,
                               onDuplicate: _handleDuplicateSelectedClip,
+                              onFreezeFrame: _handleFreezeSelectedClip,
+                              onReverse: _handleReverseSelectedClip,
+                              onExtractAudio: _handleExtractAudioSelectedClip,
                               onDelete: _handleDeleteSelectedClip,
                               onTrimHeadToPlayhead: _handleTrimHeadToPlayhead,
                               onTrimTailToPlayhead: _handleTrimTailToPlayhead,
@@ -429,6 +432,40 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
     if (widget.selectedClipId == null) return;
     final updated = TimelineEditingService.duplicateClip(widget.project, widget.selectedClipId!);
     widget.onProjectMutated(updated);
+  }
+
+  void _handleFreezeSelectedClip() {
+    if (widget.selectedClipId == null) return;
+    final updated = TimelineEditingService.freezeFrame(
+      widget.project,
+      widget.selectedClipId!,
+      widget.playheadPositionMs,
+    );
+    if (updated != null) {
+      widget.onProjectMutated(updated);
+    }
+  }
+
+  void _handleReverseSelectedClip() {
+    if (widget.selectedClipId == null) return;
+    final updated = TimelineEditingService.toggleReverseClip(
+      widget.project,
+      widget.selectedClipId!,
+    );
+    if (updated != null) {
+      widget.onProjectMutated(updated);
+    }
+  }
+
+  void _handleExtractAudioSelectedClip() {
+    if (widget.selectedClipId == null) return;
+    final updated = TimelineEditingService.extractAudio(
+      widget.project,
+      widget.selectedClipId!,
+    );
+    if (updated != null) {
+      widget.onProjectMutated(updated);
+    }
   }
 
   void _handleDeleteSelectedClip() {

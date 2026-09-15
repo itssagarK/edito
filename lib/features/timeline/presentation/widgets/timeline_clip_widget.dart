@@ -126,6 +126,44 @@ class TimelineClipWidget extends StatelessWidget {
                           style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: AppColors.accent),
                         ),
                       ),
+                    if (clip.isFreezeFrame)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        margin: const EdgeInsets.only(right: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00E5FF).withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(3),
+                          border: Border.all(color: const Color(0xFF00E5FF), width: 0.8),
+                        ),
+                        child: const Text(
+                          '❄️ FREEZE',
+                          style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFF00E5FF)),
+                        ),
+                      ),
+                    if (clip.isReversed)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        margin: const EdgeInsets.only(right: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF5252).withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(3),
+                          border: Border.all(color: const Color(0xFFFF5252), width: 0.8),
+                        ),
+                        child: const Text(
+                          '⏪ REV',
+                          style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFFFF5252)),
+                        ),
+                      ),
+                    if (clip.isMuted)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                        margin: const EdgeInsets.only(right: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                        child: const Icon(Icons.volume_off, size: 9, color: AppColors.textMuted),
+                      ),
                     if (clip.speedCurve.type != SpeedCurveType.constant || clip.speed != 1.0)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),

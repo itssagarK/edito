@@ -348,3 +348,51 @@ CapCut Pro and After Effects style universal keyframing engine allowing fine-gra
    - Accessible from Editor Toolbar and docked panel via `EditorTool.keyframes`.
    - Verified by comprehensive test suite in `test/keyframe_suite_test.dart`.
 
+---
+
+## 13. Timeline Workflow Suite: Freeze Frame, Video Reversal & Audio Detachment (v1.0.27 Release)
+
+Professional CapCut Pro, DaVinci Resolve, and Premiere Pro style clip manipulation engine enabling non-linear clip workflows:
+
+1. **Data Model Attributes (`lib/models/clip.dart`)**:
+   - `isFreezeFrame: bool`: Denotes a static frozen frame clip held still for a specified duration.
+   - `freezeSourceMs: int?`: Exact timestamp in source video media where the frame was captured.
+   - `isReversed: bool`: Flags bidirectional reverse playback for video frames and audio packets.
+
+2. **Non-Linear Timeline Editing Engine (`lib/features/timeline/services/timeline_editing_service.dart`)**:
+   - **Freeze Frame (`freezeFrame`)**:
+     - Accurately computes playhead position inside target clip (`sourceInMs + offset * speed`).
+     - Splits clip dynamically (mid-clip, head, or tail).
+     - Inserts a freeze frame clip (`freezeDurationMs = 3000ms`, `isMuted = true`, `isFreezeFrame = true`).
+     - Ripples and time-shifts all subsequent clips on the track seamlessly without overlapping or gaps.
+     - Recalculates master project duration.
+   - **Video & Audio Reversal (`toggleReverseClip`)**:
+     - Toggles `isReversed` flag on the target clip.
+     - Instant preview update and timeline indicator update.
+   - **Audio Detachment / Extraction (`extractAudio`)**:
+     - Mutes original video clip (`isMuted: true`, `volume: 0.0`).
+     - Discovers an existing `TrackType.audio` track or creates a new dedicated audio track.
+     - Spawns an independent `Clip` on the audio track synchronized with the original video's start time and duration.
+     - Permits independent audio trimming, volume curves, voice modulation, and ducking.
+   - **Clip Duplication (`duplicateClip`)**:
+     - Clones clip with distinct UUID and appends immediately adjacent on the track.
+
+3. **Dual-Engine Compositor & Hardware Decoders**:
+   - **Real-Time Preview Canvas (`VideoPlaybackBridgeService` & `RealtimePreviewViewport`)**:
+     - During freeze frames, video player stays paused and clamped to `freezeSourceMs`, holding the frame without glitching.
+     - During reversed clips, scrub and playback calculate local media offset backwards from `sourceOutMs`.
+     - Displays live viewport HUD status badges: `❄️ FREEZE FRAME` and `⏪ REVERSED`.
+   - **Deterministic FFmpeg Export Engine (`FFmpegCommandBuilder`)**:
+     - Freeze frames compile with `trim=start=...:duration=0.04,fps=...,tpad=stop_mode=clone:stop_duration=...,trim=duration=...,setpts=PTS-STARTPTS`, holding the exact frame while omitting audio streams (silence).
+     - Reversed clips compile with `reverse` in the video filterchain and `areverse` in the audio filterchain.
+
+4. **UI Studio & Timeline Integration**:
+   - **Floating Timeline Context Bar (`TimelineContextBar`)**:
+     - One-tap buttons for `Split`, `Duplicate`, `Freeze` (❄️), `Reverse` (⏪), `Extract Audio` (🎵), `Trim Start`, `Trim End`, and `Delete`.
+   - **Timeline Clip Badges (`TimelineClipWidget`)**:
+     - Shows `❄️ FREEZE`, `⏪ REV`, and `🔇` badges directly on clip representations.
+   - **Dedicated Studio Sheet (`ClipWorkflowSheet`)**:
+     - Full clip metrics overview, duration slider for freeze frame insertion, forward/reverse playback toggle card, and audio extraction action.
+     - Accessible from Toolbar via `EditorTool.clipWorkflow` ('Clip Actions') and docked editing panel.
+   - Verified by comprehensive test suite in `test/clip_workflow_test.dart`.
+

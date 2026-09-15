@@ -15,6 +15,7 @@ import '../../../highlight/presentation/widgets/character_highlight_sheet.dart';
 import '../../../masking/presentation/widgets/mask_sheet.dart';
 import '../../../blending/presentation/widgets/blend_mode_sheet.dart';
 import '../../../keyframes/presentation/widgets/keyframe_studio_sheet.dart';
+import '../../../timeline/presentation/widgets/clip_workflow_sheet.dart';
 import '../../../image_editor/presentation/widgets/image_overlay_sheet.dart';
 import '../../../image_editor/presentation/widgets/video_layout_sheet.dart';
 import '../../../overlays/presentation/widgets/text_editor_sheet.dart';
@@ -63,6 +64,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'Pro Blending Modes';
       case EditorTool.keyframes:
         return 'Universal Keyframe Studio';
+      case EditorTool.clipWorkflow:
+        return 'Clip Actions Studio';
       case EditorTool.speed:
         return 'Speed Ramping & Curve';
       case EditorTool.smooth:
@@ -100,6 +103,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.layers;
       case EditorTool.keyframes:
         return Icons.animation;
+      case EditorTool.clipWorkflow:
+        return Icons.movie_filter_outlined;
       case EditorTool.speed:
         return Icons.speed;
       case EditorTool.smooth:
@@ -350,6 +355,15 @@ class DockedToolPanel extends StatelessWidget {
         return KeyframeStudioSheet(
           clip: clip,
           onSave: onSaveClip,
+          onDone: onClose,
+        );
+
+      case EditorTool.clipWorkflow:
+        return ClipWorkflowSheet(
+          project: project,
+          clip: clip,
+          playheadPositionMs: clip.startTimeMs,
+          onProjectChanged: onSaveProject,
           onDone: onClose,
         );
 

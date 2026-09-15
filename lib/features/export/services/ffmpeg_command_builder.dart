@@ -96,21 +96,35 @@ class FFmpegCommandBuilder {
         final speed = clip.speed;
         final vLabel = 'v$clipCounter';
 
-        final vFilters = <String>[
-          'trim=start=$startSec:end=$endSec',
-          'fps=fps=${config.framerate.fpsValue}:round=near',
-        ];
-
-        // On upper tracks (tIdx > 0), align PTS to timeline start time for frame-accurate overlay
-        final timelineStartSec = clip.startTimeMs / 1000.0;
-        if (tIdx > 0 && timelineStartSec > 0.0) {
-          vFilters.add('setpts=PTS-STARTPTS+(${timelineStartSec.toStringAsFixed(3)}/TB)');
+        final vFilters = <String>[];
+        if (clip.isFreezeFrame) {
+          final freezeSec = ((clip.freezeSourceMs ?? clip.sourceInMs) / 1000.0).toStringAsFixed(3);
+          final freezeDurationSec = (clip.durationMs / 1000.0).toStringAsFixed(3);
+          vFilters.add('trim=start=$freezeSec:duration=0.04');
+          vFilters.add('fps=fps=${config.framerate.fpsValue}:round=near');
+          vFilters.add('tpad=stop_mode=clone:stop_duration=$freezeDurationSec');
+          vFilters.add('trim=duration=$freezeDurationSec');
+          final timelineStartSec = clip.startTimeMs / 1000.0;
+          if (tIdx > 0 && timelineStartSec > 0.0) {
+            vFilters.add('setpts=PTS-STARTPTS+(${timelineStartSec.toStringAsFixed(3)}/TB)');
+          } else {
+            vFilters.add('setpts=PTS-STARTPTS');
+          }
         } else {
-          vFilters.add('setpts=PTS-STARTPTS');
-        }
-
-        if (speed != 1.0) {
-          vFilters.add('setpts=PTS/${speed.toStringAsFixed(2)}');
+          vFilters.add('trim=start=$startSec:end=$endSec');
+          vFilters.add('fps=fps=${config.framerate.fpsValue}:round=near');
+          if (clip.isReversed) {
+            vFilters.add('reverse');
+          }
+          final timelineStartSec = clip.startTimeMs / 1000.0;
+          if (tIdx > 0 && timelineStartSec > 0.0) {
+            vFilters.add('setpts=PTS-STARTPTS+(${timelineStartSec.toStringAsFixed(3)}/TB)');
+          } else {
+            vFilters.add('setpts=PTS-STARTPTS');
+          }
+          if (speed != 1.0) {
+            vFilters.add('setpts=PTS/${speed.toStringAsFixed(2)}');
+          }
         }
 
         // Chroma Key / Green Screen Removal (applied BEFORE scale/pad so native resolution pixels are keyed without Lanczos interpolation fringing)
@@ -323,7 +337,7 @@ class FFmpegCommandBuilder {
     for (final track in project.tracks) {
       if (track.isHidden || track.isMuted) continue;
       for (final clip in track.clips) {
-        if (clip.isMuted || clip.assetId.isEmpty) continue;
+        if (clip.isMuted || clip.isFreezeFrame || clip.assetId.isEmpty) continue;
 
         // Conditional audio binding: check cached hasAudio on MediaAsset without re-probing
         final asset = project.assets.firstWhere(
@@ -341,6 +355,10 @@ class FFmpegCommandBuilder {
         final aFilters = <String>[
           'atrim=start=$startSec:end=$endSec',
         ];
+
+        if (clip.isReversed) {
+          aFilters.add('areverse');
+        }
 
         if (speed != 1.0) {
           aFilters.add('atempo=${speed.toStringAsFixed(2)}');
