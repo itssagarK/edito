@@ -22,6 +22,7 @@ import '../../../overlays/presentation/widgets/text_editor_sheet.dart';
 import '../../../smoothing/presentation/widgets/video_smoother_sheet.dart';
 import '../../../speed/presentation/widgets/speed_ramping_sheet.dart';
 import '../../../vfx/presentation/widgets/vfx_studio_sheet.dart';
+import '../../../beats/presentation/widgets/beat_detection_sheet.dart';
 
 class DockedToolPanel extends StatelessWidget {
   final EditorTool tool;
@@ -81,6 +82,10 @@ class DockedToolPanel extends StatelessWidget {
         return 'Overlay & Picture-in-Picture';
       case EditorTool.layout:
         return 'Video Aspect & Layout';
+      case EditorTool.vfx:
+        return 'Cinematic Visual VFX';
+      case EditorTool.beats:
+        return 'Beats & Rhythm Snapping';
       default:
         return tool.name.toUpperCase();
     }
@@ -120,6 +125,10 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.picture_in_picture_alt_outlined;
       case EditorTool.layout:
         return Icons.aspect_ratio;
+      case EditorTool.vfx:
+        return Icons.auto_awesome;
+      case EditorTool.beats:
+        return Icons.music_note;
       default:
         return Icons.edit;
     }
@@ -430,6 +439,15 @@ class DockedToolPanel extends StatelessWidget {
           onSave: onSaveClip,
           isDocked: true,
           onDone: onClose,
+        );
+
+      case EditorTool.beats:
+        return BeatDetectionSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+          currentPlayheadMs: clip.startTimeMs,
         );
 
       default:

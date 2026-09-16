@@ -572,5 +572,42 @@ Hollywood-grade optical styling, vintage analog emulation, digital chromatic abe
    - Toolbar integration via `EditorTool.vfx` ('Visual FX') and docked tool panel.
    - Verified by comprehensive test suite in `test/vfx_suite_test.dart`.
 
+---
+
+## 18. Beat Detection & Audio Rhythm Waveform Snapping Studio (v1.0.32 Release)
+
+High-precision musical rhythm synchronization and magnetic editing grid for music-driven video cuts:
+
+1. **Beat Detection Data Model (`lib/features/beats/models/beat_detection_config.dart`)**:
+   - `isEnabled`: Global beat detection toggle on the clip.
+   - `mode`: Detection operational mode (`BeatDetectionMode.auto`, `manual`, `gridBpm`).
+   - `bpm`: Tempo in beats per minute ($40.0 \to 240.0$, default $120.0$).
+   - `sensitivity`: Dynamic energy threshold sensitivity ($0.1 \to 1.0$, default $0.70$).
+   - `snapToBeats`: Magnetic snapping flag to pull cuts, trims, and playhead to beat timestamps.
+   - `beatTimestampsMs`: Monotonically increasing list of millisecond timestamps relative to clip start.
+   - Integrated into `Clip` model (`clip.beatConfig`) with full JSON serialization and Equatable props.
+
+2. **Detection & Snapping Engine (`lib/features/beats/services/beat_detector_service.dart`)**:
+   - `autoDetectBeats`:
+     - **Transient Energy Flux**: Evaluates PCM audio sample peak flux against moving average threshold $\mu + (1.0 - \text{sensitivity}) \times 0.45$ with dynamic minimum peak interval $\frac{30000}{\text{BPM}}$.
+     - **Rhythm BPM Grid**: Generates exact quarter-note downbeats and eighth-note upbeat subdivisions ($\Delta t = \frac{60000}{\text{BPM}}$) for synthetic or unprobed audio tracks.
+   - `calculateBpmFromTaps`: Dynamic BPM evaluation from rhythmic user tap intervals with outlier rejection ($200\text{ms} - 2000\text{ms}$).
+   - `addManualBeat` & `removeNearBeat`: Real-time interactive point editing with 120ms proximity de-duplication.
+   - `findNearestBeat`: Proximity search within snapping threshold ($120\text{ms}$).
+   - `TimelineEditingService.calculateSnapTime`: Timeline ruler scrub, clip trimming, and split operations dynamically aggregate active beat markers across all clips where `beatConfig.snapToBeats == true` and magnetically snap within 120–150ms.
+
+3. **Visual Timeline & Studio UI (`BeatMarkersOverlayPainter` & `BeatDetectionSheet`)**:
+   - `BeatMarkersOverlayPainter`: Custom Skia painter rendering golden vertical tick guidelines and glowing top/bottom bead markers on timeline audio waveforms.
+   - `TimelineClipWidget`: Displays gold `🥁 128 BPM` badge when beats are active.
+   - `TimelineContextBar`: Dedicated gold `Beats` action button for selected clips.
+   - `BeatDetectionSheet`: Real-time interactive sheet featuring:
+     - **TAP BEAT**: Large tactile rhythm tap button updating tempo in real time.
+     - **AUTO DETECT**: One-tap transient analysis with quick presets (*Beat 1 (Drops)* vs *Beat 2 (All)*).
+     - **Magnetic Beat Snapping**: One-click toggle switch.
+     - **Tempo & Sensitivity Sliders**: Precise numeric BPM and threshold adjustment.
+     - **Playhead Beat Toggler**: Quick marker drop/remove at the exact playhead position.
+   - Verified by comprehensive test suite in `test/beats_suite_test.dart`.
+
+
 
 

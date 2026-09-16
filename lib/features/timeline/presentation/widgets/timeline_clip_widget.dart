@@ -3,6 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../models/clip.dart';
 import '../../../../models/track.dart';
 import '../../../audio/presentation/widgets/waveform_painter.dart';
+import '../../../beats/presentation/widgets/beat_markers_overlay_painter.dart';
 import '../../../speed/models/speed_curve_preset.dart';
 
 class TimelineClipWidget extends StatelessWidget {
@@ -70,6 +71,20 @@ class TimelineClipWidget extends StatelessWidget {
                     painter: WaveformPainter(
                       color: Colors.white,
                       seed: clip.id.hashCode,
+                    ),
+                  ),
+                ),
+              ),
+
+            // Rhythmic Beat Markers overlay
+            if (clip.beatConfig.hasBeats)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: CustomPaint(
+                    painter: BeatMarkersOverlayPainter(
+                      beatTimestampsMs: clip.beatConfig.beatTimestampsMs,
+                      clipDurationMs: clip.durationMs,
                     ),
                   ),
                 ),
@@ -152,6 +167,20 @@ class TimelineClipWidget extends StatelessWidget {
                         child: const Text(
                           '⏪ REV',
                           style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFFFF5252)),
+                        ),
+                      ),
+                    if (clip.beatConfig.hasBeats)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        margin: const EdgeInsets.only(right: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFD700).withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(3),
+                          border: Border.all(color: const Color(0xFFFFD700), width: 0.8),
+                        ),
+                        child: Text(
+                          '🥁 ${clip.beatConfig.bpm.toInt()} BPM',
+                          style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFFFFD700)),
                         ),
                       ),
                     if (clip.isMuted)

@@ -29,6 +29,7 @@ enum EditorTool {
   keyframes,
   clipWorkflow,
   vfx,
+  beats,
 }
 
 class EditorState {

@@ -5,6 +5,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../models/project.dart';
 import '../../../../models/track.dart';
 import '../../services/timeline_editing_service.dart';
+import '../../../beats/presentation/widgets/beat_detection_sheet.dart';
 import 'timeline_track_lane.dart';
 import 'timeline_context_bar.dart';
 import 'timeline_clip_widget.dart';
@@ -335,6 +336,7 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
                               onFreezeFrame: _handleFreezeSelectedClip,
                               onReverse: _handleReverseSelectedClip,
                               onExtractAudio: _handleExtractAudioSelectedClip,
+                              onBeats: _handleBeatsSelectedClip,
                               onDelete: _handleDeleteSelectedClip,
                               onTrimHeadToPlayhead: _handleTrimHeadToPlayhead,
                               onTrimTailToPlayhead: _handleTrimTailToPlayhead,
@@ -466,6 +468,31 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
     if (updated != null) {
       widget.onProjectMutated(updated);
     }
+  }
+
+  void _handleBeatsSelectedClip() {
+    if (widget.selectedClipId == null) return;
+    Clip? selectedClip;
+    for (final track in widget.project.tracks) {
+      for (final clip in track.clips) {
+        if (clip.id == widget.selectedClipId) {
+          selectedClip = clip;
+          break;
+        }
+      }
+      if (selectedClip != null) break;
+    }
+    if (selectedClip == null) return;
+
+    BeatDetectionSheet.show(
+      context,
+      clip: selectedClip,
+      currentPlayheadMs: widget.playheadPositionMs,
+      onSave: (updatedClip) {
+        final updatedProject = widget.project.updateClip(updatedClip);
+        widget.onProjectMutated(updatedProject);
+      },
+    );
   }
 
   void _handleDeleteSelectedClip() {

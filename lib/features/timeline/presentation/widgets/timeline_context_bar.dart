@@ -8,6 +8,7 @@ class TimelineContextBar extends StatelessWidget {
   final VoidCallback? onFreezeFrame;
   final VoidCallback? onReverse;
   final VoidCallback? onExtractAudio;
+  final VoidCallback? onBeats;
   final VoidCallback onDelete;
   final VoidCallback onTrimHeadToPlayhead;
   final VoidCallback onTrimTailToPlayhead;
@@ -20,6 +21,7 @@ class TimelineContextBar extends StatelessWidget {
     this.onFreezeFrame,
     this.onReverse,
     this.onExtractAudio,
+    this.onBeats,
     required this.onDelete,
     required this.onTrimHeadToPlayhead,
     required this.onTrimTailToPlayhead,
@@ -86,6 +88,15 @@ class TimelineContextBar extends StatelessWidget {
               label: 'Extract Audio',
               onTap: onExtractAudio!,
               color: AppColors.accent,
+            ),
+          ],
+          if (onBeats != null) ...[
+            const VerticalDivider(width: 12, indent: 8, endIndent: 8, color: AppColors.border),
+            _buildActionButton(
+              icon: Icons.graphic_eq,
+              label: 'Beats',
+              onTap: onBeats!,
+              color: const Color(0xFFFFD700),
             ),
           ],
           const VerticalDivider(width: 12, indent: 8, endIndent: 8, color: AppColors.border),

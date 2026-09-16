@@ -425,6 +425,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openVfxModal();
         break;
 
+      case EditorTool.beats:
+        _openBeatsModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -691,6 +695,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openVfxModal() {
     _openDockedTool(EditorTool.vfx, trackType: TrackType.video, purpose: 'Visual FX');
+  }
+
+  void _openBeatsModal() {
+    _openDockedTool(EditorTool.beats, trackType: TrackType.audio, purpose: 'Beats & Rhythm');
   }
 
   Clip? _findTargetClip() {

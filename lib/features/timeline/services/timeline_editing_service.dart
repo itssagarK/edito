@@ -227,23 +227,37 @@ class TimelineEditingService {
     return project.copyWith(tracks: updatedTracks).recalculateDuration();
   }
 
-  /// Calculates magnetic snapping to clip start/end boundaries and playhead
+  /// Calculates magnetic snapping to clip start/end boundaries, playhead, and rhythm beat markers
   static int calculateSnapTime(
     Project project,
     int targetTimeMs, {
     int thresholdMs = 150,
     String? ignoreClipId,
+    List<int>? customSnapPoints,
   }) {
     int closestPoint = targetTimeMs;
     int minDiff = thresholdMs + 1;
 
     final snapPoints = <int>{0, project.durationMs};
+    if (customSnapPoints != null) {
+      snapPoints.addAll(customSnapPoints);
+    }
 
     for (final track in project.tracks) {
       for (final clip in track.clips) {
         if (clip.id == ignoreClipId) continue;
         snapPoints.add(clip.startTimeMs);
         snapPoints.add(clip.startTimeMs + clip.durationMs);
+
+        // Magnetic Snapping to Beat Markers
+        if (clip.beatConfig.hasBeats && clip.beatConfig.snapToBeats) {
+          for (final beatMs in clip.beatConfig.beatTimestampsMs) {
+            final absBeatMs = clip.startTimeMs + beatMs;
+            if (absBeatMs >= clip.startTimeMs && absBeatMs <= clip.startTimeMs + clip.durationMs) {
+              snapPoints.add(absBeatMs);
+            }
+          }
+        }
       }
     }
 

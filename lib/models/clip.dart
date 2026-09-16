@@ -17,6 +17,7 @@ import '../features/smoothing/models/video_smoother_config.dart';
 import '../features/speed/models/speed_curve_preset.dart';
 import '../features/transitions/models/transition_type.dart';
 import '../features/vfx/models/vfx_config.dart';
+import '../features/beats/models/beat_detection_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -51,6 +52,7 @@ class Clip extends Equatable {
   final bool isFreezeFrame;
   final int? freezeSourceMs;
   final VfxConfig vfx;
+  final BeatDetectionConfig beatConfig;
 
   const Clip({
     required this.id,
@@ -85,6 +87,7 @@ class Clip extends Equatable {
     this.isFreezeFrame = false,
     this.freezeSourceMs,
     this.vfx = const VfxConfig(),
+    this.beatConfig = const BeatDetectionConfig(),
   });
 
   Clip copyWith({
@@ -120,6 +123,7 @@ class Clip extends Equatable {
     bool? isFreezeFrame,
     int? freezeSourceMs,
     VfxConfig? vfx,
+    BeatDetectionConfig? beatConfig,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -154,6 +158,7 @@ class Clip extends Equatable {
       isFreezeFrame: isFreezeFrame ?? this.isFreezeFrame,
       freezeSourceMs: freezeSourceMs ?? this.freezeSourceMs,
       vfx: vfx ?? this.vfx,
+      beatConfig: beatConfig ?? this.beatConfig,
     );
   }
 
@@ -190,6 +195,7 @@ class Clip extends Equatable {
         'isFreezeFrame': isFreezeFrame,
         'freezeSourceMs': freezeSourceMs,
         'vfx': vfx.toJson(),
+        'beatConfig': beatConfig.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -266,6 +272,9 @@ class Clip extends Equatable {
         vfx: json['vfx'] != null
             ? VfxConfig.fromJson(json['vfx'] as Map<String, dynamic>)
             : const VfxConfig(),
+        beatConfig: json['beatConfig'] != null
+            ? BeatDetectionConfig.fromJson(json['beatConfig'] as Map<String, dynamic>)
+            : const BeatDetectionConfig(),
       );
 
   @override
@@ -302,5 +311,6 @@ class Clip extends Equatable {
         isFreezeFrame,
         freezeSourceMs,
         vfx,
+        beatConfig,
       ];
 }
