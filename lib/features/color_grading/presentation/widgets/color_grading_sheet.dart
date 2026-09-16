@@ -480,49 +480,160 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
   Widget _buildHslTab() {
     final colors = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'magenta'];
     final activeShift = _config.hsl[_selectedHslColor] ?? const HslShift();
+    final bool hasChannelMod = activeShift.hue != 0.0 || activeShift.saturation != 0.0 || activeShift.luminance != 0.0;
 
     return Column(
       children: [
-        // Color Selector Swatches
+        // 1. Presets Carousel
         Container(
-          height: 44,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          height: 36,
+          margin: const EdgeInsets.only(top: 6, bottom: 4),
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            children: [
+              _buildHslPresetChip('Reset All', Icons.restart_alt, () {
+                _updateConfig((c) => c.copyWith(hsl: const {}));
+              }, isReset: true),
+              const SizedBox(width: 6),
+              ...HslPreset.values.where((p) => p != HslPreset.none).map((preset) {
+                final isCurrent = _isHslPresetActive(preset);
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: _buildHslPresetChip(
+                    preset.label,
+                    _getPresetIcon(preset),
+                    () {
+                      _updateConfig((c) => c.applyHslPreset(preset));
+                    },
+                    isActive: isCurrent,
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+
+        // 2. Color Selector Swatches (with active indicators)
+        Container(
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: colors.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
             itemBuilder: (context, index) {
               final colorName = colors[index];
               final isSelected = _selectedHslColor == colorName;
               final color = _getHslColor(colorName);
+              final shift = _config.hsl[colorName];
+              final isModified = shift != null && (shift.hue != 0.0 || shift.saturation != 0.0 || shift.luminance != 0.0);
 
               return GestureDetector(
                 onTap: () => setState(() => _selectedHslColor = colorName),
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? Colors.white : Colors.transparent,
-                      width: 2.5,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected ? Colors.white : Colors.transparent,
+                              width: 2.5,
+                            ),
+                            boxShadow: isSelected
+                                ? [BoxShadow(color: color.withOpacity(0.6), blurRadius: 8, spreadRadius: 1)]
+                                : null,
+                          ),
+                          child: isSelected
+                              ? const Icon(Icons.check, size: 16, color: Colors.white)
+                              : null,
+                        ),
+                        if (isModified)
+                          Positioned(
+                            right: -2,
+                            top: -2,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Colors.amber,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                  ),
-                  child: isSelected
-                      ? const Icon(Icons.check, size: 18, color: Colors.white)
-                      : null,
+                    const SizedBox(height: 3),
+                    Text(
+                      _getHslColorShortLabel(colorName),
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: isSelected ? Colors.white : AppColors.textMuted,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ],
                 ),
               );
             },
           ),
         ),
-        const Divider(color: AppColors.border),
 
-        // HSL Sliders
+        // 3. Channel Control Header
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: _getHslColor(_selectedHslColor),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${_selectedHslColor.toUpperCase()} CHANNEL',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70),
+                  ),
+                ],
+              ),
+              if (hasChannelMod)
+                GestureDetector(
+                  onTap: () {
+                    final updated = Map<String, HslShift>.from(_config.hsl);
+                    updated.remove(_selectedHslColor);
+                    _updateConfig((c) => c.copyWith(hsl: updated));
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    child: Text(
+                      'Reset Channel',
+                      style: TextStyle(fontSize: 11, color: AppColors.accent, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+
+        const Divider(color: AppColors.border, height: 8),
+
+        // 4. HSL Sliders
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
             children: [
               _buildSliderRow(
                 'Hue Shift',
@@ -538,6 +649,7 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
                 -1.0,
                 1.0,
                 (val) => _updateHslShift(activeShift.copyWith(saturation: val)),
+                isPercent: true,
               ),
               _buildSliderRow(
                 'Luminance',
@@ -545,11 +657,101 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
                 -1.0,
                 1.0,
                 (val) => _updateHslShift(activeShift.copyWith(luminance: val)),
+                isPercent: true,
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  bool _isHslPresetActive(HslPreset preset) {
+    final expected = HslPreset.getPresetShifts(preset);
+    if (expected.isEmpty && _config.hsl.isEmpty) return true;
+    if (expected.isEmpty || _config.hsl.isEmpty) return false;
+    for (final entry in expected.entries) {
+      final actual = _config.hsl[entry.key];
+      if (actual == null) return false;
+      if ((actual.hue - entry.value.hue).abs() > 0.01) return false;
+      if ((actual.saturation - entry.value.saturation).abs() > 0.01) return false;
+      if ((actual.luminance - entry.value.luminance).abs() > 0.01) return false;
+    }
+    return true;
+  }
+
+  IconData _getPresetIcon(HslPreset preset) {
+    switch (preset) {
+      case HslPreset.none: return Icons.refresh;
+      case HslPreset.selectiveRed: return Icons.colorize;
+      case HslPreset.tealAndOrange: return Icons.movie_filter;
+      case HslPreset.autumnGold: return Icons.park;
+      case HslPreset.emeraldLush: return Icons.forest;
+      case HslPreset.urbanDesat: return Icons.location_city;
+    }
+  }
+
+  String _getHslColorShortLabel(String name) {
+    switch (name) {
+      case 'red': return 'Red';
+      case 'orange': return 'Org';
+      case 'yellow': return 'Yel';
+      case 'green': return 'Grn';
+      case 'cyan': return 'Cyn';
+      case 'blue': return 'Blu';
+      case 'purple': return 'Pur';
+      case 'magenta': return 'Mag';
+      default: return name;
+    }
+  }
+
+  Widget _buildHslPresetChip(
+    String label,
+    IconData icon,
+    VoidCallback onTap, {
+    bool isActive = false,
+    bool isReset = false,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: isActive
+                ? AppColors.accent.withOpacity(0.22)
+                : (isReset ? AppColors.surfaceElevated : AppColors.surfaceElevated.withOpacity(0.7)),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isActive
+                  ? AppColors.accent
+                  : (isReset ? AppColors.border : AppColors.border.withOpacity(0.6)),
+              width: isActive ? 1.5 : 1.0,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 13,
+                color: isActive ? AppColors.accent : (isReset ? AppColors.textMuted : Colors.white70),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                  color: isActive ? AppColors.accent : (isReset ? AppColors.textMuted : Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -580,7 +782,12 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
     double max,
     ValueChanged<double> onChanged, {
     String unit = '',
+    bool isPercent = false,
   }) {
+    final String valueText = isPercent
+        ? '${(value * 100).round() >= 0 && min < 0 ? "+" : ""}${(value * 100).round()}%'
+        : '${value >= 0 && min < 0 ? "+" : ""}${value.toStringAsFixed(1)}$unit';
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -612,7 +819,7 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
           SizedBox(
             width: 44,
             child: Text(
-              '${value >= 0 && min < 0 ? "+" : ""}${value.toStringAsFixed(1)}$unit',
+              valueText,
               textAlign: TextAlign.right,
               style: const TextStyle(fontSize: 11, color: Colors.white),
             ),

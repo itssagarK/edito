@@ -617,6 +617,19 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: const TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
                   ),
                 ),
+              if (ColorFilterCompilerService.getHslBadge(clip.colorGrading).isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFFFF5252)),
+                  ),
+                  child: Text(
+                    ColorFilterCompilerService.getHslBadge(clip.colorGrading),
+                    style: const TextStyle(fontSize: 9, color: Color(0xFFFF5252), fontWeight: FontWeight.bold),
+                  ),
+                ),
               if (clip.enhancement.is8kUpscaleEnabled)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

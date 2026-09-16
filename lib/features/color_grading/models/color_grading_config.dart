@@ -160,6 +160,63 @@ class HslShift extends Equatable {
   List<Object?> get props => [hue, saturation, luminance];
 }
 
+enum HslPreset {
+  none('Neutral'),
+  selectiveRed('Sin City Red Pop'),
+  tealAndOrange('Teal & Orange'),
+  autumnGold('Autumn Gold'),
+  emeraldLush('Emerald Foliage'),
+  urbanDesat('Urban Desat');
+
+  final String label;
+  const HslPreset(this.label);
+
+  static Map<String, HslShift> getPresetShifts(HslPreset preset) {
+    switch (preset) {
+      case HslPreset.none:
+        return const {};
+      case HslPreset.selectiveRed:
+        return const {
+          'red': HslShift(saturation: 0.40, luminance: 0.10),
+          'orange': HslShift(saturation: -1.0),
+          'yellow': HslShift(saturation: -1.0),
+          'green': HslShift(saturation: -1.0),
+          'cyan': HslShift(saturation: -1.0),
+          'blue': HslShift(saturation: -1.0),
+          'purple': HslShift(saturation: -1.0),
+          'magenta': HslShift(saturation: -1.0),
+        };
+      case HslPreset.tealAndOrange:
+        return const {
+          'orange': HslShift(hue: 5.0, saturation: 0.40, luminance: 0.10),
+          'cyan': HslShift(hue: -10.0, saturation: 0.45, luminance: 0.05),
+          'blue': HslShift(hue: -15.0, saturation: 0.30),
+          'green': HslShift(saturation: -0.40, luminance: -0.10),
+          'yellow': HslShift(hue: -10.0, saturation: -0.25),
+        };
+      case HslPreset.autumnGold:
+        return const {
+          'green': HslShift(hue: -60.0, saturation: 0.25, luminance: 0.15),
+          'yellow': HslShift(hue: -15.0, saturation: 0.35),
+          'orange': HslShift(saturation: 0.25),
+        };
+      case HslPreset.emeraldLush:
+        return const {
+          'green': HslShift(hue: 15.0, saturation: 0.50, luminance: -0.10),
+          'yellow': HslShift(hue: 20.0, saturation: 0.25),
+        };
+      case HslPreset.urbanDesat:
+        return const {
+          'green': HslShift(saturation: -0.80),
+          'yellow': HslShift(saturation: -0.70),
+          'orange': HslShift(saturation: -0.30),
+          'cyan': HslShift(saturation: 0.25, luminance: -0.10),
+          'blue': HslShift(saturation: 0.20, luminance: -0.10),
+        };
+    }
+  }
+}
+
 class CurvePoint extends Equatable {
   final double x; // 0.0 to 1.0
   final double y; // 0.0 to 1.0
@@ -246,8 +303,15 @@ class ColorGradingConfig extends Equatable {
       gamma.isActive ||
       gain.isActive ||
       offset.isActive ||
-      hsl.values.any((h) => h.hue != 0.0 || h.saturation != 0.0 || h.luminance != 0.0) ||
+      hasActiveHsl ||
       isCurveCustomized(masterCurve);
+
+  bool get hasActiveHsl =>
+      hsl.values.any((h) => h.hue != 0.0 || h.saturation != 0.0 || h.luminance != 0.0);
+
+  ColorGradingConfig applyHslPreset(HslPreset preset) {
+    return copyWith(hsl: HslPreset.getPresetShifts(preset));
+  }
 
   static bool isCurveCustomized(List<CurvePoint> points) {
     if (points.isEmpty) return false;

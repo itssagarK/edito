@@ -43,7 +43,7 @@ class ColorFilterCompilerService {
         config.gamma.isActive ||
         config.gain.isActive ||
         config.offset.isActive ||
-        config.hsl.values.any((h) => h.hue != 0.0 || h.saturation != 0.0 || h.luminance != 0.0) ||
+        config.hasActiveHsl ||
         ColorGradingConfig.isCurveCustomized(config.masterCurve);
 
     return !hasColorAdjustments;
@@ -222,23 +222,28 @@ class ColorFilterCompilerService {
     final gLum = effInvSat * lg;
     final bLum = effInvSat * lb;
 
+    // HSL 8-Channel Selective Color adjustments
+    final hslAdj = _calcHslMatrixAdjustments(config.hsl);
+    final hslM = hslAdj.matrix3x3;
+    final hslOff = hslAdj.offsets;
+
     // Row 0 (Red output)
-    final m00 = finalContrast * (rLum + effectiveSat);
-    final m01 = finalContrast * gLum;
-    final m02 = finalContrast * bLum;
-    final totalROffset = brightnessOffset + contrastOffset + rTemp + rTint + lutR + wheelR + whitesOffset + blacksOffset;
+    final m00 = finalContrast * (rLum + effectiveSat) + hslM[0];
+    final m01 = finalContrast * gLum + hslM[1];
+    final m02 = finalContrast * bLum + hslM[2];
+    final totalROffset = brightnessOffset + contrastOffset + rTemp + rTint + lutR + wheelR + whitesOffset + blacksOffset + hslOff[0];
 
     // Row 1 (Green output)
-    final m10 = finalContrast * rLum * chromaGScale;
-    final m11 = finalContrast * (gLum + effectiveSat) * chromaGScale;
-    final m12 = finalContrast * bLum * chromaGScale;
-    final totalGOffset = brightnessOffset + contrastOffset + gTint + lutG + chromaGOffset + wheelG + whitesOffset + blacksOffset;
+    final m10 = finalContrast * rLum * chromaGScale + hslM[3];
+    final m11 = finalContrast * (gLum + effectiveSat) * chromaGScale + hslM[4];
+    final m12 = finalContrast * bLum * chromaGScale + hslM[5];
+    final totalGOffset = brightnessOffset + contrastOffset + gTint + lutG + chromaGOffset + wheelG + whitesOffset + blacksOffset + hslOff[1];
 
     // Row 2 (Blue output)
-    final m20 = finalContrast * rLum * chromaBScale;
-    final m21 = finalContrast * gLum * chromaBScale;
-    final m22 = finalContrast * (bLum + effectiveSat) * chromaBScale;
-    final totalBOffset = brightnessOffset + contrastOffset + bTemp + bTint + lutB + chromaBOffset + wheelB + whitesOffset + blacksOffset;
+    final m20 = finalContrast * rLum * chromaBScale + hslM[6];
+    final m21 = finalContrast * gLum * chromaBScale + hslM[7];
+    final m22 = finalContrast * (bLum + effectiveSat) * chromaBScale + hslM[8];
+    final totalBOffset = brightnessOffset + contrastOffset + bTemp + bTint + lutB + chromaBOffset + wheelB + whitesOffset + blacksOffset + hslOff[2];
 
     return [
       m00, m01, m02, 0.0, totalROffset,
@@ -356,6 +361,183 @@ class ColorFilterCompilerService {
       filters.add('vignette=angle=$angle');
     }
 
+    // 6. HSL 8-Channel Selective Color Qualifier
+    final selectiveColor = _compileSelectiveColorFilter(config);
+    if (selectiveColor != null) {
+      filters.add(selectiveColor);
+    }
+
     return filters.join(',');
+  }
+
+  /// Calculates GPU 4x5 ColorFilter matrix adjustments for 8-channel HSL shifts
+  static ({List<double> matrix3x3, List<double> offsets}) _calcHslMatrixAdjustments(
+    Map<String, HslShift> hsl,
+  ) {
+    if (hsl.isEmpty) {
+      return (matrix3x3: const [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], offsets: const [0.0, 0.0, 0.0]);
+    }
+
+    const lr = 0.2126;
+    const lg = 0.7152;
+    const lb = 0.0722;
+
+    // Retrieve per-channel shifts
+    final red = hsl['red'] ?? const HslShift();
+    final orange = hsl['orange'] ?? const HslShift();
+    final yellow = hsl['yellow'] ?? const HslShift();
+    final green = hsl['green'] ?? const HslShift();
+    final cyan = hsl['cyan'] ?? const HslShift();
+    final blue = hsl['blue'] ?? const HslShift();
+    final purple = hsl['purple'] ?? const HslShift();
+    final magenta = hsl['magenta'] ?? const HslShift();
+
+    // Column 0 (Red response)
+    final s0 = (red.saturation + 0.35 * orange.saturation).clamp(-1.0, 1.5);
+    final h0 = (red.hue + 0.35 * orange.hue).clamp(-180.0, 180.0);
+    final l0 = (red.luminance + 0.35 * orange.luminance).clamp(-1.0, 1.0);
+
+    // Column 1 (Green response)
+    final s1 = (green.saturation + 0.40 * yellow.saturation + 0.35 * cyan.saturation).clamp(-1.0, 1.5);
+    final h1 = (green.hue + 0.40 * yellow.hue + 0.35 * cyan.hue).clamp(-180.0, 180.0);
+    final l1 = (green.luminance + 0.40 * yellow.luminance + 0.35 * cyan.luminance).clamp(-1.0, 1.0);
+
+    // Column 2 (Blue response)
+    final s2 = (blue.saturation + 0.35 * cyan.saturation + 0.35 * purple.saturation + 0.25 * magenta.saturation).clamp(-1.0, 1.5);
+    final h2 = (blue.hue + 0.35 * cyan.hue + 0.35 * purple.hue + 0.25 * magenta.hue).clamp(-180.0, 180.0);
+    final l2 = (blue.luminance + 0.35 * cyan.luminance + 0.35 * purple.luminance + 0.25 * magenta.luminance).clamp(-1.0, 1.0);
+
+    // Saturation matrix deltas (pulling towards or pushing away from gray)
+    double d00 = s0 * (1.0 - lr);
+    double d10 = -s0 * lg;
+    double d20 = -s0 * lb;
+
+    double d01 = -s1 * lr;
+    double d11 = s1 * (1.0 - lg);
+    double d21 = -s1 * lb;
+
+    double d02 = -s2 * lr;
+    double d12 = -s2 * lg;
+    double d22 = s2 * (1.0 - lb);
+
+    // Hue shifts (rotates column into neighboring color components)
+    if (h0.abs() > 0.1) {
+      final sin0 = math.sin(h0 * (math.pi / 180.0)) * 0.40;
+      d10 += sin0;
+      d20 -= sin0 * 0.5;
+    }
+    if (h1.abs() > 0.1) {
+      final sin1 = math.sin(h1 * (math.pi / 180.0)) * 0.40;
+      d21 += sin1;
+      d01 -= sin1 * 0.5;
+    }
+    if (h2.abs() > 0.1) {
+      final sin2 = math.sin(h2 * (math.pi / 180.0)) * 0.40;
+      d02 += sin2;
+      d12 -= sin2 * 0.5;
+    }
+
+    // Luminance offsets
+    final offR = l0 * 28.0;
+    final offG = l1 * 28.0;
+    final offB = l2 * 28.0;
+
+    return (
+      matrix3x3: [d00, d01, d02, d10, d11, d12, d20, d21, d22],
+      offsets: [offR, offG, offB],
+    );
+  }
+
+  /// Compiles 8-channel HSL adjustments into native FFmpeg selectivecolor filter
+  static String? _compileSelectiveColorFilter(ColorGradingConfig config) {
+    if (!config.hasActiveHsl) return null;
+
+    final parts = <String>[];
+
+    // Formats CMYK adjustment string for FFmpeg selectivecolor
+    String formatSector(double s, double h, double l) {
+      final c = (-s * 0.8).clamp(-1.0, 1.0);
+      final m = (-h / 180.0).clamp(-1.0, 1.0);
+      final y = (h / 180.0).clamp(-1.0, 1.0);
+      final k = (-l).clamp(-1.0, 1.0);
+
+      return '${c.toStringAsFixed(2)} ${m.toStringAsFixed(2)} ${y.toStringAsFixed(2)} ${k.toStringAsFixed(2)}';
+    }
+
+    final hsl = config.hsl;
+
+    // 1. Reds (red + 0.4 orange)
+    final redShift = hsl['red'];
+    final orangeShift = hsl['orange'];
+    if (redShift != null || orangeShift != null) {
+      final s = (redShift?.saturation ?? 0.0) + (orangeShift?.saturation ?? 0.0) * 0.4;
+      final h = (redShift?.hue ?? 0.0) + (orangeShift?.hue ?? 0.0) * 0.4;
+      final l = (redShift?.luminance ?? 0.0) + (orangeShift?.luminance ?? 0.0) * 0.4;
+      if (s.abs() > 0.01 || h.abs() > 0.5 || l.abs() > 0.01) {
+        parts.add('reds=\'${formatSector(s, h, l)}\'');
+      }
+    }
+
+    // 2. Yellows (yellow + 0.4 orange)
+    final yellowShift = hsl['yellow'];
+    if (yellowShift != null || orangeShift != null) {
+      final s = (yellowShift?.saturation ?? 0.0) + (orangeShift?.saturation ?? 0.0) * 0.4;
+      final h = (yellowShift?.hue ?? 0.0) + (orangeShift?.hue ?? 0.0) * 0.4;
+      final l = (yellowShift?.luminance ?? 0.0) + (orangeShift?.luminance ?? 0.0) * 0.4;
+      if (s.abs() > 0.01 || h.abs() > 0.5 || l.abs() > 0.01) {
+        parts.add('yellows=\'${formatSector(s, h, l)}\'');
+      }
+    }
+
+    // 3. Greens (green)
+    final greenShift = hsl['green'];
+    if (greenShift != null) {
+      if (greenShift.saturation.abs() > 0.01 || greenShift.hue.abs() > 0.5 || greenShift.luminance.abs() > 0.01) {
+        parts.add('greens=\'${formatSector(greenShift.saturation, greenShift.hue, greenShift.luminance)}\'');
+      }
+    }
+
+    // 4. Cyans (cyan)
+    final cyanShift = hsl['cyan'];
+    if (cyanShift != null) {
+      if (cyanShift.saturation.abs() > 0.01 || cyanShift.hue.abs() > 0.5 || cyanShift.luminance.abs() > 0.01) {
+        parts.add('cyans=\'${formatSector(cyanShift.saturation, cyanShift.hue, cyanShift.luminance)}\'');
+      }
+    }
+
+    // 5. Blues (blue + 0.4 purple)
+    final blueShift = hsl['blue'];
+    final purpleShift = hsl['purple'];
+    if (blueShift != null || purpleShift != null) {
+      final s = (blueShift?.saturation ?? 0.0) + (purpleShift?.saturation ?? 0.0) * 0.4;
+      final h = (blueShift?.hue ?? 0.0) + (purpleShift?.hue ?? 0.0) * 0.4;
+      final l = (blueShift?.luminance ?? 0.0) + (purpleShift?.luminance ?? 0.0) * 0.4;
+      if (s.abs() > 0.01 || h.abs() > 0.5 || l.abs() > 0.01) {
+        parts.add('blues=\'${formatSector(s, h, l)}\'');
+      }
+    }
+
+    // 6. Magentas (magenta + 0.4 purple)
+    final magentaShift = hsl['magenta'];
+    if (magentaShift != null || purpleShift != null) {
+      final s = (magentaShift?.saturation ?? 0.0) + (purpleShift?.saturation ?? 0.0) * 0.4;
+      final h = (magentaShift?.hue ?? 0.0) + (purpleShift?.hue ?? 0.0) * 0.4;
+      final l = (magentaShift?.luminance ?? 0.0) + (purpleShift?.luminance ?? 0.0) * 0.4;
+      if (s.abs() > 0.01 || h.abs() > 0.5 || l.abs() > 0.01) {
+        parts.add('magentas=\'${formatSector(s, h, l)}\'');
+      }
+    }
+
+    if (parts.isEmpty) return null;
+    return 'selectivecolor=${parts.join(':')}';
+  }
+
+  /// Generates a live HUD badge for active HSL Selective Color adjustments
+  static String getHslBadge(ColorGradingConfig config) {
+    if (!config.hasActiveHsl) return '';
+    final activeCount = config.hsl.values
+        .where((h) => h.hue != 0.0 || h.saturation != 0.0 || h.luminance != 0.0)
+        .length;
+    return '🎯 HSL (${activeCount}ch)';
   }
 }

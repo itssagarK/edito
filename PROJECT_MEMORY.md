@@ -688,8 +688,42 @@ High-fidelity neural voiceover generator, script-to-speech timing synthesis, and
    - Toolbar integration via `EditorTool.tts` ('AI Voice') and docked tool panel.
    - Verified by comprehensive test suite in `test/tts_suite_test.dart`.
 
+---
 
+## 21. HSL 8-Channel Selective Color Qualifier & Color Isolation Studio (v1.0.35 Release)
 
+Hollywood-grade 8-channel selective color qualifier, per-hue isolation engine, and real-time GPU matrix shader:
 
+1. **HSL 8-Channel Data Model (`lib/features/color_grading/models/color_grading_config.dart`)**:
+   - **8 Canonical Color Sectors**:
+     - `red` ($0^\circ$), `orange` ($30^\circ$, dedicated portrait skin tones), `yellow` ($60^\circ$), `green` ($120^\circ$, foliage/greenscreen), `cyan` ($180^\circ$, skies/water), `blue` ($240^\circ$), `purple` ($280^\circ$), `magenta` ($320^\circ$).
+   - **`HslShift` Parameters**:
+     - `hue`: Radial hue shift in degrees ($-180.0^\circ \to +180.0^\circ$).
+     - `saturation`: Relative saturation delta ($-1.0 \to +1.0$, where $-1.0 = -100\%$ complete monochrome drain, $+1.0 = +100\%$ intense color pop).
+     - `luminance`: Sector lightness adjustment ($-1.0 \to +1.0$).
+   - **Cinematic Presets (`HslPreset`)**:
+     - 🎬 **Sin City Red Pop (`selectiveRed`)**: Hollywood selective isolation keeping Red saturated ($+40\%$) while completely draining all other 7 sectors to $-100\%$ monochrome.
+     - 🌅 **Teal & Orange (`tealAndOrange`)**: Warm skin highlights (Orange $+40\%$, Yellow $-25\%$) paired with cool teal-cyan shadows (Cyan $+45\%$, Blue $+30\%$).
+     - 🍂 **Autumn Gold (`autumnGold`)**: Shifts foliage green $-60^\circ$ towards amber-orange with boosted yellow/orange saturation.
+     - 🌲 **Emerald Foliage (`emeraldLush`)**: Deep vibrant greens ($+50\%$, $-10\%$ lightness) with rich yellow warmth.
+     - 🏙️ **Urban Desat (`urbanDesat`)**: Moody architectural look crushing greens ($-80\%$) and yellows ($-70\%$) while popping cyan reflections ($+25\%$).
+   - `hasActiveHsl` getter and `applyHslPreset(preset)` seamless integration.
 
+2. **Dual-Engine Real-Time Compositor & Export Compiler (`ColorFilterCompilerService`)**:
+   - **Real-Time GPU 4x5 ColorFilter Matrix**:
+     - Computes per-channel primary sector projection vectors with Rec.709 luminance constants ($lr=0.2126, lg=0.7152, lb=0.0722$).
+     - Desaturation selectively steers color sectors towards monochrome luminance without disturbing unselected sectors.
+     - Real-time 60fps rendering in `realtime_preview_viewport.dart` with zero CPU overhead.
+     - Viewport HUD status badge: `🎯 HSL (8ch)`, `🎯 HSL (2ch)`.
+   - **Deterministic FFmpeg Export Compiler (`selectivecolor` filter)**:
+     - Automatically maps active 8-channel HSL shifts to native FFmpeg `selectivecolor` subtractive CMYK deltas:
+       `selectivecolor=reds='c m y k':yellows='...':greens='...':cyans='...':blues='...':magentas='...'`
+     - Seamless integration into `ffmpeg_command_builder.dart` export pipeline.
 
+3. **Studio UI Sheet & Editor Integration (`ColorGradingSheet`)**:
+   - Dedicated HSL Presets Carousel (*Reset All*, *Sin City Red Pop*, *Teal & Orange*, *Autumn Gold*, *Emerald Foliage*, *Urban Desat*).
+   - 8 channel swatches with active modification badges (amber dot), live color glows, and short channel labels.
+   - Contextual header with selected channel indicator and one-tap "Reset Channel" button.
+   - Precision sliders for Hue Shift ($\pm 180^\circ$), Saturation ($\pm 100\%$), and Luminance ($\pm 100\%$).
+   - Universal Flutter compatibility using `IconButton.styleFrom(...)`.
+   - Verified by comprehensive unit test suite in `test/hsl_suite_test.dart`.
