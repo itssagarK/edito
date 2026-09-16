@@ -421,6 +421,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openClipWorkflowModal();
         break;
 
+      case EditorTool.vfx:
+        _openVfxModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -683,6 +687,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openClipWorkflowModal() {
     _openDockedTool(EditorTool.clipWorkflow, trackType: TrackType.video, purpose: 'Clip Actions');
+  }
+
+  void _openVfxModal() {
+    _openDockedTool(EditorTool.vfx, trackType: TrackType.video, purpose: 'Visual FX');
   }
 
   Clip? _findTargetClip() {

@@ -16,6 +16,7 @@ import '../features/masking/models/mask_config.dart';
 import '../features/smoothing/models/video_smoother_config.dart';
 import '../features/speed/models/speed_curve_preset.dart';
 import '../features/transitions/models/transition_type.dart';
+import '../features/vfx/models/vfx_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -49,6 +50,7 @@ class Clip extends Equatable {
   final bool isReversed;
   final bool isFreezeFrame;
   final int? freezeSourceMs;
+  final VfxConfig vfx;
 
   const Clip({
     required this.id,
@@ -82,6 +84,7 @@ class Clip extends Equatable {
     this.isReversed = false,
     this.isFreezeFrame = false,
     this.freezeSourceMs,
+    this.vfx = const VfxConfig(),
   });
 
   Clip copyWith({
@@ -116,6 +119,7 @@ class Clip extends Equatable {
     bool? isReversed,
     bool? isFreezeFrame,
     int? freezeSourceMs,
+    VfxConfig? vfx,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -149,6 +153,7 @@ class Clip extends Equatable {
       isReversed: isReversed ?? this.isReversed,
       isFreezeFrame: isFreezeFrame ?? this.isFreezeFrame,
       freezeSourceMs: freezeSourceMs ?? this.freezeSourceMs,
+      vfx: vfx ?? this.vfx,
     );
   }
 
@@ -184,6 +189,7 @@ class Clip extends Equatable {
         'isReversed': isReversed,
         'isFreezeFrame': isFreezeFrame,
         'freezeSourceMs': freezeSourceMs,
+        'vfx': vfx.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -257,6 +263,9 @@ class Clip extends Equatable {
         isReversed: json['isReversed'] as bool? ?? false,
         isFreezeFrame: json['isFreezeFrame'] as bool? ?? false,
         freezeSourceMs: json['freezeSourceMs'] as int?,
+        vfx: json['vfx'] != null
+            ? VfxConfig.fromJson(json['vfx'] as Map<String, dynamic>)
+            : const VfxConfig(),
       );
 
   @override
@@ -292,5 +301,6 @@ class Clip extends Equatable {
         isReversed,
         isFreezeFrame,
         freezeSourceMs,
+        vfx,
       ];
 }

@@ -21,6 +21,7 @@ import '../../../image_editor/presentation/widgets/video_layout_sheet.dart';
 import '../../../overlays/presentation/widgets/text_editor_sheet.dart';
 import '../../../smoothing/presentation/widgets/video_smoother_sheet.dart';
 import '../../../speed/presentation/widgets/speed_ramping_sheet.dart';
+import '../../../vfx/presentation/widgets/vfx_studio_sheet.dart';
 
 class DockedToolPanel extends StatelessWidget {
   final EditorTool tool;
@@ -419,6 +420,14 @@ class DockedToolPanel extends StatelessWidget {
         return VideoLayoutSheet(
           project: project,
           onSave: onSaveProject,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.vfx:
+        return VfxStudioSheet(
+          clip: clip,
+          onSave: onSaveClip,
           isDocked: true,
           onDone: onClose,
         );

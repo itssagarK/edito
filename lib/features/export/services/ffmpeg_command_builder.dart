@@ -20,6 +20,7 @@ import '../../smoothing/services/ai_video_smoother_service.dart';
 import '../../speed/services/speed_ramping_service.dart';
 import '../../transitions/models/transition_type.dart';
 import '../../transitions/services/transition_compiler_service.dart';
+import '../../vfx/services/vfx_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandBuilder {
@@ -223,6 +224,14 @@ class FFmpegCommandBuilder {
           );
           if (zoomFilter.isNotEmpty) {
             vFilters.add(zoomFilter);
+          }
+        }
+
+        // Cinematic Motion VFX & Visual Effects
+        if (clip.vfx.isActive) {
+          final vfxFilters = VfxCompilerService.generateFFmpegFilters(clip.vfx);
+          if (vfxFilters.isNotEmpty) {
+            vFilters.addAll(vfxFilters);
           }
         }
 

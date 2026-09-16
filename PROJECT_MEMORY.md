@@ -526,4 +526,51 @@ Broadcast-level mastering, dynamic sidechain auto-ducking, AI voice isolation, a
    - 4 dedicated tabs: **🎚️ EQ Studio**, **🎙️ Vocal Studio**, **🦆 Ducking & Levels**, and **🔥 Voice FX & Booster**.
    - Verified by comprehensive test suite in `test/audio_suite_test.dart`.
 
+---
+
+## 17. Cinematic Motion VFX & Visual Effects Studio (v1.0.31 Release)
+
+Hollywood-grade optical styling, vintage analog emulation, digital chromatic aberration, and dynamic motion FX engine:
+
+1. **VFX Configuration & Preset Modes (`lib/features/vfx/models/vfx_config.dart`)**:
+   - **Supported Effect Modes (`VfxType`)**:
+     - `filmGrain`: Authentic 35mm/16mm emulsion grain texture with temporal uniform noise.
+     - `rgbGlitch`: Digital chromatic aberration and horizontal red/blue channel split displacement.
+     - `lensBlur`: Soft optical depth-of-field Gaussian lens defocus.
+     - `vhsVintage`: 80s/90s analog camcorder CRT scanlines, desaturated tape warmth, and noise.
+     - `vignette`: Darkened optical perimeter falloff focusing attention on the subject.
+     - `lightLeak`: Warm anamorphic golden hour sun flare pulses and bloom.
+     - `cameraShake`: High-energy organic handheld camera tremor.
+     - `radialZoom`: High-velocity action zoom blur radiating from the center.
+   - **Precision Parameters**:
+     - `intensity`: Master blend factor ($0.05-1.0$).
+     - `speed`: Motion pulse & frequency multiplier ($0.1-3.0$).
+     - `grainSize`: Texture scale ($1.0-5.0$).
+     - `rgbOffset`: Chromatic pixel shift ($1.0-30.0\text{px}$).
+     - `blurRadius`: Defocus radius ($1.0-25.0\text{px}$).
+     - `vignetteRadius` & `vignetteSoftness`: Geometric falloff controls.
+     - `shakeAmplitude`: Handheld jitter amplitude ($2.0-30.0\text{px}$).
+
+2. **Dual-Engine Real-Time Compositor & Export Compiler**:
+   - **Real-Time Preview Canvas (`VfxPreviewWrapper`)**:
+     - Skia hardware-accelerated Gaussian defocus (`ImageFilter.blur`), scale transformation, procedural 35mm grain particle simulation (`_FilmGrainPainter`), chromatic fringe bands (`_RgbGlitchPainter`), CRT scanlines (`_VhsScanlinePainter`), and radial vignette gradients.
+     - Viewport HUD status badge: `🎞️ FILM GRAIN (45%)`, `⚡ RGB GLITCH (8px)`, `🌫️ LENS BLUR (8px)`, `📼 RETRO VHS`, `🎬 VIGNETTE`, `☀️ LIGHT LEAK`, `📳 CAMERA SHAKE`, `🚀 RADIAL ZOOM`.
+   - **Deterministic FFmpeg Export Compiler (`VfxCompilerService`)**:
+     - `filmGrain`: `noise=alls=...:allf=t+u`.
+     - `rgbGlitch`: Native FFmpeg chromatic aberration `rgbashift=rh=$shift:bh=-$shift`.
+     - `lensBlur`: `gblur=sigma=...:steps=2`.
+     - `vhsVintage`: `curves=all='0/0 0.5/0.46 1/0.95':r='0/0 1/0.92':b='0/0.06 1/0.88',noise=alls=...:allf=t,vignette=PI/4`.
+     - `vignette`: `vignette=angle=...`.
+     - `lightLeak`: `colorchannelmixer=...,curves=r='0/0.06 1/1'`.
+     - `cameraShake`: Sinusoidal crop jitter `crop=w=iw-amp:h=ih-amp:x='(iw-ow)/2+sin(n*1.8)*...':y='(ih-oh)/2+cos(n*1.4)*...',scale=iw+amp:ih+amp`.
+     - `radialZoom`: Scale-crop with dynamic Gaussian blur.
+
+3. **Studio UI Sheet & Toolbar Integration (`VfxStudioSheet`)**:
+   - Quick one-tap studio presets carousel (*35mm Film*, *RGB Glitch*, *Lens Blur*, *Retro VHS*, *Vignette*, *Light Leak*, *Shake*, *Zoom Rush*).
+   - Visual grid cards for all 8 VFX types with icon and description.
+   - Contextual precision sliders for intensity, texture scale, RGB shift, blur radius, vignette radius, and tremor amplitude.
+   - Toolbar integration via `EditorTool.vfx` ('Visual FX') and docked tool panel.
+   - Verified by comprehensive test suite in `test/vfx_suite_test.dart`.
+
+
 

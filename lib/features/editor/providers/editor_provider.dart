@@ -28,6 +28,7 @@ enum EditorTool {
   blend,
   keyframes,
   clipWorkflow,
+  vfx,
 }
 
 class EditorState {
