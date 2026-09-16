@@ -21,6 +21,7 @@ import '../../speed/services/speed_ramping_service.dart';
 import '../../transitions/models/transition_type.dart';
 import '../../transitions/services/transition_compiler_service.dart';
 import '../../vfx/services/vfx_compiler_service.dart';
+import '../../image_editor/services/auto_reframe_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandBuilder {
@@ -145,16 +146,16 @@ class FFmpegCommandBuilder {
           vFilters.add('format=yuva420p');
         }
 
-        // Scale & Pad with Video Layout Canvas Framing & Background
-        final layout = project.layoutConfig;
-        final padPx = layout.framePadding.round();
-        final innerW = (targetW - (padPx * 2)).clamp(32, targetW);
-        final innerH = (targetH - (padPx * 2)).clamp(32, targetH);
-        final bgHex = '0x${layout.backgroundColor.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
-        final padColor = tIdx > 0 ? 'black@0' : bgHex;
-
-        vFilters.add('scale=$innerW:$innerH:force_original_aspect_ratio=decrease:flags=lanczos');
-        vFilters.add('pad=$targetW:$targetH:(ow-iw)/2:(oh-ih)/2:color=$padColor');
+        // Auto-Reframing & Video Layout Canvas Framing
+        final layoutFilter = AutoReframeService.generateFFmpegFilter(
+          layout: project.layoutConfig,
+          targetWidth: targetW,
+          targetHeight: targetH,
+          trackIndex: tIdx,
+        );
+        if (layoutFilter.isNotEmpty) {
+          vFilters.add(layoutFilter);
+        }
         vFilters.add('setsar=1');
 
         // Color Grading & Looks filter

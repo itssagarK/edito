@@ -608,6 +608,54 @@ High-precision musical rhythm synchronization and magnetic editing grid for musi
      - **Playhead Beat Toggler**: Quick marker drop/remove at the exact playhead position.
    - Verified by comprehensive test suite in `test/beats_suite_test.dart`.
 
+---
+
+## 19. Auto-Reframing & Multi-Platform Smart Aspect Ratio Studio (v1.0.33 Release)
+
+Intelligent multi-platform video reframing, blur-clone background fill, and smart pan-and-scan subject tracking engine:
+
+1. **Auto-Reframing Data Model (`lib/features/image_editor/models/video_layout_config.dart`)**:
+   - **Supported Ratios (`VideoLayoutRatio` & `AspectRatioPreset`)**:
+     - `9:16` ($1080 \times 1920$): TikTok, Instagram Reels, YouTube Shorts.
+     - `16:9` ($1920 \times 1080$): YouTube, Landscape TV, Widescreen.
+     - `1:1` ($1080 \times 1080$): Instagram Square Feed Post.
+     - `4:5` ($1080 \times 1350$): Instagram Portrait Feed.
+     - `4:3` ($1440 \times 1080$): Classic Retro TV, iPad, Vintage Cinema.
+     - `3:4` ($1080 \times 1440$): Vertical Tablet, Portrait Photo.
+     - `21:9` ($2560 \times 1080$): Ultra-Wide Cinematic.
+     - `2.39:1` ($2560 \times 1072$): Hollywood Anamorphic Cinemascope.
+   - **Reframing Operational Modes (`AutoReframeMode`)**:
+     - `fitWithBlur`: Signature TikTok/Shorts cloned blurred video background fill ($5-50\text{px}$ blur radius).
+     - `smartCrop`: Full-screen pan-and-scan subject tracking with focal point offsets.
+     - `solidPillarbox`: Clean solid border frame with customizable color palette.
+     - `gradientCanvas`: Cinematic dual-color gradient letterbox/pillarbox.
+   - **Subject Tracking Parameters**:
+     - `focalPointX`: Horizontal pan offset ($-1.0$ left to $+1.0$ right).
+     - `focalPointY`: Vertical tilt offset ($-1.0$ top to $+1.0$ bottom).
+     - `gradientPreset`: Midnight Neon, Vibrant Sunset, Cyberpunk Glow, Studio Charcoal, Electric Violet.
+
+2. **Dual-Engine Compositor & Export Compiler (`AutoReframeService`)**:
+   - **Deterministic FFmpeg Pipeline (`ffmpeg_command_builder.dart`)**:
+     - `fitWithBlur`: Dual-branch split filter:
+       `split=2[fg_raw][bg_raw];[bg_raw]scale=$targetW:$targetH:force_original_aspect_ratio=increase,crop=$targetW:$targetH,gblur=sigma=$blur:steps=2[bg_blur];[fg_raw]scale=$innerW:$innerH:force_original_aspect_ratio=decrease[fg_scaled];[bg_blur][fg_scaled]overlay=(W-w)/2:(H-h)/2`
+     - `smartCrop`: Pan-and-scan crop:
+       `scale=$targetW:$targetH:force_original_aspect_ratio=increase,crop=$targetW:$targetH:'(iw-ow)/2 + ($fx * (iw-ow)/2)':'(ih-oh)/2 + ($fy * (ih-oh)/2)'`
+     - `solidPillarbox` & `gradientCanvas`: Precision Lanczos decrease scale + padded color frame.
+   - **Real-Time Preview Compositor (`RealtimePreviewViewport`)**:
+     - Hardware-accelerated Skia `ImageFilter.blur` layer rendering the cloned background in real time.
+     - Interactive `Alignment(focalPointX, focalPointY)` dynamic pan-and-scan viewport rendering.
+     - Live HUD badge: `📐 REFRAME: 9:16 (BLUR CLONE)`, `📐 REFRAME: 9:16 (SMART CROP PAN 40%)`.
+
+3. **Studio Sheet UI (`VideoLayoutSheet`)**:
+   - Aspect ratio chips for all 8 standard media platforms.
+   - 4-mode reframing selector with icons.
+   - Real-time horizontal pan slider with percentage readout and 1-tap "Reset Center" button.
+   - Background blur radius slider ($5 \to 50\text{px}$).
+   - Corner radius ($0 \to 32\text{px}$) and frame padding ($0 \to 36\text{px}$) sliders.
+   - Integrated into editor toolbar as 'Reframe' (`EditorTool.layout`).
+   - Verified by comprehensive test suite in `test/auto_reframe_suite_test.dart`.
+
+
 
 
 

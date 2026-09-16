@@ -46,6 +46,8 @@ import '../../services/video_playback_bridge_service.dart';
 import '../../../editor/providers/editor_provider.dart';
 import '../../../image_editor/models/image_overlay_config.dart';
 import '../../../image_editor/models/video_layout_config.dart';
+import '../../../image_editor/services/auto_reframe_service.dart';
+import '../../../beats/services/beat_detector_service.dart';
 import '../../../transitions/models/transition_type.dart';
 
 class RealtimePreviewViewport extends ConsumerWidget {
@@ -188,6 +190,33 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
+                        // 0. Cloned Blurred Video Background (TikTok/Shorts/Reels Signature Look)
+                        if (layoutConfig.isBlurFill && currentFrame != null && currentFrame.hasVisualContent)
+                          Positioned.fill(
+                            child: ClipRect(
+                              child: ImageFiltered(
+                                imageFilter: ImageFilter.blur(
+                                  sigmaX: layoutConfig.blurIntensity * 0.75,
+                                  sigmaY: layoutConfig.blurIntensity * 0.75,
+                                  tileMode: TileMode.mirror,
+                                ),
+                                child: Transform.scale(
+                                  scale: 1.45,
+                                  child: Opacity(
+                                    opacity: 0.65,
+                                    child: _buildVisualContent(
+                                      context,
+                                      ref,
+                                      currentFrame,
+                                      layoutConfig: layoutConfig,
+                                      isBackdropClone: true,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
                         // 1. Primary Visual Content framed with layout padding & corner radius
                         Padding(
                           padding: EdgeInsets.all(layoutConfig.framePadding),
@@ -309,7 +338,13 @@ class RealtimePreviewViewport extends ConsumerWidget {
     );
   }
 
-  Widget _buildVisualContent(BuildContext context, WidgetRef ref, CompositorFrame? frame, {VideoLayoutConfig? layoutConfig}) {
+  Widget _buildVisualContent(
+    BuildContext context,
+    WidgetRef ref,
+    CompositorFrame? frame, {
+    VideoLayoutConfig? layoutConfig,
+    bool isBackdropClone = false,
+  }) {
     if (frame == null || !frame.hasVisualContent) {
       return Center(
         child: Column(
@@ -343,16 +378,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
 
     if (isPlayable && asset.type == MediaType.image) {
       // 1. Real photo / image rendering from disk or network
+      final fitMode = (isBackdropClone || layoutConfig?.isSmartCrop == true) ? BoxFit.cover : BoxFit.contain;
+      final alignment = (layoutConfig?.isSmartCrop == true && !isBackdropClone)
+          ? Alignment(layoutConfig?.focalPointX ?? 0.0, layoutConfig?.focalPointY ?? 0.0)
+          : Alignment.center;
+
       if (asset.path.startsWith('http://') || asset.path.startsWith('https://')) {
         contentWidget = Image.network(
           asset.path,
-          fit: BoxFit.contain,
+          fit: fitMode,
+          alignment: alignment,
           errorBuilder: (context, error, stackTrace) => _buildPlaceholderContent(frame, clip, asset),
         );
       } else {
         contentWidget = Image.file(
           File(asset.path),
-          fit: BoxFit.contain,
+          fit: fitMode,
+          alignment: alignment,
           errorBuilder: (context, error, stackTrace) => _buildPlaceholderContent(frame, clip, asset),
         );
       }
@@ -366,6 +408,35 @@ class RealtimePreviewViewport extends ConsumerWidget {
             final double videoRatio = controller.value.aspectRatio > 0
                 ? controller.value.aspectRatio
                 : (asset.width > 0 && asset.height > 0 ? asset.width / asset.height : frame.aspectRatio.ratio);
+
+            if (isBackdropClone) {
+              return SizedBox.expand(
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  clipBehavior: Clip.hardEdge,
+                  child: SizedBox(
+                    width: controller.value.size.width > 0 ? controller.value.size.width : 1920,
+                    height: controller.value.size.height > 0 ? controller.value.size.height : 1080,
+                    child: VideoPlayer(controller),
+                  ),
+                ),
+              );
+            }
+
+            if (layoutConfig?.isSmartCrop == true) {
+              return SizedBox.expand(
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  alignment: Alignment(layoutConfig?.focalPointX ?? 0.0, layoutConfig?.focalPointY ?? 0.0),
+                  clipBehavior: Clip.hardEdge,
+                  child: SizedBox(
+                    width: controller.value.size.width > 0 ? controller.value.size.width : 1920,
+                    height: controller.value.size.height > 0 ? controller.value.size.height : 1080,
+                    child: VideoPlayer(controller),
+                  ),
+                ),
+              );
+            }
 
             return Center(
               child: AspectRatio(
@@ -483,6 +554,11 @@ class RealtimePreviewViewport extends ConsumerWidget {
       );
     }
 
+    // Blurred clone backdrop returns pure video without overlays or HUD
+    if (isBackdropClone) {
+      return videoContent;
+    }
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -502,6 +578,32 @@ class RealtimePreviewViewport extends ConsumerWidget {
             spacing: 6,
             runSpacing: 4,
             children: [
+              if (layoutConfig != null && AutoReframeService.getReframeBadge(layoutConfig).isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF38EF7D)),
+                  ),
+                  child: Text(
+                    AutoReframeService.getReframeBadge(layoutConfig),
+                    style: const TextStyle(fontSize: 9, color: Color(0xFF38EF7D), fontWeight: FontWeight.bold),
+                  ),
+                ),
+              if (clip.beatConfig.hasBeats)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFFFFD700)),
+                  ),
+                  child: Text(
+                    BeatDetectorService.getBeatsBadge(clip.beatConfig),
+                    style: const TextStyle(fontSize: 9, color: Color(0xFFFFD700), fontWeight: FontWeight.bold),
+                  ),
+                ),
               if (clip.colorGrading.activeLut != LutPreset.none)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -1213,28 +1315,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
   }
 
   static Decoration _buildCanvasDecoration(VideoLayoutConfig layout) {
-    switch (layout.backgroundMode) {
-      case LayoutBackgroundMode.blur:
-        return const BoxDecoration(
-          color: Color(0xFF141419),
-          gradient: LinearGradient(
-            colors: [Color(0xFF232526), Color(0xFF0F1012)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        );
-      case LayoutBackgroundMode.gradient:
-        return const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF4A00E0), Color(0xFF8E2DE2)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        );
-      case LayoutBackgroundMode.solidColor:
-        return BoxDecoration(
-          color: Color(layout.backgroundColor),
-        );
+    if (layout.reframeMode == AutoReframeMode.gradientCanvas || layout.backgroundMode == LayoutBackgroundMode.gradient) {
+      final colors = layout.gradientPreset.colors.map((c) => Color(c)).toList();
+      return BoxDecoration(
+        gradient: LinearGradient(
+          colors: colors.length >= 2 ? colors : [const Color(0xFF4A00E0), const Color(0xFF8E2DE2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      );
+    } else if (layout.reframeMode == AutoReframeMode.solidPillarbox || layout.backgroundMode == LayoutBackgroundMode.solidColor) {
+      return BoxDecoration(
+        color: Color(layout.backgroundColor),
+      );
+    } else {
+      return const BoxDecoration(
+        color: Color(0xFF101216),
+      );
     }
   }
 
@@ -1250,6 +1347,12 @@ class RealtimePreviewViewport extends ConsumerWidget {
         return AspectRatioPreset.ratio4x5;
       case VideoLayoutRatio.ratio21_9:
         return AspectRatioPreset.ratio21x9;
+      case VideoLayoutRatio.ratio4_3:
+        return AspectRatioPreset.ratio4x3;
+      case VideoLayoutRatio.ratio3_4:
+        return AspectRatioPreset.ratio3x4;
+      case VideoLayoutRatio.ratio239_1:
+        return AspectRatioPreset.ratio239x1;
     }
   }
 
@@ -1558,6 +1661,12 @@ class RealtimePreviewViewport extends ConsumerWidget {
         return VideoLayoutRatio.ratio4_5;
       case AspectRatioPreset.ratio21x9:
         return VideoLayoutRatio.ratio21_9;
+      case AspectRatioPreset.ratio4x3:
+        return VideoLayoutRatio.ratio4_3;
+      case AspectRatioPreset.ratio3x4:
+        return VideoLayoutRatio.ratio3_4;
+      case AspectRatioPreset.ratio239x1:
+        return VideoLayoutRatio.ratio239_1;
     }
   }
 }

@@ -5,7 +5,10 @@ enum AspectRatioPreset {
   ratio9x16, // TikTok, Instagram Reels, YouTube Shorts (1080x1920)
   ratio1x1,  // Instagram Square Post (1080x1080)
   ratio4x5,  // Instagram Portrait (1080x1350)
-  ratio21x9, // Cinemascope Ultra-Wide (2560x1080)
+  ratio4x3,  // Classic Retro TV / iPad (1440x1080)
+  ratio3x4,  // Vertical Tablet / Photo (1080x1440)
+  ratio21x9, // Ultra-Wide 21:9 (2560x1080)
+  ratio239x1,// 2.39:1 Anamorphic Cinemascope (2560x1072)
 }
 
 extension AspectRatioPresetExtension on AspectRatioPreset {
@@ -19,8 +22,14 @@ extension AspectRatioPresetExtension on AspectRatioPreset {
         return 1.0;
       case AspectRatioPreset.ratio4x5:
         return 4.0 / 5.0;
+      case AspectRatioPreset.ratio4x3:
+        return 4.0 / 3.0;
+      case AspectRatioPreset.ratio3x4:
+        return 3.0 / 4.0;
       case AspectRatioPreset.ratio21x9:
         return 21.0 / 9.0;
+      case AspectRatioPreset.ratio239x1:
+        return 2.39;
     }
   }
 
@@ -34,8 +43,14 @@ extension AspectRatioPresetExtension on AspectRatioPreset {
         return '1:1 (Square)';
       case AspectRatioPreset.ratio4x5:
         return '4:5 (Portrait)';
+      case AspectRatioPreset.ratio4x3:
+        return '4:3 (Classic TV / iPad)';
+      case AspectRatioPreset.ratio3x4:
+        return '3:4 (Vertical Tablet)';
       case AspectRatioPreset.ratio21x9:
-        return '21:9 (Cinematic)';
+        return '21:9 (Ultra-Wide)';
+      case AspectRatioPreset.ratio239x1:
+        return '2.39:1 (Cinemascope)';
     }
   }
 
@@ -49,8 +64,14 @@ extension AspectRatioPresetExtension on AspectRatioPreset {
         return Icons.crop_square;
       case AspectRatioPreset.ratio4x5:
         return Icons.crop_5_4;
+      case AspectRatioPreset.ratio4x3:
+        return Icons.crop_7_5;
+      case AspectRatioPreset.ratio3x4:
+        return Icons.crop_portrait;
       case AspectRatioPreset.ratio21x9:
         return Icons.crop_din;
+      case AspectRatioPreset.ratio239x1:
+        return Icons.movie_filter;
     }
   }
 
@@ -64,7 +85,13 @@ extension AspectRatioPresetExtension on AspectRatioPreset {
         return 1080;
       case AspectRatioPreset.ratio4x5:
         return 1080;
+      case AspectRatioPreset.ratio4x3:
+        return 1440;
+      case AspectRatioPreset.ratio3x4:
+        return 1080;
       case AspectRatioPreset.ratio21x9:
+        return 2560;
+      case AspectRatioPreset.ratio239x1:
         return 2560;
     }
   }
@@ -79,8 +106,14 @@ extension AspectRatioPresetExtension on AspectRatioPreset {
         return 1080;
       case AspectRatioPreset.ratio4x5:
         return 1350;
+      case AspectRatioPreset.ratio4x3:
+        return 1080;
+      case AspectRatioPreset.ratio3x4:
+        return 1440;
       case AspectRatioPreset.ratio21x9:
         return 1080;
+      case AspectRatioPreset.ratio239x1:
+        return 1072;
     }
   }
 }

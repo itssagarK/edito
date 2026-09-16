@@ -81,7 +81,7 @@ class DockedToolPanel extends StatelessWidget {
       case EditorTool.imageOverlay:
         return 'Overlay & Picture-in-Picture';
       case EditorTool.layout:
-        return 'Video Aspect & Layout';
+        return 'Auto-Reframe & Canvas Ratio';
       case EditorTool.vfx:
         return 'Cinematic Visual VFX';
       case EditorTool.beats:
