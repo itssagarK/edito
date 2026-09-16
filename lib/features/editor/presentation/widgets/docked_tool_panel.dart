@@ -23,6 +23,7 @@ import '../../../smoothing/presentation/widgets/video_smoother_sheet.dart';
 import '../../../speed/presentation/widgets/speed_ramping_sheet.dart';
 import '../../../vfx/presentation/widgets/vfx_studio_sheet.dart';
 import '../../../beats/presentation/widgets/beat_detection_sheet.dart';
+import '../../../tts/presentation/widgets/tts_voiceover_sheet.dart';
 
 class DockedToolPanel extends StatelessWidget {
   final EditorTool tool;
@@ -86,6 +87,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'Cinematic Visual VFX';
       case EditorTool.beats:
         return 'Beats & Rhythm Snapping';
+      case EditorTool.tts:
+        return 'AI Voiceover & Narration';
       default:
         return tool.name.toUpperCase();
     }
@@ -129,6 +132,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.auto_awesome;
       case EditorTool.beats:
         return Icons.music_note;
+      case EditorTool.tts:
+        return Icons.record_voice_over;
       default:
         return Icons.edit;
     }
@@ -448,6 +453,15 @@ class DockedToolPanel extends StatelessWidget {
           isDocked: true,
           onDone: onClose,
           currentPlayheadMs: clip.startTimeMs,
+        );
+
+      case EditorTool.tts:
+        return TTSVoiceoverSheet(
+          project: project,
+          currentPlayheadMs: clip.startTimeMs,
+          onProjectChanged: onSaveProject,
+          isDocked: true,
+          onDone: onClose,
         );
 
       default:

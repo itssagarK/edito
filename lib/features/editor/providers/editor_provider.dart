@@ -30,6 +30,7 @@ enum EditorTool {
   clipWorkflow,
   vfx,
   beats,
+  tts,
 }
 
 class EditorState {

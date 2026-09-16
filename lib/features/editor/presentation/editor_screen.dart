@@ -34,6 +34,7 @@ import '../../speed/presentation/widgets/speed_ramping_sheet.dart';
 import '../../timeline/presentation/widgets/interactive_timeline.dart';
 import '../../timeline/services/timeline_editing_service.dart';
 import '../../transitions/presentation/widgets/transition_selector_sheet.dart';
+import '../../tts/presentation/widgets/tts_voiceover_sheet.dart';
 import 'widgets/editor_app_bar.dart';
 import 'widgets/editing_toolbar.dart';
 import 'widgets/docked_tool_panel.dart';
@@ -429,6 +430,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openBeatsModal();
         break;
 
+      case EditorTool.tts:
+        _openTTSModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -699,6 +704,21 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openBeatsModal() {
     _openDockedTool(EditorTool.beats, trackType: TrackType.audio, purpose: 'Beats & Rhythm');
+  }
+
+  void _openTTSModal() {
+    final project = ref.read(editorProvider).project;
+    if (project == null) return;
+    final playheadMs = ref.read(editorProvider).playheadPositionMs;
+    TTSVoiceoverSheet.show(
+      context,
+      project: project,
+      currentPlayheadMs: playheadMs,
+      onProjectChanged: (updated) {
+        ref.read(editorProvider.notifier).updateProject(updated);
+        ref.read(projectListProvider.notifier).updateProject(updated);
+      },
+    );
   }
 
   Clip? _findTargetClip() {
