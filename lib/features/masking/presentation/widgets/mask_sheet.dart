@@ -136,7 +136,7 @@ class _MaskSheetState extends State<MaskSheet> with SingleTickerProviderStateMix
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Masking Studio', style: AppTypography.bodyBold),
+                  Text('Masking Studio', style: AppTypography.bodyBold),
                   Text(
                     _config.isActive
                         ? '${_config.type.name.toUpperCase()} ${_config.inverted ? "(INVERTED)" : ""}'
@@ -353,7 +353,7 @@ class _MaskSheetState extends State<MaskSheet> with SingleTickerProviderStateMix
 
         // Invert Mask Switch
         SwitchListTile(
-          title: const Text('Invert Mask', style: AppTypography.captionBold),
+          title: Text('Invert Mask', style: AppTypography.captionBold),
           subtitle: Text(
             _config.inverted ? 'Showing outside of mask' : 'Showing inside of mask',
             style: AppTypography.micro.copyWith(color: AppColors.textTertiary),
@@ -506,7 +506,7 @@ class _MaskSheetState extends State<MaskSheet> with SingleTickerProviderStateMix
         border: Border.all(color: AppColors.border),
       ),
       child: CheckboxListTile(
-        title: const Text('Apply mask to all clips', style: AppTypography.captionBold),
+        title: Text('Apply mask to all clips', style: AppTypography.captionBold),
         subtitle: Text(
           'Applies current mask configuration to all video clips in project',
           style: AppTypography.micro.copyWith(color: AppColors.textTertiary),

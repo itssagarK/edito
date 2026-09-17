@@ -240,14 +240,14 @@ class _KeyframeStudioSheetState extends State<KeyframeStudioSheet> {
                 const SizedBox(height: 6),
 
                 // Easing Curve Selector (when sitting on a keyframe)
-                const Text('Motion Easing Curve', style: AppTypography.captionBold),
+                Text('Motion Easing Curve', style: AppTypography.captionBold),
                 const SizedBox(height: 6),
                 _buildEasingChips(activeKey?.easing ?? KeyframeEasing.easeInOut),
 
                 const SizedBox(height: 12),
 
                 // Animation Presets
-                const Text('Animation Presets', style: AppTypography.captionBold),
+                Text('Animation Presets', style: AppTypography.captionBold),
                 const SizedBox(height: 6),
                 _buildPresetsCarousel(),
               ],
@@ -278,7 +278,7 @@ class _KeyframeStudioSheetState extends State<KeyframeStudioSheet> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Universal Keyframes', style: AppTypography.bodyBold),
+                  Text('Universal Keyframes', style: AppTypography.bodyBold),
                   Text(
                     '${_keyframes.length} KEYFRAME${_keyframes.length == 1 ? "" : "S"} ON CLIP',
                     style: AppTypography.micro.copyWith(color: AppColors.accent, fontWeight: FontWeight.bold),

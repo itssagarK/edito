@@ -114,7 +114,7 @@ class _BlendModeSheetState extends State<BlendModeSheet> with SingleTickerProvid
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Pro Blending Modes', style: AppTypography.bodyBold),
+                  Text('Pro Blending Modes', style: AppTypography.bodyBold),
                   Text(
                     '${_config.mode.label.toUpperCase()} (${(_config.opacity * 100).round()}%)',
                     style: AppTypography.micro.copyWith(color: AppColors.accent, fontWeight: FontWeight.bold),
