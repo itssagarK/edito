@@ -37,6 +37,8 @@ import '../../../../models/clip.dart';
 import '../../../../models/media_asset.dart';
 import '../../../overlays/models/text_overlay_config.dart';
 import '../../../overlays/services/overlay_compiler_service.dart';
+import '../../../captions/models/caption_line.dart';
+import '../../../captions/presentation/widgets/kinetic_caption_overlay.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';
@@ -249,11 +251,28 @@ class RealtimePreviewViewport extends ConsumerWidget {
                             if (overlayClip.textOverlay.text.trim().isNotEmpty) {
                               final offsetMs = currentPositionMs - overlayClip.startTimeMs;
                               final evaluatedText = OverlayCompilerService.evaluateOverlayAt(overlayClip, offsetMs);
-                              widgets.add(_buildTextOverlayWidget(
-                                evaluatedText,
-                                clipOffsetMs: offsetMs,
-                                clipDurationMs: overlayClip.durationMs,
-                              ));
+
+                              if (evaluatedText.animationType == TextAnimationType.karaoke ||
+                                  overlayClip.trackId.toLowerCase().contains('caption') ||
+                                  overlayClip.id.toLowerCase().contains('caption')) {
+                                widgets.add(KineticCaptionOverlay(
+                                  caption: CaptionLine(
+                                    id: overlayClip.id,
+                                    text: evaluatedText.text,
+                                    startTimeMs: overlayClip.startTimeMs,
+                                    durationMs: overlayClip.durationMs,
+                                    style: evaluatedText,
+                                    highlightStyle: KaraokeHighlightStyle.colorFill,
+                                  ),
+                                  offsetMs: offsetMs,
+                                ));
+                              } else {
+                                widgets.add(_buildTextOverlayWidget(
+                                  evaluatedText,
+                                  clipOffsetMs: offsetMs,
+                                  clipDurationMs: overlayClip.durationMs,
+                                ));
+                              }
                             }
                             return widgets;
                           }),

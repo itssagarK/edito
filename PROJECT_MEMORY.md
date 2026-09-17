@@ -903,3 +903,49 @@ DAW-grade audio restoration, ground loop hum cancellation, targeted sibilance su
      5. `🦆 Dynamics`: Smart sidechain auto-ducking, pre-amp booster, and voice modulation FX.
    - Integrated into editor docked panel as 'Audio Restoration & Mixer'.
    - Verified by comprehensive test suite in `test/audio_restoration_test.dart` and `test/audio_suite_test.dart`.
+
+---
+
+## 25. Dynamic Kinetic Subtitles & Animated Word-by-Word Caption Studio (v1.0.39 Release)
+
+Viral short-form kinetic captions, word-by-word active timing synchronization, SubRip (`.srt`) / WebVTT (`.vtt`) bidirectional interchange, and multi-style karaoke typography:
+
+1. **Word-Level Kinetic Timing & Subtitle Data Model (`lib/features/captions/models/caption_line.dart`)**:
+   - **`WordTimestamp` Architecture**:
+     - Models individual word fragments: `word`, `startOffsetMs`, and `durationMs`.
+     - 100% backward-compatible JSON serialization.
+   - **`KaraokeHighlightStyle` Engine**:
+     - `none`: Standard static subtitle display.
+     - `colorFill`: Viral TikTok / Reels style color pop changing active word to neon accent.
+     - `scalePunch`: High-energy scale pop ($1.05\text{x} \to 1.50\text{x}$) bouncing active spoken syllables.
+     - `pillBackground`: High-contrast neon bounding pill container wrapping the active word.
+     - `glowWave`: Radiant soft-light neon aura drop shadow pulsing on active speech.
+   - **Timing Algorithms**:
+     - `CaptionLine.generateInterpolatedWords(text, durationMs)`: Distributes phrase durations across words with natural vowel/consonant weighting.
+     - `CaptionLine.getActiveWordIndex(offsetMs)`: Pinpoints active word index with clamping and timecode synchronization.
+
+2. **Bidirectional SubRip & WebVTT Subtitle Interchange Engine (`lib/features/captions/services/srt_subtitle_service.dart`)**:
+   - `parseSrt`: Robust parser handling comma-separated (`00:00:01,000`) and dot-separated timecodes, multiline subtitle blocks, and automatic word-level interpolation.
+   - `exportToSrt`: Deterministic standard SubRip formatter with sequence indices and blank-line separation.
+   - `exportToVtt`: Standards-compliant WebVTT format for modern web players and streaming distribution.
+
+3. **Dual-Engine Real-Time Compositor & Export Compiler**:
+   - **Skia Real-Time Viewport Overlay (`KineticCaptionOverlay`)**:
+     - Zero-latency Skia canvas rendering word-by-word transformations inside `RealtimePreviewViewport`.
+     - Supports live font rendering across Google Fonts (`Anton`, `Inter`, `Bebas Neue`, `Montserrat`, `Poppins`, `JetBrains Mono`, `Permanent Marker`, `Caveat`, `Pacifico`).
+     - Dynamic pill box container rendering, glow wave drops, and scale punching.
+   - **FFmpeg Timed Subtitle Filter Chain (`CaptionCompilerService`)**:
+     - Generates resolution-scaled timed `drawtext` filters with `between(t, start, end)` gates.
+     - Position scaling across 720p, 1080p, and 4K UHD resolutions.
+     - Floating HUD badge status: `⚡ KINETIC CAPTIONS (count)` or `💬 SUBTITLES (count)`.
+
+4. **Dedicated 6-Tab Caption Studio (`CaptionManagerSheet`)**:
+   - Upgraded from 5 to 6 dedicated studio tabs:
+     1. `✨ AI & SRT`: AI speech sync, script auto-slicer, SubRip `.srt` import dialog, and `.srt` / `.vtt` clipboard export dialogs.
+     2. `⚡ Kinetic Karaoke`: Highlight styles (`Color Pop`, `Scale Bounce`, `Neon Pill`, `Aura Glow`), 8-color palette, scale bounce slider, and word re-alignment.
+     3. `🎨 Presets`: One-tap viral presets (`TikTok Viral`, `Cinematic Serif`, `Neon Cyberpunk`, `Subtle Minimal`, `Bold Highlight`).
+     4. `🔤 Font & Size`: Typography picker, quick size chips (`S`, `M`, `L`, `XL`, `XXL`), and styling toggles (`Bold`, `Italic`, `ALL CAPS`, `Underline`).
+     5. `🌈 Colors & Stroke`: 10 text colors, 9 background box translucent presets, and stroke outline slider.
+     6. `🎬 Animation & Pos`: Entrance animations (`Fade`, `Pop Scale`, `Bounce`, `Slide Up`, `Zoom In`, `Shimmer`, `Karaoke`, `Typewriter`) and position presets (`Top`, `Center`, `Bottom`).
+   - Integrated into editor bottom modal and timeline action bar.
+   - Tested by comprehensive unit test suite in `test/kinetic_captions_test.dart`.

@@ -3,7 +3,9 @@ import '../../../core/utils/timecode_formatter.dart';
 import '../../../models/clip.dart';
 import '../../../models/project.dart';
 import '../../../models/track.dart';
+import '../../overlays/models/text_overlay_config.dart';
 import '../models/caption_line.dart';
+import 'srt_subtitle_service.dart';
 
 class AutoCaptionService {
   /// Generates AI auto-captions synchronized across the project's duration
@@ -36,12 +38,16 @@ class AutoCaptionService {
           : lineDurationMs;
 
       final phrase = samplePhrases[i % samplePhrases.length];
+      final words = CaptionLine.generateInterpolatedWords(phrase, durMs);
       captions.add(CaptionLine(
         id: const Uuid().v4(),
         text: phrase,
         startTimeMs: startMs,
         durationMs: durMs,
         style: preset.createStyle(phrase),
+        words: words,
+        highlightStyle: KaraokeHighlightStyle.colorFill,
+        isKinetic: true,
       ));
     }
 
@@ -91,12 +97,16 @@ class AutoCaptionService {
           ? (duration - currentStartMs).clamp(1500, 6000)
           : perLineDurationMs;
 
+      final words = CaptionLine.generateInterpolatedWords(text, dur);
       captions.add(CaptionLine(
         id: const Uuid().v4(),
         text: text,
         startTimeMs: currentStartMs,
         durationMs: dur,
         style: preset.createStyle(text),
+        words: words,
+        highlightStyle: KaraokeHighlightStyle.colorFill,
+        isKinetic: true,
       ));
 
       currentStartMs += dur;
@@ -137,7 +147,10 @@ class AutoCaptionService {
         durationMs: cap.durationMs,
         sourceInMs: 0,
         sourceOutMs: cap.durationMs,
-        textOverlay: cap.style.copyWith(text: cap.text),
+        textOverlay: cap.style.copyWith(
+          text: cap.text,
+          animationType: cap.isKinetic ? TextAnimationType.karaoke : cap.style.animationType,
+        ),
       );
     }).toList();
 
@@ -164,41 +177,29 @@ class AutoCaptionService {
     }
 
     return captionTrack.clips.map((clip) {
+      final words = CaptionLine.generateInterpolatedWords(clip.textOverlay.text, clip.durationMs);
       return CaptionLine(
         id: clip.id,
         text: clip.textOverlay.text,
         startTimeMs: clip.startTimeMs,
         durationMs: clip.durationMs,
         style: clip.textOverlay,
+        words: words,
+        highlightStyle: clip.textOverlay.animationType == TextAnimationType.karaoke
+            ? KaraokeHighlightStyle.colorFill
+            : KaraokeHighlightStyle.none,
+        isKinetic: clip.textOverlay.animationType == TextAnimationType.karaoke,
       );
     }).toList();
   }
 
   /// Exports captions into standard .srt subtitle format
   static String exportSrt(List<CaptionLine> captions) {
-    final buffer = StringBuffer();
-    for (int i = 0; i < captions.length; i++) {
-      final cap = captions[i];
-      buffer.writeln('${i + 1}');
-      buffer.writeln('${_formatSrtTimestamp(cap.startTimeMs)} --> ${_formatSrtTimestamp(cap.endTimeMs)}');
-      buffer.writeln(cap.text);
-      buffer.writeln();
-    }
-    return buffer.toString();
+    return SrtSubtitleService.exportToSrt(captions);
   }
 
-  static String _formatSrtTimestamp(int ms) {
-    final totalSeconds = ms ~/ 1000;
-    final milliseconds = ms % 1000;
-    final hours = totalSeconds ~/ 3600;
-    final minutes = (totalSeconds % 3600) ~/ 60;
-    final seconds = totalSeconds % 60;
-
-    final hStr = hours.toString().padLeft(2, '0');
-    final mStr = minutes.toString().padLeft(2, '0');
-    final sStr = seconds.toString().padLeft(2, '0');
-    final msStr = milliseconds.toString().padLeft(3, '0');
-
-    return '$hStr:$mStr:$sStr,$msStr';
+  /// Imports captions from standard .srt subtitle format
+  static List<CaptionLine> importSrt(String srtContent, {CaptionPreset preset = CaptionPreset.tiktokViral}) {
+    return SrtSubtitleService.parseSrt(srtContent, preset: preset);
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -9,6 +10,7 @@ import '../../../../models/project.dart';
 import '../../../overlays/models/text_overlay_config.dart';
 import '../../models/caption_line.dart';
 import '../../services/auto_caption_service.dart';
+import '../../services/srt_subtitle_service.dart';
 
 class CaptionManagerSheet extends StatefulWidget {
   final Project project;
@@ -52,6 +54,9 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
   List<CaptionLine> _captions = [];
   CaptionPreset _activePreset = CaptionPreset.tiktokViral;
   late TextOverlayConfig _currentStyle;
+  KaraokeHighlightStyle _karaokeStyle = KaraokeHighlightStyle.colorFill;
+  int _karaokeHighlightColor = 0xFFFFE600;
+  double _karaokeHighlightScale = 1.20;
   int? _selectedCaptionIndex;
   bool _applyToAll = true;
 
@@ -106,7 +111,7 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
     _previewAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2500),
@@ -115,6 +120,9 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
     _captions = AutoCaptionService.extractCaptionsFromProject(widget.project);
     if (_captions.isNotEmpty) {
       _currentStyle = _captions.first.style;
+      _karaokeStyle = _captions.first.highlightStyle;
+      _karaokeHighlightColor = _captions.first.highlightColor;
+      _karaokeHighlightScale = _captions.first.highlightScale;
     } else {
       _currentStyle = _activePreset.createStyle('SAMPLE CAPTION');
     }
@@ -210,6 +218,54 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
       _captions = _captions.map((cap) {
         return cap.copyWith(style: preset.createStyle(cap.text));
       }).toList();
+    });
+    _applyAndSave();
+  }
+
+  void _updateKaraokeSettings({
+    KaraokeHighlightStyle? style,
+    int? highlightColor,
+    double? highlightScale,
+  }) {
+    setState(() {
+      if (style != null) _karaokeStyle = style;
+      if (highlightColor != null) _karaokeHighlightColor = highlightColor;
+      if (highlightScale != null) _karaokeHighlightScale = highlightScale;
+
+      final isKinetic = _karaokeStyle != KaraokeHighlightStyle.none;
+      if (isKinetic && _currentStyle.animationType != TextAnimationType.karaoke) {
+        _currentStyle = _currentStyle.copyWith(animationType: TextAnimationType.karaoke);
+      }
+
+      if (_applyToAll || _selectedCaptionIndex == null) {
+        _captions = _captions.map((cap) {
+          final words = cap.words.isEmpty ? cap.generateInterpolatedWords() : cap.words;
+          return cap.copyWith(
+            highlightStyle: _karaokeStyle,
+            highlightColor: _karaokeHighlightColor,
+            highlightScale: _karaokeHighlightScale,
+            isKinetic: isKinetic,
+            words: words,
+            style: cap.style.copyWith(
+              animationType: isKinetic ? TextAnimationType.karaoke : cap.style.animationType,
+            ),
+          );
+        }).toList();
+      } else if (_selectedCaptionIndex != null && _selectedCaptionIndex! < _captions.length) {
+        final idx = _selectedCaptionIndex!;
+        final cap = _captions[idx];
+        final words = cap.words.isEmpty ? cap.generateInterpolatedWords() : cap.words;
+        _captions[idx] = cap.copyWith(
+          highlightStyle: _karaokeStyle,
+          highlightColor: _karaokeHighlightColor,
+          highlightScale: _karaokeHighlightScale,
+          isKinetic: isKinetic,
+          words: words,
+          style: cap.style.copyWith(
+            animationType: isKinetic ? TextAnimationType.karaoke : cap.style.animationType,
+          ),
+        );
+      }
     });
     _applyAndSave();
   }
@@ -362,7 +418,8 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
               tabAlignment: TabAlignment.start,
               labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
               tabs: const [
-                Tab(icon: Icon(Icons.auto_awesome, size: 15), text: 'AI Generate'),
+                Tab(icon: Icon(Icons.auto_awesome, size: 15), text: 'AI & SRT'),
+                Tab(icon: Icon(Icons.flash_on, size: 15), text: 'Kinetic Karaoke'),
                 Tab(icon: Icon(Icons.style, size: 15), text: 'Presets'),
                 Tab(icon: Icon(Icons.font_download, size: 15), text: 'Font & Size'),
                 Tab(icon: Icon(Icons.color_lens, size: 15), text: 'Colors & Stroke'),
@@ -378,6 +435,7 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
               controller: _tabController,
               children: [
                 _buildAutoGenerateTab(),
+                _buildKineticKaraokeTab(),
                 _buildPresetsTab(),
                 _buildFontAndSizeTab(),
                 _buildColorsAndStrokeTab(),
@@ -603,7 +661,7 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
             left: 10,
             top: 6,
             child: Text(
-              'PREVIEW: ${_currentStyle.fontFamily} • ${_currentStyle.fontSize.round()}pt • ${_currentStyle.animationType.label}',
+              'PREVIEW: ${_currentStyle.fontFamily} • ${_currentStyle.fontSize.round()}pt • ${_currentStyle.animationType.label}${_karaokeStyle != KaraokeHighlightStyle.none ? " • ⚡ ${_karaokeStyle.label}" : ""}',
               style: const TextStyle(fontSize: 9, color: AppColors.textMuted, letterSpacing: 0.5),
             ),
           ),
@@ -696,37 +754,7 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(_currentStyle.boxCornerRadius),
                       ),
-                      child: _currentStyle.strokeWidth > 0 && _currentStyle.strokeColor != null
-                          ? Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Text(
-                                  sampleText,
-                                  style: baseStyle.copyWith(
-                                    foreground: Paint()
-                                      ..style = PaintingStyle.stroke
-                                      ..strokeWidth = _currentStyle.strokeWidth * 1.5
-                                      ..color = Color(_currentStyle.strokeColor!),
-                                  ),
-                                ),
-                                Text(
-                                  sampleText,
-                                  style: baseStyle.copyWith(color: Color(_currentStyle.textColor)),
-                                ),
-                              ],
-                            )
-                          : Text(
-                              sampleText,
-                              style: baseStyle.copyWith(
-                                color: Color(_currentStyle.textColor),
-                                shadows: [
-                                  if (_currentStyle.shadowColor != null)
-                                    Shadow(color: Color(_currentStyle.shadowColor!), blurRadius: 4, offset: const Offset(0, 2))
-                                  else
-                                    const Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2)),
-                                ],
-                              ),
-                            ),
+                      child: _buildPreviewCaptionText(sampleText, baseStyle, elapsedMs),
                     ),
                   ),
                 ),
@@ -738,73 +766,525 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
     );
   }
 
-  // 1. Auto-Generate AI Tab
+  Widget _buildPreviewCaptionText(String sampleText, TextStyle baseStyle, int elapsedMs) {
+    if (_karaokeStyle == KaraokeHighlightStyle.none) {
+      if (_currentStyle.strokeWidth > 0 && _currentStyle.strokeColor != null) {
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Text(
+              sampleText,
+              style: baseStyle.copyWith(
+                foreground: Paint()
+                  ..style = PaintingStyle.stroke
+                  ..strokeWidth = _currentStyle.strokeWidth * 1.5
+                  ..color = Color(_currentStyle.strokeColor!),
+              ),
+            ),
+            Text(
+              sampleText,
+              style: baseStyle.copyWith(color: Color(_currentStyle.textColor)),
+            ),
+          ],
+        );
+      }
+      return Text(
+        sampleText,
+        style: baseStyle.copyWith(
+          color: Color(_currentStyle.textColor),
+          shadows: [
+            if (_currentStyle.shadowColor != null)
+              Shadow(color: Color(_currentStyle.shadowColor!), blurRadius: 4, offset: const Offset(0, 2))
+            else
+              const Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2)),
+          ],
+        ),
+      );
+    }
+
+    // Kinetic word-by-word active word preview
+    final rawWords = sampleText.split(' ');
+    final wordCount = math.max(1, rawWords.length);
+    final wordSlotMs = 2500 ~/ wordCount;
+    final activeWordIdx = (elapsedMs ~/ math.max(1, wordSlotMs)) % wordCount;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(rawWords.length, (wIdx) {
+        final word = rawWords[wIdx];
+        final isActive = wIdx == activeWordIdx;
+
+        Color wordColor = Color(_currentStyle.textColor);
+        double scale = 1.0;
+        BoxDecoration? pillDecoration;
+
+        if (isActive) {
+          switch (_karaokeStyle) {
+            case KaraokeHighlightStyle.colorFill:
+              wordColor = Color(_karaokeHighlightColor);
+              scale = 1.08;
+              break;
+            case KaraokeHighlightStyle.scalePunch:
+              wordColor = Color(_karaokeHighlightColor);
+              scale = _karaokeHighlightScale;
+              break;
+            case KaraokeHighlightStyle.pillBackground:
+              wordColor = Colors.black;
+              scale = 1.05;
+              pillDecoration = BoxDecoration(
+                color: Color(_karaokeHighlightColor),
+                borderRadius: BorderRadius.circular(4),
+              );
+              break;
+            case KaraokeHighlightStyle.glowWave:
+              wordColor = Color(_karaokeHighlightColor);
+              scale = 1.12;
+              break;
+            case KaraokeHighlightStyle.none:
+              break;
+          }
+        }
+
+        Widget wordWidget = Container(
+          padding: pillDecoration != null ? const EdgeInsets.symmetric(horizontal: 4, vertical: 2) : EdgeInsets.zero,
+          decoration: pillDecoration,
+          child: Text(
+            word,
+            style: baseStyle.copyWith(
+              color: wordColor,
+              fontWeight: isActive ? FontWeight.w900 : baseStyle.fontWeight,
+              shadows: [
+                if (isActive && _karaokeStyle == KaraokeHighlightStyle.glowWave)
+                  Shadow(color: Color(_karaokeHighlightColor).withOpacity(0.9), blurRadius: 10)
+                else if (_currentStyle.shadowColor != null)
+                  Shadow(color: Color(_currentStyle.shadowColor!), blurRadius: 4, offset: const Offset(0, 2))
+                else
+                  const Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2)),
+              ],
+            ),
+          ),
+        );
+
+        if (scale != 1.0) {
+          wordWidget = Transform.scale(scale: scale, child: wordWidget);
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2.5),
+          child: wordWidget,
+        );
+      }),
+    );
+  }
+
+  // 1. Auto-Generate AI & SRT Tab
   Widget _buildAutoGenerateTab() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _generateAuto,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: _generateAuto,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                icon: const Icon(Icons.auto_awesome, size: 16),
+                label: const Text('AI Auto-Speech Sync', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              ),
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: _showImportSrtDialog,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.accent,
+                side: const BorderSide(color: AppColors.border),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              icon: const Icon(Icons.file_upload_outlined, size: 16),
+              label: const Text('Import .SRT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 48,
+                child: TextField(
+                  controller: _selfDescriptionController,
+                  maxLines: 2,
+                  style: const TextStyle(fontSize: 11),
+                  decoration: InputDecoration(
+                    hintText: 'Paste script / dialogue to auto-slice...',
+                    hintStyle: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                    filled: true,
+                    fillColor: AppColors.surfaceElevated,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
                   ),
-                  icon: const Icon(Icons.auto_awesome, size: 18),
-                  label: const Text('AI Auto-Speech Sync', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _generateFromDescription,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.surfaceElevated,
+                  foregroundColor: AppColors.accent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: const BorderSide(color: AppColors.border),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                ),
+                child: const Text('Convert\nScript', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _showExportSrtDialog,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white70,
+                  side: const BorderSide(color: AppColors.border),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                icon: const Icon(Icons.subtitles_outlined, size: 14),
+                label: const Text('Export .SRT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _showExportVttDialog,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white70,
+                  side: const BorderSide(color: AppColors.border),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                icon: const Icon(Icons.closed_caption_outlined, size: 14),
+                label: const Text('Export .VTT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _showImportSrtDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceElevated,
+        title: const Text('Import SubRip (.srt) Subtitles', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Paste .srt subtitle content below. Word timings will be automatically interpolated:',
+              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: controller,
+              maxLines: 8,
+              style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+              decoration: InputDecoration(
+                hintText: '1\n00:00:01,000 --> 00:00:03,500\nHello and welcome to Edito!\n\n2\n00:00:03,600 --> 00:00:06,000\nKinetic subtitles made effortless.',
+                hintStyle: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                filled: true,
+                fillColor: AppColors.surface,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.black),
+            onPressed: () {
+              final text = controller.text.trim();
+              if (text.isNotEmpty) {
+                final parsed = SrtSubtitleService.parseSrt(text, preset: _activePreset);
+                if (parsed.isNotEmpty) {
+                  setState(() {
+                    _captions = parsed;
+                    _selectedCaptionIndex = 0;
+                  });
+                  _applyAndSave();
+                  if (widget.onSeek != null) {
+                    widget.onSeek!(parsed.first.startTimeMs);
+                  }
+                }
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('Import'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showExportSrtDialog() {
+    final srt = SrtSubtitleService.exportToSrt(_captions);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceElevated,
+        title: const Text('Exported SubRip (.srt)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${_captions.length} captions formatted:', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+              const SizedBox(height: 6),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 200),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: SingleChildScrollView(
+                  child: SelectableText(
+                    srt.isEmpty ? '(No captions on timeline)' : srt,
+                    style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _selfDescriptionController,
-                    maxLines: 3,
-                    style: const TextStyle(fontSize: 12),
-                    decoration: InputDecoration(
-                      hintText: 'Or paste script / dialogue to auto-slice into timed captions...',
-                      hintStyle: const TextStyle(fontSize: 11, color: AppColors.textMuted),
-                      filled: true,
-                      fillColor: AppColors.surfaceElevated,
-                      contentPadding: const EdgeInsets.all(10),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 90,
-                  height: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _generateFromDescription,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.surfaceElevated,
-                      foregroundColor: AppColors.accent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: const BorderSide(color: AppColors.border),
-                      ),
-                      padding: const EdgeInsets.all(8),
-                    ),
-                    child: const Text('Convert\nScript', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
-            ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.black),
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: srt));
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('SRT Subtitles copied to clipboard!')),
+              );
+            },
+            icon: const Icon(Icons.copy, size: 14),
+            label: const Text('Copy SRT'),
           ),
         ],
       ),
+    );
+  }
+
+  void _showExportVttDialog() {
+    final vtt = SrtSubtitleService.exportToVtt(_captions);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceElevated,
+        title: const Text('Exported WebVTT (.vtt)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${_captions.length} captions formatted for web & players:', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+              const SizedBox(height: 6),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 200),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: SingleChildScrollView(
+                  child: SelectableText(
+                    vtt.isEmpty ? '(No captions on timeline)' : vtt,
+                    style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.black),
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: vtt));
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('WebVTT Subtitles copied to clipboard!')),
+              );
+            },
+            icon: const Icon(Icons.copy, size: 14),
+            label: const Text('Copy VTT'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 2. Kinetic Karaoke Tab
+  Widget _buildKineticKaraokeTab() {
+    final kineticColors = [
+      0xFFFFE600, // Vibrant Yellow
+      0xFF00E5FF, // Cyan
+      0xFF00FF66, // Neon Green
+      0xFFFF2A85, // Hot Pink
+      0xFFFFFFFF, // Pure White
+      0xFFFF6B00, // Blaze Orange
+      0xFFFF3344, // Bright Red
+      0xFFA855F7, // Neon Purple
+    ];
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'KINETIC HIGHLIGHT STYLE',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textMuted, letterSpacing: 0.5),
+            ),
+            if (_selectedCaptionIndex != null && _selectedCaptionIndex! < _captions.length)
+              InkWell(
+                onTap: () {
+                  final idx = _selectedCaptionIndex!;
+                  final cap = _captions[idx];
+                  setState(() {
+                    _captions[idx] = cap.copyWith(
+                      words: cap.generateInterpolatedWords(),
+                    );
+                  });
+                  _applyAndSave();
+                },
+                child: const Text(
+                  'Re-slice Words',
+                  style: TextStyle(fontSize: 10, color: AppColors.accent, fontWeight: FontWeight.bold),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 34,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: KaraokeHighlightStyle.values.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final style = KaraokeHighlightStyle.values[index];
+              final isSelected = _karaokeStyle == style;
+              return ChoiceChip(
+                label: Text(style.label, style: const TextStyle(fontSize: 11)),
+                selected: isSelected,
+                selectedColor: AppColors.accent,
+                backgroundColor: AppColors.surfaceElevated,
+                labelStyle: TextStyle(
+                  color: isSelected ? Colors.black : Colors.white,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+                onSelected: (_) => _updateKaraokeSettings(style: style),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'HIGHLIGHT COLOR',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textMuted, letterSpacing: 0.5),
+            ),
+            Row(
+              children: kineticColors.map((color) {
+                final isSelected = _karaokeHighlightColor == color;
+                return Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: GestureDetector(
+                    onTap: () => _updateKaraokeSettings(highlightColor: color),
+                    child: Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: Color(color),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected ? Colors.white : AppColors.border,
+                          width: isSelected ? 2.5 : 1.0,
+                        ),
+                      ),
+                      child: isSelected
+                          ? Icon(
+                              Icons.check,
+                              size: 13,
+                              color: (color == 0xFFFFFFFF || color == 0xFFFFE600) ? Colors.black : Colors.white,
+                            )
+                          : null,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'SCALE POP: ${_karaokeHighlightScale.toStringAsFixed(2)}x',
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textMuted, letterSpacing: 0.5),
+            ),
+            Text(
+              _karaokeStyle == KaraokeHighlightStyle.none ? 'Static' : 'Kinetic Active',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: _karaokeStyle == KaraokeHighlightStyle.none ? AppColors.textMuted : AppColors.accent,
+              ),
+            ),
+          ],
+        ),
+        Slider(
+          value: _karaokeHighlightScale.clamp(1.05, 1.50),
+          min: 1.05,
+          max: 1.50,
+          divisions: 9,
+          activeColor: AppColors.accent,
+          inactiveColor: AppColors.border,
+          onChanged: (val) => _updateKaraokeSettings(highlightScale: val),
+        ),
+      ],
     );
   }
 
