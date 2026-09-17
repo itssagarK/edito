@@ -17,7 +17,7 @@ class Track extends Equatable {
     required this.id,
     required this.name,
     required this.type,
-    required this.order,
+    this.order = 0,
     this.isMuted = false,
     this.isLocked = false,
     this.isHidden = false,

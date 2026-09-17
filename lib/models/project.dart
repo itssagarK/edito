@@ -18,11 +18,12 @@ class Project extends Equatable {
   final List<Track> tracks;
   final List<MediaAsset> assets;
 
-  const Project({
+  Project({
     required this.id,
-    required this.title,
-    required this.createdAt,
-    required this.updatedAt,
+    String? title,
+    String? name,
+    DateTime? createdAt,
+    DateTime? updatedAt,
     this.durationMs = 0,
     this.fps = 30,
     this.width = 1920,
@@ -31,7 +32,11 @@ class Project extends Equatable {
     this.layoutConfig = const VideoLayoutConfig(),
     this.tracks = const [],
     this.assets = const [],
-  });
+  })  : title = title ?? name ?? 'Untitled Project',
+        createdAt = createdAt ?? DateTime.fromMillisecondsSinceEpoch(0),
+        updatedAt = updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+
+  String get name => title;
 
   /// Recalculates total project duration from the max end time of all clips
   Project recalculateDuration() {

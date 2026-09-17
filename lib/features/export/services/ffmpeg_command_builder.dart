@@ -26,6 +26,9 @@ import '../../image_editor/services/pip_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandBuilder {
+  /// Alias for buildArguments
+  static List<String> build(Project project, ExportConfiguration config) => buildArguments(project, config);
+
   /// Builds the complete list of FFmpeg command-line arguments for rendering the project
   static List<String> buildArguments(Project project, ExportConfiguration config) {
     final args = <String>[];

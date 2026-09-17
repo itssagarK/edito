@@ -24,7 +24,11 @@ class AppColors {
   // Text
   static const Color textPrimary = Color(0xFFF5F6FA);
   static const Color textSecondary = Color(0xFFA4B0BE);
+  static const Color textTertiary = Color(0xFF57606F);
   static const Color textMuted = Color(0xFF747D8C);
+
+  // Cards
+  static const Color cardBackground = Color(0xFF1E1E28);
 
   // Playhead & Guides
   static const Color playhead = Color(0xFFFF3838);

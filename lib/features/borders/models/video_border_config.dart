@@ -205,6 +205,11 @@ class VideoBorderConfig extends Equatable {
     this.padding = 0.0,
   });
 
+  // Compatibility aliases
+  int get primaryColor => borderColor;
+  double get borderRadius => cornerRadius;
+  double get opacity => borderOpacity;
+
   VideoBorderConfig copyWith({
     bool? isEnabled,
     VideoBorderStyle? style,

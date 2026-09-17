@@ -61,4 +61,28 @@ class AppTypography {
         color: AppColors.textMuted,
         letterSpacing: 0.5,
       );
+
+  static TextStyle get micro => GoogleFonts.inter(
+        fontSize: 9,
+        fontWeight: FontWeight.w500,
+        color: AppColors.textMuted,
+      );
+
+  static TextStyle get caption => GoogleFonts.inter(
+        fontSize: 11,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textSecondary,
+      );
+
+  static TextStyle get captionBold => GoogleFonts.inter(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+      );
+
+  static TextStyle get bodyBold => GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textPrimary,
+      );
 }

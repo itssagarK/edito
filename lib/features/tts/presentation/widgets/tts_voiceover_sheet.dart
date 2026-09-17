@@ -3,9 +3,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/timecode_formatter.dart';
 import '../../../../models/project.dart';
-import '../../captions/services/auto_caption_service.dart';
-import '../models/tts_voice_profile.dart';
-import '../services/tts_generation_service.dart';
+import '../../../captions/services/auto_caption_service.dart';
+import '../../models/tts_voice_profile.dart';
+import '../../services/tts_generation_service.dart';
 
 class TTSVoiceoverSheet extends StatefulWidget {
   final Project project;

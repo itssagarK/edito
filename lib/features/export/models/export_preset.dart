@@ -201,3 +201,28 @@ class ExportConfiguration {
     return (sizeMb * 10).roundToDouble() / 10.0;
   }
 }
+
+class ResolutionPreset {
+  static const ExportResolution fhd1080p = ExportResolution.res1080p;
+  static const ExportResolution uhd4k = ExportResolution.res4k;
+  static const ExportResolution uhd8k = ExportResolution.res8k;
+  static const ExportResolution hd720p = ExportResolution.res720p;
+}
+
+class FrameratePreset {
+  static const ExportFramerate fps24 = ExportFramerate.fps24;
+  static const ExportFramerate fps30 = ExportFramerate.fps30;
+  static const ExportFramerate fps60 = ExportFramerate.fps60;
+}
+
+class CodecPreset {
+  static const ExportCodec h264 = ExportCodec.h264;
+  static const ExportCodec hevc = ExportCodec.hevc;
+}
+
+class QualityPreset {
+  static const ExportQuality standard = ExportQuality.standard;
+  static const ExportQuality balanced = ExportQuality.high;
+  static const ExportQuality high = ExportQuality.high;
+  static const ExportQuality ultra = ExportQuality.ultra;
+}

@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/project.dart';
 import '../../../../models/track.dart';
+import '../../../../models/clip.dart';
 import '../../services/timeline_editing_service.dart';
 import '../../../beats/presentation/widgets/beat_detection_sheet.dart';
 import 'timeline_track_lane.dart';

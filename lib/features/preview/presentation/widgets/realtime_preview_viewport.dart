@@ -1370,7 +1370,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
           ),
         );
 
-      case VideoBorderStyle.film35mm:
+      case VideoBorderStyle.filmStrip:
         return Positioned.fill(
           child: IgnorePointer(
             child: CustomPaint(
@@ -1398,7 +1398,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
           ),
         );
 
-      case VideoBorderStyle.cinematicLetterbox:
+      case VideoBorderStyle.vignetteFrame:
         final barHeight = (config.borderWidth * 2.2).clamp(16.0, 120.0);
         return Positioned.fill(
           child: IgnorePointer(

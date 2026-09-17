@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart' as painting;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
@@ -461,7 +462,7 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
         children: [
           ToneCurveEditor(
             points: _config.masterCurve,
-            onChanged: (newPoints) {
+            onPointsChanged: (newPoints) {
               _updateConfig((c) => c.copyWith(masterCurve: newPoints));
             },
           ),
@@ -535,7 +536,7 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Stack(
-                      clipBehavior: Clip.none,
+                      clipBehavior: painting.Clip.none,
                       children: [
                         Container(
                           width: 30,

@@ -7,6 +7,13 @@ import '../models/aspect_ratio_preset.dart';
 import '../models/compositor_frame.dart';
 
 class TimelineCompositorService {
+  /// Evaluates composite frame for instance calls
+  CompositorFrame composeFrame(
+    Project project,
+    int timestampMs, {
+    AspectRatioPreset aspectRatio = AspectRatioPreset.ratio16x9,
+  }) => evaluateFrame(project, timestampMs, aspectRatio: aspectRatio);
+
   /// Evaluates the complete multi-track composite frame at a specific millisecond timestamp
   static CompositorFrame evaluateFrame(
     Project project,
