@@ -48,6 +48,9 @@ import '../../../image_editor/models/image_overlay_config.dart';
 import '../../../image_editor/models/video_layout_config.dart';
 import '../../../image_editor/services/auto_reframe_service.dart';
 import '../../../beats/services/beat_detector_service.dart';
+import '../../../smoothing/models/video_smoother_config.dart';
+import '../../../smoothing/services/ai_video_smoother_service.dart';
+import '../../../smoothing/presentation/widgets/motion_blur_preview_wrapper.dart';
 import '../../../transitions/models/transition_type.dart';
 
 class RealtimePreviewViewport extends ConsumerWidget {
@@ -554,6 +557,14 @@ class RealtimePreviewViewport extends ConsumerWidget {
       );
     }
 
+    if (clip.smoother.isMotionBlurEnabled ||
+        clip.smoother.effectiveInterpolationMode == MotionInterpolationMode.frameBlend) {
+      videoContent = MotionBlurPreviewWrapper(
+        config: clip.smoother,
+        child: videoContent,
+      );
+    }
+
     // Blurred clone backdrop returns pure video without overlays or HUD
     if (isBackdropClone) {
       return videoContent;
@@ -668,7 +679,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: const TextStyle(fontSize: 9, color: AppColors.audioTrack, fontWeight: FontWeight.bold),
                   ),
                 ),
-              if (clip.smoother.hasActiveSmoothing)
+              if (clip.smoother.hasActiveSmoothing && AIVideoSmootherService.getSmootherBadge(clip.smoother).isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
@@ -677,9 +688,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     border: Border.all(color: AppColors.accentWarm),
                   ),
                   child: Text(
-                    clip.smoother.isStabilizationEnabled
-                        ? '🛡️ GIMBAL STABILIZED'
-                        : '🌊 ${clip.smoother.targetFps}FPS SMOOTH',
+                    AIVideoSmootherService.getSmootherBadge(clip.smoother),
                     style: const TextStyle(fontSize: 9, color: AppColors.accentWarm, fontWeight: FontWeight.bold),
                   ),
                 ),

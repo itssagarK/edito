@@ -572,7 +572,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   }
 
   void _openSmootherModal() {
-    _openDockedTool(EditorTool.smooth, trackType: TrackType.video, purpose: 'Smoother');
+    _openDockedTool(EditorTool.smooth, trackType: TrackType.video, purpose: 'Optical Flow & Motion Blur');
   }
 
   void _openChromaKeyModal() {

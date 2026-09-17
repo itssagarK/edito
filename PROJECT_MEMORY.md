@@ -727,3 +727,58 @@ Hollywood-grade 8-channel selective color qualifier, per-hue isolation engine, a
    - Precision sliders for Hue Shift ($\pm 180^\circ$), Saturation ($\pm 100\%$), and Luminance ($\pm 100\%$).
    - Universal Flutter compatibility using `IconButton.styleFrom(...)`.
    - Verified by comprehensive unit test suite in `test/hsl_suite_test.dart`.
+
+---
+
+## 22. Optical Flow Frame Blending & Velocity Motion Blur Studio (v1.0.36 Release)
+
+High-performance optical flow motion estimation, temporal frame crossfade blending, and rotary shutter angle velocity motion blur engine:
+
+1. **Optical Flow & Motion Blur Data Model (`lib/features/smoothing/models/video_smoother_config.dart`)**:
+   - **Interpolation Engines (`MotionInterpolationMode`)**:
+     - `none`: Native original clip frame cadence.
+     - `frameBlend`: Linear temporal crossfade blending of adjacent frames (`tblend=all_mode=average`) to eliminate motion judder without vector warping artifacts.
+     - `opticalFlow`: Full bidirectional motion-compensated optical flow synthesis (`minterpolate=mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1`) generating intermediate vector frames for buttery 60fps/120fps/240fps slow motion.
+   - **Velocity Shutter Angle Parameters**:
+     - `isMotionBlurEnabled`: Global toggle for velocity motion blur.
+     - `shutterAngle`: Rotary camera shutter angle ($0.0^\circ \to 360.0^\circ$, default $180.0^\circ$).
+       - $90^\circ$: Action Crisp (reduced blur, high temporal clarity).
+       - $180^\circ$: Hollywood Cinema standard ($1/48\text{s}$ at $24\text{fps}$).
+       - $270^\circ$: Dreamy, soft motion trail.
+       - $360^\circ$: Full exposure light streak velocity blur.
+     - `motionBlurSamples`: Number of temporal sub-frame slices ($2 \to 16$, default 6).
+     - `motionBlurIntensity`: Velocity trail amplitude multiplier ($0.0 \to 1.0$).
+     - `motionBlurDirection`: `omnidirectional`, `horizontal` (pan streak), `vertical` (tilt streak).
+   - **Cinematic Presets (`SmootherPreset`)**:
+     - 🎬 *180° Cinema Shutter*: Classic $180^\circ$ shutter angle natural velocity motion blur.
+     - ⚡ *Action 90° Crisp*: Tight shutter speed for razor-sharp high-speed action.
+     - 🌊 *60 FPS Optical Flow*: Butter-smooth 60fps frame rate interpolation.
+     - 🧈 *120 FPS Buttery Flow*: 120fps high-frame-rate slow-mo frame synthesis.
+     - 🌪️ *360° Velocity Streak*: Artistic light streaks and speed trail blur.
+     - 🔄 *Natural Frame Blend*: Natural temporal crossfade blending.
+     - 🛡️ *Gimbal Stabilizer*: 3-axis camera gimbal wobble cancellation.
+     - 🧹 *Anti-Glitch & De-Flutter*: Cadence fixing and LED flutter removal.
+     - 🏎️ *Action Sports Stabilizer*: Heavy rotational & translational stabilization.
+
+2. **Dual-Engine Real-Time Compositor & Export Compiler**:
+   - **Real-Time Viewport Preview Compositor (`MotionBlurPreviewWrapper`)**:
+     - Hardware-accelerated Skia `ImageFilter.blur` directional layer rendering simulated shutter angle velocity streaks in real time at 60fps.
+     - Live floating HUD status badges:
+       - `🌪️ BLUR (180°) + 🌊 120FPS`
+       - `🌪️ MOTION BLUR (180°)`
+       - `🌊 OPTICAL FLOW (60FPS)`
+       - `🔄 FRAME BLEND (60FPS)`
+       - `🛡️ GIMBAL STABILIZED`
+       - `ANTI-GLITCH`
+   - **Deterministic FFmpeg Export Compiler (`AIVideoSmootherService`)**:
+     - Optical flow interpolation: `minterpolate=fps=$targetFps:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1`.
+     - Linear frame blending: `tblend=all_mode=average,fps=fps=$targetFps:round=near`.
+     - Rotary shutter angle motion blur: Gaussian-distributed temporal sub-frame slice blending `tmix=frames=$samples:weights='...'` with directional convolution.
+
+3. **Studio UI Sheet & Toolbar Integration (`VideoSmootherSheet`)**:
+   - Modern 3-tab studio architecture: *Flow & Interpolation*, *Velocity Motion Blur*, and *Stabilizer & Glitch*.
+   - Horizontal presets carousel covering all 10 cinematic presets.
+   - 3-Way interpolation engine selector with real-time algorithm explanations.
+   - Rotary shutter angle slider ($0^\circ \to 360^\circ$) with cinematic reference marks.
+   - Integrated into editor toolbar as 'Flow & Blur' (`EditorTool.smooth`).
+   - Verified by comprehensive test suite in `test/optical_flow_and_motion_blur_test.dart` and `test/video_smoother_test.dart`.

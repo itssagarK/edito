@@ -72,7 +72,7 @@ class DockedToolPanel extends StatelessWidget {
       case EditorTool.speed:
         return 'Speed Ramping & Curve';
       case EditorTool.smooth:
-        return 'Video Smoother';
+        return 'Optical Flow & Motion Blur';
       case EditorTool.audio:
         return 'Voice & Audio Mixer';
       case EditorTool.enhance:

@@ -25,7 +25,7 @@ class EditingToolbar extends StatelessWidget {
       _ToolItem(EditorTool.clipWorkflow, 'Clip Actions', Icons.movie_filter_outlined),
       _ToolItem(EditorTool.enhance, '8K Upscale', Icons.auto_awesome_motion),
       _ToolItem(EditorTool.hdConverter, 'HD Converter', Icons.high_quality),
-      _ToolItem(EditorTool.smooth, 'Smoother', Icons.waves),
+      _ToolItem(EditorTool.smooth, 'Flow & Blur', Icons.waves),
       _ToolItem(EditorTool.speed, 'Speed', Icons.speed),
       _ToolItem(EditorTool.audio, 'Voice & Audio', Icons.mic_none),
       _ToolItem(EditorTool.beats, 'Beats', Icons.music_note),
