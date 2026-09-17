@@ -80,7 +80,7 @@ class DockedToolPanel extends StatelessWidget {
       case EditorTool.text:
         return 'Text & Motion Titles';
       case EditorTool.imageOverlay:
-        return 'Overlay & Picture-in-Picture';
+        return 'Picture-in-Picture (PiP)';
       case EditorTool.layout:
         return 'Auto-Reframe & Canvas Ratio';
       case EditorTool.vfx:

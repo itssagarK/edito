@@ -782,3 +782,67 @@ High-performance optical flow motion estimation, temporal frame crossfade blendi
    - Rotary shutter angle slider ($0^\circ \to 360^\circ$) with cinematic reference marks.
    - Integrated into editor toolbar as 'Flow & Blur' (`EditorTool.smooth`).
    - Verified by comprehensive test suite in `test/optical_flow_and_motion_blur_test.dart` and `test/video_smoother_test.dart`.
+
+---
+
+## 23. Picture-in-Picture (PiP) Multi-Layer Video Overlay & Window Compositor Studio (v1.0.37 Release)
+
+Professional broadcast-grade Picture-in-Picture windowing, gaming webcam facecam framing, multi-shape masking, drop shadow ambient rendering, and multi-layer video overlay compositing:
+
+1. **PiP Data Model & Presets Engine (`lib/features/image_editor/models/image_overlay_config.dart`)**:
+   - **Window Shapes (`PipShape`)**:
+     - `sharpWindow` (`rectangle`): Clean rectangular window with sharp borders.
+     - `roundedRect`: Modern rounded window with customizable corner radii ($0 \to 48\text{px}$).
+     - `circle`: 1:1 circular webcam portrait mask (`ClipOval`, $999\text{px}$ radius).
+     - `diamond`: 4-point diamond geometric mask (`ClipPath` with Skia path clipper).
+     - `squircle`: iOS continuous-curvature squircle mask ($20\text{px}$ smooth radius).
+   - **Cinematic PiP Presets (`PipPreset`)**:
+     - 🎥 *Webcam (Bottom-Right)*: Standard 16:9 streaming webcam window anchored at $(0.80, 0.80)$.
+     - 🟣 *Circle Portrait*: 1:1 circular facecam window anchored at $(0.80, 0.80)$ with $3\text{px}$ border.
+     - 🌓 *Split Left (50%)*: 50/50 side-by-side split screen anchored at $(0.25, 0.50)$.
+     - 🌗 *Split Right (50%)*: 50/50 side-by-side split screen anchored at $(0.75, 0.50)$.
+     - 🕹️ *Gaming HUD (Top-Left)*: Streamer gameplay overlay anchored at $(0.20, 0.20)$.
+     - ↗️ *Top-Right*: Reaction window anchored at $(0.80, 0.20)$.
+     - ↙️ *Bottom-Left*: PiP window anchored at $(0.20, 0.80)$.
+     - 🔲 *Center Floating*: Highlight callout window centered at $(0.50, 0.50)$.
+     - 🎨 *Custom Freeform*: Unconstrained manual geometry, position, and rotation.
+   - **Styling & Geometry Parameters**:
+     - `scale`: Window size multiplier ($15\% \to 120\%$).
+     - `positionX` / `positionY`: Normalized coordinate anchors ($0.0 \to 1.0$).
+     - `rotation`: Free rotation angle ($0^\circ \to 360^\circ$).
+     - `opacity`: Layer transparency multiplier ($0.0 \to 1.0$).
+     - `cornerRadius`: Border curvature radius ($0 \to 48\text{px}$).
+     - `borderWidth`: Outer border stroke thickness ($0 \to 12\text{px}$).
+     - `borderColor`: ARGB hex color code (Palette: White, Gold, Cyan, Pink, Green, Purple, Black).
+     - `hasShadow`: Ambient drop shadow toggle.
+     - `shadowBlur`: Skia Gaussian drop shadow blur ($0 \to 30\text{px}$).
+     - `shadowColor`: ARGB hex color code with alpha.
+     - `mediaPath`: Path to photo or video overlay file.
+     - `assetLabel`: Overlay label or streamer badge text (e.g. "Host Cam", "Screen Share").
+
+2. **Dual-Engine Real-Time Compositor & Export Compiler**:
+   - **Real-Time Viewport Preview Compositor (`PipPreviewOverlay`)**:
+     - Fractional Skia layout with `FractionallySizedBox` and `AspectRatio` (1:1 for circle webcam, 16:9 for windows).
+     - Custom clipper execution for geometric shapes (`_DiamondClipper`, `ClipRRect`, `ClipOval`).
+     - Real-time `BoxShadow` ambient drop shadow rendering behind the outer border stroke.
+     - Live floating HUD status badges:
+       - `🪟 PiP (CIRCLE WEBCAM)`
+       - `🪟 PiP (SPLIT 50/50)`
+       - `🪟 PiP (WEBCAM)`
+       - `🪟 PiP (WINDOW)`
+   - **Deterministic FFmpeg Export Compiler (`PipCompilerService`)**:
+     - Scaled background bounding box generation: `drawbox=x=...:y=...:w=...:h=...:color=black@opacity:t=fill`.
+     - Pixel-accurate outer border stroke generation: `drawbox=x=...:y=...:w=...:h=...:color=0xRRGGBB@opacity:t=borderWidth`.
+     - Escaped streamer label burn-in: `drawtext=text=...:x=...:y=...:fontsize=...:fontcolor=white:box=1:boxcolor=black@0.75:boxborderw=4`.
+     - Seamlessly integrated into `FFmpegCommandBuilder`.
+
+3. **Studio UI Sheet & Toolbar Integration (`ImageOverlaySheet`)**:
+   - Integrated into editor toolbar as 'PiP / Overlay' (`EditorTool.imageOverlay`) and docked panel as 'Picture-in-Picture (PiP)'.
+   - Master Enable / Disable switch card with live badge display.
+   - Horizontal preset selector carousel for all 9 PiP presets.
+   - Window shape choice chips (`Sharp Window`, `Rounded Window`, `Circle Webcam`, `Diamond`, `Squircle`).
+   - Gallery picker dialog supporting both Photo and Video overlays (`image_picker`).
+   - Quick Anchor Position buttons (`Top-Left`, `Top-Right`, `Center`, `Bot-Left`, `Bot-Right`).
+   - Precision sliders for Scale, Position X/Y, Rotation, Opacity, Corner Radius, Border Width, and Shadow Blur.
+   - Border stroke color palette chips.
+   - Verified by comprehensive test suite in `test/pip_suite_test.dart` and `test/video_layout_and_assets_test.dart`.

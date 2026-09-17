@@ -623,7 +623,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   }
 
   void _openImageOverlayModal() {
-    _openDockedTool(EditorTool.imageOverlay, trackType: TrackType.video, purpose: 'Overlay / PiP');
+    _openDockedTool(EditorTool.imageOverlay, trackType: TrackType.video, purpose: 'Picture-in-Picture (PiP)');
   }
 
   void _openCharacterHighlightModal() {

@@ -47,6 +47,8 @@ import '../../../editor/providers/editor_provider.dart';
 import '../../../image_editor/models/image_overlay_config.dart';
 import '../../../image_editor/models/video_layout_config.dart';
 import '../../../image_editor/services/auto_reframe_service.dart';
+import '../../../image_editor/services/pip_compiler_service.dart';
+import '../../../image_editor/presentation/widgets/pip_preview_overlay.dart';
 import '../../../beats/services/beat_detector_service.dart';
 import '../../../smoothing/models/video_smoother_config.dart';
 import '../../../smoothing/services/ai_video_smoother_service.dart';
@@ -770,7 +772,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: const TextStyle(fontSize: 9, color: AppColors.primaryLight, fontWeight: FontWeight.bold),
                   ),
                 ),
-              if (clip.imageOverlay.isEnabled)
+              if (clip.imageOverlay.isEnabled && PipCompilerService.getPipBadge(clip.imageOverlay).isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
@@ -779,7 +781,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     border: Border.all(color: AppColors.accent),
                   ),
                   child: Text(
-                    clip.imageOverlay.isPiP ? '🖼️ PiP ACTIVE' : '🏷️ BADGE ACTIVE',
+                    PipCompilerService.getPipBadge(clip.imageOverlay),
                     style: const TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -1173,112 +1175,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
 
   Widget _buildImageOverlayWidget(ImageOverlayConfig config) {
     if (!config.isEnabled) return const SizedBox.shrink();
-
-    Widget imageContent;
-    if (config.imagePath.trim().isNotEmpty) {
-      if (config.imagePath.startsWith('http://') || config.imagePath.startsWith('https://')) {
-        imageContent = Image.network(config.imagePath, fit: BoxFit.contain);
-      } else if (config.imagePath.startsWith('assets/') || config.imagePath.startsWith('packages/')) {
-        imageContent = Image.asset(config.imagePath, fit: BoxFit.contain);
-      } else if (File(config.imagePath).existsSync()) {
-        imageContent = Image.file(File(config.imagePath), fit: BoxFit.contain);
-      } else {
-        imageContent = Center(
-          child: Text(config.assetLabel.isNotEmpty ? config.assetLabel : 'Overlay',
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13)),
-        );
-      }
-    } else if (config.assetLabel.trim().isNotEmpty) {
-      // Creative Asset Badge / Sticker
-      return Align(
-        alignment: Alignment(
-          (config.positionX * 2.0) - 1.0,
-          (config.positionY * 2.0) - 1.0,
-        ),
-        child: Transform.scale(
-          scale: config.scale.clamp(0.2, 3.0),
-          child: Transform.rotate(
-            angle: config.rotation * (3.14159 / 180.0),
-            child: Opacity(
-              opacity: config.opacity.clamp(0.0, 1.0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.85),
-                  borderRadius: BorderRadius.circular(config.cornerRadius),
-                  border: Border.all(color: Color(config.borderColor), width: 1.8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(config.borderColor).withOpacity(0.4),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  config.assetLabel,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    } else {
-      return const SizedBox.shrink();
-    }
-
-    Widget framedContent = imageContent;
-    if (config.isPiP) {
-      framedContent = Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(config.cornerRadius),
-          border: Border.all(color: Color(config.borderColor), width: 2.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.55),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(config.cornerRadius > 2 ? config.cornerRadius - 2 : 0),
-          child: imageContent,
-        ),
-      );
-    } else if (config.cornerRadius > 0) {
-      framedContent = ClipRRect(
-        borderRadius: BorderRadius.circular(config.cornerRadius),
-        child: imageContent,
-      );
-    }
-
-    return Align(
-      alignment: Alignment(
-        (config.positionX * 2.0) - 1.0,
-        (config.positionY * 2.0) - 1.0,
-      ),
-      child: Transform.scale(
-        scale: config.scale.clamp(0.2, 3.0),
-        child: Transform.rotate(
-          angle: config.rotation * (3.14159 / 180.0),
-          child: Opacity(
-            opacity: config.opacity.clamp(0.0, 1.0),
-            child: SizedBox(
-              width: config.isPiP ? 130 : 100,
-              height: config.isPiP ? 90 : 70,
-              child: framedContent,
-            ),
-          ),
-        ),
-      ),
-    );
+    return PipPreviewOverlay(config: config);
   }
 
   Widget _buildTransitionOverlay(Clip clip, int currentPositionMs) {

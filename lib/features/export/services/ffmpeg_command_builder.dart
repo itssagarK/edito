@@ -22,6 +22,7 @@ import '../../transitions/models/transition_type.dart';
 import '../../transitions/services/transition_compiler_service.dart';
 import '../../vfx/services/vfx_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
+import '../../image_editor/services/pip_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandBuilder {
@@ -176,15 +177,16 @@ class FFmpegCommandBuilder {
           vFilters.add(drawTextFilter);
         }
 
-        // Image Overlays & Creative Asset Sticker Badges (resolution-scaled)
-        if (clip.imageOverlay.isEnabled && clip.imageOverlay.assetLabel.trim().isNotEmpty) {
-          final sanitizedLabel = clip.imageOverlay.assetLabel.replaceAll("'", "\\'").replaceAll(':', '\\:');
-          final posX = (clip.imageOverlay.positionX * 0.85).toStringAsFixed(2);
-          final posY = (clip.imageOverlay.positionY * 0.85).toStringAsFixed(2);
-          final scale = targetH / 720.0;
-          final labelFontSize = (26 * scale).round().clamp(8, 300);
-          final labelBoxBorder = (6 * scale).round().clamp(1, 50);
-          vFilters.add("drawtext=text='$sanitizedLabel':x=w*$posX:y=h*$posY:fontsize=$labelFontSize:fontcolor=white:box=1:boxcolor=black@0.85:boxborderw=$labelBoxBorder");
+        // Picture-in-Picture (PiP) & Media Overlays
+        if (clip.imageOverlay.isEnabled) {
+          final pipFilter = PipCompilerService.generateFFmpegOverlayFilter(
+            clip.imageOverlay,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (pipFilter.isNotEmpty) {
+            vFilters.add(pipFilter);
+          }
         }
 
         // 8K AI Enhancement Filters (Upscaling, Sharpening, Denoising, HDR)
