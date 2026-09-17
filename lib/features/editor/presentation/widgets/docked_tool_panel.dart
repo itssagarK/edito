@@ -74,7 +74,7 @@ class DockedToolPanel extends StatelessWidget {
       case EditorTool.smooth:
         return 'Optical Flow & Motion Blur';
       case EditorTool.audio:
-        return 'Voice & Audio Mixer';
+        return 'Audio Restoration & Mixer';
       case EditorTool.enhance:
         return '8K AI Detail Upscaler';
       case EditorTool.text:

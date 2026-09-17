@@ -846,3 +846,60 @@ Professional broadcast-grade Picture-in-Picture windowing, gaming webcam facecam
    - Precision sliders for Scale, Position X/Y, Rotation, Opacity, Corner Radius, Border Width, and Shadow Blur.
    - Border stroke color palette chips.
    - Verified by comprehensive test suite in `test/pip_suite_test.dart` and `test/video_layout_and_assets_test.dart`.
+
+---
+
+## 24. Cinematic Multi-Track Audio Restoration Studio (v1.0.38 Release)
+
+DAW-grade audio restoration, ground loop hum cancellation, targeted sibilance suppression, wind/plosive sub-bass protection, and 3D acoustic room reverberation modeling:
+
+1. **Audio Restoration & Acoustic Data Model (`lib/features/audio/models/audio_effects_config.dart`)**:
+   - **Powerline Ground De-Hum Engine (`DeHumMode`)**:
+     - `off`: Bypassed.
+     - `hz50EuropeAsia`: $50\text{Hz}$ fundamental frequency plus harmonic overtones ($100\text{Hz}, 150\text{Hz}, 200\text{Hz}$) targeting electrical ground hums in UK, Europe, Asia, Africa, and Australia.
+     - `hz60NorthAmerica`: $60\text{Hz}$ fundamental frequency plus harmonic overtones ($120\text{Hz}, 180\text{Hz}, 240\text{Hz}$) targeting electrical ground hums in USA, Canada, and Americas.
+     - `custom`: Freely tunable fundamental notch frequency ($40\text{Hz} \to 120\text{Hz}$).
+     - `deHumGain`: Notch attenuation depth ($-12\text{dB} \to -48\text{dB}$, default $-32\text{dB}$).
+     - `deHumHarmonics`: Number of cascading harmonic notch filters ($1 \to 4$, default 3).
+   - **Targeted Frequency Sibilance De-Esser (`DeEsserMode`)**:
+     - `off`: De-esser disabled.
+     - `wideband`: Standard wideband sibilance compression centered at $6.5\text{kHz}$.
+     - `splitBandMale`: Low sibilance male speech centered at $5.0\text{kHz}$.
+     - `splitBandFemale`: Sharp sibilance female speech centered at $7.5\text{kHz}$.
+     - `crispMicrophone`: Condenser microphone splash centered at $9.0\text{kHz}$.
+     - `deEsserIntensity`: Attenuation compression ratio ($10\% \to 100\%$).
+     - `deEsserFrequency`: Precision center frequency ($3000\text{Hz} \to 10000\text{Hz}$).
+   - **Wind & Mic Plosive Sub-Bass Guard**:
+     - `isWindDePlosiveEnabled`: Steep 18dB/octave low-cut and dynamic low-frequency compressor targeting air turbulence and "p"/"b" microphone pops below $75\text{Hz}$.
+     - `dePlosiveIntensity`: Sub-bass dynamic compression ratio ($20\% \to 100\%$).
+   - **Studio Room Reverb & Acoustic Space Modeling (`RoomReverbPreset`)**:
+     - `none`: Completely dry direct sound.
+     - `studioVocalBooth`: Ultra-tight acoustic reflection booth (roomSize 0.12, damping 0.85, wet 0.08, dry 0.95).
+     - `intimateRoom`: Cozy home studio / living room (roomSize 0.28, damping 0.65, wet 0.15, dry 0.90).
+     - `warmAuditorium`: Medium theater / concert hall (roomSize 0.55, damping 0.45, wet 0.22, dry 0.85).
+     - `cinematicCathedral`: Expansive epic cavernous hall (roomSize 0.85, damping 0.30, wet 0.35, dry 0.75).
+     - `tunnelEcho`: Concrete reflective chamber with metallic ring (roomSize 0.75, damping 0.10, wet 0.40, dry 0.70).
+     - `custom`: Manually adjustable acoustic dimensions.
+
+2. **Dual-Engine Real-Time Compositor & Export Compiler**:
+   - **Skia 3D Acoustic Space Visualizer (`AcousticSpaceVisualizer`)**:
+     - Interactive wireframe 3D room box scaling dynamically with `reverbRoomSize`.
+     - Sound emitter origin and multi-bounce reflection vectors showing ray paths.
+     - Live acoustic readouts: Sabine RT60 reverberation decay time calculation, reflection density percentage, and damping ratio.
+     - Live floating HUD badges: `🏛️ REVERB (...)`, `🧹 DE-HUM (...)`, `🎙️ DE-ESSER (...)`, `🌬️ DE-PLOSIVE ACTIVE`.
+   - **Deterministic FFmpeg Export Compiler (`AIVoiceEnhancerService`)**:
+     - Cascading steep Q notch filter generation: `equalizer=f=$f:width_type=q:width=14:g=$g`.
+     - Wind/plosive filter: `highpass=f=75:p=2,compand=attacks=0.01:decays=0.08:points=...`.
+     - Targeted de-esser: `deesser=i=$i:m=0.5:f=$freqNorm:s=e`.
+     - Algorithmic Freeverb: `freeverb=roomsize=...:damping=...:wet=...:dry=...:width=...`.
+     - Limiter safeguard: `alimiter=limit=0.95:attack=5:release=50:asc=1` eliminating digital clipping.
+
+3. **5-Tab Studio UI Sheet & Toolbar Integration (`AudioMixerSheet`)**:
+   - Upgraded from 4 tabs to 5 pro studio tabs:
+     1. `🎚️ EQ`: Parametric 3-band tone equalizer with live Skia frequency response curve.
+     2. `🧹 Restore`: Powerline De-Hum, targeted De-Esser, Wind/Plosive guard, and AI noise suppression.
+     3. `🏛️ Acoustic`: Studio room reverb with 3D space visualizer and acoustic geometry sliders.
+     4. `🎙️ Vocal`: Vocal isolation, clean speech, and neural voice gating.
+     5. `🦆 Dynamics`: Smart sidechain auto-ducking, pre-amp booster, and voice modulation FX.
+   - Integrated into editor docked panel as 'Audio Restoration & Mixer'.
+   - Verified by comprehensive test suite in `test/audio_restoration_test.dart` and `test/audio_suite_test.dart`.

@@ -4,6 +4,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
 import '../../models/audio_effects_config.dart';
 import '../../services/ai_voice_enhancer_service.dart';
+import 'acoustic_space_visualizer.dart';
 import 'parametric_eq_curve_widget.dart';
 
 class AudioMixerSheet extends StatefulWidget {
@@ -44,7 +45,7 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
     super.initState();
     _volume = widget.clip.volume;
     _effects = widget.clip.audioEffects;
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -180,9 +181,23 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
     _applyChange();
   }
 
+  void _applyReverbPreset(RoomReverbPreset preset) {
+    setState(() {
+      _effects = AudioEffectsConfig.getReverbPreset(preset, base: _effects);
+    });
+    _applyChange();
+  }
+
+  void _applyDeHumMode(DeHumMode mode) {
+    setState(() {
+      _effects = AudioEffectsConfig.getDeHumConfig(mode, base: _effects);
+    });
+    _applyChange();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final double? sheetHeight = widget.isDocked ? null : MediaQuery.of(context).size.height * 0.58;
+    final double? sheetHeight = widget.isDocked ? null : MediaQuery.of(context).size.height * 0.62;
     final badge = AIVoiceEnhancerService.getAudioBadge(_effects);
 
     return Container(
@@ -257,7 +272,7 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
             ),
           ),
 
-          // Studio Navigation Tabs
+          // Studio Navigation Tabs (5 Tabs)
           Container(
             height: 38,
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -280,9 +295,10 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
               indicatorSize: TabBarIndicatorSize.tab,
               tabs: const [
                 Tab(text: '🎚️ EQ'),
+                Tab(text: '🧹 Restore'),
+                Tab(text: '🏛️ Acoustic'),
                 Tab(text: '🎙️ Vocal'),
-                Tab(text: '🦆 Ducking'),
-                Tab(text: '🔥 FX'),
+                Tab(text: '🦆 Dynamics'),
               ],
             ),
           ),
@@ -293,9 +309,10 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
               controller: _tabController,
               children: [
                 _buildEQTab(),
+                _buildRestoreTab(),
+                _buildAcousticTab(),
                 _buildVocalStudioTab(),
-                _buildDuckingLevelsTab(),
-                _buildVoiceFXTab(),
+                _buildDynamicsTab(),
               ],
             ),
           ),
@@ -318,7 +335,7 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Parametric 3-Band Equalizer', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                Text('Drag nodes on graph or use precision sliders', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                Text('Low Shelf, Mid Bell & High Shelf tone shaping', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
               ],
             ),
             Switch(
@@ -331,22 +348,13 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
             ),
           ],
         ),
+        const SizedBox(height: 8),
 
-        const SizedBox(height: 6),
-
-        // Interactive Frequency Response Canvas
-        ParametricEQCurveWidget(
-          config: _effects,
-          height: 150,
-          onChanged: (updated) {
-            setState(() => _effects = updated);
-            _applyChange();
-          },
-        ),
-
+        // Live Equalizer Curve Skia Plotter
+        ParametricEqCurveWidget(config: _effects),
         const SizedBox(height: 10),
 
-        // EQ Presets Carousel
+        // Preset Carousel
         SizedBox(
           height: 32,
           child: ListView.separated(
@@ -356,38 +364,29 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
             itemBuilder: (context, idx) {
               final preset = EqualizerPreset.values[idx];
               final isSelected = _effects.isEqualizerEnabled && _effects.equalizerPreset == preset;
-              return InkWell(
-                onTap: () => _applyEqualizerPreset(preset),
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.accent : AppColors.surfaceElevated,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isSelected ? AppColors.accent : AppColors.border),
-                  ),
-                  child: Center(
-                    child: Text(
-                      preset.label,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        color: isSelected ? Colors.black : Colors.white,
-                      ),
-                    ),
+              return ChoiceChip(
+                label: Text(
+                  preset.label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected ? Colors.black : Colors.white70,
                   ),
                 ),
+                selected: isSelected,
+                selectedColor: AppColors.accent,
+                backgroundColor: AppColors.surfaceElevated,
+                onSelected: (_) => _applyEqualizerPreset(preset),
               );
             },
           ),
         ),
-
         const SizedBox(height: 12),
 
-        // Precision Frequency & Gain Sliders
+        // Band 1: Low Shelf
         _buildSliderCard(
-          title: 'Low Shelf (Bass)',
-          valueText: '${_effects.eqLowGain > 0 ? "+" : ""}${_effects.eqLowGain.toStringAsFixed(1)} dB  @ ${_effects.eqLowFreq.toInt()} Hz',
+          title: 'Low Shelf (Bass Resonance)',
+          valueText: '${_effects.eqLowGain > 0 ? "+" : ""}${_effects.eqLowGain.toStringAsFixed(1)} dB @ ${_effects.eqLowFreq.toInt()} Hz',
           color: const Color(0xFF00E5FF),
           value: _effects.eqLowGain,
           min: -15.0,
@@ -403,13 +402,13 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
             _applyChange();
           },
         ),
-
         const SizedBox(height: 8),
 
+        // Band 2: Mid Bell
         _buildSliderCard(
-          title: 'Mid Bell (Presence)',
-          valueText: '${_effects.eqMidGain > 0 ? "+" : ""}${_effects.eqMidGain.toStringAsFixed(1)} dB  @ ${_effects.eqMidFreq >= 1000 ? "${(_effects.eqMidFreq / 1000).toStringAsFixed(1)}k" : _effects.eqMidFreq.toInt()} Hz',
-          color: const Color(0xFFFF9100),
+          title: 'Mid Bell (Speech Presence)',
+          valueText: '${_effects.eqMidGain > 0 ? "+" : ""}${_effects.eqMidGain.toStringAsFixed(1)} dB @ ${_effects.eqMidFreq.toInt()} Hz (Q: ${_effects.eqMidQ.toStringAsFixed(1)})',
+          color: AppColors.primary,
           value: _effects.eqMidGain,
           min: -15.0,
           max: 15.0,
@@ -424,13 +423,13 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
             _applyChange();
           },
         ),
-
         const SizedBox(height: 8),
 
+        // Band 3: High Shelf
         _buildSliderCard(
-          title: 'High Shelf (Air & Treble)',
-          valueText: '${_effects.eqHighGain > 0 ? "+" : ""}${_effects.eqHighGain.toStringAsFixed(1)} dB  @ ${(_effects.eqHighFreq / 1000).toStringAsFixed(1)}k Hz',
-          color: const Color(0xFFD500F9),
+          title: 'High Shelf (Treble Air & Crisp)',
+          valueText: '${_effects.eqHighGain > 0 ? "+" : ""}${_effects.eqHighGain.toStringAsFixed(1)} dB @ ${_effects.eqHighFreq.toInt()} Hz',
+          color: AppColors.accent,
           value: _effects.eqHighGain,
           min: -15.0,
           max: 15.0,
@@ -445,7 +444,6 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
             _applyChange();
           },
         ),
-
         const SizedBox(height: 8),
 
         // HPF / Low Cut Filter
@@ -473,7 +471,381 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
   }
 
   // ---------------------------------------------------------------------------
-  // TAB 2: VOCAL ISOLATION & DE-NOISE STUDIO
+  // TAB 2: AUDIO RESTORATION (DE-HUM, DE-ESSER, WIND/PLOSIVE GUARD)
+  // ---------------------------------------------------------------------------
+  Widget _buildRestoreTab() {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      children: [
+        // 1. Powerline Ground De-Hum Card
+        _buildCard(
+          title: '⚡ Powerline Ground Hum Remover',
+          subtitle: 'Eliminates 50Hz/60Hz ground loop hums and electrical harmonics',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 6,
+                children: DeHumMode.values.map((mode) {
+                  final isSelected = _effects.deHumMode == mode;
+                  return ChoiceChip(
+                    label: Text(
+                      mode.label,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected ? Colors.black : Colors.white70,
+                      ),
+                    ),
+                    selected: isSelected,
+                    selectedColor: AppColors.accent,
+                    backgroundColor: AppColors.surface,
+                    onSelected: (_) => _applyDeHumMode(mode),
+                  );
+                }).toList(),
+              ),
+              if (_effects.deHumMode != DeHumMode.off) ...[
+                const SizedBox(height: 10),
+                _buildSliderCard(
+                  title: 'Hum Attenuation Depth',
+                  valueText: '${_effects.deHumGain.toStringAsFixed(1)} dB',
+                  color: AppColors.accent,
+                  value: _effects.deHumGain,
+                  min: -48.0,
+                  max: -12.0,
+                  onChanged: (v) {
+                    setState(() => _effects = _effects.copyWith(deHumGain: v));
+                    _applyChange();
+                  },
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Text('Harmonic Notches: ', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    ...[1, 2, 3, 4].map((h) {
+                      final isSel = _effects.deHumHarmonics == h;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ChoiceChip(
+                          label: Text('${h}x (${(_effects.deHumMode.defaultFrequency * h).toInt()}Hz)', style: TextStyle(fontSize: 9, color: isSel ? Colors.black : Colors.white)),
+                          selected: isSel,
+                          selectedColor: AppColors.primary,
+                          backgroundColor: AppColors.surface,
+                          onSelected: (_) {
+                            setState(() => _effects = _effects.copyWith(deHumHarmonics: h));
+                            _applyChange();
+                          },
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+                if (_effects.deHumMode == DeHumMode.custom) ...[
+                  const SizedBox(height: 6),
+                  _buildSliderCard(
+                    title: 'Custom Base Frequency',
+                    valueText: '${_effects.customHumFreq.toInt()} Hz',
+                    color: AppColors.primaryLight,
+                    value: _effects.customHumFreq,
+                    min: 40.0,
+                    max: 120.0,
+                    onChanged: (v) {
+                      setState(() => _effects = _effects.copyWith(customHumFreq: v));
+                      _applyChange();
+                    },
+                  ),
+                ],
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // 2. Targeted Frequency Sibilance De-Esser
+        _buildCard(
+          title: '🎙️ Multi-Band Vocal De-Esser',
+          subtitle: 'Smooths harsh sibilance ("s", "sh", "ch") and condenser splash',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: DeEsserMode.values.map((mode) {
+                  final isSelected = _effects.deEsserMode == mode;
+                  return ChoiceChip(
+                    label: Text(
+                      mode.label,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected ? Colors.black : Colors.white70,
+                      ),
+                    ),
+                    selected: isSelected,
+                    selectedColor: const Color(0xFF00E5FF),
+                    backgroundColor: AppColors.surface,
+                    onSelected: (_) {
+                      setState(() {
+                        _effects = _effects.copyWith(
+                          deEsserMode: mode,
+                          deEsserIntensity: mode == DeEsserMode.off ? 0.0 : (_effects.deEsserIntensity > 0 ? _effects.deEsserIntensity : 0.65),
+                          deEsserFrequency: mode.targetFrequency,
+                        );
+                      });
+                      _applyChange();
+                    },
+                  );
+                }).toList(),
+              ),
+              if (_effects.deEsserMode != DeEsserMode.off) ...[
+                const SizedBox(height: 10),
+                _buildSliderCard(
+                  title: 'De-Esser Reduction Intensity',
+                  valueText: '${(_effects.deEsserIntensity * 100).toInt()}%',
+                  color: const Color(0xFF00E5FF),
+                  value: _effects.deEsserIntensity > 0 ? _effects.deEsserIntensity : 0.65,
+                  min: 0.1,
+                  max: 1.0,
+                  onChanged: (v) {
+                    setState(() => _effects = _effects.copyWith(deEsserIntensity: v));
+                    _applyChange();
+                  },
+                ),
+                const SizedBox(height: 6),
+                _buildSliderCard(
+                  title: 'Center Sibilance Frequency',
+                  valueText: '${(_effects.deEsserFrequency / 1000).toStringAsFixed(1)} kHz',
+                  color: AppColors.primary,
+                  value: _effects.deEsserFrequency,
+                  min: 3000.0,
+                  max: 10000.0,
+                  onChanged: (v) {
+                    setState(() => _effects = _effects.copyWith(deEsserFrequency: v));
+                    _applyChange();
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // 3. Wind & Mic Plosive Guard
+        _buildCard(
+          title: '🌬️ Wind & Mic Plosive Guard',
+          subtitle: 'Cancels aggressive microphone pop thumps ("p", "b") & wind turbulence',
+          badge: Switch(
+            value: _effects.isWindDePlosiveEnabled,
+            activeColor: AppColors.accent,
+            onChanged: (val) {
+              setState(() => _effects = _effects.copyWith(isWindDePlosiveEnabled: val));
+              _applyChange();
+            },
+          ),
+          child: _effects.isWindDePlosiveEnabled
+              ? Column(
+                  children: [
+                    const SizedBox(height: 4),
+                    _buildSliderCard(
+                      title: 'Guard Attenuation Depth',
+                      valueText: '${(_effects.dePlosiveIntensity * 100).toInt()}%',
+                      color: AppColors.accent,
+                      value: _effects.dePlosiveIntensity,
+                      min: 0.2,
+                      max: 1.0,
+                      onChanged: (v) {
+                        setState(() => _effects = _effects.copyWith(dePlosiveIntensity: v));
+                        _applyChange();
+                      },
+                    ),
+                  ],
+                )
+              : const SizedBox.shrink(),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // TAB 3: STUDIO ROOM REVERB & ACOUSTIC SIMULATION
+  // ---------------------------------------------------------------------------
+  Widget _buildAcousticTab() {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Studio Room Reverb (Freeverb)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                Text('Natural spatial reflections & acoustic space modeling', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+              ],
+            ),
+            Switch(
+              value: _effects.isReverbEnabled && _effects.reverbPreset != RoomReverbPreset.none,
+              activeColor: AppColors.accent,
+              onChanged: (val) {
+                if (val) {
+                  _applyReverbPreset(_effects.reverbPreset != RoomReverbPreset.none ? _effects.reverbPreset : RoomReverbPreset.intimateRoom);
+                } else {
+                  _applyReverbPreset(RoomReverbPreset.none);
+                }
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        // Live 3D Acoustic Space Wireframe Visualizer
+        AcousticSpaceVisualizer(config: _effects),
+        const SizedBox(height: 10),
+
+        // Reverb Presets Carousel
+        SizedBox(
+          height: 34,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: RoomReverbPreset.values.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 6),
+            itemBuilder: (context, idx) {
+              final preset = RoomReverbPreset.values[idx];
+              final isSelected = _effects.isReverbEnabled && _effects.reverbPreset == preset;
+              return ChoiceChip(
+                label: Text(
+                  preset.label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected ? Colors.black : Colors.white70,
+                  ),
+                ),
+                selected: isSelected,
+                selectedColor: AppColors.accent,
+                backgroundColor: AppColors.surfaceElevated,
+                onSelected: (_) => _applyReverbPreset(preset),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Acoustic Geometry Sliders
+        _buildSliderCard(
+          title: 'Virtual Room Size',
+          valueText: '${(_effects.reverbRoomSize * 100).toInt()}%',
+          color: AppColors.accent,
+          value: _effects.reverbRoomSize,
+          min: 0.05,
+          max: 1.0,
+          onChanged: (v) {
+            setState(() {
+              _effects = _effects.copyWith(
+                isReverbEnabled: true,
+                reverbPreset: RoomReverbPreset.custom,
+                reverbRoomSize: v,
+              );
+            });
+            _applyChange();
+          },
+        ),
+        const SizedBox(height: 8),
+
+        _buildSliderCard(
+          title: 'High-Frequency Damping',
+          valueText: '${(_effects.reverbDamping * 100).toInt()}%',
+          color: AppColors.primaryLight,
+          value: _effects.reverbDamping,
+          min: 0.0,
+          max: 1.0,
+          onChanged: (v) {
+            setState(() {
+              _effects = _effects.copyWith(
+                isReverbEnabled: true,
+                reverbPreset: RoomReverbPreset.custom,
+                reverbDamping: v,
+              );
+            });
+            _applyChange();
+          },
+        ),
+        const SizedBox(height: 8),
+
+        Row(
+          children: [
+            Expanded(
+              child: _buildSliderCard(
+                title: 'Wet Mix (Reverb)',
+                valueText: '${(_effects.reverbWetGain * 100).toInt()}%',
+                color: const Color(0xFF00E5FF),
+                value: _effects.reverbWetGain,
+                min: 0.0,
+                max: 0.50,
+                onChanged: (v) {
+                  setState(() {
+                    _effects = _effects.copyWith(
+                      isReverbEnabled: true,
+                      reverbPreset: RoomReverbPreset.custom,
+                      reverbWetGain: v,
+                    );
+                  });
+                  _applyChange();
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildSliderCard(
+                title: 'Dry Mix (Direct)',
+                valueText: '${(_effects.reverbDryGain * 100).toInt()}%',
+                color: Colors.white70,
+                value: _effects.reverbDryGain,
+                min: 0.40,
+                max: 1.0,
+                onChanged: (v) {
+                  setState(() {
+                    _effects = _effects.copyWith(
+                      isReverbEnabled: true,
+                      reverbPreset: RoomReverbPreset.custom,
+                      reverbDryGain: v,
+                    );
+                  });
+                  _applyChange();
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        _buildSliderCard(
+          title: 'Stereo Spatial Width',
+          valueText: '${(_effects.reverbWidth * 100).toInt()}%',
+          color: Colors.deepPurpleAccent,
+          value: _effects.reverbWidth,
+          min: 0.2,
+          max: 1.0,
+          onChanged: (v) {
+            setState(() {
+              _effects = _effects.copyWith(
+                isReverbEnabled: true,
+                reverbPreset: RoomReverbPreset.custom,
+                reverbWidth: v,
+              );
+            });
+            _applyChange();
+          },
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // TAB 4: VOCAL ISOLATION & DE-NOISE STUDIO
   // ---------------------------------------------------------------------------
   Widget _buildVocalStudioTab() {
     final clarityScore = AIVoiceEnhancerService.calculateClarityScore(_effects);
@@ -525,7 +897,6 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
             ],
           ),
         ),
-
         const SizedBox(height: 12),
 
         if (_effects.vocalIsolationMode == VocalIsolationMode.isolateVocals) ...[
@@ -544,22 +915,6 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
           const SizedBox(height: 12),
         ],
 
-        // De-Esser Card
-        _buildSliderCard(
-          title: 'Sibilance De-Esser (4k - 8k Hz)',
-          valueText: _effects.deEsserIntensity <= 0.01 ? 'OFF' : '${(_effects.deEsserIntensity * 100).toInt()}%',
-          color: const Color(0xFF00E5FF),
-          value: _effects.deEsserIntensity,
-          min: 0.0,
-          max: 1.0,
-          onChanged: (v) {
-            setState(() => _effects = _effects.copyWith(deEsserIntensity: v));
-            _applyChange();
-          },
-        ),
-
-        const SizedBox(height: 12),
-
         // AI Noise Reduction
         _buildSliderCard(
           title: 'Background Noise Reduction (FFT)',
@@ -573,7 +928,6 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
             _applyChange();
           },
         ),
-
         const SizedBox(height: 12),
 
         // Speech Presence & Clarity
@@ -589,16 +943,15 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
             _applyChange();
           },
         ),
-
         const SizedBox(height: 16),
       ],
     );
   }
 
   // ---------------------------------------------------------------------------
-  // TAB 3: DUCKING & LEVELS TAB
+  // TAB 5: DYNAMICS, DUCKING & VOICE MODULATION FX
   // ---------------------------------------------------------------------------
-  Widget _buildDuckingLevelsTab() {
+  Widget _buildDynamicsTab() {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       children: [
@@ -615,7 +968,6 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
             _applyChange();
           },
         ),
-
         const SizedBox(height: 12),
 
         // Smart Auto-Ducking Card
@@ -684,7 +1036,97 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
             ],
           ),
         ),
+        const SizedBox(height: 12),
 
+        // Loud Voice Booster Card
+        _buildCard(
+          title: '🔥 Loud Voice Booster & Pre-Amp',
+          subtitle: 'Dynamic compression & true-peak brickwall ceiling',
+          badge: Switch(
+            value: _effects.isLoudVoiceEnabled,
+            activeColor: AppColors.primary,
+            onChanged: (val) {
+              setState(() => _effects = _effects.copyWith(isLoudVoiceEnabled: val));
+              _applyChange();
+            },
+          ),
+          child: Column(
+            children: [
+              if (_effects.isLoudVoiceEnabled) ...[
+                const SizedBox(height: 4),
+                _buildSliderCard(
+                  title: 'Pre-Amp Boost Gain',
+                  valueText: '${(_effects.voiceBoost * 100).toInt()}% (+${((_effects.voiceBoost - 1.0) * 10.0).toStringAsFixed(1)}dB)',
+                  color: AppColors.primary,
+                  value: _effects.voiceBoost,
+                  min: 1.0,
+                  max: 2.5,
+                  onChanged: (v) {
+                    setState(() => _effects = _effects.copyWith(voiceBoost: v));
+                    _applyChange();
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Voice Modulation Presets
+        _buildCard(
+          title: '🎭 Voice Modulation & Character FX',
+          subtitle: 'Stylize voice pitch, formants & robot/broadcast tone',
+          child: Column(
+            children: [
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: VoiceModulationPreset.values.map((preset) {
+                  final isSelected = _effects.modulationPreset == preset;
+                  return ChoiceChip(
+                    label: Text(
+                      preset.label,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected ? Colors.black : Colors.white70,
+                      ),
+                    ),
+                    selected: isSelected,
+                    selectedColor: AppColors.primaryLight,
+                    backgroundColor: AppColors.surface,
+                    onSelected: (_) {
+                      setState(() {
+                        _effects = _effects.copyWith(
+                          modulationPreset: preset,
+                          pitchShiftSemitones: preset == VoiceModulationPreset.deepNarrator
+                              ? -4.0
+                              : (preset == VoiceModulationPreset.crystalClear ? 2.0 : 0.0),
+                        );
+                      });
+                      _applyChange();
+                    },
+                  );
+                }).toList(),
+              ),
+              if (_effects.modulationPreset == VoiceModulationPreset.customPitch) ...[
+                const SizedBox(height: 10),
+                _buildSliderCard(
+                  title: 'Pitch Shift (Semitones)',
+                  valueText: '${_effects.pitchShiftSemitones > 0 ? "+" : ""}${_effects.pitchShiftSemitones.toStringAsFixed(1)} st',
+                  color: Colors.orangeAccent,
+                  value: _effects.pitchShiftSemitones,
+                  min: -12.0,
+                  max: 12.0,
+                  onChanged: (v) {
+                    setState(() => _effects = _effects.copyWith(pitchShiftSemitones: v));
+                    _applyChange();
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
         const SizedBox(height: 12),
 
         // Fade Envelopes Card
@@ -727,106 +1169,7 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
   }
 
   // ---------------------------------------------------------------------------
-  // TAB 4: VOICE FX & BOOSTER
-  // ---------------------------------------------------------------------------
-  Widget _buildVoiceFXTab() {
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      children: [
-        // Loud Voice Booster Card
-        _buildCard(
-          title: '🔥 Loud Voice Booster & Pre-Amp',
-          subtitle: 'Dynamic compression & true-peak brickwall ceiling',
-          badge: Switch(
-            value: _effects.isLoudVoiceEnabled,
-            activeColor: AppColors.primary,
-            onChanged: (val) {
-              setState(() => _effects = _effects.copyWith(isLoudVoiceEnabled: val));
-              _applyChange();
-            },
-          ),
-          child: Column(
-            children: [
-              if (_effects.isLoudVoiceEnabled) ...[
-                const SizedBox(height: 4),
-                _buildSliderCard(
-                  title: 'Gain Multiplier',
-                  valueText: '${(_effects.voiceBoost * 100).toInt()}% (+${((_effects.voiceBoost - 1.0) * 10).toStringAsFixed(1)}dB)',
-                  color: AppColors.primary,
-                  value: _effects.voiceBoost,
-                  min: 1.0,
-                  max: 2.5,
-                  onChanged: (v) {
-                    setState(() => _effects = _effects.copyWith(voiceBoost: v));
-                    _applyChange();
-                  },
-                ),
-              ],
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        // Voice Character Presets
-        _buildCard(
-          title: '🎙️ Voice Character & Modulation Presets',
-          subtitle: 'Transform timbre, formant, and harmonic depth',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: VoiceModulationPreset.values.map((preset) {
-                  final isSelected = _effects.modulationPreset == preset;
-                  return ChoiceChip(
-                    label: Text(preset.label, style: TextStyle(fontSize: 11, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
-                    selected: isSelected,
-                    selectedColor: AppColors.accent,
-                    backgroundColor: AppColors.surface,
-                    labelStyle: TextStyle(color: isSelected ? Colors.black : AppColors.textSecondary),
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _effects = _effects.copyWith(modulationPreset: preset);
-                        });
-                        _applyChange();
-                      }
-                    },
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _effects.modulationPreset.description,
-                style: const TextStyle(fontSize: 11, color: AppColors.textMuted, fontStyle: FontStyle.italic),
-              ),
-              if (_effects.modulationPreset == VoiceModulationPreset.customPitch) ...[
-                const SizedBox(height: 12),
-                _buildSliderCard(
-                  title: 'Custom Pitch Shift',
-                  valueText: '${_effects.pitchShiftSemitones > 0 ? "+" : ""}${_effects.pitchShiftSemitones.toStringAsFixed(1)} st',
-                  color: AppColors.accent,
-                  value: _effects.pitchShiftSemitones,
-                  min: -12.0,
-                  max: 12.0,
-                  onChanged: (v) {
-                    setState(() => _effects = _effects.copyWith(pitchShiftSemitones: v));
-                    _applyChange();
-                  },
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // REUSABLE UI CARD & SLIDER HELPERS
+  // SHARED UI HELPERS
   // ---------------------------------------------------------------------------
   Widget _buildCard({
     required String title,
@@ -835,7 +1178,7 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
     required Widget child,
   }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surfaceElevated,
         borderRadius: BorderRadius.circular(12),
@@ -851,7 +1194,7 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 2),
                     Text(subtitle, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
                   ],
@@ -877,7 +1220,7 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
     required ValueChanged<double> onChanged,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.surfaceElevated,
         borderRadius: BorderRadius.circular(10),
@@ -889,15 +1232,14 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-              Text(valueText, style: AppTypography.timecode.copyWith(fontSize: 11, color: color)),
+              Text(title, style: const TextStyle(fontSize: 11, color: Colors.white70)),
+              Text(valueText, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
             ],
           ),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              trackHeight: 3.0,
+              trackHeight: 2.5,
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
             ),
             child: Slider(
               value: value.clamp(min, max),

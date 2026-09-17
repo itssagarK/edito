@@ -560,7 +560,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   }
 
   void _openAudioToolsModal() {
-    _openDockedTool(EditorTool.audio, trackType: TrackType.audio, purpose: 'Audio');
+    _openDockedTool(EditorTool.audio, trackType: TrackType.audio, purpose: 'Audio Restoration & Mixer');
   }
 
   void _openEnhancementModal() {
