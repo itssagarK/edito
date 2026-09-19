@@ -1030,3 +1030,35 @@ Directly inspired by CapCut Pro's AmazingEngine `LogWheel.zip` / `PrimaryWheel.z
    - Resolved `num` to `int` assignment in `TransitionCompilerService.compileTimelineTransitions`.
    - Updated missing required named parameters (`trackId`, `name`, `sourceInMs`, `sourceOutMs`) across `auto_reframe_suite_test.dart`, `beats_suite_test.dart`, `kinetic_captions_test.dart`, and `tts_suite_test.dart`.
    - Created comprehensive test suite in `test/color_wheels_and_contextual_dock_test.dart` covering 100% of models, compiler, presets, and widget interactions.
+
+---
+
+## 28. Magnetic Multi-Track Ripple Timeline with Audio Waveforms & Snap Guidelines (v1.0.42 Release)
+
+Directly inspired by CapCut Creator's native C++ NLE timeline (`libcccreator.so`) and ByteDance multi-track UI:
+
+1. **Magnetic Ripple Editing Mode (`InteractiveTimeline` & `TimelineEditingService`)**:
+   - **Corner Header Ripple Toggle**:
+     - One-tap toggle button in the timeline top-left corner (`[🧲 Ripple] / [🔓 Free]`).
+     - **Magnetic Ripple ON (Default)**:
+       - Deleting a clip automatically ripples subsequent clips to the left, closing empty gaps.
+       - Trimming clip head or tail automatically shifts subsequent clips on the track to maintain contiguous, gapless flow.
+     - **Freeform Gaps Mode (Free)**:
+       - Allows free placement with empty spaces/gaps on tracks for specialized pacing.
+   - **Service Implementation**:
+     - Updated `TimelineEditingService.trimClipHead` and `trimClipTail` with `bool ripple = false`.
+
+2. **Magnetic Snap Guidelines Engine (`SnapResult` & `calculateDetailedSnap`)**:
+   - **Smart Snap Targets**:
+     - Timeline Start (`0s`) and Project End.
+     - Playhead needle position (`playheadMs`).
+     - Clip Boundaries (Clip Head & Clip Tail across all tracks).
+     - Rhythmic Beat Markers on clips with active beat analysis (`hasBeats && snapToBeats`).
+   - **Real-Time Vertical Glowing Guideline Overlay**:
+     - Renders a glowing accent line (`BoxShadow` with cyan glow) with an indicator tag (`"🧲 Playhead"`, `"🧲 Clip Head"`, `"🧲 Beat"`) during dragging, trimming, and scrubbing.
+
+3. **Audio Waveform Visualizer on Video Clips (`TimelineClipWidget`)**:
+   - In addition to dedicated audio tracks, video clips with audio (`!clip.isMuted && clip.volume > 0.05`) now render a subtle bottom amplitude waveform overlay (`WaveformPainter`).
+   - Enables razor-sharp dialogue cuts and musical synchronization directly on the primary video track without detaching audio.
+   - Verified by comprehensive test suite in `test/magnetic_timeline_test.dart`.
+

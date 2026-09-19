@@ -74,6 +74,23 @@ class TimelineClipWidget extends StatelessWidget {
                     ),
                   ),
                 ),
+              )
+            else if (trackType == TrackType.video && !clip.isMuted && clip.volume > 0.05)
+              // Subtle audio waveform strip at bottom of video clips (CapCut Pro style)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: 18,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(6)),
+                  child: CustomPaint(
+                    painter: WaveformPainter(
+                      color: Colors.white.withOpacity(0.35),
+                      seed: clip.id.hashCode,
+                    ),
+                  ),
+                ),
               ),
 
             // Rhythmic Beat Markers overlay

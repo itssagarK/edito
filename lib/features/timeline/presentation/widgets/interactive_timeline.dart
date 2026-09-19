@@ -43,7 +43,9 @@ class InteractiveTimeline extends StatefulWidget {
 class _InteractiveTimelineState extends State<InteractiveTimeline> {
   final ScrollController _horizontalScrollController = ScrollController();
   double _baseZoomScale = 1.0;
-  bool _isSnapping = false;
+  bool _isRippleEnabled = true;
+  int? _activeSnapGuideMs;
+  String? _activeSnapTarget;
 
   @override
   void dispose() {
@@ -100,19 +102,51 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
                 width: AppConstants.timelineHeaderWidth,
                 child: Column(
                   children: [
-                    // Corner Header
-                    Container(
-                      height: 32,
-                      decoration: const BoxDecoration(
-                        color: AppColors.surfaceElevated,
-                        border: Border(
-                          top: BorderSide(color: AppColors.border),
-                          bottom: BorderSide(color: AppColors.border),
-                          right: BorderSide(color: AppColors.border),
+                    // Corner Header: Magnetic Ripple Toggle
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _isRippleEnabled = !_isRippleEnabled;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(_isRippleEnabled ? '🧲 Magnetic Ripple: ON' : '🔓 Freeform Gaps: ON'),
+                            duration: const Duration(milliseconds: 600),
+                            backgroundColor: AppColors.surfaceElevated,
+                          ),
+                        );
+                      },
+                      child: Container(
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: _isRippleEnabled ? AppColors.accent.withOpacity(0.15) : AppColors.surfaceElevated,
+                          border: const Border(
+                            top: BorderSide(color: AppColors.border),
+                            bottom: BorderSide(color: AppColors.border),
+                            right: BorderSide(color: AppColors.border),
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.linear_scale,
+                              size: 13,
+                              color: _isRippleEnabled ? AppColors.accent : AppColors.textMuted,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              _isRippleEnabled ? 'Ripple' : 'Free',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: _isRippleEnabled ? AppColors.accent : AppColors.textMuted,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      alignment: Alignment.center,
-                      child: Text('Tracks', style: AppTypography.labelSmall),
                     ),
                     // Track Control Headers
                     ...widget.project.tracks.map((track) {
@@ -327,6 +361,51 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
                           ),
                         ),
 
+                        // Magnetic Snap Vertical Glowing Guideline
+                        if (_activeSnapGuideMs != null)
+                          Positioned(
+                            left: (_activeSnapGuideMs! / 1000.0) * pps,
+                            top: 0,
+                            bottom: 0,
+                            child: IgnorePointer(
+                              child: Stack(
+                                clipBehavior: ui.Clip.none,
+                                children: [
+                                  Container(
+                                    width: 2.0,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.accent,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.accent.withOpacity(0.75),
+                                          blurRadius: 6,
+                                          spreadRadius: 1,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (_activeSnapTarget != null)
+                                    Positioned(
+                                      top: 2,
+                                      left: 4,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.surfaceElevated,
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: AppColors.accent, width: 0.8),
+                                        ),
+                                        child: Text(
+                                          '🧲 ${_activeSnapTarget!}',
+                                          style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.accent),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+
                         // Floating Context Bar when clip is selected
                         if (widget.selectedClipId != null)
                           Positioned(
@@ -359,14 +438,30 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
 
   void _handleRulerTap(double localX, double pps) {
     final rawMs = ((localX / pps) * 1000).toInt();
-    final snappedMs = TimelineEditingService.calculateSnapTime(widget.project, rawMs);
-    widget.onSeek(snappedMs);
+    final snap = TimelineEditingService.calculateDetailedSnap(
+      widget.project,
+      rawMs,
+      playheadMs: widget.playheadPositionMs,
+    );
+    setState(() {
+      _activeSnapGuideMs = snap.isSnapped ? snap.snappedTimeMs : null;
+      _activeSnapTarget = snap.snapTarget;
+    });
+    widget.onSeek(snap.snappedTimeMs);
   }
 
   void _handleRulerDrag(double localX, double pps) {
     final rawMs = ((localX / pps) * 1000).toInt();
-    final snappedMs = TimelineEditingService.calculateSnapTime(widget.project, rawMs);
-    widget.onSeek(snappedMs);
+    final snap = TimelineEditingService.calculateDetailedSnap(
+      widget.project,
+      rawMs,
+      playheadMs: widget.playheadPositionMs,
+    );
+    setState(() {
+      _activeSnapGuideMs = snap.isSnapped ? snap.snappedTimeMs : null;
+      _activeSnapTarget = snap.snapTarget;
+    });
+    widget.onSeek(snap.snappedTimeMs);
   }
 
   void _handleTrimLeft(String clipId, double dx, double pps) {
@@ -375,7 +470,22 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
       for (final clip in track.clips) {
         if (clip.id == clipId) {
           final newStart = clip.startTimeMs + deltaMs;
-          final updated = TimelineEditingService.trimClipHead(widget.project, clipId, newStart);
+          final snap = TimelineEditingService.calculateDetailedSnap(
+            widget.project,
+            newStart,
+            ignoreClipId: clipId,
+            playheadMs: widget.playheadPositionMs,
+          );
+          setState(() {
+            _activeSnapGuideMs = snap.isSnapped ? snap.snappedTimeMs : null;
+            _activeSnapTarget = snap.snapTarget;
+          });
+          final updated = TimelineEditingService.trimClipHead(
+            widget.project,
+            clipId,
+            snap.snappedTimeMs,
+            ripple: _isRippleEnabled,
+          );
           if (updated != null) {
             widget.onProjectMutated(updated);
           }
@@ -391,7 +501,22 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
       for (final clip in track.clips) {
         if (clip.id == clipId) {
           final newEnd = clip.startTimeMs + clip.durationMs + deltaMs;
-          final updated = TimelineEditingService.trimClipTail(widget.project, clipId, newEnd);
+          final snap = TimelineEditingService.calculateDetailedSnap(
+            widget.project,
+            newEnd,
+            ignoreClipId: clipId,
+            playheadMs: widget.playheadPositionMs,
+          );
+          setState(() {
+            _activeSnapGuideMs = snap.isSnapped ? snap.snappedTimeMs : null;
+            _activeSnapTarget = snap.snapTarget;
+          });
+          final updated = TimelineEditingService.trimClipTail(
+            widget.project,
+            clipId,
+            snap.snappedTimeMs,
+            ripple: _isRippleEnabled,
+          );
           if (updated != null) {
             widget.onProjectMutated(updated);
           }
@@ -407,12 +532,17 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
       for (final clip in track.clips) {
         if (clip.id == clipId) {
           final newStart = (clip.startTimeMs + deltaMs).clamp(0, 3600000);
-          final snappedStart = TimelineEditingService.calculateSnapTime(
+          final snap = TimelineEditingService.calculateDetailedSnap(
             widget.project,
             newStart,
             ignoreClipId: clipId,
+            playheadMs: widget.playheadPositionMs,
           );
-          final updated = TimelineEditingService.moveClip(widget.project, clipId, trackId, snappedStart);
+          setState(() {
+            _activeSnapGuideMs = snap.isSnapped ? snap.snappedTimeMs : null;
+            _activeSnapTarget = snap.snapTarget;
+          });
+          final updated = TimelineEditingService.moveClip(widget.project, clipId, trackId, snap.snappedTimeMs);
           widget.onProjectMutated(updated);
           return;
         }
@@ -499,7 +629,11 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
 
   void _handleDeleteSelectedClip() {
     if (widget.selectedClipId == null) return;
-    final updated = TimelineEditingService.deleteClip(widget.project, widget.selectedClipId!, ripple: true);
+    final updated = TimelineEditingService.deleteClip(
+      widget.project,
+      widget.selectedClipId!,
+      ripple: _isRippleEnabled,
+    );
     widget.onSelectClip(null);
     widget.onProjectMutated(updated);
   }
@@ -510,6 +644,7 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
       widget.project,
       widget.selectedClipId!,
       widget.playheadPositionMs,
+      ripple: _isRippleEnabled,
     );
     if (updated != null) {
       widget.onProjectMutated(updated);
@@ -522,6 +657,7 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
       widget.project,
       widget.selectedClipId!,
       widget.playheadPositionMs,
+      ripple: _isRippleEnabled,
     );
     if (updated != null) {
       widget.onProjectMutated(updated);

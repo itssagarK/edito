@@ -72,8 +72,20 @@ class TimelineEditingService {
     return project.copyWith(tracks: updatedTracks).recalculateDuration();
   }
 
-  /// Trims the head (start) of a clip
-  static Project? trimClipHead(Project project, String clipId, int newStartMs) {
+class SnapResult {
+  final int snappedTimeMs;
+  final bool isSnapped;
+  final String? snapTarget;
+
+  const SnapResult({
+    required this.snappedTimeMs,
+    required this.isSnapped,
+    this.snapTarget,
+  });
+}
+
+  /// Trims the head (start) of a clip, optionally rippling subsequent clips
+  static Project? trimClipHead(Project project, String clipId, int newStartMs, {bool ripple = false}) {
     if (newStartMs < 0) return null;
 
     for (final track in project.tracks) {
@@ -89,26 +101,44 @@ class TimelineEditingService {
           if (newSourceInMs < 0 || newSourceInMs >= clip.sourceOutMs) return null;
 
           final updatedClip = clip.copyWith(
-            startTimeMs: newStartMs,
+            startTimeMs: ripple ? clip.startTimeMs : newStartMs,
             durationMs: newDurationMs,
             sourceInMs: newSourceInMs,
           );
 
-          return project.updateClip(updatedClip);
+          if (!ripple) {
+            return project.updateClip(updatedClip);
+          }
+
+          final updatedClips = <Clip>[];
+          for (final c in track.clips) {
+            if (c.id == clipId) {
+              updatedClips.add(updatedClip);
+            } else if (c.startTimeMs > clip.startTimeMs) {
+              updatedClips.add(c.copyWith(startTimeMs: (c.startTimeMs - deltaMs).clamp(0, 3600000)));
+            } else {
+              updatedClips.add(c);
+            }
+          }
+
+          final updatedTrack = track.copyWith(clips: updatedClips);
+          final updatedTracks = project.tracks.map((t) => t.id == updatedTrack.id ? updatedTrack : t).toList();
+          return project.copyWith(tracks: updatedTracks).recalculateDuration();
         }
       }
     }
     return null;
   }
 
-  /// Trims the tail (end) of a clip
-  static Project? trimClipTail(Project project, String clipId, int newEndMs) {
+  /// Trims the tail (end) of a clip, optionally rippling subsequent clips
+  static Project? trimClipTail(Project project, String clipId, int newEndMs, {bool ripple = false}) {
     for (final track in project.tracks) {
       for (final clip in track.clips) {
         if (clip.id == clipId) {
           if (newEndMs <= clip.startTimeMs + minClipDurationMs) return null;
 
           final newDurationMs = newEndMs - clip.startTimeMs;
+          final deltaDuration = newDurationMs - clip.durationMs;
           final newSourceOutMs = clip.sourceInMs + (newDurationMs * clip.speed).round();
 
           final updatedClip = clip.copyWith(
@@ -116,7 +146,24 @@ class TimelineEditingService {
             sourceOutMs: newSourceOutMs,
           );
 
-          return project.updateClip(updatedClip);
+          if (!ripple) {
+            return project.updateClip(updatedClip);
+          }
+
+          final updatedClips = <Clip>[];
+          for (final c in track.clips) {
+            if (c.id == clipId) {
+              updatedClips.add(updatedClip);
+            } else if (c.startTimeMs > clip.startTimeMs) {
+              updatedClips.add(c.copyWith(startTimeMs: (c.startTimeMs + deltaDuration).clamp(0, 3600000)));
+            } else {
+              updatedClips.add(c);
+            }
+          }
+
+          final updatedTrack = track.copyWith(clips: updatedClips);
+          final updatedTracks = project.tracks.map((t) => t.id == updatedTrack.id ? updatedTrack : t).toList();
+          return project.copyWith(tracks: updatedTracks).recalculateDuration();
         }
       }
     }
@@ -227,6 +274,69 @@ class TimelineEditingService {
     return project.copyWith(tracks: updatedTracks).recalculateDuration();
   }
 
+  /// Calculates magnetic snapping to clip boundaries, playhead, and rhythm beat markers with detailed metadata
+  static SnapResult calculateDetailedSnap(
+    Project project,
+    int targetTimeMs, {
+    int thresholdMs = 150,
+    String? ignoreClipId,
+    List<int>? customSnapPoints,
+    int? playheadMs,
+  }) {
+    int closestPoint = targetTimeMs;
+    int minDiff = thresholdMs + 1;
+    String? snapTarget;
+
+    final snapPoints = <int, String>{
+      0: 'Start (0s)',
+      if (project.durationMs > 0) project.durationMs: 'Project End',
+    };
+
+    if (playheadMs != null) {
+      snapPoints[playheadMs] = 'Playhead';
+    }
+
+    if (customSnapPoints != null) {
+      for (final p in customSnapPoints) {
+        snapPoints[p] = 'Marker';
+      }
+    }
+
+    for (final track in project.tracks) {
+      for (final clip in track.clips) {
+        if (clip.id == ignoreClipId) continue;
+        snapPoints[clip.startTimeMs] = 'Clip Head';
+        snapPoints[clip.startTimeMs + clip.durationMs] = 'Clip Tail';
+
+        // Magnetic Snapping to Beat Markers
+        if (clip.beatConfig.hasBeats && clip.beatConfig.snapToBeats) {
+          for (final beatMs in clip.beatConfig.beatTimestampsMs) {
+            final absBeatMs = clip.startTimeMs + beatMs;
+            if (absBeatMs >= clip.startTimeMs && absBeatMs <= clip.startTimeMs + clip.durationMs) {
+              snapPoints[absBeatMs] = 'Beat';
+            }
+          }
+        }
+      }
+    }
+
+    for (final entry in snapPoints.entries) {
+      final diff = (targetTimeMs - entry.key).abs();
+      if (diff <= thresholdMs && diff < minDiff) {
+        minDiff = diff;
+        closestPoint = entry.key;
+        snapTarget = entry.value;
+      }
+    }
+
+    final isSnapped = minDiff <= thresholdMs;
+    return SnapResult(
+      snappedTimeMs: isSnapped ? closestPoint : targetTimeMs,
+      isSnapped: isSnapped,
+      snapTarget: isSnapped ? snapTarget : null,
+    );
+  }
+
   /// Calculates magnetic snapping to clip start/end boundaries, playhead, and rhythm beat markers
   static int calculateSnapTime(
     Project project,
@@ -235,41 +345,13 @@ class TimelineEditingService {
     String? ignoreClipId,
     List<int>? customSnapPoints,
   }) {
-    int closestPoint = targetTimeMs;
-    int minDiff = thresholdMs + 1;
-
-    final snapPoints = <int>{0, project.durationMs};
-    if (customSnapPoints != null) {
-      snapPoints.addAll(customSnapPoints);
-    }
-
-    for (final track in project.tracks) {
-      for (final clip in track.clips) {
-        if (clip.id == ignoreClipId) continue;
-        snapPoints.add(clip.startTimeMs);
-        snapPoints.add(clip.startTimeMs + clip.durationMs);
-
-        // Magnetic Snapping to Beat Markers
-        if (clip.beatConfig.hasBeats && clip.beatConfig.snapToBeats) {
-          for (final beatMs in clip.beatConfig.beatTimestampsMs) {
-            final absBeatMs = clip.startTimeMs + beatMs;
-            if (absBeatMs >= clip.startTimeMs && absBeatMs <= clip.startTimeMs + clip.durationMs) {
-              snapPoints.add(absBeatMs);
-            }
-          }
-        }
-      }
-    }
-
-    for (final point in snapPoints) {
-      final diff = (targetTimeMs - point).abs();
-      if (diff <= thresholdMs && diff < minDiff) {
-        minDiff = diff;
-        closestPoint = point;
-      }
-    }
-
-    return closestPoint;
+    return calculateDetailedSnap(
+      project,
+      targetTimeMs,
+      thresholdMs: thresholdMs,
+      ignoreClipId: ignoreClipId,
+      customSnapPoints: customSnapPoints,
+    ).snappedTimeMs;
   }
 
   /// Inserts a freeze frame clip at playhead position, splitting the clip and rippling subsequent clips
