@@ -101,6 +101,7 @@ void main() {
               Clip(
                 id: 'c_vid',
                 assetId: 'a_vid',
+                trackId: 't_video',
                 startTimeMs: 0,
                 durationMs: 10000,
                 sourceInMs: 0,
@@ -134,12 +135,12 @@ void main() {
       final insertedClip = audioTracks.first.clips.firstWhere((c) => c.id.startsWith('tts_clip_'));
       expect(insertedClip.startTimeMs, 2000);
       expect(insertedClip.durationMs, greaterThan(1000));
-      expect(insertedClip.audioEffects.aiVoiceBoost, true);
+      expect(insertedClip.audioEffects.isVoiceEnhancerEnabled, true);
 
       // Verify asset added
       final ttsAsset = updatedProject.assets.firstWhere((a) => a.id == insertedClip.assetId);
       expect(ttsAsset.type, MediaType.audio);
-      expect(ttsAsset.waveform?.isNotEmpty, true);
+      expect(ttsAsset.durationMs, greaterThan(1000));
     });
 
     test('generateSynchronizedCaptions chunks script into chronological timed captions', () {

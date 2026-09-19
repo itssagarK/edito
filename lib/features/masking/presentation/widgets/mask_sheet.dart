@@ -322,7 +322,7 @@ class _MaskSheetState extends State<MaskSheet> with SingleTickerProviderStateMix
 
   Widget _buildAdjustTab() {
     if (!_config.isActive) {
-      return const Center(
+      return Center(
         child: Text('Select a mask shape above to adjust settings', style: AppTypography.caption),
       );
     }
@@ -382,7 +382,7 @@ class _MaskSheetState extends State<MaskSheet> with SingleTickerProviderStateMix
 
   Widget _buildTransformTab() {
     if (!_config.isActive) {
-      return const Center(
+      return Center(
         child: Text('Select a mask shape above to adjust transforms', style: AppTypography.caption),
       );
     }

@@ -81,7 +81,6 @@ class TTSGenerationService {
       speechRate: config.speechRate,
     );
 
-    final waveform = generateRealisticWaveform(durationMs);
     final uuid = const Uuid().v4();
     final assetId = 'tts_asset_${uuid.substring(0, 8)}';
     final fileName = 'Voiceover_${config.voice.displayName.split(' ').first}.m4a';
@@ -92,20 +91,6 @@ class TTSGenerationService {
       fileName: fileName,
       type: MediaType.audio,
       durationMs: durationMs,
-      waveform: waveform,
-    );
-
-    final newClip = Clip(
-      id: 'tts_clip_${uuid.substring(0, 8)}',
-      assetId: assetId,
-      startTimeMs: startTimeMs,
-      durationMs: durationMs,
-      sourceInMs: 0,
-      sourceOutMs: durationMs,
-      audioEffects: AudioEffectsConfig(
-        volume: config.volumeBoost,
-        aiVoiceBoost: true,
-      ),
     );
 
     // Find first audio track or create a dedicated voiceover track
@@ -119,13 +104,27 @@ class TTSGenerationService {
     targetTrack ??= project.tracks.firstWhere(
       (t) => t.type == TrackType.audio,
       orElse: () {
-        final newTrack = Track(
+        return Track(
           id: 'track_tts_${uuid.substring(0, 8)}',
           type: TrackType.audio,
           name: '🎙️ AI Voiceover',
         );
-        return newTrack;
       },
+    );
+
+    final newClip = Clip(
+      id: 'tts_clip_${uuid.substring(0, 8)}',
+      assetId: assetId,
+      trackId: targetTrack.id,
+      startTimeMs: startTimeMs,
+      durationMs: durationMs,
+      sourceInMs: 0,
+      sourceOutMs: durationMs,
+      audioEffects: AudioEffectsConfig(
+        isLoudVoiceEnabled: true,
+        voiceBoost: config.volumeBoost,
+        isVoiceEnhancerEnabled: true,
+      ),
     );
 
     final updatedClips = [...targetTrack.clips, newClip]
@@ -179,7 +178,7 @@ class TTSGenerationService {
           text: chunks[i],
           startTimeMs: chunkStart,
           durationMs: chunkDuration,
-          preset: CaptionPreset.tiktokViral,
+          style: CaptionPreset.tiktokViral.createStyle(chunks[i]),
         ),
       );
     }
