@@ -242,7 +242,7 @@ void main() {
         clips: [musicClip],
       );
 
-      const project = Project(
+      final project = Project(
         id: 'p-ducking',
         name: 'Ducking Test',
         durationMs: 10000,
@@ -324,7 +324,7 @@ void main() {
       const track1 = Track(id: 't-speech', name: 'Speech', type: TrackType.video, clips: [speechClip]);
       const track2 = Track(id: 't-music', name: 'Music', type: TrackType.audio, clips: [musicClip]);
 
-      const project = Project(
+      final project = Project(
         id: 'p-audio-export',
         name: 'Audio Export Test',
         durationMs: 5000,

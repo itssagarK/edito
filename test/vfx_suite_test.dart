@@ -165,7 +165,7 @@ void main() {
         clips: [vfxClip],
       );
 
-      const project = Project(
+      final project = Project(
         id: 'p-vfx',
         name: 'VFX Export Test',
         durationMs: 5000,

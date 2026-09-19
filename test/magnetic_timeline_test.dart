@@ -139,7 +139,7 @@ void main() {
         clips: [clip1, clip2],
       );
 
-      project = const Project(
+      project = Project(
         id: 'p1',
         title: 'Ripple Project',
         durationMs: 9000,
@@ -236,7 +236,7 @@ void main() {
         sourceOutMs: 4000,
       );
 
-      final project = const Project(
+      final project = Project(
         id: 'p1',
         title: 'Interactive Test',
         durationMs: 4000,

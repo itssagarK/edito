@@ -579,7 +579,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   }
 
   void _openChromaKeyModal() {
-    _openDockedTool(EditorTool.chromaKey, trackType: TrackType.video, purpose: 'Green Screen');
+    _openDockedTool(EditorTool.chromaKey, trackType: TrackType.video, purpose: 'Smart Cutout');
   }
 
   void _openImageEditorModal() {

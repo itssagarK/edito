@@ -138,7 +138,7 @@ void main() {
         clips: [chromaClip],
       );
 
-      const project = Project(
+      final project = Project(
         id: 'p-chroma',
         name: 'Chroma Export Test',
         durationMs: 5000,

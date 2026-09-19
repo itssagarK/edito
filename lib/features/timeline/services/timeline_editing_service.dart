@@ -3,6 +3,18 @@ import '../../../models/clip.dart';
 import '../../../models/project.dart';
 import '../../../models/track.dart';
 
+class SnapResult {
+  final int snappedTimeMs;
+  final bool isSnapped;
+  final String? snapTarget;
+
+  const SnapResult({
+    required this.snappedTimeMs,
+    required this.isSnapped,
+    this.snapTarget,
+  });
+}
+
 class TimelineEditingService {
   static const int minClipDurationMs = 100;
 
@@ -71,18 +83,6 @@ class TimelineEditingService {
 
     return project.copyWith(tracks: updatedTracks).recalculateDuration();
   }
-
-class SnapResult {
-  final int snappedTimeMs;
-  final bool isSnapped;
-  final String? snapTarget;
-
-  const SnapResult({
-    required this.snappedTimeMs,
-    required this.isSnapped,
-    this.snapTarget,
-  });
-}
 
   /// Trims the head (start) of a clip, optionally rippling subsequent clips
   static Project? trimClipHead(Project project, String clipId, int newStartMs, {bool ripple = false}) {

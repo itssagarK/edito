@@ -8,6 +8,7 @@ import '../../providers/editor_provider.dart';
 import '../../../audio/presentation/widgets/audio_mixer_sheet.dart';
 import '../../../character_zoom/presentation/widgets/character_zoom_sheet.dart';
 import '../../../chroma/presentation/widgets/chroma_key_sheet.dart';
+import '../../../cutout/presentation/widgets/smart_cutout_sheet.dart';
 import '../../../color_grading/presentation/widgets/color_grading_sheet.dart';
 import '../../../enhancement/presentation/widgets/video_enhancement_sheet.dart';
 import '../../../hd_converter/presentation/widgets/hd_converter_sheet.dart';
@@ -62,7 +63,7 @@ class DockedToolPanel extends StatelessWidget {
       case EditorTool.highlight:
         return 'Highlight & Background';
       case EditorTool.chromaKey:
-        return 'Chroma Key Green Screen';
+        return 'Smart AI Cutout Studio';
       case EditorTool.mask:
         return 'Multi-Shape Masking Studio';
       case EditorTool.blend:
@@ -329,7 +330,7 @@ class DockedToolPanel extends StatelessWidget {
         );
 
       case EditorTool.chromaKey:
-        return ChromaKeySheet(
+        return SmartCutoutSheet(
           clip: clip,
           onSave: onSaveClip,
           isDocked: true,

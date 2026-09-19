@@ -1062,3 +1062,42 @@ Directly inspired by CapCut Creator's native C++ NLE timeline (`libcccreator.so`
    - Enables razor-sharp dialogue cuts and musical synchronization directly on the primary video track without detaching audio.
    - Verified by comprehensive test suite in `test/magnetic_timeline_test.dart`.
 
+---
+
+## 29. CapCut Pro Smart AI Cutout Studio with Glowing Neon Outlines (v1.0.43)
+
+1. **Auto Cutout & Portrait Matting Engine (`SmartCutoutConfig` & `SmartCutoutCompilerService`)**:
+   - **No Green Screen Required**:
+     - Isolates subjects and human figures automatically without traditional green/blue screens.
+     - Presets: *⚡ Neon Cyan*, *💖 Cyber Pink*, *✨ Golden Aura*, *🟢 Matrix Green*, *🏷️ Sticker Border*, *🌫️ Portrait Bokeh*, *🖤 Studio Dark*.
+   - **Background Replacement & Manipulation**:
+     - `transparent`: Preserves alpha channel (`format=yuva420p`) so lower video tracks and background layers show through seamlessly.
+     - `blur`: Generates cinematic portrait mode bokeh with adjustable blur radius (1.0 to 30.0 px).
+     - `solidColor`: Replaces background with customizable studio backdrop colors (#121212, #000000, #FFFFFF, #1E293B, #831843, #064E3B).
+   - **Invert Cutout**:
+     - One-tap inversion (`isInverted: true`) to isolate the background and remove foreground subjects.
+   - **Edge Feather Softness**:
+     - Adjustable 0% to 100% boundary softening for natural hair and edge blending.
+
+2. **CapCut Signature Glowing Neon Stroke Outlines**:
+   - **Styles**:
+     - `neonGlow`: Multi-pass glowing outer neon aura with colored core.
+     - `cyberPink`: Cyberpunk neon edge shift.
+     - `goldenAura`: Warm luminous edge aura.
+     - `matrixGreen`: High-tech cyber green aura.
+     - `solidBorder`: Solid white/custom sticker border.
+     - `dashedSticker`: High-contrast comic outline.
+   - **Customizable Dynamics**:
+     - `strokeWidth`: 1.0 to 20.0 px.
+     - `glowSpread`: 0.0 to 30.0 px Gaussian blur spread.
+     - 8-color glowing neon palette swatches.
+
+3. **Skia GPU Real-Time Compositor & Viewport HUD Integration (`SmartCutoutPreviewWrapper`)**:
+   - Skia ambient lighting matrix matching stroke color.
+   - Real-time `CustomPainter` with `BlurStyle.outer` Gaussian blur passes and bright inner core.
+   - Live floating viewport HUD badge: e.g. `✂️ CUTOUT (NEON GLOW)`, `✂️ PORTRAIT BOKEH`.
+
+4. **FFmpeg Export Filtergraph Integration**:
+   - Generates deterministic filter chains (`format=yuva420p`, `boxblur`, `colorbalance`, `colorchannelmixer`, `negate`).
+   - Verified by comprehensive test suite in `test/smart_cutout_test.dart`.
+

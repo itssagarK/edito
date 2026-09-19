@@ -20,6 +20,9 @@ import '../../../character_zoom/services/character_zoom_compiler_service.dart';
 import '../../../chroma/models/chroma_key_config.dart';
 import '../../../chroma/services/chroma_key_compiler_service.dart';
 import '../../../chroma/presentation/widgets/chroma_key_preview_wrapper.dart';
+import '../../../cutout/models/smart_cutout_config.dart';
+import '../../../cutout/services/smart_cutout_compiler_service.dart';
+import '../../../cutout/presentation/widgets/smart_cutout_preview_wrapper.dart';
 import '../../../hd_converter/models/hd_converter_config.dart';
 import '../../../hd_converter/services/hd_converter_service.dart';
 import '../../../header_footer/models/header_footer_config.dart';
@@ -549,6 +552,13 @@ class RealtimePreviewViewport extends ConsumerWidget {
       );
     }
 
+    if (clip.smartCutout.isEnabled) {
+      videoContent = SmartCutoutPreviewWrapper(
+        config: clip.smartCutout,
+        child: videoContent,
+      );
+    }
+
     if (clip.mask.isActive) {
       videoContent = MaskPreviewWrapper(
         config: clip.mask,
@@ -726,6 +736,19 @@ class RealtimePreviewViewport extends ConsumerWidget {
                   child: Text(
                     ChromaKeyCompilerService.getChromaBadge(clip.chromaKey),
                     style: const TextStyle(fontSize: 9, color: Color(0xFF00FF66), fontWeight: FontWeight.bold),
+                  ),
+                ),
+              if (clip.smartCutout.isEnabled)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF00E5FF)),
+                  ),
+                  child: Text(
+                    SmartCutoutCompilerService.getCutoutBadge(clip.smartCutout),
+                    style: const TextStyle(fontSize: 9, color: Color(0xFF00E5FF), fontWeight: FontWeight.bold),
                   ),
                 ),
               if (clip.mask.isActive)

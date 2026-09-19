@@ -18,6 +18,7 @@ import '../features/speed/models/speed_curve_preset.dart';
 import '../features/transitions/models/transition_type.dart';
 import '../features/vfx/models/vfx_config.dart';
 import '../features/beats/models/beat_detection_config.dart';
+import '../features/cutout/models/smart_cutout_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -53,6 +54,7 @@ class Clip extends Equatable {
   final int? freezeSourceMs;
   final VfxConfig vfx;
   final BeatDetectionConfig beatConfig;
+  final SmartCutoutConfig smartCutout;
 
   const Clip({
     required this.id,
@@ -88,6 +90,7 @@ class Clip extends Equatable {
     this.freezeSourceMs,
     this.vfx = const VfxConfig(),
     this.beatConfig = const BeatDetectionConfig(),
+    this.smartCutout = const SmartCutoutConfig(),
   });
 
   Clip copyWith({
@@ -124,6 +127,7 @@ class Clip extends Equatable {
     int? freezeSourceMs,
     VfxConfig? vfx,
     BeatDetectionConfig? beatConfig,
+    SmartCutoutConfig? smartCutout,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -159,6 +163,7 @@ class Clip extends Equatable {
       freezeSourceMs: freezeSourceMs ?? this.freezeSourceMs,
       vfx: vfx ?? this.vfx,
       beatConfig: beatConfig ?? this.beatConfig,
+      smartCutout: smartCutout ?? this.smartCutout,
     );
   }
 
@@ -196,6 +201,7 @@ class Clip extends Equatable {
         'freezeSourceMs': freezeSourceMs,
         'vfx': vfx.toJson(),
         'beatConfig': beatConfig.toJson(),
+        'smartCutout': smartCutout.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -275,6 +281,9 @@ class Clip extends Equatable {
         beatConfig: json['beatConfig'] != null
             ? BeatDetectionConfig.fromJson(json['beatConfig'] as Map<String, dynamic>)
             : const BeatDetectionConfig(),
+        smartCutout: json['smartCutout'] != null
+            ? SmartCutoutConfig.fromJson(json['smartCutout'] as Map<String, dynamic>)
+            : const SmartCutoutConfig(),
       );
 
   @override
@@ -312,5 +321,6 @@ class Clip extends Equatable {
         freezeSourceMs,
         vfx,
         beatConfig,
+        smartCutout,
       ];
 }

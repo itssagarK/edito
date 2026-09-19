@@ -23,11 +23,29 @@ import '../../transitions/services/transition_compiler_service.dart';
 import '../../vfx/services/vfx_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
 import '../../image_editor/services/pip_compiler_service.dart';
+import '../../cutout/services/smart_cutout_compiler_service.dart';
 import '../models/export_preset.dart';
 
+class FFmpegCommandResult {
+  final List<String> arguments;
+  final String command;
+
+  FFmpegCommandResult(this.arguments) : command = arguments.join(' ');
+}
+
 class FFmpegCommandBuilder {
-  /// Alias for buildArguments
-  static List<String> build(Project project, ExportConfiguration config) => buildArguments(project, config);
+  /// Builds command arguments and unified command string
+  static FFmpegCommandResult build({
+    required Project project,
+    required ExportConfiguration config,
+    String? outputPath,
+  }) {
+    final args = buildArguments(project, config);
+    if (outputPath != null) {
+      args.addAll(['-y', outputPath]);
+    }
+    return FFmpegCommandResult(args);
+  }
 
   /// Builds the complete list of FFmpeg command-line arguments for rendering the project
   static List<String> buildArguments(Project project, ExportConfiguration config) {
@@ -238,6 +256,18 @@ class FFmpegCommandBuilder {
           final vfxFilters = VfxCompilerService.generateFFmpegFilters(clip.vfx);
           if (vfxFilters.isNotEmpty) {
             vFilters.addAll(vfxFilters);
+          }
+        }
+
+        // Smart AI Cutout Studio & Glowing Neon Outlines
+        if (clip.smartCutout.isEnabled) {
+          final cutoutFilters = SmartCutoutCompilerService.generateFFmpegFilters(
+            clip.smartCutout,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (cutoutFilters.isNotEmpty) {
+            vFilters.addAll(cutoutFilters);
           }
         }
 

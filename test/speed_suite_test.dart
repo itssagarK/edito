@@ -174,7 +174,7 @@ void main() {
         clips: [speedClip],
       );
 
-      const project = Project(
+      final project = Project(
         id: 'p-speed',
         name: 'Speed Export Test',
         durationMs: 2500,
