@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
-import '../models/auto_velocity_config.dart';
-import '../services/auto_velocity_service.dart';
+import '../../models/auto_velocity_config.dart';
+import '../../services/auto_velocity_service.dart';
 
 class AutoVelocitySheet extends StatefulWidget {
   final Clip clip;
@@ -247,7 +247,7 @@ class _AutoVelocitySheetState extends State<AutoVelocitySheet> {
         Row(
           children: VelocityInterval.values.map((interval) {
             final isSelected = _config.interval == interval;
-            final label = () {
+            final String label = () {
               switch (interval) {
                 case VelocityInterval.everyBeat:
                   return 'Every Beat (1/1)';
