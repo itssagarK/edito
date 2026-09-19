@@ -96,6 +96,7 @@ void main() {
         tracks: [
           Track(
             id: 't_video',
+            name: 'Main Video',
             type: TrackType.video,
             clips: [
               Clip(

@@ -121,6 +121,19 @@ class ColorWheelValue extends Equatable {
   List<Object?> get props => [angle, saturation, luminance];
 }
 
+enum ColorWheelsPreset {
+  neutral('Neutral (Reset)'),
+  tealAndOrange('Blockbuster Teal & Orange'),
+  vintageFilm('Vintage Analog 35mm'),
+  cyberpunkNeon('Cyberpunk Magenta & Cyan'),
+  goldenHour('Warm Golden Hour'),
+  bleachBypass('Gritty Bleach Bypass'),
+  coldNoir('Cold Nordic Noir');
+
+  final String label;
+  const ColorWheelsPreset(this.label);
+}
+
 class HslShift extends Equatable {
   final double hue;        // -180.0 to +180.0 deg
   final double saturation; // -1.0 to +1.0
@@ -311,6 +324,60 @@ class ColorGradingConfig extends Equatable {
 
   ColorGradingConfig applyHslPreset(HslPreset preset) {
     return copyWith(hsl: HslPreset.getPresetShifts(preset));
+  }
+
+  ColorGradingConfig applyColorWheelsPreset(ColorWheelsPreset preset) {
+    switch (preset) {
+      case ColorWheelsPreset.neutral:
+        return copyWith(
+          lift: const ColorWheelValue(),
+          gamma: const ColorWheelValue(),
+          gain: const ColorWheelValue(),
+          offset: const ColorWheelValue(),
+        );
+      case ColorWheelsPreset.tealAndOrange:
+        return copyWith(
+          lift: const ColorWheelValue(angle: 195.0, saturation: 0.35, luminance: -0.05),
+          gamma: const ColorWheelValue(angle: 30.0, saturation: 0.15, luminance: 0.0),
+          gain: const ColorWheelValue(angle: 35.0, saturation: 0.40, luminance: 0.08),
+          offset: const ColorWheelValue(),
+        );
+      case ColorWheelsPreset.vintageFilm:
+        return copyWith(
+          lift: const ColorWheelValue(angle: 230.0, saturation: 0.20, luminance: 0.05),
+          gamma: const ColorWheelValue(angle: 45.0, saturation: 0.22, luminance: -0.02),
+          gain: const ColorWheelValue(angle: 55.0, saturation: 0.30, luminance: 0.04),
+          offset: const ColorWheelValue(),
+        );
+      case ColorWheelsPreset.cyberpunkNeon:
+        return copyWith(
+          lift: const ColorWheelValue(angle: 210.0, saturation: 0.45, luminance: -0.08),
+          gamma: const ColorWheelValue(angle: 280.0, saturation: 0.25, luminance: 0.0),
+          gain: const ColorWheelValue(angle: 315.0, saturation: 0.40, luminance: 0.10),
+          offset: const ColorWheelValue(),
+        );
+      case ColorWheelsPreset.goldenHour:
+        return copyWith(
+          lift: const ColorWheelValue(angle: 220.0, saturation: 0.15, luminance: -0.02),
+          gamma: const ColorWheelValue(angle: 40.0, saturation: 0.30, luminance: 0.05),
+          gain: const ColorWheelValue(angle: 45.0, saturation: 0.45, luminance: 0.12),
+          offset: const ColorWheelValue(),
+        );
+      case ColorWheelsPreset.bleachBypass:
+        return copyWith(
+          lift: const ColorWheelValue(angle: 205.0, saturation: 0.25, luminance: -0.10),
+          gamma: const ColorWheelValue(angle: 180.0, saturation: 0.12, luminance: 0.0),
+          gain: const ColorWheelValue(angle: 60.0, saturation: 0.15, luminance: 0.08),
+          offset: const ColorWheelValue(),
+        );
+      case ColorWheelsPreset.coldNoir:
+        return copyWith(
+          lift: const ColorWheelValue(angle: 225.0, saturation: 0.30, luminance: -0.12),
+          gamma: const ColorWheelValue(angle: 210.0, saturation: 0.10, luminance: 0.02),
+          gain: const ColorWheelValue(angle: 190.0, saturation: 0.15, luminance: -0.05),
+          offset: const ColorWheelValue(),
+        );
+    }
   }
 
   static bool isCurveCustomized(List<CurvePoint> points) {

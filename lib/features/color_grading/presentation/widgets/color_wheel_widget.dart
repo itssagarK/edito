@@ -6,16 +6,20 @@ import '../../models/color_grading_config.dart';
 
 class ColorWheelWidget extends StatelessWidget {
   final String label;
+  final String? description;
   final ColorWheelValue value;
   final ValueChanged<ColorWheelValue> onChanged;
   final Color accentColor;
+  final double size;
 
   const ColorWheelWidget({
     super.key,
     required this.label,
+    this.description,
     required this.value,
     required this.onChanged,
     this.accentColor = AppColors.accent,
+    this.size = 140.0,
   });
 
   @override
@@ -27,19 +31,27 @@ class ColorWheelWidget extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: accentColor,
-                    shape: BoxShape.circle,
+            Expanded(
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: accentColor,
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                Text(label, style: AppTypography.titleMedium.copyWith(fontSize: 13, fontWeight: FontWeight.bold)),
-              ],
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      label,
+                      style: AppTypography.titleMedium.copyWith(fontSize: 12, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
             Row(
               children: [
@@ -61,13 +73,23 @@ class ColorWheelWidget extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        if (description != null) ...[
+          const SizedBox(height: 2),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              description!,
+              style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+            ),
+          ),
+        ],
+        const SizedBox(height: 8),
 
         // Interactive Chromatic Disc
         Center(
           child: SizedBox(
-            width: 140,
-            height: 140,
+            width: size,
+            height: size,
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final radius = constraints.maxWidth / 2;
@@ -80,6 +102,7 @@ class ColorWheelWidget extends StatelessWidget {
                 final puckY = center.dy + puckDist * math.sin(rad);
 
                 return GestureDetector(
+                  onDoubleTap: () => onChanged(value.copyWith(angle: 0.0, saturation: 0.0)),
                   onPanDown: (details) => _handleGesture(details.localPosition, center, radius),
                   onPanUpdate: (details) => _handleGesture(details.localPosition, center, radius),
                   child: CustomPaint(
@@ -100,7 +123,7 @@ class ColorWheelWidget extends StatelessWidget {
         // Luminance Slider (-1.0 to +1.0)
         Row(
           children: [
-            const Icon(Icons.brightness_medium, size: 14, color: AppColors.textMuted),
+            const Icon(Icons.brightness_medium, size: 13, color: AppColors.textMuted),
             const SizedBox(width: 4),
             Expanded(
               child: SliderTheme(
@@ -122,7 +145,7 @@ class ColorWheelWidget extends StatelessWidget {
               ),
             ),
             SizedBox(
-              width: 32,
+              width: 28,
               child: Text(
                 '${(value.luminance * 100).round()}',
                 textAlign: TextAlign.right,
@@ -214,6 +237,17 @@ class _ColorWheelDiscPainter extends CustomPainter {
       ..strokeWidth = 1.0;
     canvas.drawLine(Offset(center.dx - 6, center.dy), Offset(center.dx + 6, center.dy), crossPaint);
     canvas.drawLine(Offset(center.dx, center.dy - 6), Offset(center.dx, center.dy + 6), crossPaint);
+
+    // 5. Cardinal angle indicator ticks (0°, 60°, 120°, 180°, 240°, 300°)
+    final tickPaint = Paint()
+      ..color = Colors.white.withOpacity(0.4)
+      ..strokeWidth = 1.2;
+    for (int deg = 0; deg < 360; deg += 60) {
+      final rad = deg * (math.pi / 180.0);
+      final p1 = Offset(center.dx + (radius - 8) * math.cos(rad), center.dy + (radius - 8) * math.sin(rad));
+      final p2 = Offset(center.dx + (radius - 3) * math.cos(rad), center.dy + (radius - 3) * math.sin(rad));
+      canvas.drawLine(p1, p2, tickPaint);
+    }
 
     // 5. Puck Indicator
     final puckBorder = Paint()

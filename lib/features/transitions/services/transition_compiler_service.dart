@@ -61,7 +61,7 @@ class TransitionCompilerService {
         continue;
       }
 
-      final transitionDurMs = transition.durationMs.clamp(100, math.min(prevClip.durationMs, currentClip.durationMs));
+      final int transitionDurMs = transition.durationMs.clamp(100, math.min(prevClip.durationMs, currentClip.durationMs)).toInt();
       final offsetSec = math.max(0.0, (accumulatedDurationMs - transitionDurMs) / 1000.0);
       final durationSec = (transitionDurMs / 1000.0).toStringAsFixed(2);
       final transitionName = transition.type.ffmpegXFadeName;

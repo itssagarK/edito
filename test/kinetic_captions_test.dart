@@ -218,6 +218,7 @@ Cinematic kinetic captions with word syncing
         tracks: [
           Track(
             id: 't_video',
+            name: 'Main Video',
             type: TrackType.video,
             clips: [
               Clip(
@@ -226,6 +227,8 @@ Cinematic kinetic captions with word syncing
                 trackId: 't_video',
                 startTimeMs: 0,
                 durationMs: 8000,
+                sourceInMs: 0,
+                sourceOutMs: 8000,
               ),
             ],
           ),

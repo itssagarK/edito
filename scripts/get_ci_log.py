@@ -13,11 +13,12 @@ def get_all_errors():
         if line.startswith('password='):
             token = line.split('=', 1)[1]
 
+    run_id = sys.argv[1] if len(sys.argv) > 1 else '35439953060'
     cmd = [
         'curl.exe', '-s',
         '-H', f'Authorization: token {token}',
         '-H', 'Accept: application/vnd.github.v3+json',
-        'https://api.github.com/repos/itssagarK/edito/actions/runs/35432537505/jobs'
+        f'https://api.github.com/repos/itssagarK/edito/actions/runs/{run_id}/jobs'
     ]
     res = subprocess.run(cmd, capture_output=True, text=True)
     jobs = json.loads(res.stdout).get('jobs', [])

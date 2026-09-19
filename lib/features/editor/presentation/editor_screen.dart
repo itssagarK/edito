@@ -310,6 +310,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   ref.read(editorProvider.notifier).setActiveTool(tool);
                   _handleToolAction(tool);
                 },
+                onDeselectClip: () {
+                  ref.read(editorProvider.notifier).selectClip(null);
+                },
                 onAddTrack: () {
                   MediaPickerSheet.show(context);
                 },

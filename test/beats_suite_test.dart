@@ -158,6 +158,7 @@ void main() {
       final clip = Clip(
         id: 'c1',
         assetId: 'a1',
+        trackId: 't1',
         startTimeMs: 1000,
         durationMs: 3000,
         sourceInMs: 0,
@@ -175,7 +176,7 @@ void main() {
         title: 'Beats Project',
         durationMs: 4000,
         tracks: [
-          Track(id: 't1', type: TrackType.video, clips: [clip]),
+          Track(id: 't1', name: 'Main Video', type: TrackType.video, clips: [clip]),
         ],
         assets: const [
           MediaAsset(id: 'a1', path: 'video.mp4', fileName: 'video.mp4', type: MediaType.video, durationMs: 5000),
@@ -199,6 +200,7 @@ void main() {
       final clip = Clip(
         id: 'c1',
         assetId: 'a1',
+        trackId: 't1',
         startTimeMs: 1000,
         durationMs: 3000,
         sourceInMs: 0,
@@ -216,7 +218,7 @@ void main() {
         title: 'Beats Project',
         durationMs: 4000,
         tracks: [
-          Track(id: 't1', type: TrackType.video, clips: [clip]),
+          Track(id: 't1', name: 'Main Video', type: TrackType.video, clips: [clip]),
         ],
       );
 
@@ -230,6 +232,7 @@ void main() {
       final clip = Clip(
         id: 'c_test',
         assetId: 'a_test',
+        trackId: 't_test',
         startTimeMs: 0,
         durationMs: 5000,
         sourceInMs: 0,

@@ -50,6 +50,7 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
   late ColorGradingConfig _config;
   String _selectedHslColor = 'red';
   bool _applyToAll = false;
+  int _selectedWheelIndex = 0; // 0: All 4, 1: Lift, 2: Gamma, 3: Gain, 4: Offset
 
   @override
   void initState() {
@@ -310,52 +311,176 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
   // --- 3-WAY COLOR WHEELS TAB ---
   Widget _buildColorWheelsTab() {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: ColorWheelWidget(
-                label: 'LIFT (SHADOWS)',
-                value: _config.lift,
-                accentColor: const Color(0xFF00E5FF),
-                onChanged: (val) => _updateConfig((c) => c.copyWith(lift: val)),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ColorWheelWidget(
-                label: 'GAMMA (MIDS)',
-                value: _config.gamma,
-                accentColor: const Color(0xFFFFD700),
-                onChanged: (val) => _updateConfig((c) => c.copyWith(gamma: val)),
-              ),
-            ),
-          ],
+        // 1. Color Wheels Quick Presets Strip
+        SizedBox(
+          height: 32,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              ...ColorWheelsPreset.values.map((preset) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: ActionChip(
+                    label: Text(
+                      preset.label,
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                    ),
+                    backgroundColor: AppColors.surfaceElevated,
+                    side: const BorderSide(color: AppColors.border),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+                    onPressed: () {
+                      _updateConfig((c) => c.applyColorWheelsPreset(preset));
+                    },
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // 2. Mode Selector: [ALL 4] [LIFT] [GAMMA] [GAIN] [OFFSET]
+        Container(
+          height: 32,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceElevated,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              _buildWheelModeButton(0, 'ALL 4', null),
+              _buildWheelModeButton(1, 'LIFT', const Color(0xFF00E5FF)),
+              _buildWheelModeButton(2, 'GAMMA', const Color(0xFFFFD700)),
+              _buildWheelModeButton(3, 'GAIN', const Color(0xFFFF007F)),
+              _buildWheelModeButton(4, 'OFFSET', AppColors.accent),
+            ],
+          ),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: ColorWheelWidget(
-                label: 'GAIN (HIGHLIGHTS)',
-                value: _config.gain,
-                accentColor: const Color(0xFFFF007F),
-                onChanged: (val) => _updateConfig((c) => c.copyWith(gain: val)),
+
+        // 3. Wheel View: Single Focused Wheel or All 4 Grid
+        if (_selectedWheelIndex == 0) ...[
+          Row(
+            children: [
+              Expanded(
+                child: ColorWheelWidget(
+                  label: 'LIFT (SHADOWS)',
+                  value: _config.lift,
+                  accentColor: const Color(0xFF00E5FF),
+                  onChanged: (val) => _updateConfig((c) => c.copyWith(lift: val)),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ColorWheelWidget(
-                label: 'OFFSET (GLOBAL)',
-                value: _config.offset,
-                accentColor: AppColors.accent,
-                onChanged: (val) => _updateConfig((c) => c.copyWith(offset: val)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ColorWheelWidget(
+                  label: 'GAMMA (MIDS)',
+                  value: _config.gamma,
+                  accentColor: const Color(0xFFFFD700),
+                  onChanged: (val) => _updateConfig((c) => c.copyWith(gamma: val)),
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ColorWheelWidget(
+                  label: 'GAIN (HIGHLIGHTS)',
+                  value: _config.gain,
+                  accentColor: const Color(0xFFFF007F),
+                  onChanged: (val) => _updateConfig((c) => c.copyWith(gain: val)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ColorWheelWidget(
+                  label: 'OFFSET (GLOBAL)',
+                  value: _config.offset,
+                  accentColor: AppColors.accent,
+                  onChanged: (val) => _updateConfig((c) => c.copyWith(offset: val)),
+                ),
+              ),
+            ],
+          ),
+        ] else if (_selectedWheelIndex == 1) ...[
+          ColorWheelWidget(
+            label: 'LIFT (SHADOWS & BLACK LEVELS)',
+            description: 'Tonal control for shadows, black pedestal, and dark values (0% - 25% Luminance). Double-tap to reset.',
+            value: _config.lift,
+            accentColor: const Color(0xFF00E5FF),
+            size: 190.0,
+            onChanged: (val) => _updateConfig((c) => c.copyWith(lift: val)),
+          ),
+        ] else if (_selectedWheelIndex == 2) ...[
+          ColorWheelWidget(
+            label: 'GAMMA (MIDTONES & SKIN TONES)',
+            description: 'Controls midtones, skin tone warmth, and natural subject lighting (25% - 75% Luminance). Double-tap to reset.',
+            value: _config.gamma,
+            accentColor: const Color(0xFFFFD700),
+            size: 190.0,
+            onChanged: (val) => _updateConfig((c) => c.copyWith(gamma: val)),
+          ),
+        ] else if (_selectedWheelIndex == 3) ...[
+          ColorWheelWidget(
+            label: 'GAIN (HIGHLIGHTS & SPECULAR)',
+            description: 'Controls specular highlights, sky warmth, and bright roll-off (75% - 100% Luminance). Double-tap to reset.',
+            value: _config.gain,
+            accentColor: const Color(0xFFFF007F),
+            size: 190.0,
+            onChanged: (val) => _updateConfig((c) => c.copyWith(gain: val)),
+          ),
+        ] else if (_selectedWheelIndex == 4) ...[
+          ColorWheelWidget(
+            label: 'OFFSET (GLOBAL MASTER PEDESTAL)',
+            description: 'Uniform tonal shift across all color channels simultaneously. Double-tap to reset.',
+            value: _config.offset,
+            accentColor: AppColors.accent,
+            size: 190.0,
+            onChanged: (val) => _updateConfig((c) => c.copyWith(offset: val)),
+          ),
+        ],
       ],
+    );
+  }
+
+  Widget _buildWheelModeButton(int index, String title, Color? indicatorColor) {
+    final isSelected = _selectedWheelIndex == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedWheelIndex = index),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (indicatorColor != null) ...[
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(color: indicatorColor, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 4),
+              ],
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

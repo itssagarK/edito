@@ -993,3 +993,40 @@ Directly reverse-engineered and benchmarked against CapCut Pro's AmazingEngine (
    - **"Apply to All Transitions" Action**: One-tap global application across all clip boundaries in the project.
    - Docked tool panel integration via `EditorTool.effects`.
    - Verified by comprehensive test suite in `test/glsl_transitions_test.dart`.
+
+---
+
+## 27. CapCut Pro 3-Way Color Wheels Studio & Two-Tier Contextual Dock (v1.0.41 Release)
+
+Directly inspired by CapCut Pro's AmazingEngine `LogWheel.zip` / `PrimaryWheel.zip` and ByteDance NLE timeline UX:
+
+1. **CapCut-Style Two-Tier Contextual Dock (`EditingToolbar`)**:
+   - **Global Navigation Dock (No Clip Selected)**:
+     - Promotes top-level creation modes: *Edit*, *Audio*, *Text*, *Captions*, *AI Voice*, *Overlay*, *Effects*, *Filters*, *Ratio*, *Canvas*, *8K Boost*, *Cover*, *HD Ultra*, *Beats*, and *Add Track*.
+   - **Contextual Clip Action Dock (Clip Selected)**:
+     - Smooth animated transition via `AnimatedSwitcher` and `SlideTransition`.
+     - Leftmost pinned tactile **Back Button** (`< Back`) that smoothly deselects the active clip and returns to Global Navigation Dock with a single tap.
+     - Clip-specific actions: *Split*, *Speed*, *Animation (Keyframes)*, *Volume*, *Cutout (Chroma)*, *Mask*, *Blend*, *8K Upscale*, *Flow & Blur*, *Filters*, *Transitions*, *Zoom*, *Border*, *Actions (Duplicate/Freeze/Reverse)*, *Reframe*.
+   - Connected `onDeselectClip` seamlessly into `editor_screen.dart`.
+
+2. **3-Way Color Wheels Studio Evolution (`ColorGradingSheet` & `ColorWheelWidget`)**:
+   - **7 Cinematic Color Wheel Presets (`ColorWheelsPreset`)**:
+     - *Neutral (Reset)*: Pure pristine raw grade.
+     - *Blockbuster Teal & Orange*: Deep cyan shadows (Lift 195°, 35% Sat, -5% Luma) paired with warm amber skin highlights (Gain 35°, 40% Sat, +8% Luma).
+     - *Vintage Analog 35mm*: Faded cool shadows (Lift 230°, +5% Luma) with rich golden-amber mids & highlights.
+     - *Cyberpunk Magenta & Cyan*: Neon cyan shadows (Lift 210°, 45% Sat) with hot magenta highlights (Gain 315°, 40% Sat).
+     - *Warm Golden Hour*: Golden amber midtones (Gamma 40°, 30% Sat) and glowing sunset highlights (Gain 45°, 45% Sat).
+     - *Gritty Bleach Bypass*: Cold crushed shadows with high-contrast desaturated tones.
+     - *Cold Nordic Noir*: Blue-tinted shadows and desaturated highlights.
+   - **Multi-View Modes**:
+     - Mode Selector: `[ALL 4]` | `[LIFT]` | `[GAMMA]` | `[GAIN]` | `[OFFSET]`.
+     - In `[ALL 4]` view: Clean 2x2 grid overview with live hue angles, saturation, and luminance sliders.
+     - In focused view (`LIFT`, `GAMMA`, `GAIN`, `OFFSET`): High-precision 190px chromatic disc with cardinal tick marks (0°, 60°, 120°, 180°, 240°, 300°), double-tap instant recenter gesture, tonal range descriptions, and large tactile luminance slider.
+   - **Mathematical Accuracy & Dual-Engine Parity (`ColorFilterCompilerService`)**:
+     - GPU Skia 4x5 ColorFilter matrix computation.
+     - FFmpeg filter compiler generating `colorbalance=rs=...:gs=...:bs=...:rm=...:gm=...:bm=...:rh=...:gh=...:bh=...`.
+
+3. **Compiler Fixes & Test Suite Parity**:
+   - Resolved `num` to `int` assignment in `TransitionCompilerService.compileTimelineTransitions`.
+   - Updated missing required named parameters (`trackId`, `name`, `sourceInMs`, `sourceOutMs`) across `auto_reframe_suite_test.dart`, `beats_suite_test.dart`, `kinetic_captions_test.dart`, and `tts_suite_test.dart`.
+   - Created comprehensive test suite in `test/color_wheels_and_contextual_dock_test.dart` covering 100% of models, compiler, presets, and widget interactions.

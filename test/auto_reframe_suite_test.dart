@@ -193,6 +193,7 @@ void main() {
       final clip = Clip(
         id: 'c1',
         assetId: 'a1',
+        trackId: 't1',
         startTimeMs: 0,
         durationMs: 3000,
         sourceInMs: 0,
@@ -204,7 +205,7 @@ void main() {
         title: 'Auto-Reframe Project',
         durationMs: 3000,
         tracks: [
-          Track(id: 't1', type: TrackType.video, clips: [clip]),
+          Track(id: 't1', name: 'Main Video', type: TrackType.video, clips: [clip]),
         ],
         assets: const [
           MediaAsset(id: 'a1', path: 'landscape.mp4', fileName: 'landscape.mp4', type: MediaType.video, durationMs: 3000),
@@ -228,6 +229,7 @@ void main() {
       final clip = Clip(
         id: 'c1',
         assetId: 'a1',
+        trackId: 't1',
         startTimeMs: 0,
         durationMs: 3000,
         sourceInMs: 0,
@@ -239,7 +241,7 @@ void main() {
         title: 'Smart Crop Project',
         durationMs: 3000,
         tracks: [
-          Track(id: 't1', type: TrackType.video, clips: [clip]),
+          Track(id: 't1', name: 'Main Video', type: TrackType.video, clips: [clip]),
         ],
         assets: const [
           MediaAsset(id: 'a1', path: 'landscape.mp4', fileName: 'landscape.mp4', type: MediaType.video, durationMs: 3000),
