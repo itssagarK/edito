@@ -168,8 +168,11 @@ void main() {
       final pipClip = Clip(
         id: 'clip_pip_01',
         assetId: 'asset_01',
+        trackId: 'track_video_01',
         startTimeMs: 0,
         durationMs: 5000,
+        sourceInMs: 0,
+        sourceOutMs: 5000,
         imageOverlay: const ImageOverlayConfig(
           isEnabled: true,
           mediaPath: '/media/cam.mp4',
@@ -192,11 +195,11 @@ void main() {
         ],
       );
 
-      final cmd = FFmpegCommandBuilder.buildExportCommand(
-        project: project,
-        preset: ExportPreset.youtube1080p,
+      const config = ExportConfiguration(
         outputPath: '/out/pip_render.mp4',
       );
+
+      final cmd = FFmpegCommandBuilder.buildArguments(project, config);
 
       expect(cmd.any((arg) => arg.contains('drawbox=')), isTrue);
       expect(cmd.any((arg) => arg.contains('Host Cam')), isTrue);

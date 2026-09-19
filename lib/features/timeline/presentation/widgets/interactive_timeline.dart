@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -220,7 +221,7 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
                     width: timelineWidth,
                     height: totalTracksHeight,
                     child: Stack(
-                      clipBehavior: Clip.none,
+                      clipBehavior: ui.Clip.none,
                       children: [
                         // Column of Ruler & Track Clip Surfaces
                         Column(

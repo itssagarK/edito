@@ -351,7 +351,13 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
         const SizedBox(height: 8),
 
         // Live Equalizer Curve Skia Plotter
-        ParametricEQCurveWidget(config: _effects),
+        ParametricEQCurveWidget(
+          config: _effects,
+          onChanged: (updated) {
+            setState(() => _effects = updated);
+            _applyChange();
+          },
+        ),
         const SizedBox(height: 10),
 
         // Preset Carousel

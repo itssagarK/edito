@@ -158,7 +158,7 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
         case 'oswald':
           return GoogleFonts.oswald(fontSize: size, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
         case 'jetbrainsmono':
-          return GoogleFonts.jetbrainsMono(fontSize: size, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
+          return GoogleFonts.jetBrainsMono(fontSize: size, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
         case 'caveat':
           return GoogleFonts.caveat(fontSize: size, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
         case 'pacifico':
@@ -239,7 +239,7 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
 
       if (_applyToAll || _selectedCaptionIndex == null) {
         _captions = _captions.map((cap) {
-          final words = cap.words.isEmpty ? cap.generateInterpolatedWords() : cap.words;
+          final words = cap.effectiveWords;
           return cap.copyWith(
             highlightStyle: _karaokeStyle,
             highlightColor: _karaokeHighlightColor,
@@ -254,7 +254,7 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
       } else if (_selectedCaptionIndex != null && _selectedCaptionIndex! < _captions.length) {
         final idx = _selectedCaptionIndex!;
         final cap = _captions[idx];
-        final words = cap.words.isEmpty ? cap.generateInterpolatedWords() : cap.words;
+        final words = cap.effectiveWords;
         _captions[idx] = cap.copyWith(
           highlightStyle: _karaokeStyle,
           highlightColor: _karaokeHighlightColor,
@@ -1181,7 +1181,7 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
                   final cap = _captions[idx];
                   setState(() {
                     _captions[idx] = cap.copyWith(
-                      words: cap.generateInterpolatedWords(),
+                      words: CaptionLine.generateInterpolatedWords(cap.text, cap.durationMs),
                     );
                   });
                   _applyAndSave();

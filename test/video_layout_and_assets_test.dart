@@ -49,7 +49,7 @@ void main() {
     test('ImageOverlayConfig serialization roundtrip', () {
       const config = ImageOverlayConfig(
         isEnabled: true,
-        imagePath: '/storage/stickers/logo.png',
+        mediaPath: '/storage/stickers/logo.png',
         assetLabel: 'Logo Overlay',
         positionX: 0.8,
         positionY: 0.2,

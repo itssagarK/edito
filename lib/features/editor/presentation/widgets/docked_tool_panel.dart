@@ -24,6 +24,8 @@ import '../../../speed/presentation/widgets/speed_ramping_sheet.dart';
 import '../../../vfx/presentation/widgets/vfx_studio_sheet.dart';
 import '../../../beats/presentation/widgets/beat_detection_sheet.dart';
 import '../../../tts/presentation/widgets/tts_voiceover_sheet.dart';
+import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
+import '../../../transitions/models/transition_type.dart';
 
 class DockedToolPanel extends StatelessWidget {
   final EditorTool tool;
@@ -89,6 +91,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'Beats & Rhythm Snapping';
       case EditorTool.tts:
         return 'AI Voiceover & Narration';
+      case EditorTool.effects:
+        return 'Cinematic Transitions';
       default:
         return tool.name.toUpperCase();
     }
@@ -96,6 +100,8 @@ class DockedToolPanel extends StatelessWidget {
 
   IconData get _toolIcon {
     switch (tool) {
+      case EditorTool.effects:
+        return Icons.auto_awesome;
       case EditorTool.color:
         return Icons.palette_outlined;
       case EditorTool.hdConverter:
@@ -462,6 +468,20 @@ class DockedToolPanel extends StatelessWidget {
           onProjectChanged: onSaveProject,
           isDocked: true,
           onDone: onClose,
+        );
+
+      case EditorTool.effects:
+        return TransitionSelectorSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          onApplyToAll: (transConfig) {
+            final updatedTracks = project.tracks.map((track) {
+              if (track.type != TrackType.video) return track;
+              final updatedClips = track.clips.map((c) => c.copyWith(transitionIn: transConfig)).toList();
+              return track.copyWith(clips: updatedClips);
+            }).toList();
+            onSaveProject(project.copyWith(tracks: updatedTracks));
+          },
         );
 
       default:

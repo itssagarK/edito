@@ -18,19 +18,19 @@ void main() {
     });
 
     test('BorderPreset correctly instantiates presets', () {
-      final neon = BorderPreset.neonCyanGlow.createConfig();
+      final neon = BorderPreset.cyberpunkNeon.createConfig();
       expect(neon.isEnabled, true);
       expect(neon.style, VideoBorderStyle.neonGlow);
       expect(neon.primaryColor, 0xFF00E5FF);
       expect(neon.glowIntensity, greaterThan(0.5));
 
-      final letterbox = BorderPreset.cinematicLetterbox.createConfig();
+      final letterbox = BorderPreset.roundedCard.createConfig();
       expect(letterbox.isEnabled, true);
-      expect(letterbox.style, VideoBorderStyle.cinematicLetterbox);
+      expect(letterbox.style, VideoBorderStyle.roundedCard);
 
       final film = BorderPreset.filmStrip35mm.createConfig();
       expect(film.isEnabled, true);
-      expect(film.style, VideoBorderStyle.film35mm);
+      expect(film.style, VideoBorderStyle.filmStrip);
     });
 
     test('VideoBorderConfig JSON serialization roundtrip preserves all values', () {
@@ -49,7 +49,7 @@ void main() {
     });
 
     test('VideoBorderCompilerService generates drawbox filters when enabled', () {
-      final config = BorderPreset.solidWhite.createConfig();
+      final config = BorderPreset.cleanWhite.createConfig();
       final filter = VideoBorderCompilerService.generateFFmpegFilter(
         config,
         targetWidth: 1920,
@@ -74,7 +74,7 @@ void main() {
       const disabled = VideoBorderConfig(isEnabled: false);
       expect(VideoBorderCompilerService.getBorderBadge(disabled), isEmpty);
 
-      final neon = BorderPreset.neonCyanGlow.createConfig();
+      final neon = BorderPreset.cyberpunkNeon.createConfig();
       final badge = VideoBorderCompilerService.getBorderBadge(neon);
       expect(badge, contains('NEON'));
       expect(badge, contains('PX'));
@@ -185,7 +185,7 @@ void main() {
         sourceOutMs: 4000,
       );
 
-      final border = BorderPreset.neonCyanGlow.createConfig();
+      final border = BorderPreset.cyberpunkNeon.createConfig();
       final headerFooter = HeaderFooterPreset.socialReelsViral.createConfig();
 
       final updatedClip = clip.copyWith(

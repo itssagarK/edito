@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -56,6 +57,7 @@ import '../../../smoothing/models/video_smoother_config.dart';
 import '../../../smoothing/services/ai_video_smoother_service.dart';
 import '../../../smoothing/presentation/widgets/motion_blur_preview_wrapper.dart';
 import '../../../transitions/models/transition_type.dart';
+import '../../../transitions/presentation/widgets/transition_shader_painter.dart';
 
 class RealtimePreviewViewport extends ConsumerWidget {
   final int currentPositionMs;
@@ -202,7 +204,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
                           Positioned.fill(
                             child: ClipRect(
                               child: ImageFiltered(
-                                imageFilter: ImageFilter.blur(
+                                imageFilter: ui.ImageFilter.blur(
                                   sigmaX: layoutConfig.blurIntensity * 0.75,
                                   sigmaY: layoutConfig.blurIntensity * 0.75,
                                   tileMode: TileMode.mirror,
@@ -437,7 +439,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
               return SizedBox.expand(
                 child: FittedBox(
                   fit: BoxFit.cover,
-                  clipBehavior: Clip.hardEdge,
+                  clipBehavior: ui.Clip.hardEdge,
                   child: SizedBox(
                     width: controller.value.size.width > 0 ? controller.value.size.width : 1920,
                     height: controller.value.size.height > 0 ? controller.value.size.height : 1080,
@@ -452,7 +454,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
                 child: FittedBox(
                   fit: BoxFit.cover,
                   alignment: Alignment(layoutConfig?.focalPointX ?? 0.0, layoutConfig?.focalPointY ?? 0.0),
-                  clipBehavior: Clip.hardEdge,
+                  clipBehavior: ui.Clip.hardEdge,
                   child: SizedBox(
                     width: controller.value.size.width > 0 ? controller.value.size.width : 1920,
                     height: controller.value.size.height > 0 ? controller.value.size.height : 1080,
@@ -994,7 +996,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
         case 'oswald':
           return GoogleFonts.oswald(fontSize: config.fontSize, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
         case 'jetbrainsmono':
-          return GoogleFonts.jetbrainsMono(fontSize: config.fontSize, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
+          return GoogleFonts.jetBrainsMono(fontSize: config.fontSize, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
         case 'caveat':
           return GoogleFonts.caveat(fontSize: config.fontSize, fontWeight: weight, fontStyle: fontStyle, decoration: decoration, letterSpacing: spacing, color: color);
         case 'pacifico':
@@ -1211,45 +1213,21 @@ class RealtimePreviewViewport extends ConsumerWidget {
 
     final progress = (elapsedMs / durationMs).clamp(0.0, 1.0);
 
-    switch (transIn.type) {
-      case TransitionType.fadeBlack:
-        return IgnorePointer(
-          child: Container(
-            color: Colors.black.withOpacity(1.0 - progress),
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: TransitionShaderPainter(
+            progress: progress,
+            type: transIn.type,
+            easing: transIn.easing,
+            sceneAColor: Colors.black,
+            sceneBColor: Colors.transparent,
+            labelA: '',
+            labelB: '',
           ),
-        );
-      case TransitionType.fadeWhite:
-        return IgnorePointer(
-          child: Container(
-            color: Colors.white.withOpacity(1.0 - progress),
-          ),
-        );
-      case TransitionType.wipeLeft:
-        return IgnorePointer(
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: FractionallySizedBox(
-              widthFactor: (1.0 - progress),
-              heightFactor: 1.0,
-              child: Container(color: Colors.black),
-            ),
-          ),
-        );
-      case TransitionType.wipeRight:
-        return IgnorePointer(
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: FractionallySizedBox(
-              widthFactor: (1.0 - progress),
-              heightFactor: 1.0,
-              child: Container(color: Colors.black),
-            ),
-          ),
-        );
-      case TransitionType.crossDissolve:
-      default:
-        return const SizedBox.shrink();
-    }
+        ),
+      ),
+    );
   }
 
   static Decoration _buildCanvasDecoration(VideoLayoutConfig layout) {
@@ -1308,7 +1286,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
     if (!config.isEnabled) return const SizedBox.shrink();
 
     final primary = Color(config.primaryColor).withOpacity(config.opacity);
-    final secondary = Color(config.secondaryColor).withOpacity(config.opacity);
+    final secondary = Color(config.secondaryColor ?? config.borderColor).withOpacity(config.opacity);
 
     switch (config.style) {
       case VideoBorderStyle.solid:

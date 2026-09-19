@@ -3,7 +3,7 @@ import 'package:edito/models/clip.dart';
 import 'package:edito/models/media_asset.dart';
 import 'package:edito/models/project.dart';
 import 'package:edito/models/track.dart';
-import 'package:edito/features/export/models/export_config.dart';
+import 'package:edito/features/export/models/export_preset.dart';
 import 'package:edito/features/export/services/ffmpeg_command_builder.dart';
 import 'package:edito/features/timeline/services/timeline_editing_service.dart';
 
@@ -205,7 +205,7 @@ void main() {
         clips: [freezeClip],
       );
 
-      const project = Project(
+      final project = Project(
         id: 'p-freeze',
         name: 'Freeze Export',
         durationMs: 3000,
@@ -213,16 +213,16 @@ void main() {
         assets: [asset],
       );
 
-      final cmd = FFmpegCommandBuilder.build(
-        project: project,
-        config: const ExportConfig(),
+      const config = ExportConfiguration(
         outputPath: '/storage/freeze_out.mp4',
       );
+      final args = FFmpegCommandBuilder.buildArguments(project, config);
+      final cmd = args.join(' ');
 
       // Verify tpad filter is present in video filtergraph
-      expect(cmd.command.contains('tpad=stop_mode=clone:stop_duration=3.000'), isTrue);
+      expect(cmd.contains('tpad=stop_mode=clone:stop_duration=3.000'), isTrue);
       // Verify freeze clip is excluded from audio chains (silence)
-      expect(cmd.command.contains('[0:a]'), isFalse);
+      expect(cmd.contains('[0:a]'), isFalse);
     });
 
     test('Builds reverse and areverse filters when clip is reversed', () {
@@ -253,7 +253,7 @@ void main() {
         clips: [revClip],
       );
 
-      const project = Project(
+      final project = Project(
         id: 'p-rev',
         name: 'Reverse Export',
         durationMs: 4000,
@@ -261,15 +261,15 @@ void main() {
         assets: [asset],
       );
 
-      final cmd = FFmpegCommandBuilder.build(
-        project: project,
-        config: const ExportConfig(),
+      const config = ExportConfiguration(
         outputPath: '/storage/reverse_out.mp4',
       );
+      final args = FFmpegCommandBuilder.buildArguments(project, config);
+      final cmd = args.join(' ');
 
       // Verify both reverse (video) and areverse (audio) are included
-      expect(cmd.command.contains('reverse'), isTrue);
-      expect(cmd.command.contains('areverse'), isTrue);
+      expect(cmd.contains('reverse'), isTrue);
+      expect(cmd.contains('areverse'), isTrue);
     });
   });
 }

@@ -115,6 +115,10 @@ class AutoCaptionService {
     return captions;
   }
 
+  /// Alias for syncCaptionsToProject
+  static Project syncCaptionsToTimeline(Project project, List<CaptionLine> captions) =>
+      syncCaptionsToProject(project, captions);
+
   /// Updates or creates the 'Captions' track in the project with the given caption lines
   static Project syncCaptionsToProject(Project project, List<CaptionLine> captions) {
     // 1. Locate existing 'Captions' track or create a new one

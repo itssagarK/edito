@@ -184,8 +184,11 @@ void main() {
       final restoredClip = Clip(
         id: 'clip_restored_01',
         assetId: 'asset_01',
+        trackId: 'track_v1',
         startTimeMs: 0,
         durationMs: 4000,
+        sourceInMs: 0,
+        sourceOutMs: 4000,
         audioEffects: const AudioEffectsConfig(
           deHumMode: DeHumMode.hz50EuropeAsia,
           isWindDePlosiveEnabled: true,
@@ -211,11 +214,11 @@ void main() {
         ],
       );
 
-      final cmd = FFmpegCommandBuilder.buildExportCommand(
-        project: project,
-        preset: ExportPreset.youtube1080p,
+      const config = ExportConfiguration(
         outputPath: '/out/audio_render.mp4',
       );
+
+      final cmd = FFmpegCommandBuilder.buildArguments(project, config);
 
       expect(cmd.any((arg) => arg.contains('equalizer=f=50')), isTrue);
       expect(cmd.any((arg) => arg.contains('highpass=f=75:p=2')), isTrue);
