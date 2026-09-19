@@ -80,7 +80,7 @@ class _SmartCutoutSheetState extends State<SmartCutoutSheet> with SingleTickerPr
   Widget build(BuildContext context) {
     final content = Container(
       decoration: BoxDecoration(
-        color: AppColors.backgroundSecondary,
+        color: AppColors.surface,
         borderRadius: widget.isDocked
             ? BorderRadius.zero
             : const BorderRadius.vertical(top: Radius.circular(20)),
@@ -122,7 +122,7 @@ class _SmartCutoutSheetState extends State<SmartCutoutSheet> with SingleTickerPr
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.surfaceLight.withOpacity(0.2))),
+        border: Border(bottom: BorderSide(color: AppColors.surfaceHighlight.withOpacity(0.2))),
       ),
       child: Row(
         children: [
@@ -143,7 +143,7 @@ class _SmartCutoutSheetState extends State<SmartCutoutSheet> with SingleTickerPr
               children: [
                 Text(
                   'Smart AI Cutout Studio',
-                  style: AppTypography.headingSmall.copyWith(fontSize: 15, fontWeight: FontWeight.bold),
+                  style: AppTypography.titleMedium.copyWith(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   badge.isNotEmpty ? badge : 'One-tap portrait matting & glowing outlines',
@@ -184,8 +184,8 @@ class _SmartCutoutSheetState extends State<SmartCutoutSheet> with SingleTickerPr
     return Container(
       height: 40,
       decoration: BoxDecoration(
-        color: AppColors.backgroundPrimary,
-        border: Border(bottom: BorderSide(color: AppColors.surfaceLight.withOpacity(0.1))),
+        color: AppColors.background,
+        border: Border(bottom: BorderSide(color: AppColors.surfaceHighlight.withOpacity(0.1))),
       ),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -257,16 +257,16 @@ class _SmartCutoutSheetState extends State<SmartCutoutSheet> with SingleTickerPr
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.surfaceDark,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.surfaceLight.withOpacity(0.15)),
+            border: Border.all(color: AppColors.surfaceHighlight.withOpacity(0.15)),
           ),
           child: Column(
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Invert Cutout (Isolate Background)', style: AppTypography.bodySmall),
+                  Text('Invert Cutout (Isolate Background)', style: AppTypography.bodyMedium),
                   Switch(
                     value: _config.isInverted,
                     activeColor: const Color(0xFF00E5FF),
@@ -299,11 +299,11 @@ class _SmartCutoutSheetState extends State<SmartCutoutSheet> with SingleTickerPr
 
   Widget _buildPresetChip(String label, SmartCutoutConfig preset) {
     return ActionChip(
-      backgroundColor: AppColors.surfaceDark,
+      backgroundColor: AppColors.surface,
       label: Text(label, style: const TextStyle(fontSize: 12, color: Colors.white)),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: AppColors.surfaceLight.withOpacity(0.3)),
+        side: BorderSide(color: AppColors.surfaceHighlight.withOpacity(0.3)),
       ),
       onPressed: () => _applyPreset(preset),
     );
@@ -326,7 +326,7 @@ class _SmartCutoutSheetState extends State<SmartCutoutSheet> with SingleTickerPr
                   label: Text(style.name.toUpperCase(), style: const TextStyle(fontSize: 11)),
                   selected: isSelected,
                   selectedColor: const Color(0xFF00E5FF).withOpacity(0.25),
-                  backgroundColor: AppColors.surfaceDark,
+                  backgroundColor: AppColors.surface,
                   onSelected: (_) {
                     setState(() {
                       _config = _config.copyWith(
@@ -425,7 +425,7 @@ class _SmartCutoutSheetState extends State<SmartCutoutSheet> with SingleTickerPr
                 label: Text(mode.name.toUpperCase(), style: const TextStyle(fontSize: 11)),
                 selected: isSelected,
                 selectedColor: const Color(0xFF00E5FF).withOpacity(0.25),
-                backgroundColor: AppColors.surfaceDark,
+                backgroundColor: AppColors.surface,
                 onSelected: (_) {
                   setState(() {
                     _config = _config.copyWith(
@@ -489,7 +489,7 @@ class _SmartCutoutSheetState extends State<SmartCutoutSheet> with SingleTickerPr
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.surfaceDark,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -519,7 +519,7 @@ class _SmartCutoutSheetState extends State<SmartCutoutSheet> with SingleTickerPr
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.surfaceDark,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
@@ -573,7 +573,7 @@ class _SmartCutoutSheetState extends State<SmartCutoutSheet> with SingleTickerPr
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: const Color(0xFF00E5FF),
-            inactiveTrackColor: AppColors.surfaceLight.withOpacity(0.3),
+            inactiveTrackColor: AppColors.surfaceHighlight.withOpacity(0.3),
             thumbColor: const Color(0xFF00E5FF),
           ),
           child: Slider(
