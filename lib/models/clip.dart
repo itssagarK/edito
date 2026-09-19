@@ -19,6 +19,7 @@ import '../features/transitions/models/transition_type.dart';
 import '../features/vfx/models/vfx_config.dart';
 import '../features/beats/models/beat_detection_config.dart';
 import '../features/cutout/models/smart_cutout_config.dart';
+import '../features/speed/models/auto_velocity_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -55,6 +56,7 @@ class Clip extends Equatable {
   final VfxConfig vfx;
   final BeatDetectionConfig beatConfig;
   final SmartCutoutConfig smartCutout;
+  final AutoVelocityConfig autoVelocity;
 
   const Clip({
     required this.id,
@@ -91,6 +93,7 @@ class Clip extends Equatable {
     this.vfx = const VfxConfig(),
     this.beatConfig = const BeatDetectionConfig(),
     this.smartCutout = const SmartCutoutConfig(),
+    this.autoVelocity = const AutoVelocityConfig(),
   });
 
   Clip copyWith({
@@ -128,6 +131,7 @@ class Clip extends Equatable {
     VfxConfig? vfx,
     BeatDetectionConfig? beatConfig,
     SmartCutoutConfig? smartCutout,
+    AutoVelocityConfig? autoVelocity,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -164,6 +168,7 @@ class Clip extends Equatable {
       vfx: vfx ?? this.vfx,
       beatConfig: beatConfig ?? this.beatConfig,
       smartCutout: smartCutout ?? this.smartCutout,
+      autoVelocity: autoVelocity ?? this.autoVelocity,
     );
   }
 
@@ -202,6 +207,7 @@ class Clip extends Equatable {
         'vfx': vfx.toJson(),
         'beatConfig': beatConfig.toJson(),
         'smartCutout': smartCutout.toJson(),
+        'autoVelocity': autoVelocity.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -284,6 +290,9 @@ class Clip extends Equatable {
         smartCutout: json['smartCutout'] != null
             ? SmartCutoutConfig.fromJson(json['smartCutout'] as Map<String, dynamic>)
             : const SmartCutoutConfig(),
+        autoVelocity: json['autoVelocity'] != null
+            ? AutoVelocityConfig.fromJson(json['autoVelocity'] as Map<String, dynamic>)
+            : const AutoVelocityConfig(),
       );
 
   @override
@@ -322,5 +331,6 @@ class Clip extends Equatable {
         vfx,
         beatConfig,
         smartCutout,
+        autoVelocity,
       ];
 }

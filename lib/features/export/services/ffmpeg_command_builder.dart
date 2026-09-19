@@ -18,6 +18,7 @@ import '../../masking/services/mask_compiler_service.dart';
 import '../../overlays/services/overlay_compiler_service.dart';
 import '../../smoothing/services/ai_video_smoother_service.dart';
 import '../../speed/services/speed_ramping_service.dart';
+import '../../speed/services/auto_velocity_service.dart';
 import '../../transitions/models/transition_type.dart';
 import '../../transitions/services/transition_compiler_service.dart';
 import '../../vfx/services/vfx_compiler_service.dart';
@@ -268,6 +269,19 @@ class FFmpegCommandBuilder {
           );
           if (cutoutFilters.isNotEmpty) {
             vFilters.addAll(cutoutFilters);
+          }
+        }
+
+        // CapCut AI Auto-Velocity Synchronized Micro-Effects (Flash Pulse, Micro-Zoom)
+        if (clip.autoVelocity.isEnabled) {
+          final velocityFilters = AutoVelocityService.generateFFmpegFilters(
+            clip,
+            clip.autoVelocity,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (velocityFilters.isNotEmpty) {
+            vFilters.addAll(velocityFilters);
           }
         }
 

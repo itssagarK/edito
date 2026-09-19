@@ -6,6 +6,7 @@ import '../../../color_grading/models/color_grading_config.dart';
 import '../../models/speed_curve_preset.dart';
 import '../../services/speed_ramping_service.dart';
 import 'speed_curve_graph_widget.dart';
+import 'auto_velocity_sheet.dart';
 
 class SpeedRampingSheet extends StatefulWidget {
   final Clip clip;
@@ -43,8 +44,10 @@ class _SpeedRampingSheetState extends State<SpeedRampingSheet> with SingleTicker
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    if (widget.clip.speedCurve.type != SpeedCurveType.constant) {
+    _tabController = TabController(length: 3, vsync: this);
+    if (widget.clip.autoVelocity.isEnabled) {
+      _tabController.index = 2;
+    } else if (widget.clip.speedCurve.type != SpeedCurveType.constant) {
       _tabController.index = 1;
     }
     _constantSpeed = widget.clip.speed;
@@ -147,8 +150,9 @@ class _SpeedRampingSheetState extends State<SpeedRampingSheet> with SingleTicker
               unselectedLabelColor: AppColors.textMuted,
               labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
               tabs: const [
-                Tab(text: 'Standard Multiplier'),
-                Tab(text: 'Dynamic Curves & Graph'),
+                Tab(text: 'Standard'),
+                Tab(text: 'Curves & Graph'),
+                Tab(text: '⚡ Auto-Velocity'),
               ],
             ),
           ),
@@ -196,6 +200,12 @@ class _SpeedRampingSheetState extends State<SpeedRampingSheet> with SingleTicker
               children: [
                 _buildConstantSpeedTab(),
                 _buildSpeedCurvesTab(),
+                AutoVelocitySheet(
+                  clip: widget.clip,
+                  onSave: widget.onSave,
+                  isDocked: true,
+                  onDone: widget.onDone,
+                ),
               ],
             ),
           ),

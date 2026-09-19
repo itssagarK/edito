@@ -1101,3 +1101,39 @@ Directly inspired by CapCut Creator's native C++ NLE timeline (`libcccreator.so`
    - Generates deterministic filter chains (`format=yuva420p`, `boxblur`, `colorbalance`, `colorchannelmixer`, `negate`).
    - Verified by comprehensive test suite in `test/smart_cutout_test.dart`.
 
+---
+
+## 30. CapCut Pro AI Auto-Velocity Studio & Micro-Effects (v1.0.44)
+
+1. **Beat-Synchronized Speed Curve Synthesis (`AutoVelocityService` & `AutoVelocityConfig`)**:
+   - **Musical Rhythm Ramping**:
+     - Mathematically distributes Bezier speed curve points across musical beat timestamps (`clip.beatConfig.beatTimestampsMs`, external audio beats, or BPM grid).
+     - Ramps between ultra smooth slow-mo buildup (`slowSpeed`: 0.1x to 0.9x) and explosive velocity surges (`fastSpeed`: 1.5x to 8.0x) snapping on the exact millisecond of every beat.
+   - **5 CapCut Signature Presets**:
+     - ⚡ *Classic Velocity* (0.35x valley ➔ 3.5x peak on every beat)
+     - 💥 *Phonk / Trap Rush* (0.20x valley ➔ 6.0x extreme burst + white flash + camera micro-zoom + RGB glitch)
+     - 🌊 *Hyper-Drift* (0.25x liquid slow-mo ➔ 3.0x snap acceleration)
+     - 🥁 *Stutter BPM* (Double-pulse velocity on half-beat subdivisions)
+     - ☕ *Lofi Chill* (0.70x to 1.50x gentle ebb and flow)
+   - **Rhythmic Beat Subdivisions**:
+     - `everyBeat` (1/1), `halfBeat` (1/2), `doubleBeat` (2/1).
+
+2. **Synchronized Visual Micro-Effects**:
+   - **White Flash Exposure Pulse**:
+     - Exponential flash decay on beat drop (`calculateFlashOpacity`), customizable from 0% to 100% intensity.
+   - **Camera Micro-Zoom Shockwave**:
+     - Quadratic punch-in scaling on beat drops (`calculateMicroZoom`), customizable from 1.02x to 1.25x zoom factor.
+   - **Peak RGB Glitch / Chromatic Aberration**:
+     - Real-time chromatic split (`rgbashift=rh=5:bh=-5`) at peak acceleration moments.
+   - **AI Motion Interpolation**:
+     - Seamless integration with optical flow slow-motion (`isSmoothSlowMo: true` / `minterpolate`).
+
+3. **Real-Time Viewport Compositing & Studio Sheet (`AutoVelocitySheet` & `SpeedRampingSheet`)**:
+   - First-class tab in `SpeedRampingSheet` (`[⚡ Auto-Velocity]`).
+   - Real-time Skia viewport micro-zoom and white flash burst during preview playback.
+   - Live floating viewport HUD badge: e.g. `💥 PHONK RUSH (6.0x + FLASH)`.
+
+4. **FFmpeg Export Filtergraph Parity**:
+   - Compiles synchronized speed curve `setpts`, optical flow `minterpolate`, `eq=brightness` flash pulses, and chromatic aberration.
+   - Verified by comprehensive test suite in `test/auto_velocity_test.dart`.
+

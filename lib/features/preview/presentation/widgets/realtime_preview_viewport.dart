@@ -23,6 +23,8 @@ import '../../../chroma/presentation/widgets/chroma_key_preview_wrapper.dart';
 import '../../../cutout/models/smart_cutout_config.dart';
 import '../../../cutout/services/smart_cutout_compiler_service.dart';
 import '../../../cutout/presentation/widgets/smart_cutout_preview_wrapper.dart';
+import '../../../speed/models/auto_velocity_config.dart';
+import '../../../speed/services/auto_velocity_service.dart';
 import '../../../hd_converter/models/hd_converter_config.dart';
 import '../../../hd_converter/services/hd_converter_service.dart';
 import '../../../header_footer/models/header_footer_config.dart';
@@ -559,6 +561,42 @@ class RealtimePreviewViewport extends ConsumerWidget {
       );
     }
 
+    if (clip.autoVelocity.isEnabled) {
+      final clipOffsetMs = (frame.sourceFrameTimeMs - clip.sourceInMs).clamp(0, clip.durationMs);
+      final zoom = AutoVelocityService.calculateMicroZoom(
+        clipOffsetMs,
+        clip.beatConfig.beatTimestampsMs,
+        clip.autoVelocity,
+      );
+      if (zoom > 1.001) {
+        videoContent = Transform.scale(
+          scale: zoom,
+          child: videoContent,
+        );
+      }
+
+      final flashOpacity = AutoVelocityService.calculateFlashOpacity(
+        clipOffsetMs,
+        clip.beatConfig.beatTimestampsMs,
+        clip.autoVelocity,
+      );
+      if (flashOpacity > 0.01) {
+        videoContent = Stack(
+          fit: StackFit.passthrough,
+          children: [
+            videoContent,
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Container(
+                  color: Colors.white.withOpacity(flashOpacity),
+                ),
+              ),
+            ),
+          ],
+        );
+      }
+    }
+
     if (clip.mask.isActive) {
       videoContent = MaskPreviewWrapper(
         config: clip.mask,
@@ -749,6 +787,19 @@ class RealtimePreviewViewport extends ConsumerWidget {
                   child: Text(
                     SmartCutoutCompilerService.getCutoutBadge(clip.smartCutout),
                     style: const TextStyle(fontSize: 9, color: Color(0xFF00E5FF), fontWeight: FontWeight.bold),
+                  ),
+                ),
+              if (clip.autoVelocity.isEnabled)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFFFFD700)),
+                  ),
+                  child: Text(
+                    AutoVelocityService.getBadge(clip.autoVelocity),
+                    style: const TextStyle(fontSize: 9, color: Color(0xFFFFD700), fontWeight: FontWeight.bold),
                   ),
                 ),
               if (clip.mask.isActive)
