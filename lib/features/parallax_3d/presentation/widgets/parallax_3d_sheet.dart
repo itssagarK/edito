@@ -58,6 +58,7 @@ class _Parallax3DSheetState extends State<Parallax3DSheet>
 
   @override
   void dispose() {
+    _demoAnimController.stop();
     _demoAnimController.dispose();
     super.dispose();
   }

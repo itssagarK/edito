@@ -14,17 +14,17 @@ class Parallax3DCompilerService {
       case MotionDynamicsCurve.smoothCubic:
         // Standard smooth cubic ease-in-out
         return clampedT < 0.5
-            ? 4 * clampedT * clampedT * clampedT
-            : 1 - math.pow(-2 * clampedT + 2, 3) / 2;
+            ? (4.0 * clampedT * clampedT * clampedT)
+            : (1.0 - math.pow(-2.0 * clampedT + 2.0, 3).toDouble() / 2.0);
 
       case MotionDynamicsCurve.elasticSnap:
         // Elastic spring snap curve with smooth settling
         if (clampedT == 0.0) return 0.0;
         if (clampedT == 1.0) return 1.0;
-        const c4 = (2 * math.pi) / 3;
-        return math.pow(2, -10 * clampedT) *
-                math.sin((clampedT * 10 - 0.75) * c4) +
-            1;
+        const c4 = (2.0 * math.pi) / 3.0;
+        return (math.pow(2.0, -10.0 * clampedT).toDouble() *
+                math.sin((clampedT * 10.0 - 0.75) * c4) +
+            1.0);
 
       case MotionDynamicsCurve.cinematicSlow:
         // Cinematic tension curve (slow start, smooth accelerate)

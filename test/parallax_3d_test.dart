@@ -109,10 +109,10 @@ void main() {
       final midMatrix = Parallax3DCompilerService.computePreviewMatrix(activeConfig, 0.5);
       final endMatrix = Parallax3DCompilerService.computePreviewMatrix(activeConfig, 1.0);
 
-      // Perspective Z divisor entry (3, 2) must be non-zero
-      expect(midMatrix.entry(3, 2), isNonZero);
-      // End matrix must be scaled higher than start matrix
-      expect(endMatrix.entry(0, 0), greaterThan(startMatrix.entry(0, 0)));
+      // Perspective Z divisor entry (row 3, col 2) is at storage[11] (column-major order: col*4 + row = 2*4 + 3 = 11)
+      expect(midMatrix.storage[11], isNonZero);
+      // End matrix must be scaled higher than start matrix (row 0, col 0 is at storage[0])
+      expect(endMatrix.storage[0], greaterThan(startMatrix.storage[0]));
     });
 
     test('Parallax3DCompilerService generates dynamic optical lens blur', () {
@@ -234,6 +234,9 @@ void main() {
       expect(find.text('CAMERA KINEMATICS'), findsOneWidget);
       expect(find.text('OPTICAL FOCAL PLANE'), findsOneWidget);
       expect(find.text('ACCELERATION & EASING'), findsOneWidget);
+
+      // Cleanly unmount to dispose animation controller and tickers
+      await tester.pumpWidget(const SizedBox.shrink());
     });
   });
 }
