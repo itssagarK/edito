@@ -40,27 +40,15 @@ class Parallax3DSheet extends StatefulWidget {
   State<Parallax3DSheet> createState() => _Parallax3DSheetState();
 }
 
-class _Parallax3DSheetState extends State<Parallax3DSheet>
-    with SingleTickerProviderStateMixin {
+class _Parallax3DSheetState extends State<Parallax3DSheet> {
   late Parallax3DConfig _config;
   bool _isPeekingRaw = false;
-  late AnimationController _demoAnimController;
+  double _previewProgress = 0.5;
 
   @override
   void initState() {
     super.initState();
     _config = widget.clip.parallax3d;
-    _demoAnimController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2400),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _demoAnimController.stop();
-    _demoAnimController.dispose();
-    super.dispose();
   }
 
   void _updateConfig(Parallax3DConfig newConfig) {
@@ -248,7 +236,7 @@ class _Parallax3DSheetState extends State<Parallax3DSheet>
                 ),
                 Text(
                   _config.isEnabled && _config.style != Parallax3DStyle.none
-                      ? _config.style.label
+                      ? 'Mode: ${_config.style.label}'
                       : 'Camera Parallax Off',
                   style: const TextStyle(
                     color: Color(0xFF00E676),
@@ -316,112 +304,106 @@ class _Parallax3DSheetState extends State<Parallax3DSheet>
     );
   }
 
-  /// Interactive Animated 3D Depth Card Visualizer
+  /// Interactive 3D Depth Card Visualizer
   Widget _buildDepthVisualizer(Parallax3DConfig activeConfig) {
     if (!activeConfig.isEnabled || activeConfig.style == Parallax3DStyle.none) {
       return const SizedBox.shrink();
     }
 
-    return AnimatedBuilder(
-      animation: _demoAnimController,
-      builder: (context, child) {
-        final progress = _demoAnimController.value;
-        final matrix = Parallax3DCompilerService.computePreviewMatrix(
-          activeConfig,
-          progress,
-          viewportSize: const Size(260, 90),
-        );
-        final blur = Parallax3DCompilerService.computePreviewBlur(activeConfig, progress);
+    final matrix = Parallax3DCompilerService.computePreviewMatrix(
+      activeConfig,
+      _previewProgress,
+      viewportSize: const Size(260, 90),
+    );
+    final blur = Parallax3DCompilerService.computePreviewBlur(activeConfig, _previewProgress);
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          height: 90,
-          decoration: BoxDecoration(
-            color: const Color(0xFF14181F),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF00E676).withOpacity(0.3)),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Simulated Background Depth Grid
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _DepthGridPainter(),
-                  ),
-                ),
-
-                // Simulated 3D Card Subject
-                Transform(
-                  transform: matrix,
-                  alignment: Alignment.center,
-                  child: Container(
-                    width: 140,
-                    height: 58,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF00E676).withOpacity(0.4),
-                          const Color(0xFF00B0FF).withOpacity(0.3),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: const Color(0xFF00E676),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF00E676).withOpacity(0.2),
-                          blurRadius: 10 + blur,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _getIconForStyle(activeConfig.style),
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            activeConfig.style.label,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Live Camera Metrics Overlay
-                Positioned(
-                  bottom: 6,
-                  left: 10,
-                  child: Text(
-                    'Z-SCALE: ${(1.0 + (activeConfig.depthScale - 1.0) * activeConfig.intensity * progress).toStringAsFixed(2)}x  •  3D PERSPECTIVE: ${(activeConfig.perspectiveTilt * 100).round()}%',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      height: 90,
+      decoration: BoxDecoration(
+        color: const Color(0xFF14181F),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF00E676).withOpacity(0.3)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Simulated Background Depth Grid
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _DepthGridPainter(),
+              ),
             ),
-          ),
-        );
-      },
+
+            // Simulated 3D Card Subject
+            Transform(
+              transform: matrix,
+              alignment: Alignment.center,
+              child: Container(
+                width: 140,
+                height: 58,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF00E676).withOpacity(0.4),
+                      const Color(0xFF00B0FF).withOpacity(0.3),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFF00E676),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF00E676).withOpacity(0.2),
+                      blurRadius: (10.0 + blur).clamp(0.0, 30.0),
+                      spreadRadius: 2.0,
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _getIconForStyle(activeConfig.style),
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '3D: ${activeConfig.style.label}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Live Camera Metrics Overlay
+            Positioned(
+              bottom: 6,
+              left: 10,
+              child: Text(
+                'Z-SCALE: ${(1.0 + (activeConfig.depthScale - 1.0) * activeConfig.intensity * _previewProgress).toStringAsFixed(2)}x  •  3D PERSPECTIVE: ${(activeConfig.perspectiveTilt * 100).round()}%',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.6),
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
