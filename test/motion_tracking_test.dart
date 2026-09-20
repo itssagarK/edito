@@ -339,7 +339,7 @@ void main() {
     });
 
     testWidgets('MotionTrackingSheet renders studio controls and handles analyze workflow', (tester) async {
-      const project = Project(
+      final project = Project(
         id: 'proj_test',
         name: 'Track Proj',
         tracks: [

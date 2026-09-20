@@ -90,7 +90,7 @@ class _Parallax3DSheetState extends State<Parallax3DSheet> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: AppColors.surface,
         borderRadius: widget.isDocked
             ? BorderRadius.zero
             : const BorderRadius.vertical(top: Radius.circular(20)),

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:edito/models/clip.dart';
 import 'package:edito/models/project.dart';
 import 'package:edito/models/track.dart';
+import 'package:edito/models/media_asset.dart';
 import 'package:edito/features/image_editor/models/image_overlay_config.dart';
 import 'package:edito/features/image_editor/services/pip_compiler_service.dart';
 import 'package:edito/features/export/services/ffmpeg_command_builder.dart';
@@ -185,6 +186,15 @@ void main() {
       final project = Project(
         id: 'proj_pip_test',
         name: 'PiP Test Project',
+        assets: const [
+          MediaAsset(
+            id: 'asset_01',
+            path: '/media/base.mp4',
+            fileName: 'base.mp4',
+            type: MediaType.video,
+            durationMs: 5000,
+          ),
+        ],
         tracks: [
           Track(
             id: 'track_video_01',
