@@ -445,6 +445,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openRetouchModal();
         break;
 
+      case EditorTool.parallax3D:
+        _openParallax3DModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -738,6 +742,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openRetouchModal() {
     _openDockedTool(EditorTool.retouch, trackType: TrackType.video, purpose: 'AI Face & Body Retouch');
+  }
+
+  void _openParallax3DModal() {
+    _openDockedTool(EditorTool.parallax3D, trackType: TrackType.video, purpose: '3D Zoom & Parallax');
   }
 
   Clip? _findTargetClip() {

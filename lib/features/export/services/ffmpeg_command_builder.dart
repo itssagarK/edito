@@ -30,6 +30,8 @@ import '../../captions/services/caption_compiler_service.dart';
 import '../../tracking/services/motion_tracking_service.dart';
 import '../../tracking/services/motion_tracking_compiler_service.dart';
 import '../../retouch/services/face_retouch_compiler_service.dart';
+import '../../parallax_3d/models/parallax_3d_config.dart';
+import '../../parallax_3d/services/parallax_3d_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -261,6 +263,18 @@ class FFmpegCommandBuilder {
           if (zoomFilter.isNotEmpty) {
             vFilters.add(zoomFilter);
           }
+        }
+
+        // CapCut Pro 3D Zoom & Parallax Motion Engine
+        if (clip.parallax3d.isEnabled && clip.parallax3d.style != Parallax3DStyle.none) {
+          final parallaxFilters = Parallax3DCompilerService.generateFFmpegFilters(
+            clip.parallax3d,
+            clip.durationMs,
+            preset.fps,
+            targetW,
+            targetH,
+          );
+          vFilters.addAll(parallaxFilters);
         }
 
         // Cinematic Motion VFX & Visual Effects

@@ -49,6 +49,8 @@ import '../../../tracking/models/motion_tracking_config.dart';
 import '../../../tracking/services/motion_tracking_service.dart';
 import '../../../retouch/models/face_retouch_config.dart';
 import '../../../retouch/services/face_retouch_compiler_service.dart';
+import '../../../parallax_3d/models/parallax_3d_config.dart';
+import '../../../parallax_3d/services/parallax_3d_compiler_service.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';
@@ -587,6 +589,28 @@ class RealtimePreviewViewport extends ConsumerWidget {
       );
     }
 
+    if (clip.parallax3d.isEnabled && clip.parallax3d.style != Parallax3DStyle.none) {
+      final currentClipTimeMs = (frame.sourceFrameTimeMs - clip.sourceInMs).clamp(0, clip.durationMs);
+      final progress = clip.durationMs > 0 ? (currentClipTimeMs / clip.durationMs).clamp(0.0, 1.0) : 0.0;
+      final matrix = Parallax3DCompilerService.computePreviewMatrix(clip.parallax3d, progress);
+      final blur = Parallax3DCompilerService.computePreviewBlur(clip.parallax3d, progress);
+
+      Widget transformed = Transform(
+        transform: matrix,
+        alignment: Alignment.center,
+        child: videoContent,
+      );
+
+      if (blur > 0.05) {
+        transformed = ImageFiltered(
+          imageFilter: ui.ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: transformed,
+        );
+      }
+
+      videoContent = ClipRect(child: transformed);
+    }
+
     if (clip.chromaKey.isEnabled) {
       videoContent = ChromaKeyPreviewWrapper(
         config: clip.chromaKey,
@@ -1086,6 +1110,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 9,
                       color: Color(0xFFFF80AB),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.parallax3d.badge.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF00E676)),
+                  ),
+                  child: Text(
+                    clip.parallax3d.badge,
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFF00E676),
                       fontWeight: FontWeight.bold,
                     ),
                   ),

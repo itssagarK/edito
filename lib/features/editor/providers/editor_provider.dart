@@ -33,6 +33,7 @@ enum EditorTool {
   tts,
   tracking,
   retouch,
+  parallax3D,
 }
 
 class EditorState {

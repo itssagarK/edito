@@ -1291,3 +1291,47 @@ Directly reverse-engineered and benchmarked against CapCut Pro's portrait beauti
    - Integrated into two-tier contextual dock (`EditorTool.retouch`) and docked panel with universal Flutter compatibility.
    - Verified by comprehensive test suite in `test/face_retouch_test.dart`.
 
+---
+
+## 34. CapCut Pro 3D Zoom & Parallax Motion Engine (v1.0.48 Release)
+
+Directly reverse-engineered and benchmarked against CapCut Pro's iconic 3D Zoom and 3D Zoom Pro camera style effects (`com.vega.edit.parallax3d`), delivering dynamic multi-plane 3D camera projection, optical focal blur, and dual-engine Skia/FFmpeg parity:
+
+1. **Domain Model & Kinematics Parameters (`Parallax3DConfig`)**:
+   - **8 Camera Motion & Parallax Styles (`Parallax3DStyle`)**:
+     - `none`: Parallax disabled.
+     - `classicZoomIn`: Forward camera push-in dolly with subject depth pop and background expansion.
+     - `dollyZoomOut`: Smooth reverse pull dolly revealing wider cinematic environment context.
+     - `orbitalLeft`: Parallax arc sweep leftward with multi-plane counter-displacement and 3D yaw tilt.
+     - `orbitalRight`: Parallax arc sweep rightward with multi-plane counter-displacement and 3D yaw tilt.
+     - `vertigoDolly`: The classic Hitchcock / Spielberg "Vertigo" counter-zoom where subject size is locked while background perspective expands.
+     - `elasticBounce`: High-energy snap push-in with organic spring rebound (tailored for TikTok beat drops).
+     - `craneGlider`: Diagonal top-down cinematic crane sweep swooping into the subject.
+   - **Multi-Plane Optics & Dynamics**:
+     - `intensity` (0.1 to 1.0): Camera travel distance and displacement amplitude.
+     - `depthScale` (1.0 to 2.5): Maximum 3D zoom scaling amplitude.
+     - `perspectiveTilt` (0.0 to 1.0): 3D pitch/yaw/roll angular rotation (up to ±15°).
+     - `depthBlur` (0.0 to 1.0): Simulated optical lens defocus blur during peak movement.
+     - **3 Optical Focal Planes (`FocalPlane`)**: *Foreground Subject*, *Midground Balance*, *Background Horizon*.
+     - **4 Acceleration & Easing Curves (`MotionDynamicsCurve`)**: *Smooth Ease (Cubic)*, *Elastic Snap (Spring)*, *Constant (Linear)*, *Cinematic Tension (Slow)*.
+
+2. **Dual-Engine Skia & FFmpeg Filter Pipeline (`Parallax3DCompilerService`)**:
+   - **Skia GPU 3D Matrix Compositor (`RealtimePreviewViewport`)**:
+     - Evaluates 4x4 transform matrix with real Z-axis perspective projection (`matrix.setEntry(3, 2, 0.0012 * perspectiveTilt)`).
+     - Dynamically evaluates dynamic scale, 3D pitch/yaw tilt, and focal plane offset at 60fps matching playhead timecode.
+     - Dynamic optical lens defocus blur using `ImageFilter.blur(sigmaX: blur, sigmaY: blur)` during peak camera velocity.
+     - Viewport floating HUD status badge: e.g. `🏔️ 3D ZOOM (CLASSIC 3D PUSH)`, `🏔️ 3D ZOOM (VERTIGO)`.
+   - **Deterministic FFmpeg Export Graph (`FFmpegCommandBuilder`)**:
+     - Compiles `zoompan=z='...':x='...':y='...':d=1:s=<W>x<H>:fps=<FPS>` matching preview kinematics.
+     - Compiles optical depth defocus blur using `boxblur=luma_radius=...:luma_power=1:enable='between(t,...)'`.
+
+3. **Studio Interface (`Parallax3DSheet`)**:
+   - **Interactive 3D Depth Visualizer**: Real-time animated 3D depth card rendering simulated foreground subject over depth grid responding to camera tilt and scale.
+   - Style selection carousel with 8 styled cards, icons, and descriptions.
+   - Granular sliders for Intensity, Depth Scale, Perspective 3D Tilt, and Optical Depth Defocus.
+   - Focal Plane and Dynamics Easing chips.
+   - Interactive "RAW" compare button and reset action.
+   - Integrated into two-tier contextual dock (`EditorTool.parallax3D`) and docked panel with universal Flutter compatibility.
+   - Verified by comprehensive test suite in `test/parallax_3d_test.dart`.
+
+

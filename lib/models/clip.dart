@@ -23,6 +23,7 @@ import '../features/speed/models/auto_velocity_config.dart';
 import '../features/captions/models/kinetic_captions_config.dart';
 import '../features/tracking/models/motion_tracking_config.dart';
 import '../features/retouch/models/face_retouch_config.dart';
+import '../features/parallax_3d/models/parallax_3d_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -63,6 +64,7 @@ class Clip extends Equatable {
   final KineticCaptionsConfig kineticCaptions;
   final MotionTrackingConfig motionTracking;
   final FaceRetouchConfig retouch;
+  final Parallax3DConfig parallax3d;
 
   const Clip({
     required this.id,
@@ -103,6 +105,7 @@ class Clip extends Equatable {
     this.kineticCaptions = const KineticCaptionsConfig(),
     this.motionTracking = const MotionTrackingConfig(),
     this.retouch = const FaceRetouchConfig(),
+    this.parallax3d = const Parallax3DConfig(),
   });
 
   Clip copyWith({
@@ -144,6 +147,7 @@ class Clip extends Equatable {
     KineticCaptionsConfig? kineticCaptions,
     MotionTrackingConfig? motionTracking,
     FaceRetouchConfig? retouch,
+    Parallax3DConfig? parallax3d,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -184,6 +188,7 @@ class Clip extends Equatable {
       kineticCaptions: kineticCaptions ?? this.kineticCaptions,
       motionTracking: motionTracking ?? this.motionTracking,
       retouch: retouch ?? this.retouch,
+      parallax3d: parallax3d ?? this.parallax3d,
     );
   }
 
@@ -226,6 +231,7 @@ class Clip extends Equatable {
         'kineticCaptions': kineticCaptions.toJson(),
         'motionTracking': motionTracking.toJson(),
         'retouch': retouch.toJson(),
+        'parallax3d': parallax3d.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -320,6 +326,9 @@ class Clip extends Equatable {
         retouch: json['retouch'] != null
             ? FaceRetouchConfig.fromJson(json['retouch'] as Map<String, dynamic>)
             : const FaceRetouchConfig(),
+        parallax3d: json['parallax3d'] != null
+            ? Parallax3DConfig.fromJson(json['parallax3d'] as Map<String, dynamic>)
+            : const Parallax3DConfig(),
       );
 
   @override
@@ -362,5 +371,6 @@ class Clip extends Equatable {
         kineticCaptions,
         motionTracking,
         retouch,
+        parallax3d,
       ];
 }
