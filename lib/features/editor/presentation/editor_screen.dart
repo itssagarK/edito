@@ -437,6 +437,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openTTSModal();
         break;
 
+      case EditorTool.tracking:
+        _openTrackingModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -722,6 +726,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         ref.read(projectListProvider.notifier).updateProject(updated);
       },
     );
+  }
+
+  void _openTrackingModal() {
+    _openDockedTool(EditorTool.tracking, trackType: TrackType.video, purpose: 'Motion Tracking');
   }
 
   Clip? _findTargetClip() {

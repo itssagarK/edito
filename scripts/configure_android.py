@@ -37,8 +37,8 @@ def configure():
         c = c.replace("minSdk = flutter.minSdkVersion", "minSdk = 24")
         c = c.replace("compileSdk = flutter.compileSdkVersion", "compileSdk = 36")
         c = c.replace("targetSdk = flutter.targetSdkVersion", "targetSdk = 36")
-        c = c.replace("versionCode = flutter.versionCode", "versionCode = 46")
-        c = c.replace("versionName = flutter.versionName", 'versionName = "1.0.45"')
+        c = c.replace("versionCode = flutter.versionCode", "versionCode = 47")
+        c = c.replace("versionName = flutter.versionName", 'versionName = "1.0.46"')
         c = c.replace("ndkVersion = flutter.ndkVersion", "// ndkVersion")
         with open(app_gradle, "w", encoding="utf-8") as f:
             f.write(c)

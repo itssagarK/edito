@@ -27,6 +27,8 @@ import '../../image_editor/services/pip_compiler_service.dart';
 import '../../cutout/services/smart_cutout_compiler_service.dart';
 import '../../captions/models/caption_line.dart';
 import '../../captions/services/caption_compiler_service.dart';
+import '../../tracking/services/motion_tracking_service.dart';
+import '../../tracking/services/motion_tracking_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -516,8 +518,33 @@ class FFmpegCommandBuilder {
         if (track.isHidden) continue;
         if (track.type == TrackType.text || track.type == TrackType.overlay) {
           for (final clip in track.clips) {
-            if (clip.kineticCaptions.isEnabled || (track.name.toLowerCase().contains('caption') && clip.textOverlay.text.trim().isNotEmpty)) {
-              final capLine = CaptionLine.fromClip(clip);
+            // Check if there is an active tracking source for this clip
+            Clip? trackingSource;
+            if (clip.motionTracking.isEnabled) {
+              trackingSource = clip;
+            } else {
+              for (final t in project.tracks) {
+                for (final c in t.clips) {
+                  if (c.motionTracking.isEnabled && c.motionTracking.pinnedOverlayId == clip.id) {
+                    trackingSource = c;
+                    break;
+                  }
+                }
+                if (trackingSource != null) break;
+              }
+            }
+
+            Clip effectiveClip = clip;
+            if (trackingSource != null && clip.keyframes.isEmpty && trackingSource.motionTracking.trajectory.isNotEmpty) {
+              final autoKeyframes = MotionTrackingService.convertTrajectoryToKeyframes(
+                trackingSource.motionTracking,
+                intervalMs: 150,
+              );
+              effectiveClip = clip.copyWith(keyframes: autoKeyframes);
+            }
+
+            if (effectiveClip.kineticCaptions.isEnabled || (track.name.toLowerCase().contains('caption') && effectiveClip.textOverlay.text.trim().isNotEmpty)) {
+              final capLine = CaptionLine.fromClip(effectiveClip);
               final capFilters = CaptionCompilerService.generateFFmpegDrawTextFilters(
                 [capLine],
                 targetWidth: targetW,
@@ -526,8 +553,8 @@ class FFmpegCommandBuilder {
               overlayFilters.addAll(capFilters);
             } else {
               final drawText = OverlayCompilerService.generateFFmpegDrawText(
-                clip,
-                clip.textOverlay,
+                effectiveClip,
+                effectiveClip.textOverlay,
                 isClipRelative: false,
                 outputHeight: targetH,
                 referenceHeight: 720,
@@ -536,16 +563,30 @@ class FFmpegCommandBuilder {
                 overlayFilters.add(drawText);
               }
             }
-            if (clip.imageOverlay.isEnabled && clip.imageOverlay.assetLabel.trim().isNotEmpty) {
-              final sanitizedLabel = clip.imageOverlay.assetLabel.replaceAll("'", "\\'").replaceAll(':', '\\:');
-              final posX = (clip.imageOverlay.positionX * 0.85).toStringAsFixed(2);
-              final posY = (clip.imageOverlay.positionY * 0.85).toStringAsFixed(2);
-              final startSec = (clip.startTimeMs / 1000.0).toStringAsFixed(2);
-              final endSec = ((clip.startTimeMs + clip.durationMs) / 1000.0).toStringAsFixed(2);
+            if (effectiveClip.imageOverlay.isEnabled && effectiveClip.imageOverlay.assetLabel.trim().isNotEmpty) {
+              final sanitizedLabel = effectiveClip.imageOverlay.assetLabel.replaceAll("'", "\\'").replaceAll(':', '\\:');
+              final startSec = (effectiveClip.startTimeMs / 1000.0).toStringAsFixed(2);
+              final endSec = ((effectiveClip.startTimeMs + effectiveClip.durationMs) / 1000.0).toStringAsFixed(2);
               final scale = targetH / 720.0;
               final labelFontSize = (26 * scale).round().clamp(8, 300);
               final labelBoxBorder = (6 * scale).round().clamp(1, 50);
-              overlayFilters.add("drawtext=text='$sanitizedLabel':enable='between(t,$startSec,$endSec)':x=w*$posX:y=h*$posY:fontsize=$labelFontSize:fontcolor=white:box=1:boxcolor=black@0.85:boxborderw=$labelBoxBorder");
+
+              if (trackingSource != null && trackingSource.motionTracking.trajectory.isNotEmpty) {
+                final motionExprs = MotionTrackingCompilerService.generateFFmpegMotionExpressions(
+                  config: trackingSource.motionTracking,
+                  clipStartTimeMs: effectiveClip.startTimeMs,
+                  clipDurationMs: effectiveClip.durationMs,
+                  targetWidth: targetW,
+                  targetHeight: targetH,
+                );
+                final posX = motionExprs['x'] ?? 'w*0.80';
+                final posY = motionExprs['y'] ?? 'h*0.80';
+                overlayFilters.add("drawtext=text='$sanitizedLabel':enable='between(t,$startSec,$endSec)':x='$posX':y='$posY':fontsize=$labelFontSize:fontcolor=white:box=1:boxcolor=black@0.85:boxborderw=$labelBoxBorder");
+              } else {
+                final posX = (effectiveClip.imageOverlay.positionX * 0.85).toStringAsFixed(2);
+                final posY = (effectiveClip.imageOverlay.positionY * 0.85).toStringAsFixed(2);
+                overlayFilters.add("drawtext=text='$sanitizedLabel':enable='between(t,$startSec,$endSec)':x=w*$posX:y=h*$posY:fontsize=$labelFontSize:fontcolor=white:box=1:boxcolor=black@0.85:boxborderw=$labelBoxBorder");
+              }
             }
           }
         }

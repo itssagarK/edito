@@ -45,6 +45,8 @@ import '../../../overlays/models/text_overlay_config.dart';
 import '../../../overlays/services/overlay_compiler_service.dart';
 import '../../../captions/models/caption_line.dart';
 import '../../../captions/presentation/widgets/kinetic_caption_overlay.dart';
+import '../../../tracking/models/motion_tracking_config.dart';
+import '../../../tracking/services/motion_tracking_service.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';
@@ -252,12 +254,42 @@ class RealtimePreviewViewport extends ConsumerWidget {
                         if (currentFrame != null && currentFrame.activeOverlays.isNotEmpty)
                           ...currentFrame.activeOverlays.expand((overlayClip) {
                             final widgets = <Widget>[];
+
+                            // Check if this overlay is pinned to a tracking source or has its own tracking
+                            Clip? trackingSource;
+                            if (overlayClip.motionTracking.isEnabled) {
+                              trackingSource = overlayClip;
+                            } else if (currentFrame.primaryVideoClip != null &&
+                                currentFrame.primaryVideoClip!.motionTracking.isEnabled &&
+                                currentFrame.primaryVideoClip!.motionTracking.pinnedOverlayId == overlayClip.id) {
+                              trackingSource = currentFrame.primaryVideoClip;
+                            }
+
+                            final trackingOffsetMs = trackingSource != null
+                                ? (currentPositionMs - trackingSource.startTimeMs)
+                                : 0;
+
                             if (overlayClip.imageOverlay.isEnabled) {
-                              widgets.add(_buildImageOverlayWidget(overlayClip.imageOverlay));
+                              final effectiveImage = (trackingSource != null && trackingSource.motionTracking.trajectory.isNotEmpty)
+                                  ? MotionTrackingService.applyTrackingToImageOverlay(
+                                      overlayClip.imageOverlay,
+                                      trackingSource.motionTracking,
+                                      trackingOffsetMs,
+                                    )
+                                  : overlayClip.imageOverlay;
+                              widgets.add(_buildImageOverlayWidget(effectiveImage));
                             }
                             if (overlayClip.textOverlay.text.trim().isNotEmpty) {
                               final offsetMs = currentPositionMs - overlayClip.startTimeMs;
-                              final evaluatedText = OverlayCompilerService.evaluateOverlayAt(overlayClip, offsetMs);
+                              var evaluatedText = OverlayCompilerService.evaluateOverlayAt(overlayClip, offsetMs);
+
+                              if (trackingSource != null && trackingSource.motionTracking.trajectory.isNotEmpty) {
+                                evaluatedText = MotionTrackingService.applyTrackingToText(
+                                  evaluatedText,
+                                  trackingSource.motionTracking,
+                                  trackingOffsetMs,
+                                );
+                              }
 
                               if (evaluatedText.animationType == TextAnimationType.karaoke ||
                                   overlayClip.kineticCaptions.isEnabled ||
@@ -1009,6 +1041,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 9,
                       color: Color(clip.kineticCaptions.highlightColor),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.motionTracking.badge.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF00E5FF)),
+                  ),
+                  child: Text(
+                    clip.motionTracking.badge,
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFF00E5FF),
                       fontWeight: FontWeight.bold,
                     ),
                   ),

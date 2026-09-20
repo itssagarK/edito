@@ -31,6 +31,7 @@ enum EditorTool {
   vfx,
   beats,
   tts,
+  tracking,
 }
 
 class EditorState {

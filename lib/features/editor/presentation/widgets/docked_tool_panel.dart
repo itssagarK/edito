@@ -25,6 +25,7 @@ import '../../../speed/presentation/widgets/speed_ramping_sheet.dart';
 import '../../../vfx/presentation/widgets/vfx_studio_sheet.dart';
 import '../../../beats/presentation/widgets/beat_detection_sheet.dart';
 import '../../../tts/presentation/widgets/tts_voiceover_sheet.dart';
+import '../../../tracking/presentation/widgets/motion_tracking_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
 
@@ -92,6 +93,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'Beats & Rhythm Snapping';
       case EditorTool.tts:
         return 'AI Voiceover & Narration';
+      case EditorTool.tracking:
+        return 'Smart Motion Tracking';
       case EditorTool.effects:
         return 'Cinematic Transitions';
       default:
@@ -119,6 +122,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.layers;
       case EditorTool.keyframes:
         return Icons.animation;
+      case EditorTool.tracking:
+        return Icons.my_location;
       case EditorTool.clipWorkflow:
         return Icons.movie_filter_outlined;
       case EditorTool.speed:
@@ -467,6 +472,15 @@ class DockedToolPanel extends StatelessWidget {
           project: project,
           currentPlayheadMs: clip.startTimeMs,
           onProjectChanged: onSaveProject,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.tracking:
+        return MotionTrackingSheet(
+          project: project,
+          targetClip: clip,
+          onSave: onSaveProject,
           isDocked: true,
           onDone: onClose,
         );
