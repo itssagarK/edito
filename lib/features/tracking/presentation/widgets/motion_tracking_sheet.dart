@@ -10,6 +10,7 @@ import '../../services/motion_tracking_service.dart';
 class MotionTrackingSheet extends StatefulWidget {
   final Project project;
   final Clip targetClip;
+  final Function(Project updatedProject) onSave;
   final bool isDocked;
   final VoidCallback? onDone;
 
