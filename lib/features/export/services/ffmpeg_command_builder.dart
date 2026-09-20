@@ -270,7 +270,7 @@ class FFmpegCommandBuilder {
           final parallaxFilters = Parallax3DCompilerService.generateFFmpegFilters(
             clip.parallax3d,
             clip.durationMs,
-            preset.fps,
+            config.framerate.fpsValue,
             targetW,
             targetH,
           );
