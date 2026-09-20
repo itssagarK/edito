@@ -224,9 +224,9 @@ void main() {
 
       final keyframes = MotionTrackingService.convertTrajectoryToKeyframes(config, intervalMs: 150);
       expect(keyframes, isNotEmpty);
-      expect(keyframes.first.timestampMs, equals(0));
+      expect(keyframes.first.timeOffsetMs, equals(0));
       for (int i = 0; i < keyframes.length - 1; i++) {
-        expect(keyframes[i + 1].timestampMs, greaterThan(keyframes[i].timestampMs));
+        expect(keyframes[i + 1].timeOffsetMs, greaterThan(keyframes[i].timeOffsetMs));
       }
     });
 

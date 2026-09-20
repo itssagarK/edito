@@ -248,8 +248,7 @@ class MotionTrackingService {
       lastOffset = pt.offsetMs;
 
       keyframes.add(Keyframe(
-        id: 'kf_track_${pt.offsetMs}',
-        timestampMs: pt.offsetMs,
+        timeOffsetMs: pt.offsetMs,
         positionX: (pt.normalizedX + config.offsetX).clamp(0.0, 1.0),
         positionY: (pt.normalizedY + anchorOffsetY).clamp(0.0, 1.0),
         scale: config.mode == TrackingMode.followPosition ? 1.0 : pt.scale,
