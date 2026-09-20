@@ -11,6 +11,8 @@ import '../../../overlays/models/text_overlay_config.dart';
 import '../../models/caption_line.dart';
 import '../../services/auto_caption_service.dart';
 import '../../services/srt_subtitle_service.dart';
+import '../../services/word_level_aligner_service.dart';
+import '../../services/caption_compiler_service.dart';
 
 class CaptionManagerSheet extends StatefulWidget {
   final Project project;
@@ -57,6 +59,8 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
   KaraokeHighlightStyle _karaokeStyle = KaraokeHighlightStyle.colorFill;
   int _karaokeHighlightColor = 0xFFFFE600;
   double _karaokeHighlightScale = 1.20;
+  double _karaokeInactiveOpacity = 0.55;
+  int _karaokeInactiveColor = 0x99FFFFFF;
   int? _selectedCaptionIndex;
   bool _applyToAll = true;
 
@@ -123,6 +127,8 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
       _karaokeStyle = _captions.first.highlightStyle;
       _karaokeHighlightColor = _captions.first.highlightColor;
       _karaokeHighlightScale = _captions.first.highlightScale;
+      _karaokeInactiveOpacity = _captions.first.inactiveOpacity;
+      _karaokeInactiveColor = _captions.first.inactiveColor;
     } else {
       _currentStyle = _activePreset.createStyle('SAMPLE CAPTION');
     }
@@ -225,12 +231,16 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
   void _updateKaraokeSettings({
     KaraokeHighlightStyle? style,
     int? highlightColor,
+    int? inactiveColor,
     double? highlightScale,
+    double? inactiveOpacity,
   }) {
     setState(() {
       if (style != null) _karaokeStyle = style;
       if (highlightColor != null) _karaokeHighlightColor = highlightColor;
+      if (inactiveColor != null) _karaokeInactiveColor = inactiveColor;
       if (highlightScale != null) _karaokeHighlightScale = highlightScale;
+      if (inactiveOpacity != null) _karaokeInactiveOpacity = inactiveOpacity;
 
       final isKinetic = _karaokeStyle != KaraokeHighlightStyle.none;
       if (isKinetic && _currentStyle.animationType != TextAnimationType.karaoke) {
@@ -243,7 +253,9 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
           return cap.copyWith(
             highlightStyle: _karaokeStyle,
             highlightColor: _karaokeHighlightColor,
+            inactiveColor: _karaokeInactiveColor,
             highlightScale: _karaokeHighlightScale,
+            inactiveOpacity: _karaokeInactiveOpacity,
             isKinetic: isKinetic,
             words: words,
             style: cap.style.copyWith(
@@ -258,7 +270,9 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
         _captions[idx] = cap.copyWith(
           highlightStyle: _karaokeStyle,
           highlightColor: _karaokeHighlightColor,
+          inactiveColor: _karaokeInactiveColor,
           highlightScale: _karaokeHighlightScale,
+          inactiveOpacity: _karaokeInactiveOpacity,
           isKinetic: isKinetic,
           words: words,
           style: cap.style.copyWith(
@@ -268,6 +282,16 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
       }
     });
     _applyAndSave();
+  }
+
+  void _applyKineticPreset(KineticCaptionsConfig preset) {
+    _updateKaraokeSettings(
+      style: preset.style,
+      highlightColor: preset.highlightColor,
+      inactiveColor: preset.inactiveColor,
+      highlightScale: preset.highlightScale,
+      inactiveOpacity: preset.inactiveOpacity,
+    );
   }
 
   void _generateAuto() {
@@ -969,7 +993,7 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
                 label: const Text('Export .SRT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: _showExportVttDialog,
@@ -981,6 +1005,20 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
                 ),
                 icon: const Icon(Icons.closed_caption_outlined, size: 14),
                 label: const Text('Export .VTT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _showExportAssDialog,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.accent,
+                  side: const BorderSide(color: AppColors.accent),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                icon: const Icon(Icons.flash_on, size: 14),
+                label: const Text('.ASS Karaoke', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -1151,6 +1189,73 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
     );
   }
 
+  void _showExportAssDialog() {
+    final ass = AutoCaptionService.exportAss(_captions);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceElevated,
+        title: const Text('Advanced SubStation Alpha (.ass Karaoke)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${_captions.length} captions formatted with {\\k...} karaoke tags:', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+              const SizedBox(height: 6),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 200),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: SingleChildScrollView(
+                  child: SelectableText(
+                    ass.isEmpty ? '(No captions on timeline)' : ass,
+                    style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.black),
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: ass));
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('ASS Karaoke Subtitles copied to clipboard!')),
+              );
+            },
+            icon: const Icon(Icons.copy, size: 14),
+            label: const Text('Copy ASS'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPresetChip(String label, KineticCaptionsConfig preset) {
+    final isSelected = _karaokeStyle == preset.style && _karaokeHighlightColor == preset.highlightColor;
+    return ChoiceChip(
+      label: Text(label, style: const TextStyle(fontSize: 11)),
+      selected: isSelected,
+      selectedColor: AppColors.accent,
+      backgroundColor: AppColors.surfaceElevated,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.black : Colors.white,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+      onSelected: (_) => _applyKineticPreset(preset),
+    );
+  }
+
   // 2. Kinetic Karaoke Tab
   Widget _buildKineticKaraokeTab() {
     final kineticColors = [
@@ -1167,6 +1272,33 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       children: [
+        const Text(
+          'TRENDING CAPCUT PRO LOOKS',
+          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textMuted, letterSpacing: 0.5),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 34,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              _buildPresetChip('⚡ TikTok Viral', KineticCaptionsConfig.tiktokPop),
+              const SizedBox(width: 8),
+              _buildPresetChip('🎙️ Neon Podcast', KineticCaptionsConfig.neonPodcast),
+              const SizedBox(width: 8),
+              _buildPresetChip('🔥 Hormozi Beast', KineticCaptionsConfig.hormoziBeast),
+              const SizedBox(width: 8),
+              _buildPresetChip('💖 Cyber Pink', KineticCaptionsConfig.cyberPink),
+              const SizedBox(width: 8),
+              _buildPresetChip('💥 Fire Punch', KineticCaptionsConfig.firePunch),
+              const SizedBox(width: 8),
+              _buildPresetChip('🎬 Cinema Minimal', KineticCaptionsConfig.cinemaMinimal),
+              const SizedBox(width: 8),
+              _buildPresetChip('⌨️ Retro Terminal', KineticCaptionsConfig.terminalRetro),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -1181,7 +1313,7 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
                   final cap = _captions[idx];
                   setState(() {
                     _captions[idx] = cap.copyWith(
-                      words: CaptionLine.generateInterpolatedWords(cap.text, cap.durationMs),
+                      words: WordLevelAlignerService.generateWeightedWords(cap.text, cap.durationMs),
                     );
                   });
                   _applyAndSave();
@@ -1283,6 +1415,55 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
           activeColor: AppColors.accent,
           inactiveColor: AppColors.border,
           onChanged: (val) => _updateKaraokeSettings(highlightScale: val),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'INACTIVE WORD OPACITY: ${(_karaokeInactiveOpacity * 100).round()}%',
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textMuted, letterSpacing: 0.5),
+            ),
+            const Text(
+              'Dim Background Words',
+              style: TextStyle(fontSize: 10, color: AppColors.textMuted),
+            ),
+          ],
+        ),
+        Slider(
+          value: _karaokeInactiveOpacity.clamp(0.15, 1.0),
+          min: 0.15,
+          max: 1.0,
+          divisions: 17,
+          activeColor: AppColors.accent,
+          inactiveColor: AppColors.border,
+          onChanged: (val) => _updateKaraokeSettings(inactiveOpacity: val),
+        ),
+        const SizedBox(height: 6),
+        ElevatedButton.icon(
+          onPressed: () {
+            setState(() {
+              _captions = _captions.map((cap) {
+                return cap.copyWith(
+                  words: WordLevelAlignerService.generateWeightedWords(cap.text, cap.durationMs),
+                );
+              }).toList();
+            });
+            _applyAndSave();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Speech cadence auto-aligned with human pause weighting!')),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.surfaceElevated,
+            foregroundColor: AppColors.accent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: const BorderSide(color: AppColors.border),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+          ),
+          icon: const Icon(Icons.graphic_eq, size: 16),
+          label: const Text('Auto-Align Speech Cadence', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
         ),
       ],
     );

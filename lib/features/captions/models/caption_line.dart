@@ -1,5 +1,10 @@
 import 'package:equatable/equatable.dart';
 import '../../overlays/models/text_overlay_config.dart';
+import '../../../models/clip.dart';
+import '../services/word_level_aligner_service.dart';
+import 'kinetic_captions_config.dart';
+
+export 'kinetic_captions_config.dart';
 
 enum CaptionPreset {
   tiktokViral,
@@ -210,46 +215,6 @@ class WordTimestamp extends Equatable {
   List<Object?> get props => [word, startOffsetMs, durationMs];
 }
 
-enum KaraokeHighlightStyle {
-  none,
-  colorFill,
-  scalePunch,
-  pillBackground,
-  glowWave,
-}
-
-extension KaraokeHighlightStyleExtension on KaraokeHighlightStyle {
-  String get label {
-    switch (this) {
-      case KaraokeHighlightStyle.none:
-        return 'Standard Static';
-      case KaraokeHighlightStyle.colorFill:
-        return 'Color Pop (TikTok)';
-      case KaraokeHighlightStyle.scalePunch:
-        return 'Scale Bounce';
-      case KaraokeHighlightStyle.pillBackground:
-        return 'Neon Pill Box';
-      case KaraokeHighlightStyle.glowWave:
-        return 'Aura Glow Wave';
-    }
-  }
-
-  String get description {
-    switch (this) {
-      case KaraokeHighlightStyle.none:
-        return 'Displays line with uniform text styling';
-      case KaraokeHighlightStyle.colorFill:
-        return 'Active spoken word pops in vibrant highlight color';
-      case KaraokeHighlightStyle.scalePunch:
-        return 'Active word bounces up 20% with spring easing';
-      case KaraokeHighlightStyle.pillBackground:
-        return 'Draws rounded accent pill behind the current word';
-      case KaraokeHighlightStyle.glowWave:
-        return 'Radiates high-intensity neon glow shadow around the active word';
-    }
-  }
-}
-
 class CaptionLine extends Equatable {
   final String id;
   final String text;
@@ -259,7 +224,10 @@ class CaptionLine extends Equatable {
   final List<WordTimestamp> words;
   final KaraokeHighlightStyle highlightStyle;
   final int highlightColor; // Default 0xFFFFE600 Vibrant Yellow
+  final int inactiveColor; // Default 0x99FFFFFF Translucent White
   final double highlightScale; // Default 1.20
+  final double inactiveOpacity; // Default 0.55
+  final double glowRadius; // Default 14.0
   final bool isKinetic;
 
   const CaptionLine({
@@ -271,7 +239,10 @@ class CaptionLine extends Equatable {
     this.words = const [],
     this.highlightStyle = KaraokeHighlightStyle.colorFill,
     this.highlightColor = 0xFFFFE600,
+    this.inactiveColor = 0x99FFFFFF,
     this.highlightScale = 1.20,
+    this.inactiveOpacity = 0.55,
+    this.glowRadius = 14.0,
     this.isKinetic = true,
   });
 
@@ -285,41 +256,74 @@ class CaptionLine extends Equatable {
 
   /// Finds index of active word at given elapsed offset (offsetMs = currentPositionMs - startTimeMs)
   int getActiveWordIndex(int offsetMs) {
-    final list = effectiveWords;
-    if (list.isEmpty) return -1;
-    for (int i = 0; i < list.length; i++) {
-      final w = list[i];
-      if (offsetMs >= w.startOffsetMs && offsetMs < w.endOffsetMs) {
-        return i;
-      }
-    }
-    // If past all words but within caption duration, point to last word
-    if (offsetMs >= 0 && offsetMs < durationMs) {
-      return list.length - 1;
-    }
-    return -1;
+    return WordLevelAlignerService.getActiveWordIndex(effectiveWords, offsetMs, durationMs);
   }
 
   /// Automatically splits text into words and balances start offset and duration proportionally
   static List<WordTimestamp> generateInterpolatedWords(String text, int totalDurationMs) {
-    final rawWords = text.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
-    if (rawWords.isEmpty) return [];
+    return WordLevelAlignerService.generateWeightedWords(text, totalDurationMs);
+  }
 
-    final result = <WordTimestamp>[];
-    final perWordMs = (totalDurationMs / rawWords.length).round();
+  /// Converts CaptionLine into KineticCaptionsConfig for Skia & FFmpeg pipelines
+  KineticCaptionsConfig toKineticConfig() => KineticCaptionsConfig(
+        isEnabled: isKinetic,
+        style: highlightStyle,
+        highlightColor: highlightColor,
+        inactiveColor: inactiveColor,
+        highlightScale: highlightScale,
+        inactiveOpacity: inactiveOpacity,
+        glowRadius: glowRadius,
+        isUppercase: style.isUppercase,
+        words: effectiveWords,
+      );
 
-    int offset = 0;
-    for (int i = 0; i < rawWords.length; i++) {
-      final isLast = i == rawWords.length - 1;
-      final dur = isLast ? (totalDurationMs - offset).clamp(100, totalDurationMs) : perWordMs;
-      result.add(WordTimestamp(
-        word: rawWords[i],
-        startOffsetMs: offset,
-        durationMs: dur,
-      ));
-      offset += dur;
-    }
-    return result;
+  /// Converts CaptionLine into a timeline Clip
+  Clip toClip(String trackId) {
+    return Clip(
+      id: id,
+      assetId: '',
+      trackId: trackId,
+      startTimeMs: startTimeMs,
+      durationMs: durationMs,
+      sourceInMs: 0,
+      sourceOutMs: durationMs,
+      textOverlay: style.copyWith(
+        text: text,
+        animationType: isKinetic ? TextAnimationType.karaoke : style.animationType,
+      ),
+      kineticCaptions: toKineticConfig(),
+    );
+  }
+
+  /// Reconstructs a CaptionLine from a timeline Clip
+  factory CaptionLine.fromClip(Clip clip) {
+    final kinetic = clip.kineticCaptions;
+    final isKinetic = kinetic.isEnabled || clip.textOverlay.animationType == TextAnimationType.karaoke;
+    final words = kinetic.words.isNotEmpty
+        ? kinetic.words
+        : WordLevelAlignerService.generateWeightedWords(clip.textOverlay.text, clip.durationMs);
+
+    final highlightStyle = kinetic.isEnabled
+        ? kinetic.style
+        : (clip.textOverlay.animationType == TextAnimationType.karaoke
+            ? KaraokeHighlightStyle.colorFill
+            : KaraokeHighlightStyle.none);
+
+    return CaptionLine(
+      id: clip.id,
+      text: clip.textOverlay.text,
+      startTimeMs: clip.startTimeMs,
+      durationMs: clip.durationMs,
+      style: clip.textOverlay,
+      words: words,
+      highlightStyle: highlightStyle,
+      highlightColor: kinetic.highlightColor,
+      inactiveColor: kinetic.inactiveColor,
+      highlightScale: kinetic.highlightScale,
+      inactiveOpacity: kinetic.inactiveOpacity,
+      glowRadius: kinetic.glowRadius,
+      isKinetic: isKinetic,
+    );
   }
 
   CaptionLine copyWith({
@@ -331,7 +335,10 @@ class CaptionLine extends Equatable {
     List<WordTimestamp>? words,
     KaraokeHighlightStyle? highlightStyle,
     int? highlightColor,
+    int? inactiveColor,
     double? highlightScale,
+    double? inactiveOpacity,
+    double? glowRadius,
     bool? isKinetic,
   }) {
     return CaptionLine(
@@ -343,7 +350,10 @@ class CaptionLine extends Equatable {
       words: words ?? this.words,
       highlightStyle: highlightStyle ?? this.highlightStyle,
       highlightColor: highlightColor ?? this.highlightColor,
+      inactiveColor: inactiveColor ?? this.inactiveColor,
       highlightScale: highlightScale ?? this.highlightScale,
+      inactiveOpacity: inactiveOpacity ?? this.inactiveOpacity,
+      glowRadius: glowRadius ?? this.glowRadius,
       isKinetic: isKinetic ?? this.isKinetic,
     );
   }
@@ -357,7 +367,10 @@ class CaptionLine extends Equatable {
         'words': words.map((w) => w.toJson()).toList(),
         'highlightStyle': highlightStyle.name,
         'highlightColor': highlightColor,
+        'inactiveColor': inactiveColor,
         'highlightScale': highlightScale,
+        'inactiveOpacity': inactiveOpacity,
+        'glowRadius': glowRadius,
         'isKinetic': isKinetic,
       };
 
@@ -384,7 +397,10 @@ class CaptionLine extends Equatable {
       words: wordsList,
       highlightStyle: highlightStyle,
       highlightColor: (json['highlightColor'] as num?)?.toInt() ?? 0xFFFFE600,
+      inactiveColor: (json['inactiveColor'] as num?)?.toInt() ?? 0x99FFFFFF,
       highlightScale: (json['highlightScale'] as num?)?.toDouble() ?? 1.20,
+      inactiveOpacity: (json['inactiveOpacity'] as num?)?.toDouble() ?? 0.55,
+      glowRadius: (json['glowRadius'] as num?)?.toDouble() ?? 14.0,
       isKinetic: json['isKinetic'] as bool? ?? true,
     );
   }
@@ -399,7 +415,10 @@ class CaptionLine extends Equatable {
         words,
         highlightStyle,
         highlightColor,
+        inactiveColor,
         highlightScale,
+        inactiveOpacity,
+        glowRadius,
         isKinetic,
       ];
 }

@@ -25,6 +25,8 @@ import '../../vfx/services/vfx_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
 import '../../image_editor/services/pip_compiler_service.dart';
 import '../../cutout/services/smart_cutout_compiler_service.dart';
+import '../../captions/models/caption_line.dart';
+import '../../captions/services/caption_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -514,15 +516,25 @@ class FFmpegCommandBuilder {
         if (track.isHidden) continue;
         if (track.type == TrackType.text || track.type == TrackType.overlay) {
           for (final clip in track.clips) {
-            final drawText = OverlayCompilerService.generateFFmpegDrawText(
-              clip,
-              clip.textOverlay,
-              isClipRelative: false,
-              outputHeight: targetH,
-              referenceHeight: 720,
-            );
-            if (drawText.isNotEmpty) {
-              overlayFilters.add(drawText);
+            if (clip.kineticCaptions.isEnabled || (track.name.toLowerCase().contains('caption') && clip.textOverlay.text.trim().isNotEmpty)) {
+              final capLine = CaptionLine.fromClip(clip);
+              final capFilters = CaptionCompilerService.generateFFmpegDrawTextFilters(
+                [capLine],
+                targetWidth: targetW,
+                targetHeight: targetH,
+              );
+              overlayFilters.addAll(capFilters);
+            } else {
+              final drawText = OverlayCompilerService.generateFFmpegDrawText(
+                clip,
+                clip.textOverlay,
+                isClipRelative: false,
+                outputHeight: targetH,
+                referenceHeight: 720,
+              );
+              if (drawText.isNotEmpty) {
+                overlayFilters.add(drawText);
+              }
             }
             if (clip.imageOverlay.isEnabled && clip.imageOverlay.assetLabel.trim().isNotEmpty) {
               final sanitizedLabel = clip.imageOverlay.assetLabel.replaceAll("'", "\\'").replaceAll(':', '\\:');

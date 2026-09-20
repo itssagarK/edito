@@ -6,6 +6,7 @@ import '../../../models/track.dart';
 import '../../overlays/models/text_overlay_config.dart';
 import '../models/caption_line.dart';
 import 'srt_subtitle_service.dart';
+import 'caption_compiler_service.dart';
 
 class AutoCaptionService {
   /// Generates AI auto-captions synchronized across the project's duration
@@ -141,21 +142,9 @@ class AutoCaptionService {
       project = project.addTrack(captionTrack);
     }
 
-    // 2. Convert each CaptionLine into a Clip with textOverlay
+    // 2. Convert each CaptionLine into a Clip with full kinetic config
     final captionClips = captions.map((cap) {
-      return Clip(
-        id: cap.id,
-        assetId: '',
-        trackId: captionTrack!.id,
-        startTimeMs: cap.startTimeMs,
-        durationMs: cap.durationMs,
-        sourceInMs: 0,
-        sourceOutMs: cap.durationMs,
-        textOverlay: cap.style.copyWith(
-          text: cap.text,
-          animationType: cap.isKinetic ? TextAnimationType.karaoke : cap.style.animationType,
-        ),
-      );
+      return cap.toClip(captionTrack!.id);
     }).toList();
 
     final updatedTrack = captionTrack.copyWith(clips: captionClips);
@@ -181,25 +170,18 @@ class AutoCaptionService {
     }
 
     return captionTrack.clips.map((clip) {
-      final words = CaptionLine.generateInterpolatedWords(clip.textOverlay.text, clip.durationMs);
-      return CaptionLine(
-        id: clip.id,
-        text: clip.textOverlay.text,
-        startTimeMs: clip.startTimeMs,
-        durationMs: clip.durationMs,
-        style: clip.textOverlay,
-        words: words,
-        highlightStyle: clip.textOverlay.animationType == TextAnimationType.karaoke
-            ? KaraokeHighlightStyle.colorFill
-            : KaraokeHighlightStyle.none,
-        isKinetic: clip.textOverlay.animationType == TextAnimationType.karaoke,
-      );
+      return CaptionLine.fromClip(clip);
     }).toList();
   }
 
   /// Exports captions into standard .srt subtitle format
   static String exportSrt(List<CaptionLine> captions) {
     return SrtSubtitleService.exportToSrt(captions);
+  }
+
+  /// Exports captions into Advanced SubStation Alpha (.ass) format with {\k...} karaoke tags
+  static String exportAss(List<CaptionLine> captions, {String title = 'Edito Kinetic Subtitles'}) {
+    return CaptionCompilerService.generateAssSubtitles(captions, title: title);
   }
 
   /// Imports captions from standard .srt subtitle format

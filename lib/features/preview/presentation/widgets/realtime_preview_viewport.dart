@@ -260,17 +260,14 @@ class RealtimePreviewViewport extends ConsumerWidget {
                               final evaluatedText = OverlayCompilerService.evaluateOverlayAt(overlayClip, offsetMs);
 
                               if (evaluatedText.animationType == TextAnimationType.karaoke ||
+                                  overlayClip.kineticCaptions.isEnabled ||
                                   overlayClip.trackId.toLowerCase().contains('caption') ||
                                   overlayClip.id.toLowerCase().contains('caption')) {
+                                final captionLine = CaptionLine.fromClip(
+                                  overlayClip.copyWith(textOverlay: evaluatedText),
+                                );
                                 widgets.add(KineticCaptionOverlay(
-                                  caption: CaptionLine(
-                                    id: overlayClip.id,
-                                    text: evaluatedText.text,
-                                    startTimeMs: overlayClip.startTimeMs,
-                                    durationMs: overlayClip.durationMs,
-                                    style: evaluatedText,
-                                    highlightStyle: KaraokeHighlightStyle.colorFill,
-                                  ),
+                                  caption: captionLine,
                                   offsetMs: offsetMs,
                                 ));
                               } else {
@@ -999,6 +996,25 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     ),
                   ),
                 ),
+              if (currentFrame != null)
+                for (final ov in currentFrame.activeOverlays)
+                  if (ov.kineticCaptions.badge.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.75),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Color(ov.kineticCaptions.highlightColor)),
+                      ),
+                      child: Text(
+                        ov.kineticCaptions.badge,
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: Color(ov.kineticCaptions.highlightColor),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
             ],
           ),
         ),

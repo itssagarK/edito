@@ -1137,3 +1137,54 @@ Directly inspired by CapCut Creator's native C++ NLE timeline (`libcccreator.so`
    - Compiles synchronized speed curve `setpts`, optical flow `minterpolate`, `eq=brightness` flash pulses, and chromatic aberration.
    - Verified by comprehensive test suite in `test/auto_velocity_test.dart`.
 
+---
+
+## 31. CapCut Pro Kinetic Karaoke Captions Studio (v1.0.45 Release)
+
+Directly reverse-engineered and benchmarked against CapCut Pro's dynamic word-level text animation engine (`com.vega.edit.subtitle`), providing studio-grade word-by-word animated bouncing, glowing neon highlights, speech-weighted timing cadence, and dual-engine Skia/FFmpeg/ASS parity:
+
+1. **Domain Model & 8 CapCut Pro Highlight Styles (`KineticCaptionsConfig` & `KaraokeHighlightStyle`)**:
+   - **8 Dynamic Styles (`KaraokeHighlightStyle`)**:
+     - `none`: Static uniform styling without word highlights.
+     - `colorFill`: Active word pops into vibrant highlight color (Yellow, Cyan, Lime Green, Hot Pink).
+     - `scalePunch`: Active word pops with dynamic spring scale bounce (1.10x to 1.45x).
+     - `pillBackground`: Active word wrapped in animated rounded neon pill container with drop shadow.
+     - `glowWave`: Active word radiates luminous multi-layer Gaussian blur aura glow.
+     - `neonUnderline`: Glowing horizontal accent indicator bar rendered beneath the active spoken word.
+     - `bouncePop`: Active word performs a parabolic vertical translation jump (-5px) + scale bounce.
+     - `typewriterReveal`: Words sequentially reveal up to the active timestamp while future words remain hidden.
+   - **CapCut Pro Trending Signature Presets**:
+     - ⚡ *TikTok Viral Pop* (Anton, Vibrant Yellow `0xFFFFE600`, 1.25x scale punch, 0.55 inactive opacity, uppercase)
+     - 🎙️ Neon Podcast (Poppins, Cyan `0xFF00E5FF`, aura glow wave, 0.50 inactive opacity)
+     - 🔥 Hormozi Beast (Bebas Neue, Neon Lime `0xFF00FF66`, pill background, 1.18x scale)
+     - 💖 Cyber Pink (Hot Pink `0xFFFF2A85`, neon underline + glow aura, 1.20x scale)
+     - 💥 Fire Punch (Blaze Orange `0xFFFF6B00`, bounce pop jump, 1.30x scale)
+     - 🎬 Cinema Minimal (Montserrat, Pure White `0xFFFFFFFF`, subtle color pop, 0.60 inactive opacity)
+     - ⌨️ Retro Terminal (JetBrains Mono, Matrix Green `0xFF00FF66`, typewriter reveal)
+   - **Loss-less Timeline Clip Synchronization**:
+     - First-class `KineticCaptionsConfig kineticCaptions` embedded directly on `Clip` domain model.
+     - Loss-less roundtripping via `CaptionLine.toClip(trackId)` and `CaptionLine.fromClip(clip)` ensuring custom word timings, styling, and highlight properties survive project serialization, undo/redo, and cuts.
+
+2. **Intelligent Speech-Cadence Aligner Engine (`WordLevelAlignerService`)**:
+   - **Human Speech Proportional Allocation**:
+     - Eliminates robotic equal-duration splitting by computing natural speech duration weights.
+     - Longer words receive proportionally more milliseconds, short articles/prepositions ("in", "the", "to", "at", "a") receive shortened duration allocations.
+     - Terminal punctuation (`.`, `!`, `?`) and pause punctuation (`,`, `;`, `:`) automatically allocate conversational breath pauses.
+   - **Spring Dynamics & Bounce Trajectories**:
+     - `calculateSpringScale`: Damped sine spring curve with peak at ~35% and smooth settling.
+     - `calculateVerticalBounce`: Parabolic trajectory $4t(1-t)$ for organic vertical bounce pop.
+
+3. **Skia GPU Viewport Compositor (`KineticCaptionOverlay` & `RealtimePreviewViewport`)**:
+   - High-contrast non-spoken word dimming (`inactiveOpacity`: 20% to 100%, `inactiveColor`).
+   - Active word rendering with selected `KaraokeHighlightStyle` (color pop, spring scale, glowing pill box, luminous outer glow shadow, neon underline, vertical jump).
+   - Live floating viewport HUD badge: e.g. `⚡ KINETIC (TIKTOK POP)`, `✨ KINETIC (AURA GLOW)`.
+   - `RepaintBoundary` isolation for silky smooth 60fps real-time preview playback.
+
+4. **FFmpeg Filtergraph & Advanced SubStation Alpha (.ass) Compiler (`CaptionCompilerService`)**:
+   - **Full ASS Karaoke Generation**:
+     - Produces standard `.ass` subtitle format with `[Script Info]`, `[V4+ Styles]`, and `[Events]` with precise centisecond `{\k<centis>}` karaoke tags.
+   - **Deterministic Video Burn-in DrawText**:
+     - Compiles timed drawtext filter chains with font scaling, box borders, outline colors, drop shadows, and scale bounce sine wave expressions for high-fidelity export.
+   - One-tap export to `.SRT`, `.VTT`, and `.ASS (Karaoke)` in `CaptionManagerSheet`.
+   - Verified by comprehensive test suite in `test/kinetic_captions_suite_test.dart` and `test/kinetic_captions_test.dart`.
+

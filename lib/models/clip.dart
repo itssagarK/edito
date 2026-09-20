@@ -20,6 +20,7 @@ import '../features/vfx/models/vfx_config.dart';
 import '../features/beats/models/beat_detection_config.dart';
 import '../features/cutout/models/smart_cutout_config.dart';
 import '../features/speed/models/auto_velocity_config.dart';
+import '../features/captions/models/kinetic_captions_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -57,6 +58,7 @@ class Clip extends Equatable {
   final BeatDetectionConfig beatConfig;
   final SmartCutoutConfig smartCutout;
   final AutoVelocityConfig autoVelocity;
+  final KineticCaptionsConfig kineticCaptions;
 
   const Clip({
     required this.id,
@@ -94,6 +96,7 @@ class Clip extends Equatable {
     this.beatConfig = const BeatDetectionConfig(),
     this.smartCutout = const SmartCutoutConfig(),
     this.autoVelocity = const AutoVelocityConfig(),
+    this.kineticCaptions = const KineticCaptionsConfig(),
   });
 
   Clip copyWith({
@@ -132,6 +135,7 @@ class Clip extends Equatable {
     BeatDetectionConfig? beatConfig,
     SmartCutoutConfig? smartCutout,
     AutoVelocityConfig? autoVelocity,
+    KineticCaptionsConfig? kineticCaptions,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -169,6 +173,7 @@ class Clip extends Equatable {
       beatConfig: beatConfig ?? this.beatConfig,
       smartCutout: smartCutout ?? this.smartCutout,
       autoVelocity: autoVelocity ?? this.autoVelocity,
+      kineticCaptions: kineticCaptions ?? this.kineticCaptions,
     );
   }
 
@@ -208,6 +213,7 @@ class Clip extends Equatable {
         'beatConfig': beatConfig.toJson(),
         'smartCutout': smartCutout.toJson(),
         'autoVelocity': autoVelocity.toJson(),
+        'kineticCaptions': kineticCaptions.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -293,6 +299,9 @@ class Clip extends Equatable {
         autoVelocity: json['autoVelocity'] != null
             ? AutoVelocityConfig.fromJson(json['autoVelocity'] as Map<String, dynamic>)
             : const AutoVelocityConfig(),
+        kineticCaptions: json['kineticCaptions'] != null
+            ? KineticCaptionsConfig.fromJson(json['kineticCaptions'] as Map<String, dynamic>)
+            : const KineticCaptionsConfig(),
       );
 
   @override
@@ -332,5 +341,6 @@ class Clip extends Equatable {
         beatConfig,
         smartCutout,
         autoVelocity,
+        kineticCaptions,
       ];
 }
