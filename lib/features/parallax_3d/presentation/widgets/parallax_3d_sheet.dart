@@ -101,7 +101,6 @@ class _Parallax3DSheetState extends State<Parallax3DSheet> {
       child: SafeArea(
         top: false,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Header Bar
@@ -111,7 +110,7 @@ class _Parallax3DSheetState extends State<Parallax3DSheet> {
             _buildDepthVisualizer(activeConfig),
 
             // Scrollable Controls
-            Flexible(
+            Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
