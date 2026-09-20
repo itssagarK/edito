@@ -53,7 +53,18 @@ jobs:
         run: flutter pub get
 
       - name: Run Unit Tests
-        run: flutter test --no-pub || flutter test
+        run: |
+          if ! flutter test --reporter=expanded > test_output.log 2>&1; then
+            echo "=== UNIT TESTS FAILED ==="
+            tail -n 100 test_output.log
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git checkout -b debug-test-log
+            git add -f test_output.log
+            git commit -m "debug: test failure log"
+            git push -f origin debug-test-log
+            exit 1
+          fi
 
       - name: Build Android APK
         run: |
