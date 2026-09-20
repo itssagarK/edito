@@ -864,6 +864,18 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
               wordColor = Color(_karaokeHighlightColor);
               scale = 1.12;
               break;
+            case KaraokeHighlightStyle.neonUnderline:
+              wordColor = Color(_karaokeHighlightColor);
+              scale = 1.08;
+              break;
+            case KaraokeHighlightStyle.bouncePop:
+              wordColor = Color(_karaokeHighlightColor);
+              scale = _karaokeHighlightScale;
+              break;
+            case KaraokeHighlightStyle.typewriterReveal:
+              wordColor = Color(_karaokeHighlightColor);
+              scale = 1.0;
+              break;
             case KaraokeHighlightStyle.none:
               break;
           }

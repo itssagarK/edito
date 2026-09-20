@@ -996,25 +996,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     ),
                   ),
                 ),
-              if (currentFrame != null)
-                for (final ov in currentFrame.activeOverlays)
-                  if (ov.kineticCaptions.badge.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.75),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Color(ov.kineticCaptions.highlightColor)),
-                      ),
-                      child: Text(
-                        ov.kineticCaptions.badge,
-                        style: TextStyle(
-                          fontSize: 9,
-                          color: Color(ov.kineticCaptions.highlightColor),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+              if (clip.kineticCaptions.badge.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Color(clip.kineticCaptions.highlightColor)),
+                  ),
+                  child: Text(
+                    clip.kineticCaptions.badge,
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: Color(clip.kineticCaptions.highlightColor),
+                      fontWeight: FontWeight.bold,
                     ),
+                  ),
+                ),
             ],
           ),
         ),
