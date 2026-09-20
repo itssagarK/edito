@@ -51,6 +51,8 @@ import '../../../retouch/models/face_retouch_config.dart';
 import '../../../retouch/services/face_retouch_compiler_service.dart';
 import '../../../parallax_3d/models/parallax_3d_config.dart';
 import '../../../parallax_3d/services/parallax_3d_compiler_service.dart';
+import '../../../stabilization/models/stabilization_config.dart';
+import '../../../stabilization/services/stabilization_compiler_service.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';
@@ -611,6 +613,18 @@ class RealtimePreviewViewport extends ConsumerWidget {
       videoContent = ClipRect(child: transformed);
     }
 
+    if (clip.stabilization.isEnabled && clip.stabilization.level != StabilizationLevel.none) {
+      final currentClipTimeMs = (frame.sourceFrameTimeMs - clip.sourceInMs).clamp(0, clip.durationMs);
+      final progress = clip.durationMs > 0 ? (currentClipTimeMs / clip.durationMs).clamp(0.0, 1.0) : 0.0;
+      final stabMatrix = StabilizationCompilerService.computePreviewTransform(clip.stabilization, progress);
+
+      videoContent = Transform(
+        transform: stabMatrix,
+        alignment: Alignment.center,
+        child: ClipRect(child: videoContent),
+      );
+    }
+
     if (clip.chromaKey.isEnabled) {
       videoContent = ChromaKeyPreviewWrapper(
         config: clip.chromaKey,
@@ -1127,6 +1141,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 9,
                       color: Color(0xFF00E676),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.stabilization.badge.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF00CEC9)),
+                  ),
+                  child: Text(
+                    clip.stabilization.badge,
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFF00CEC9),
                       fontWeight: FontWeight.bold,
                     ),
                   ),

@@ -28,6 +28,7 @@ import '../../../tts/presentation/widgets/tts_voiceover_sheet.dart';
 import '../../../tracking/presentation/widgets/motion_tracking_sheet.dart';
 import '../../../retouch/presentation/widgets/face_retouch_sheet.dart';
 import '../../../parallax_3d/presentation/widgets/parallax_3d_sheet.dart';
+import '../../../stabilization/presentation/widgets/stabilization_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
 
@@ -101,6 +102,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'AI Face & Body Retouch';
       case EditorTool.parallax3D:
         return '3D Zoom & Parallax';
+      case EditorTool.stabilization:
+        return 'AI Video Stabilization';
       case EditorTool.effects:
         return 'Cinematic Transitions';
       default:
@@ -134,6 +137,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.face_retouching_natural;
       case EditorTool.parallax3D:
         return Icons.view_in_ar;
+      case EditorTool.stabilization:
+        return Icons.screen_lock_rotation;
       case EditorTool.clipWorkflow:
         return Icons.movie_filter_outlined;
       case EditorTool.speed:
@@ -509,6 +514,16 @@ class DockedToolPanel extends StatelessWidget {
           onSave: onSaveClip,
           isDocked: true,
           onDone: onClose,
+        );
+
+      case EditorTool.stabilization:
+        return StabilizationSheet(
+          initialConfig: clip.stabilization,
+          onApply: (stabConfig) {
+            onSaveClip(clip.copyWith(stabilization: stabConfig));
+          },
+          isDocked: true,
+          onClose: onClose,
         );
 
       case EditorTool.effects:

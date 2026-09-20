@@ -24,6 +24,7 @@ import '../features/captions/models/kinetic_captions_config.dart';
 import '../features/tracking/models/motion_tracking_config.dart';
 import '../features/retouch/models/face_retouch_config.dart';
 import '../features/parallax_3d/models/parallax_3d_config.dart';
+import '../features/stabilization/models/stabilization_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -65,6 +66,7 @@ class Clip extends Equatable {
   final MotionTrackingConfig motionTracking;
   final FaceRetouchConfig retouch;
   final Parallax3DConfig parallax3d;
+  final StabilizationConfig stabilization;
 
   const Clip({
     required this.id,
@@ -106,6 +108,7 @@ class Clip extends Equatable {
     this.motionTracking = const MotionTrackingConfig(),
     this.retouch = const FaceRetouchConfig(),
     this.parallax3d = const Parallax3DConfig(),
+    this.stabilization = const StabilizationConfig(),
   });
 
   Clip copyWith({
@@ -148,6 +151,7 @@ class Clip extends Equatable {
     MotionTrackingConfig? motionTracking,
     FaceRetouchConfig? retouch,
     Parallax3DConfig? parallax3d,
+    StabilizationConfig? stabilization,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -189,6 +193,7 @@ class Clip extends Equatable {
       motionTracking: motionTracking ?? this.motionTracking,
       retouch: retouch ?? this.retouch,
       parallax3d: parallax3d ?? this.parallax3d,
+      stabilization: stabilization ?? this.stabilization,
     );
   }
 
@@ -232,6 +237,7 @@ class Clip extends Equatable {
         'motionTracking': motionTracking.toJson(),
         'retouch': retouch.toJson(),
         'parallax3d': parallax3d.toJson(),
+        'stabilization': stabilization.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -329,6 +335,9 @@ class Clip extends Equatable {
         parallax3d: json['parallax3d'] != null
             ? Parallax3DConfig.fromJson(json['parallax3d'] as Map<String, dynamic>)
             : const Parallax3DConfig(),
+        stabilization: json['stabilization'] != null
+            ? StabilizationConfig.fromJson(json['stabilization'] as Map<String, dynamic>)
+            : const StabilizationConfig(),
       );
 
   @override
@@ -372,5 +381,6 @@ class Clip extends Equatable {
         motionTracking,
         retouch,
         parallax3d,
+        stabilization,
       ];
 }

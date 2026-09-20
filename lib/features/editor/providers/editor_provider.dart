@@ -34,6 +34,7 @@ enum EditorTool {
   tracking,
   retouch,
   parallax3D,
+  stabilization,
 }
 
 class EditorState {

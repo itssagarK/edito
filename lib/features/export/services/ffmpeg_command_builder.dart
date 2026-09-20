@@ -32,6 +32,8 @@ import '../../tracking/services/motion_tracking_compiler_service.dart';
 import '../../retouch/services/face_retouch_compiler_service.dart';
 import '../../parallax_3d/models/parallax_3d_config.dart';
 import '../../parallax_3d/services/parallax_3d_compiler_service.dart';
+import '../../stabilization/models/stabilization_config.dart';
+import '../../stabilization/services/stabilization_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -275,6 +277,16 @@ class FFmpegCommandBuilder {
             targetH,
           );
           vFilters.addAll(parallaxFilters);
+        }
+
+        // CapCut Pro AI Video Stabilization & Gyro Flow
+        if (clip.stabilization.isEnabled && clip.stabilization.level != StabilizationLevel.none) {
+          final stabFilters = StabilizationCompilerService.generateFFmpegFilters(
+            clip.stabilization,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          vFilters.addAll(stabFilters);
         }
 
         // Cinematic Motion VFX & Visual Effects

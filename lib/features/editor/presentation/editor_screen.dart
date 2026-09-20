@@ -449,6 +449,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openParallax3DModal();
         break;
 
+      case EditorTool.stabilization:
+        _openStabilizationModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -746,6 +750,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openParallax3DModal() {
     _openDockedTool(EditorTool.parallax3D, trackType: TrackType.video, purpose: '3D Zoom & Parallax');
+  }
+
+  void _openStabilizationModal() {
+    _openDockedTool(EditorTool.stabilization, trackType: TrackType.video, purpose: 'AI Video Stabilization');
   }
 
   Clip? _findTargetClip() {
