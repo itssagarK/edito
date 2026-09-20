@@ -26,6 +26,7 @@ import '../../../vfx/presentation/widgets/vfx_studio_sheet.dart';
 import '../../../beats/presentation/widgets/beat_detection_sheet.dart';
 import '../../../tts/presentation/widgets/tts_voiceover_sheet.dart';
 import '../../../tracking/presentation/widgets/motion_tracking_sheet.dart';
+import '../../../retouch/presentation/widgets/face_retouch_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
 
@@ -95,6 +96,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'AI Voiceover & Narration';
       case EditorTool.tracking:
         return 'Smart Motion Tracking';
+      case EditorTool.retouch:
+        return 'AI Face & Body Retouch';
       case EditorTool.effects:
         return 'Cinematic Transitions';
       default:
@@ -124,6 +127,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.animation;
       case EditorTool.tracking:
         return Icons.my_location;
+      case EditorTool.retouch:
+        return Icons.face_retouching_natural;
       case EditorTool.clipWorkflow:
         return Icons.movie_filter_outlined;
       case EditorTool.speed:
@@ -481,6 +486,14 @@ class DockedToolPanel extends StatelessWidget {
           project: project,
           targetClip: clip,
           onSave: onSaveProject,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.retouch:
+        return FaceRetouchSheet(
+          clip: clip,
+          onSave: onSaveClip,
           isDocked: true,
           onDone: onClose,
         );

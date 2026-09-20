@@ -441,6 +441,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openTrackingModal();
         break;
 
+      case EditorTool.retouch:
+        _openRetouchModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -730,6 +734,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openTrackingModal() {
     _openDockedTool(EditorTool.tracking, trackType: TrackType.video, purpose: 'Motion Tracking');
+  }
+
+  void _openRetouchModal() {
+    _openDockedTool(EditorTool.retouch, trackType: TrackType.video, purpose: 'AI Face & Body Retouch');
   }
 
   Clip? _findTargetClip() {

@@ -22,6 +22,7 @@ import '../features/cutout/models/smart_cutout_config.dart';
 import '../features/speed/models/auto_velocity_config.dart';
 import '../features/captions/models/kinetic_captions_config.dart';
 import '../features/tracking/models/motion_tracking_config.dart';
+import '../features/retouch/models/face_retouch_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -61,6 +62,7 @@ class Clip extends Equatable {
   final AutoVelocityConfig autoVelocity;
   final KineticCaptionsConfig kineticCaptions;
   final MotionTrackingConfig motionTracking;
+  final FaceRetouchConfig retouch;
 
   const Clip({
     required this.id,
@@ -100,6 +102,7 @@ class Clip extends Equatable {
     this.autoVelocity = const AutoVelocityConfig(),
     this.kineticCaptions = const KineticCaptionsConfig(),
     this.motionTracking = const MotionTrackingConfig(),
+    this.retouch = const FaceRetouchConfig(),
   });
 
   Clip copyWith({
@@ -140,6 +143,7 @@ class Clip extends Equatable {
     AutoVelocityConfig? autoVelocity,
     KineticCaptionsConfig? kineticCaptions,
     MotionTrackingConfig? motionTracking,
+    FaceRetouchConfig? retouch,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -179,6 +183,7 @@ class Clip extends Equatable {
       autoVelocity: autoVelocity ?? this.autoVelocity,
       kineticCaptions: kineticCaptions ?? this.kineticCaptions,
       motionTracking: motionTracking ?? this.motionTracking,
+      retouch: retouch ?? this.retouch,
     );
   }
 
@@ -220,6 +225,7 @@ class Clip extends Equatable {
         'autoVelocity': autoVelocity.toJson(),
         'kineticCaptions': kineticCaptions.toJson(),
         'motionTracking': motionTracking.toJson(),
+        'retouch': retouch.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -311,6 +317,9 @@ class Clip extends Equatable {
         motionTracking: json['motionTracking'] != null
             ? MotionTrackingConfig.fromJson(json['motionTracking'] as Map<String, dynamic>)
             : const MotionTrackingConfig(),
+        retouch: json['retouch'] != null
+            ? FaceRetouchConfig.fromJson(json['retouch'] as Map<String, dynamic>)
+            : const FaceRetouchConfig(),
       );
 
   @override
@@ -352,5 +361,6 @@ class Clip extends Equatable {
         autoVelocity,
         kineticCaptions,
         motionTracking,
+        retouch,
       ];
 }

@@ -29,6 +29,7 @@ import '../../captions/models/caption_line.dart';
 import '../../captions/services/caption_compiler_service.dart';
 import '../../tracking/services/motion_tracking_service.dart';
 import '../../tracking/services/motion_tracking_compiler_service.dart';
+import '../../retouch/services/face_retouch_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -189,6 +190,12 @@ class FFmpegCommandBuilder {
         final colorFilter = ColorFilterCompilerService.generateFFmpegFilter(clip.colorGrading);
         if (colorFilter.isNotEmpty) {
           vFilters.add(colorFilter);
+        }
+
+        // CapCut Pro AI Face & Body Retouching
+        if (clip.retouch.isEnabled) {
+          final retouchFilters = FaceRetouchCompilerService.generateFFmpegFilters(clip.retouch);
+          vFilters.addAll(retouchFilters);
         }
 
         // Text Titles & DrawText Burn-In (clip-relative coordinates, resolution-scaled font)

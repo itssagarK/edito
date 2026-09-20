@@ -32,6 +32,7 @@ enum EditorTool {
   beats,
   tts,
   tracking,
+  retouch,
 }
 
 class EditorState {

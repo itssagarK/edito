@@ -1247,3 +1247,47 @@ Directly reverse-engineered and benchmarked against CapCut Pro's object and moti
      - Compiles piecewise linear interpolation expressions (`if(lt(t, ...))`) for video export.
      - Auto-converts tracking trajectories to keyframes during render, ensuring 100% pixel-perfect output parity.
    - Verified by comprehensive test suite in `test/motion_tracking_test.dart`.
+
+---
+
+## 33. CapCut Pro AI Face & Body Retouching Studio (v1.0.47 Release)
+
+Directly reverse-engineered and benchmarked against CapCut Pro's portrait beautification and silhouette enhancement engine (`com.vega.edit.retouch`), delivering studio-grade bilateral skin smoothing, complex radiance glows, facial feature refinement, and dual-engine Skia/FFmpeg parity:
+
+1. **Domain Model & Beauty Parameters (`FaceRetouchConfig`)**:
+   - **Skin & Complexion Beautification**:
+     - `skinSmooth` (0.0 to 1.0): Edge-preserving bilateral Gaussian spatial filtering softening pores and blemishes while locking sharp eye, hair, and lip contours.
+     - `skinRadiance` (0.0 to 1.0): Illuminates facial skin luminance and dynamic contrast.
+     - **6 Skin Tone Palettes (`SkinToneStyle`)**: *Natural True*, *Porcelain Ivory*, *Warm Peach*, *Golden Honey*, *Bronze Sun*, and *Cinema Pastel* with color balance vectors.
+   - **Facial Feature Refinement**:
+     - `eyeBrighten` (0.0 to 1.0): Sclera whitening and iris reflection enhancement.
+     - `teethWhiten` (0.0 to 1.0): Selective yellow-cast color neutralization in highlights.
+     - `darkCircles` (0.0 to 1.0): Under-eye shadow concealer reduction.
+     - `faceSlimming` (0.0 to 1.0): Natural jawline contouring.
+   - **Body & Silhouette Reshaping**:
+     - `waistSlimming` (0.0 to 1.0): Organic torso and silhouette contouring.
+     - `legLengthening` (0.0 to 1.0): Vertical elongation perspective adjustment.
+   - **7 Trending Beauty Presets (`RetouchPreset`)**:
+     - 🌟 *Natural Glow* (Smooth 45%, Radiance 35%, Eye Brighten 30%, Teeth Whiten 25%)
+     - 💎 *Porcelain Flawless* (Smooth 75%, Radiance 50%, Porcelain Ivory Tone, Face Slimming 20%)
+     - ☀️ *Golden Hour* (Smooth 50%, Radiance 45%, Golden Honey Tone, Eye Sparkle 35%)
+     - 🎬 *Cinema Clean* (Smooth 35%, Radiance 20%, Cinema Pastel Tone, Subtle Concealer)
+     - 📸 *Glamour Portrait* (Smooth 80%, Radiance 60%, Warm Peach Tone, Eye/Teeth Pop 55%, Waist Slim 20%)
+     - ✨ *Blemish Eraser* (Smooth 65%, Radiance 30%, Dark Circle Concealer 50%)
+     - 🌿 *Subtle Fresh* (Smooth 28%, Radiance 22%, Eye Brighten 20%)
+
+2. **Dual-Engine Skia & FFmpeg Filter Pipeline (`FaceRetouchCompilerService`)**:
+   - **Skia GPU Real-Time Compositing**:
+     - Evaluates 4x5 ColorMatrix with luminance offsets and chromatic channel gains during real-time 60fps preview.
+     - Floating HUD status badge: e.g. `✨ RETOUCH (PORCELAIN FLAWLESS)`, `✨ RETOUCH (70%)`.
+   - **Deterministic FFmpeg Export Graph (`FFmpegCommandBuilder`)**:
+     - Compiles `smartblur=lr=<radius>:ls=<strength>:lt=<threshold>` with edge-preserving negative strength and unsharp mask `unsharp=5:5:<amount>:3:3:<amount>` for eye and hair detail retention.
+     - Compiles `eq=brightness=...:contrast=...:saturation=...` and skin tone `colorbalance` matrix for release video export.
+
+3. **Studio Interface (`FaceRetouchSheet`)**:
+   - Quick preset selector carousel with live preview switching.
+   - Multi-tab categorized controls: *Skin & Complexion*, *Facial Features*, and *Body & Silhouette*.
+   - Interactive "COMPARE / RAW" press-to-hold peek button for instantaneous A/B verification.
+   - Integrated into two-tier contextual dock (`EditorTool.retouch`) and docked panel with universal Flutter compatibility.
+   - Verified by comprehensive test suite in `test/face_retouch_test.dart`.
+
