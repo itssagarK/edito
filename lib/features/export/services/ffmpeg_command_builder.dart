@@ -34,6 +34,8 @@ import '../../parallax_3d/models/parallax_3d_config.dart';
 import '../../parallax_3d/services/parallax_3d_compiler_service.dart';
 import '../../stabilization/models/stabilization_config.dart';
 import '../../stabilization/services/stabilization_compiler_service.dart';
+import '../../vocal_isolation/models/vocal_isolation_config.dart';
+import '../../vocal_isolation/services/vocal_isolation_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -495,6 +497,12 @@ class FFmpegCommandBuilder {
         }
         if (effectChain.isNotEmpty) {
           aFilters.add(effectChain);
+        }
+
+        // CapCut Pro AI Vocal Isolation & Audio Stem Splitter
+        if (clip.vocalIsolation.isEnabled && clip.vocalIsolation.mode != VocalIsolationMode.none) {
+          final vocalFilters = VocalIsolationCompilerService.generateFFmpegFilters(clip.vocalIsolation);
+          aFilters.addAll(vocalFilters);
         }
 
         // Format harmonization (48kHz sample rate, fltp, stereo)

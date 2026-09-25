@@ -25,6 +25,7 @@ import '../features/tracking/models/motion_tracking_config.dart';
 import '../features/retouch/models/face_retouch_config.dart';
 import '../features/parallax_3d/models/parallax_3d_config.dart';
 import '../features/stabilization/models/stabilization_config.dart';
+import '../features/vocal_isolation/models/vocal_isolation_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -67,6 +68,7 @@ class Clip extends Equatable {
   final FaceRetouchConfig retouch;
   final Parallax3DConfig parallax3d;
   final StabilizationConfig stabilization;
+  final VocalIsolationConfig vocalIsolation;
 
   const Clip({
     required this.id,
@@ -109,6 +111,7 @@ class Clip extends Equatable {
     this.retouch = const FaceRetouchConfig(),
     this.parallax3d = const Parallax3DConfig(),
     this.stabilization = const StabilizationConfig(),
+    this.vocalIsolation = const VocalIsolationConfig(),
   });
 
   Clip copyWith({
@@ -152,6 +155,7 @@ class Clip extends Equatable {
     FaceRetouchConfig? retouch,
     Parallax3DConfig? parallax3d,
     StabilizationConfig? stabilization,
+    VocalIsolationConfig? vocalIsolation,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -194,6 +198,7 @@ class Clip extends Equatable {
       retouch: retouch ?? this.retouch,
       parallax3d: parallax3d ?? this.parallax3d,
       stabilization: stabilization ?? this.stabilization,
+      vocalIsolation: vocalIsolation ?? this.vocalIsolation,
     );
   }
 
@@ -238,6 +243,7 @@ class Clip extends Equatable {
         'retouch': retouch.toJson(),
         'parallax3d': parallax3d.toJson(),
         'stabilization': stabilization.toJson(),
+        'vocalIsolation': vocalIsolation.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -338,6 +344,9 @@ class Clip extends Equatable {
         stabilization: json['stabilization'] != null
             ? StabilizationConfig.fromJson(json['stabilization'] as Map<String, dynamic>)
             : const StabilizationConfig(),
+        vocalIsolation: json['vocalIsolation'] != null
+            ? VocalIsolationConfig.fromJson(json['vocalIsolation'] as Map<String, dynamic>)
+            : const VocalIsolationConfig(),
       );
 
   @override
@@ -382,5 +391,6 @@ class Clip extends Equatable {
         retouch,
         parallax3d,
         stabilization,
+        vocalIsolation,
       ];
 }

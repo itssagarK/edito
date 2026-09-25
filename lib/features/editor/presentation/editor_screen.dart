@@ -453,6 +453,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openStabilizationModal();
         break;
 
+      case EditorTool.vocalIsolation:
+        _openVocalIsolationModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -754,6 +758,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openStabilizationModal() {
     _openDockedTool(EditorTool.stabilization, trackType: TrackType.video, purpose: 'AI Video Stabilization');
+  }
+
+  void _openVocalIsolationModal() {
+    _openDockedTool(EditorTool.vocalIsolation, trackType: TrackType.video, purpose: 'AI Vocal Isolation');
   }
 
   Clip? _findTargetClip() {

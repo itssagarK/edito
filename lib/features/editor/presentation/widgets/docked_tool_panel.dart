@@ -29,6 +29,7 @@ import '../../../tracking/presentation/widgets/motion_tracking_sheet.dart';
 import '../../../retouch/presentation/widgets/face_retouch_sheet.dart';
 import '../../../parallax_3d/presentation/widgets/parallax_3d_sheet.dart';
 import '../../../stabilization/presentation/widgets/stabilization_sheet.dart';
+import '../../../vocal_isolation/presentation/widgets/vocal_isolation_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
 
@@ -104,6 +105,8 @@ class DockedToolPanel extends StatelessWidget {
         return '3D Zoom & Parallax';
       case EditorTool.stabilization:
         return 'AI Video Stabilization';
+      case EditorTool.vocalIsolation:
+        return 'AI Vocal Isolation';
       case EditorTool.effects:
         return 'Cinematic Transitions';
       default:
@@ -139,6 +142,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.view_in_ar;
       case EditorTool.stabilization:
         return Icons.screen_lock_rotation;
+      case EditorTool.vocalIsolation:
+        return Icons.record_voice_over;
       case EditorTool.clipWorkflow:
         return Icons.movie_filter_outlined;
       case EditorTool.speed:
@@ -521,6 +526,16 @@ class DockedToolPanel extends StatelessWidget {
           initialConfig: clip.stabilization,
           onApply: (stabConfig) {
             onSaveClip(clip.copyWith(stabilization: stabConfig));
+          },
+          isDocked: true,
+          onClose: onClose,
+        );
+
+      case EditorTool.vocalIsolation:
+        return VocalIsolationSheet(
+          initialConfig: clip.vocalIsolation,
+          onApply: (vocalConfig) {
+            onSaveClip(clip.copyWith(vocalIsolation: vocalConfig));
           },
           isDocked: true,
           onClose: onClose,

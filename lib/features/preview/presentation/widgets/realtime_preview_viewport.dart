@@ -1162,6 +1162,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     ),
                   ),
                 ),
+              if (clip.vocalIsolation.badge.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF6C5CE7)),
+                  ),
+                  child: Text(
+                    clip.vocalIsolation.badge,
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFFA29BFE),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
