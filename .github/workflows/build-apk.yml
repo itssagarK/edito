@@ -57,22 +57,7 @@ jobs:
 
       - name: Build Android APK
         run: |
-          if ! flutter build apk --release --no-tree-shake-icons > build_error.log 2>&1; then
-            echo "=== RELEASE BUILD FAILED ==="
-            tail -n 120 build_error.log
-            echo "=== TRYING DEBUG BUILD ==="
-            if ! flutter build apk --debug >> build_error.log 2>&1; then
-              echo "=== DEBUG BUILD FAILED ==="
-              tail -n 120 build_error.log
-              git config user.name "github-actions[bot]"
-              git config user.email "github-actions[bot]@users.noreply.github.com"
-              git checkout -b debug-build-log
-              git add -f build_error.log
-              git commit -m "debug: build error log"
-              git push -f origin debug-build-log
-              exit 1
-            fi
-          fi
+          flutter build apk --release --no-tree-shake-icons || flutter build apk --debug
           mkdir -p release_out
           APK=$(find build/ -type f -name "*.apk" | head -n 1)
           echo "Discovered APK at: $APK"

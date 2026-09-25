@@ -41,6 +41,12 @@ class AppTypography {
         color: AppColors.textSecondary,
       );
 
+  static TextStyle get bodySmall => GoogleFonts.inter(
+        fontSize: 11,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textSecondary,
+      );
+
   static TextStyle get timecode => GoogleFonts.jetBrainsMono(
         fontSize: 13,
         fontWeight: FontWeight.w600,
