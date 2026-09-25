@@ -55,6 +55,8 @@ import '../../../stabilization/models/stabilization_config.dart';
 import '../../../stabilization/services/stabilization_compiler_service.dart';
 import '../../../color_match/models/color_match_config.dart';
 import '../../../color_match/services/color_match_compiler_service.dart';
+import '../../../relight/models/relight_config.dart';
+import '../../../relight/services/relight_compiler_service.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';
@@ -554,6 +556,25 @@ class RealtimePreviewViewport extends ConsumerWidget {
           ColorMatchCompilerService.calculateColorMatrix(clip.colorMatch),
         ),
         child: videoContent,
+      );
+    }
+
+    if (clip.relight.isEnabled && clip.relight.mode != RelightMode.none && clip.relight.intensity > 0.0) {
+      videoContent = Stack(
+        fit: StackFit.passthrough,
+        children: [
+          videoContent,
+          Positioned.fill(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return RelightCompilerService.buildLightingOverlay(
+                  clip.relight,
+                  Size(constraints.maxWidth, constraints.maxHeight),
+                );
+              },
+            ),
+          ),
+        ],
       );
     }
 
@@ -1203,6 +1224,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 9,
                       color: Color(0xFFFF9F43),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.relight.badge.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFFFFD166)),
+                  ),
+                  child: Text(
+                    clip.relight.badge,
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFFFFD166),
                       fontWeight: FontWeight.bold,
                     ),
                   ),

@@ -38,6 +38,8 @@ import '../../vocal_isolation/models/vocal_isolation_config.dart';
 import '../../vocal_isolation/services/vocal_isolation_compiler_service.dart';
 import '../../color_match/models/color_match_config.dart';
 import '../../color_match/services/color_match_compiler_service.dart';
+import '../../relight/models/relight_config.dart';
+import '../../relight/services/relight_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -210,6 +212,12 @@ class FFmpegCommandBuilder {
         if (clip.colorMatch.isEnabled && clip.colorMatch.intensity > 0.0) {
           final colorMatchFilters = ColorMatchCompilerService.generateFFmpegFilters(clip.colorMatch);
           vFilters.addAll(colorMatchFilters);
+        }
+
+        // CapCut Pro AI Video Relight & Virtual Studio Lighting
+        if (clip.relight.isEnabled && clip.relight.mode != RelightMode.none && clip.relight.intensity > 0.0) {
+          final relightFilters = RelightCompilerService.generateFFmpegFilters(clip.relight);
+          vFilters.addAll(relightFilters);
         }
 
         // Text Titles & DrawText Burn-In (clip-relative coordinates, resolution-scaled font)

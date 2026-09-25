@@ -37,6 +37,7 @@ enum EditorTool {
   stabilization,
   vocalIsolation,
   colorMatch,
+  relight,
 }
 
 class EditorState {

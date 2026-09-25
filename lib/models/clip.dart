@@ -27,6 +27,7 @@ import '../features/parallax_3d/models/parallax_3d_config.dart';
 import '../features/stabilization/models/stabilization_config.dart';
 import '../features/vocal_isolation/models/vocal_isolation_config.dart';
 import '../features/color_match/models/color_match_config.dart';
+import '../features/relight/models/relight_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -71,6 +72,7 @@ class Clip extends Equatable {
   final StabilizationConfig stabilization;
   final VocalIsolationConfig vocalIsolation;
   final ColorMatchConfig colorMatch;
+  final RelightConfig relight;
 
   const Clip({
     required this.id,
@@ -115,6 +117,7 @@ class Clip extends Equatable {
     this.stabilization = const StabilizationConfig(),
     this.vocalIsolation = const VocalIsolationConfig(),
     this.colorMatch = const ColorMatchConfig(),
+    this.relight = const RelightConfig(),
   });
 
   Clip copyWith({
@@ -160,6 +163,7 @@ class Clip extends Equatable {
     StabilizationConfig? stabilization,
     VocalIsolationConfig? vocalIsolation,
     ColorMatchConfig? colorMatch,
+    RelightConfig? relight,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -204,6 +208,7 @@ class Clip extends Equatable {
       stabilization: stabilization ?? this.stabilization,
       vocalIsolation: vocalIsolation ?? this.vocalIsolation,
       colorMatch: colorMatch ?? this.colorMatch,
+      relight: relight ?? this.relight,
     );
   }
 
@@ -250,6 +255,7 @@ class Clip extends Equatable {
         'stabilization': stabilization.toJson(),
         'vocalIsolation': vocalIsolation.toJson(),
         'colorMatch': colorMatch.toJson(),
+        'relight': relight.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -356,6 +362,9 @@ class Clip extends Equatable {
         colorMatch: json['colorMatch'] != null
             ? ColorMatchConfig.fromJson(json['colorMatch'] as Map<String, dynamic>)
             : const ColorMatchConfig(),
+        relight: json['relight'] != null
+            ? RelightConfig.fromJson(json['relight'] as Map<String, dynamic>)
+            : const RelightConfig(),
       );
 
   @override
@@ -402,5 +411,6 @@ class Clip extends Equatable {
         stabilization,
         vocalIsolation,
         colorMatch,
+        relight,
       ];
 }

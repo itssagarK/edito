@@ -461,6 +461,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openColorMatchModal();
         break;
 
+      case EditorTool.relight:
+        _openRelightModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -770,6 +774,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openColorMatchModal() {
     _openDockedTool(EditorTool.colorMatch, trackType: TrackType.video, purpose: 'AI Color Match');
+  }
+
+  void _openRelightModal() {
+    _openDockedTool(EditorTool.relight, trackType: TrackType.video, purpose: 'AI Video Relight');
   }
 
   Clip? _findTargetClip() {

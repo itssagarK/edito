@@ -31,6 +31,7 @@ import '../../../parallax_3d/presentation/widgets/parallax_3d_sheet.dart';
 import '../../../stabilization/presentation/widgets/stabilization_sheet.dart';
 import '../../../vocal_isolation/presentation/widgets/vocal_isolation_sheet.dart';
 import '../../../color_match/presentation/widgets/color_match_sheet.dart';
+import '../../../relight/presentation/widgets/relight_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
 
@@ -110,6 +111,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'AI Vocal Isolation';
       case EditorTool.colorMatch:
         return 'AI Color Match';
+      case EditorTool.relight:
+        return 'AI Video Relight';
       case EditorTool.effects:
         return 'Cinematic Transitions';
       default:
@@ -149,6 +152,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.record_voice_over;
       case EditorTool.colorMatch:
         return Icons.auto_fix_high;
+      case EditorTool.relight:
+        return Icons.lightbulb_circle;
       case EditorTool.clipWorkflow:
         return Icons.movie_filter_outlined;
       case EditorTool.speed:
@@ -557,6 +562,16 @@ class DockedToolPanel extends StatelessWidget {
           availableReferenceClips: allVideoClips,
           onApply: (colorMatchConfig) {
             onSaveClip(clip.copyWith(colorMatch: colorMatchConfig));
+          },
+          isDocked: true,
+          onClose: onClose,
+        );
+
+      case EditorTool.relight:
+        return RelightSheet(
+          initialConfig: clip.relight,
+          onApply: (relightConfig) {
+            onSaveClip(clip.copyWith(relight: relightConfig));
           },
           isDocked: true,
           onClose: onClose,
