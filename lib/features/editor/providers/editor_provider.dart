@@ -38,6 +38,7 @@ enum EditorTool {
   vocalIsolation,
   colorMatch,
   relight,
+  denoise,
 }
 
 class EditorState {

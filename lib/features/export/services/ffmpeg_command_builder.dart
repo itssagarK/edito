@@ -40,6 +40,8 @@ import '../../color_match/models/color_match_config.dart';
 import '../../color_match/services/color_match_compiler_service.dart';
 import '../../relight/models/relight_config.dart';
 import '../../relight/services/relight_compiler_service.dart';
+import '../../denoise/models/denoise_config.dart';
+import '../../denoise/services/denoise_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -218,6 +220,12 @@ class FFmpegCommandBuilder {
         if (clip.relight.isEnabled && clip.relight.mode != RelightMode.none && clip.relight.intensity > 0.0) {
           final relightFilters = RelightCompilerService.generateFFmpegFilters(clip.relight);
           vFilters.addAll(relightFilters);
+        }
+
+        // CapCut Pro Video De-Noise & Low-Light Enhancement
+        if (clip.denoise.isEnabled && clip.denoise.level != DenoiseLevel.none) {
+          final denoiseFilters = DenoiseCompilerService.generateFFmpegFilters(clip.denoise);
+          vFilters.addAll(denoiseFilters);
         }
 
         // Text Titles & DrawText Burn-In (clip-relative coordinates, resolution-scaled font)

@@ -465,6 +465,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openRelightModal();
         break;
 
+      case EditorTool.denoise:
+        _openDenoiseModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -778,6 +782,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openRelightModal() {
     _openDockedTool(EditorTool.relight, trackType: TrackType.video, purpose: 'AI Video Relight');
+  }
+
+  void _openDenoiseModal() {
+    _openDockedTool(EditorTool.denoise, trackType: TrackType.video, purpose: 'AI Video De-Noise');
   }
 
   Clip? _findTargetClip() {

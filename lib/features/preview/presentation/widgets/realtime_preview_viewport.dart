@@ -57,6 +57,8 @@ import '../../../color_match/models/color_match_config.dart';
 import '../../../color_match/services/color_match_compiler_service.dart';
 import '../../../relight/models/relight_config.dart';
 import '../../../relight/services/relight_compiler_service.dart';
+import '../../../denoise/models/denoise_config.dart';
+import '../../../denoise/services/denoise_compiler_service.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';
@@ -575,6 +577,15 @@ class RealtimePreviewViewport extends ConsumerWidget {
             ),
           ),
         ],
+      );
+    }
+
+    if (clip.denoise.isEnabled && clip.denoise.level != DenoiseLevel.none && clip.denoise.lowLightBoost > 0.0) {
+      videoContent = ColorFiltered(
+        colorFilter: ColorFilter.matrix(
+          DenoiseCompilerService.calculateColorMatrix(clip.denoise),
+        ),
+        child: videoContent,
       );
     }
 
@@ -1241,6 +1252,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 9,
                       color: Color(0xFFFFD166),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.denoise.badge.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF2ED573)),
+                  ),
+                  child: Text(
+                    clip.denoise.badge,
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFF2ED573),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
