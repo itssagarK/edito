@@ -60,6 +60,10 @@ jobs:
           flutter build apk --release --no-tree-shake-icons || flutter build apk --debug
           mkdir -p release_out
           APK=$(find build/ -type f -name "*.apk" | head -n 1)
+          if [ -z "$APK" ]; then
+            echo "::error::No APK produced by flutter build"
+            exit 1
+          fi
           echo "Discovered APK at: $APK"
           cp -v "$APK" release_out/app-release.apk
           cp -v "$APK" release_out/edito-release.apk

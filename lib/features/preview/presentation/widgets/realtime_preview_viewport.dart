@@ -59,6 +59,7 @@ import '../../../relight/models/relight_config.dart';
 import '../../../relight/services/relight_compiler_service.dart';
 import '../../../denoise/models/denoise_config.dart';
 import '../../../denoise/services/denoise_compiler_service.dart';
+import '../../../voice_effects/models/voice_effects_config.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';

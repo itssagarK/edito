@@ -310,7 +310,7 @@ class _VoiceEffectsSheetState extends State<VoiceEffectsSheet> {
             child: ChoiceChip(
               label: Text(cat.label),
               selected: isSelected,
-              selectedColor: AppColors.primary.withValues(alpha: 0.25),
+              selectedColor: AppColors.primary.withOpacity(0.25),
               backgroundColor: AppColors.cardSurface,
               labelStyle: AppTypography.caption.copyWith(
                 color: isSelected ? AppColors.primary : AppColors.textSecondary,
@@ -360,7 +360,7 @@ class _VoiceEffectsSheetState extends State<VoiceEffectsSheet> {
                 padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? color.withValues(alpha: 0.18)
+                      ? color.withOpacity(0.18)
                       : AppColors.cardSurface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
@@ -370,7 +370,7 @@ class _VoiceEffectsSheetState extends State<VoiceEffectsSheet> {
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: color.withValues(alpha: 0.35),
+                            color: color.withOpacity(0.35),
                             blurRadius: 8,
                             spreadRadius: 1,
                           )
@@ -506,7 +506,7 @@ class _VoiceEffectsSheetState extends State<VoiceEffectsSheet> {
             activeTrackColor: AppColors.primary,
             inactiveTrackColor: AppColors.border,
             thumbColor: AppColors.primary,
-            overlayColor: AppColors.primary.withValues(alpha: 0.2),
+            overlayColor: AppColors.primary.withOpacity(0.2),
             trackHeight: 3,
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
           ),
@@ -568,7 +568,7 @@ class _VoiceEffectsSheetState extends State<VoiceEffectsSheet> {
             activeTrackColor: AppColors.primary,
             inactiveTrackColor: AppColors.border,
             thumbColor: AppColors.primary,
-            overlayColor: AppColors.primary.withValues(alpha: 0.2),
+            overlayColor: AppColors.primary.withOpacity(0.2),
             trackHeight: 3,
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
           ),
