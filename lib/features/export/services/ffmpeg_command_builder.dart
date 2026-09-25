@@ -42,6 +42,8 @@ import '../../relight/models/relight_config.dart';
 import '../../relight/services/relight_compiler_service.dart';
 import '../../denoise/models/denoise_config.dart';
 import '../../denoise/services/denoise_compiler_service.dart';
+import '../../voice_effects/models/voice_effects_config.dart';
+import '../../voice_effects/services/voice_effects_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -527,6 +529,12 @@ class FFmpegCommandBuilder {
         if (clip.vocalIsolation.isEnabled && clip.vocalIsolation.mode != VocalIsolationMode.none) {
           final vocalFilters = VocalIsolationCompilerService.generateFFmpegFilters(clip.vocalIsolation);
           aFilters.addAll(vocalFilters);
+        }
+
+        // CapCut Pro AI Voice Changer & Audio Timbre Morphing Studio
+        if (clip.voiceEffects.isEnabled && clip.voiceEffects.character != VoiceEffectCharacter.none) {
+          final voiceFilters = VoiceEffectsCompilerService.generateFFmpegFilters(clip.voiceEffects);
+          aFilters.addAll(voiceFilters);
         }
 
         // Format harmonization (48kHz sample rate, fltp, stereo)

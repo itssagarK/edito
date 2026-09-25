@@ -29,6 +29,7 @@ import '../features/vocal_isolation/models/vocal_isolation_config.dart';
 import '../features/color_match/models/color_match_config.dart';
 import '../features/relight/models/relight_config.dart';
 import '../features/denoise/models/denoise_config.dart';
+import '../features/voice_effects/models/voice_effects_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -75,6 +76,7 @@ class Clip extends Equatable {
   final ColorMatchConfig colorMatch;
   final RelightConfig relight;
   final DenoiseConfig denoise;
+  final VoiceEffectsConfig voiceEffects;
 
   const Clip({
     required this.id,
@@ -121,6 +123,7 @@ class Clip extends Equatable {
     this.colorMatch = const ColorMatchConfig(),
     this.relight = const RelightConfig(),
     this.denoise = const DenoiseConfig(),
+    this.voiceEffects = const VoiceEffectsConfig(),
   });
 
   Clip copyWith({
@@ -168,6 +171,7 @@ class Clip extends Equatable {
     ColorMatchConfig? colorMatch,
     RelightConfig? relight,
     DenoiseConfig? denoise,
+    VoiceEffectsConfig? voiceEffects,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -214,6 +218,7 @@ class Clip extends Equatable {
       colorMatch: colorMatch ?? this.colorMatch,
       relight: relight ?? this.relight,
       denoise: denoise ?? this.denoise,
+      voiceEffects: voiceEffects ?? this.voiceEffects,
     );
   }
 
@@ -262,6 +267,7 @@ class Clip extends Equatable {
         'colorMatch': colorMatch.toJson(),
         'relight': relight.toJson(),
         'denoise': denoise.toJson(),
+        'voiceEffects': voiceEffects.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -374,6 +380,9 @@ class Clip extends Equatable {
         denoise: json['denoise'] != null
             ? DenoiseConfig.fromJson(json['denoise'] as Map<String, dynamic>)
             : const DenoiseConfig(),
+        voiceEffects: json['voiceEffects'] != null
+            ? VoiceEffectsConfig.fromJson(json['voiceEffects'] as Map<String, dynamic>)
+            : const VoiceEffectsConfig(),
       );
 
   @override
@@ -422,5 +431,6 @@ class Clip extends Equatable {
         colorMatch,
         relight,
         denoise,
+        voiceEffects,
       ];
 }

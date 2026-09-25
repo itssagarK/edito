@@ -33,6 +33,7 @@ import '../../../vocal_isolation/presentation/widgets/vocal_isolation_sheet.dart
 import '../../../color_match/presentation/widgets/color_match_sheet.dart';
 import '../../../relight/presentation/widgets/relight_sheet.dart';
 import '../../../denoise/presentation/widgets/denoise_sheet.dart';
+import '../../../voice_effects/presentation/widgets/voice_effects_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
 
@@ -116,6 +117,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'AI Video Relight';
       case EditorTool.denoise:
         return 'AI Video De-Noise';
+      case EditorTool.voiceEffects:
+        return 'CapCut Pro Voice Changer';
       case EditorTool.effects:
         return 'Cinematic Transitions';
       default:
@@ -159,6 +162,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.lightbulb_circle;
       case EditorTool.denoise:
         return Icons.noise_control_off;
+      case EditorTool.voiceEffects:
+        return Icons.mic_external_on;
       case EditorTool.clipWorkflow:
         return Icons.movie_filter_outlined;
       case EditorTool.speed:
@@ -587,6 +592,16 @@ class DockedToolPanel extends StatelessWidget {
           initialConfig: clip.denoise,
           onApply: (denoiseConfig) {
             onSaveClip(clip.copyWith(denoise: denoiseConfig));
+          },
+          isDocked: true,
+          onClose: onClose,
+        );
+
+      case EditorTool.voiceEffects:
+        return VoiceEffectsSheet(
+          initialConfig: clip.voiceEffects,
+          onApply: (voiceConfig) {
+            onSaveClip(clip.copyWith(voiceEffects: voiceConfig));
           },
           isDocked: true,
           onClose: onClose,

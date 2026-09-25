@@ -469,6 +469,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openDenoiseModal();
         break;
 
+      case EditorTool.voiceEffects:
+        _openVoiceEffectsModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -786,6 +790,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openDenoiseModal() {
     _openDockedTool(EditorTool.denoise, trackType: TrackType.video, purpose: 'AI Video De-Noise');
+  }
+
+  void _openVoiceEffectsModal() {
+    _openDockedTool(EditorTool.voiceEffects, trackType: TrackType.video, purpose: 'CapCut Pro Voice Changer');
   }
 
   Clip? _findTargetClip() {
