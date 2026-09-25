@@ -36,6 +36,8 @@ import '../../stabilization/models/stabilization_config.dart';
 import '../../stabilization/services/stabilization_compiler_service.dart';
 import '../../vocal_isolation/models/vocal_isolation_config.dart';
 import '../../vocal_isolation/services/vocal_isolation_compiler_service.dart';
+import '../../color_match/models/color_match_config.dart';
+import '../../color_match/services/color_match_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -202,6 +204,12 @@ class FFmpegCommandBuilder {
         if (clip.retouch.isEnabled) {
           final retouchFilters = FaceRetouchCompilerService.generateFFmpegFilters(clip.retouch);
           vFilters.addAll(retouchFilters);
+        }
+
+        // CapCut Pro AI Color Match & Tone Palette Transfer
+        if (clip.colorMatch.isEnabled && clip.colorMatch.intensity > 0.0) {
+          final colorMatchFilters = ColorMatchCompilerService.generateFFmpegFilters(clip.colorMatch);
+          vFilters.addAll(colorMatchFilters);
         }
 
         // Text Titles & DrawText Burn-In (clip-relative coordinates, resolution-scaled font)

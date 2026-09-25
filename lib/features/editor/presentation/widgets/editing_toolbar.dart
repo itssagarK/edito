@@ -72,6 +72,7 @@ class EditingToolbar extends StatelessWidget {
       _ToolItem(EditorTool.parallax3D, '3D Zoom', Icons.view_in_ar),
       _ToolItem(EditorTool.stabilization, 'Stabilize', Icons.screen_lock_rotation),
       _ToolItem(EditorTool.vocalIsolation, 'Isolate Voice', Icons.record_voice_over),
+      _ToolItem(EditorTool.colorMatch, 'Color Match', Icons.auto_fix_high),
       _ToolItem(EditorTool.borders, 'Border', Icons.border_outer),
       _ToolItem(EditorTool.clipWorkflow, 'Actions', Icons.movie_filter_outlined),
       _ToolItem(EditorTool.layout, 'Reframe', Icons.aspect_ratio),

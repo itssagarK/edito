@@ -36,6 +36,7 @@ enum EditorTool {
   parallax3D,
   stabilization,
   vocalIsolation,
+  colorMatch,
 }
 
 class EditorState {

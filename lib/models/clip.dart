@@ -26,6 +26,7 @@ import '../features/retouch/models/face_retouch_config.dart';
 import '../features/parallax_3d/models/parallax_3d_config.dart';
 import '../features/stabilization/models/stabilization_config.dart';
 import '../features/vocal_isolation/models/vocal_isolation_config.dart';
+import '../features/color_match/models/color_match_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -69,6 +70,7 @@ class Clip extends Equatable {
   final Parallax3DConfig parallax3d;
   final StabilizationConfig stabilization;
   final VocalIsolationConfig vocalIsolation;
+  final ColorMatchConfig colorMatch;
 
   const Clip({
     required this.id,
@@ -112,6 +114,7 @@ class Clip extends Equatable {
     this.parallax3d = const Parallax3DConfig(),
     this.stabilization = const StabilizationConfig(),
     this.vocalIsolation = const VocalIsolationConfig(),
+    this.colorMatch = const ColorMatchConfig(),
   });
 
   Clip copyWith({
@@ -156,6 +159,7 @@ class Clip extends Equatable {
     Parallax3DConfig? parallax3d,
     StabilizationConfig? stabilization,
     VocalIsolationConfig? vocalIsolation,
+    ColorMatchConfig? colorMatch,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -199,6 +203,7 @@ class Clip extends Equatable {
       parallax3d: parallax3d ?? this.parallax3d,
       stabilization: stabilization ?? this.stabilization,
       vocalIsolation: vocalIsolation ?? this.vocalIsolation,
+      colorMatch: colorMatch ?? this.colorMatch,
     );
   }
 
@@ -244,6 +249,7 @@ class Clip extends Equatable {
         'parallax3d': parallax3d.toJson(),
         'stabilization': stabilization.toJson(),
         'vocalIsolation': vocalIsolation.toJson(),
+        'colorMatch': colorMatch.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -347,6 +353,9 @@ class Clip extends Equatable {
         vocalIsolation: json['vocalIsolation'] != null
             ? VocalIsolationConfig.fromJson(json['vocalIsolation'] as Map<String, dynamic>)
             : const VocalIsolationConfig(),
+        colorMatch: json['colorMatch'] != null
+            ? ColorMatchConfig.fromJson(json['colorMatch'] as Map<String, dynamic>)
+            : const ColorMatchConfig(),
       );
 
   @override
@@ -392,5 +401,6 @@ class Clip extends Equatable {
         parallax3d,
         stabilization,
         vocalIsolation,
+        colorMatch,
       ];
 }

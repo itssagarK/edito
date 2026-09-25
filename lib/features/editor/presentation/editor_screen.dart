@@ -457,6 +457,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openVocalIsolationModal();
         break;
 
+      case EditorTool.colorMatch:
+        _openColorMatchModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -762,6 +766,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openVocalIsolationModal() {
     _openDockedTool(EditorTool.vocalIsolation, trackType: TrackType.video, purpose: 'AI Vocal Isolation');
+  }
+
+  void _openColorMatchModal() {
+    _openDockedTool(EditorTool.colorMatch, trackType: TrackType.video, purpose: 'AI Color Match');
   }
 
   Clip? _findTargetClip() {

@@ -53,6 +53,8 @@ import '../../../parallax_3d/models/parallax_3d_config.dart';
 import '../../../parallax_3d/services/parallax_3d_compiler_service.dart';
 import '../../../stabilization/models/stabilization_config.dart';
 import '../../../stabilization/services/stabilization_compiler_service.dart';
+import '../../../color_match/models/color_match_config.dart';
+import '../../../color_match/services/color_match_compiler_service.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';
@@ -541,6 +543,15 @@ class RealtimePreviewViewport extends ConsumerWidget {
       videoContent = ColorFiltered(
         colorFilter: ColorFilter.matrix(
           FaceRetouchCompilerService.generateColorFilterMatrix(clip.retouch),
+        ),
+        child: videoContent,
+      );
+    }
+
+    if (clip.colorMatch.isEnabled && clip.colorMatch.intensity > 0.0) {
+      videoContent = ColorFiltered(
+        colorFilter: ColorFilter.matrix(
+          ColorMatchCompilerService.calculateColorMatrix(clip.colorMatch),
         ),
         child: videoContent,
       );
@@ -1175,6 +1186,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 9,
                       color: Color(0xFFA29BFE),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.colorMatch.badge.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFFFF9F43)),
+                  ),
+                  child: Text(
+                    clip.colorMatch.badge,
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFFFF9F43),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
