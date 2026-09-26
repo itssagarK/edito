@@ -307,7 +307,7 @@ class VoiceEffectsConfig extends Equatable {
     return VoiceEffectsConfig(
       isEnabled: json['isEnabled'] as bool? ?? false,
       character: VoiceEffectCharacter.values[
-        (json['character'] as int? ?? 0).clamp(0, VoiceEffectCharacter.values.length - 1)
+        (json['character'] as int? ?? 0).clamp(0, VoiceEffectCharacter.values.length - 1).toInt()
       ],
       pitchSemitones: (json['pitchSemitones'] as num?)?.toDouble() ?? 0.0,
       formantShift: (json['formantShift'] as num?)?.toDouble() ?? 1.0,

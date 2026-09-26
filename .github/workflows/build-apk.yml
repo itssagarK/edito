@@ -50,14 +50,22 @@ jobs:
           flutter config --no-analytics
 
       - name: Install Dependencies
-        run: flutter pub get
+        run: |
+          flutter pub get
+          flutter analyze --no-fatal-infos || true
 
       - name: Run Unit Tests
         run: flutter test --no-pub || flutter test || true
 
       - name: Build Android APK
         run: |
-          flutter build apk --release --no-tree-shake-icons || flutter build apk --debug
+          if ! flutter build apk --release --no-tree-shake-icons; then
+            echo "::warning::Release build failed, falling back to debug APK build..."
+            flutter build apk --debug || {
+              echo "::error::Both release and debug build failed"
+              exit 1
+            }
+          fi
           mkdir -p release_out
           APK=$(find build/ -type f -name "*.apk" | head -n 1)
           if [ -z "$APK" ]; then
