@@ -59,12 +59,16 @@ jobs:
 
       - name: Build Android APK
         run: |
-          if ! flutter build apk --release --no-tree-shake-icons; then
-            echo "::warning::Release build failed, falling back to debug APK build..."
-            flutter build apk --debug || {
-              echo "::error::Both release and debug build failed"
+          if ! flutter build apk --release --no-tree-shake-icons > release_build.log 2>&1; then
+            ERR_MSG=$(grep -i -E "error|exception|failure|undefined" release_build.log | tail -n 5 | tr '\n' ' ' | tr -d '"' | tr -d "'")
+            echo "::error::Release build failed: $ERR_MSG"
+            cat release_build.log | tail -n 60
+            if ! flutter build apk --debug > debug_build.log 2>&1; then
+              DEBUG_ERR=$(grep -i -E "error|exception|failure|undefined" debug_build.log | tail -n 5 | tr '\n' ' ' | tr -d '"' | tr -d "'")
+              echo "::error::Debug build failed: $DEBUG_ERR"
+              cat debug_build.log | tail -n 60
               exit 1
-            }
+            fi
           fi
           mkdir -p release_out
           APK=$(find build/ -type f -name "*.apk" | head -n 1)
