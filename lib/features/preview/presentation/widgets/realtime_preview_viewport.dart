@@ -42,6 +42,7 @@ import '../../../vfx/presentation/widgets/vfx_preview_wrapper.dart';
 import '../../../../models/clip.dart';
 import '../../../../models/media_asset.dart';
 import '../../../overlays/models/text_overlay_config.dart';
+import '../../../overlays/presentation/widgets/curved_text_painter.dart';
 import '../../../overlays/services/overlay_compiler_service.dart';
 import '../../../captions/models/caption_line.dart';
 import '../../../captions/presentation/widgets/kinetic_caption_overlay.dart';
@@ -1536,57 +1537,10 @@ class RealtimePreviewViewport extends ConsumerWidget {
                 child: Builder(
                   builder: (context) {
                     final baseStyle = _resolveOverlayTextStyle(config);
-                    final shadows = <Shadow>[
-                      if (config.shadowColor != null)
-                        Shadow(
-                          color: Color(config.shadowColor!),
-                          blurRadius: config.shadowBlur,
-                          offset: const Offset(0, 2),
-                        )
-                      else
-                        const Shadow(
-                          color: Colors.black87,
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
-                        ),
-                    ];
-
-                    if (config.strokeWidth > 0.0 && config.strokeColor != null) {
-                      return Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Stroke Outline Layer
-                          Text(
-                            displayText,
-                            textAlign: TextAlign.center,
-                            style: baseStyle.copyWith(
-                              foreground: Paint()
-                                ..style = PaintingStyle.stroke
-                                ..strokeWidth = config.strokeWidth * 2
-                                ..strokeJoin = StrokeJoin.round
-                                ..color = Color(config.strokeColor!),
-                            ),
-                          ),
-                          // Filled Foreground Layer
-                          Text(
-                            displayText,
-                            textAlign: TextAlign.center,
-                            style: baseStyle.copyWith(
-                              color: Color(config.textColor),
-                              shadows: shadows,
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-
-                    return Text(
-                      displayText,
-                      textAlign: TextAlign.center,
-                      style: baseStyle.copyWith(
-                        color: Color(config.textColor),
-                        shadows: shadows,
-                      ),
+                    return CurvedTextWidget(
+                      config: config,
+                      baseStyle: baseStyle,
+                      displayText: displayText,
                     );
                   },
                 ),

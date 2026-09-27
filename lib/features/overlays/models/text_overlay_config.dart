@@ -60,6 +60,13 @@ class TextOverlayConfig extends Equatable {
   final double shadowBlur;
   final double boxCornerRadius;
   final double boxPadding;
+  final double curveAngle;       // in degrees (-180 to 180, 0 = straight)
+  final double offsetOnCurve;    // normalized offset (-1.0 to 1.0)
+  final int? glowColor;          // e.g. 0xFFFF0855
+  final double glowRadius;       // 0.0 to 30.0
+  final double glowIntensity;    // 0.0 to 1.0
+  final double shadowOffsetX;    // default 0.0
+  final double shadowOffsetY;    // default 2.0
 
   const TextOverlayConfig({
     this.text = '',
@@ -84,6 +91,13 @@ class TextOverlayConfig extends Equatable {
     this.shadowBlur = 4.0,
     this.boxCornerRadius = 6.0,
     this.boxPadding = 8.0,
+    this.curveAngle = 0.0,
+    this.offsetOnCurve = 0.0,
+    this.glowColor,
+    this.glowRadius = 0.0,
+    this.glowIntensity = 0.0,
+    this.shadowOffsetX = 0.0,
+    this.shadowOffsetY = 2.0,
   });
 
   bool get isEnabled => text.trim().isNotEmpty;
@@ -111,6 +125,13 @@ class TextOverlayConfig extends Equatable {
     double? shadowBlur,
     double? boxCornerRadius,
     double? boxPadding,
+    double? curveAngle,
+    double? offsetOnCurve,
+    int? glowColor,
+    double? glowRadius,
+    double? glowIntensity,
+    double? shadowOffsetX,
+    double? shadowOffsetY,
   }) {
     return TextOverlayConfig(
       text: text ?? this.text,
@@ -135,6 +156,13 @@ class TextOverlayConfig extends Equatable {
       shadowBlur: shadowBlur ?? this.shadowBlur,
       boxCornerRadius: boxCornerRadius ?? this.boxCornerRadius,
       boxPadding: boxPadding ?? this.boxPadding,
+      curveAngle: curveAngle ?? this.curveAngle,
+      offsetOnCurve: offsetOnCurve ?? this.offsetOnCurve,
+      glowColor: glowColor ?? this.glowColor,
+      glowRadius: glowRadius ?? this.glowRadius,
+      glowIntensity: glowIntensity ?? this.glowIntensity,
+      shadowOffsetX: shadowOffsetX ?? this.shadowOffsetX,
+      shadowOffsetY: shadowOffsetY ?? this.shadowOffsetY,
     );
   }
 
@@ -161,6 +189,13 @@ class TextOverlayConfig extends Equatable {
         'shadowBlur': shadowBlur,
         'boxCornerRadius': boxCornerRadius,
         'boxPadding': boxPadding,
+        'curveAngle': curveAngle,
+        'offsetOnCurve': offsetOnCurve,
+        'glowColor': glowColor,
+        'glowRadius': glowRadius,
+        'glowIntensity': glowIntensity,
+        'shadowOffsetX': shadowOffsetX,
+        'shadowOffsetY': shadowOffsetY,
       };
 
   factory TextOverlayConfig.fromJson(Map<String, dynamic> json) => TextOverlayConfig(
@@ -189,6 +224,13 @@ class TextOverlayConfig extends Equatable {
         shadowBlur: (json['shadowBlur'] as num?)?.toDouble() ?? 4.0,
         boxCornerRadius: (json['boxCornerRadius'] as num?)?.toDouble() ?? 6.0,
         boxPadding: (json['boxPadding'] as num?)?.toDouble() ?? 8.0,
+        curveAngle: (json['curveAngle'] as num?)?.toDouble() ?? 0.0,
+        offsetOnCurve: (json['offsetOnCurve'] as num?)?.toDouble() ?? 0.0,
+        glowColor: (json['glowColor'] as num?)?.toInt(),
+        glowRadius: (json['glowRadius'] as num?)?.toDouble() ?? 0.0,
+        glowIntensity: (json['glowIntensity'] as num?)?.toDouble() ?? 0.0,
+        shadowOffsetX: (json['shadowOffsetX'] as num?)?.toDouble() ?? 0.0,
+        shadowOffsetY: (json['shadowOffsetY'] as num?)?.toDouble() ?? 2.0,
       );
 
   @override
@@ -215,5 +257,12 @@ class TextOverlayConfig extends Equatable {
         shadowBlur,
         boxCornerRadius,
         boxPadding,
+        curveAngle,
+        offsetOnCurve,
+        glowColor,
+        glowRadius,
+        glowIntensity,
+        shadowOffsetX,
+        shadowOffsetY,
       ];
 }

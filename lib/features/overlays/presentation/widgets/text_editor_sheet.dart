@@ -4,6 +4,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
 import '../../models/keyframe.dart';
 import '../../models/text_overlay_config.dart';
+import '../../models/text_preset_style.dart';
 
 class TextEditorSheet extends StatefulWidget {
   final Clip clip;
@@ -42,11 +43,12 @@ class _TextEditorSheetState extends State<TextEditorSheet> with SingleTickerProv
   late TextEditingController _textController;
   late TextOverlayConfig _config;
   late List<Keyframe> _keyframes;
+  String _selectedPresetCategory = 'All';
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
     _config = widget.clip.textOverlay;
     _keyframes = List.from(widget.clip.keyframes);
     _textController = TextEditingController(text: _config.text);
@@ -147,6 +149,7 @@ class _TextEditorSheetState extends State<TextEditorSheet> with SingleTickerProv
             ),
             child: TabBar(
               controller: _tabController,
+              isScrollable: true,
               indicator: BoxDecoration(
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(8),
@@ -157,9 +160,11 @@ class _TextEditorSheetState extends State<TextEditorSheet> with SingleTickerProv
               unselectedLabelColor: AppColors.textMuted,
               labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
               tabs: const [
+                Tab(text: 'Presets'),
                 Tab(text: 'Style & Font'),
+                Tab(text: 'Curve & Glow'),
                 Tab(text: 'Animation'),
-                Tab(text: 'Position & Scale'),
+                Tab(text: 'Position'),
                 Tab(text: 'Keyframes'),
               ],
             ),
@@ -169,7 +174,9 @@ class _TextEditorSheetState extends State<TextEditorSheet> with SingleTickerProv
             child: TabBarView(
               controller: _tabController,
               children: [
+                _buildPresetsTab(),
                 _buildStyleTab(),
+                _buildCurveAndGlowTab(),
                 _buildAnimationTab(),
                 _buildPositionTab(),
                 _buildKeyframesTab(),
@@ -178,6 +185,167 @@ class _TextEditorSheetState extends State<TextEditorSheet> with SingleTickerProv
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPresetsTab() {
+    final categories = ['All', 'Classic', 'Strokes', 'Badges', 'Shadows', 'Neon Glow'];
+    final filtered = _selectedPresetCategory == 'All'
+        ? TextPresetStyle.presets
+        : TextPresetStyle.presets.where((p) => p.category == _selectedPresetCategory).toList();
+
+    return Column(
+      children: [
+        // Category Chips
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: categories.map((cat) {
+              final isSel = _selectedPresetCategory == cat;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(cat),
+                  selected: isSel,
+                  selectedColor: AppColors.primary,
+                  backgroundColor: AppColors.surfaceElevated,
+                  labelStyle: TextStyle(
+                    color: isSel ? Colors.white : AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                  ),
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() => _selectedPresetCategory = cat);
+                    }
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+
+        // Grid of Presets
+        Expanded(
+          child: GridView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 2.2,
+            ),
+            itemCount: filtered.length,
+            itemBuilder: (context, index) {
+              final preset = filtered[index];
+              final isApplied = _config.textColor == preset.fillColor &&
+                  _config.strokeColor == preset.strokeColor &&
+                  _config.backgroundColor == preset.backgroundColor &&
+                  _config.glowColor == preset.glowColor;
+
+              return InkWell(
+                onTap: () {
+                  setState(() => _config = preset.applyTo(_config));
+                  _applyChange();
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isApplied ? AppColors.primary : AppColors.border,
+                      width: isApplied ? 2.0 : 1.0,
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(8),
+                  child: Row(
+                    children: [
+                      // Visual Preview Box
+                      Container(
+                        width: 48,
+                        height: 48,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: preset.backgroundColor != null ? Color(preset.backgroundColor!) : Colors.black54,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            if (preset.strokeWidth > 0.0 && preset.strokeColor != null)
+                              Text(
+                                'Aa',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  foreground: Paint()
+                                    ..style = PaintingStyle.stroke
+                                    ..strokeWidth = preset.strokeWidth
+                                    ..color = Color(preset.strokeColor!),
+                                ),
+                              ),
+                            Text(
+                              'Aa',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(preset.fillColor),
+                                shadows: [
+                                  if (preset.glowColor != null)
+                                    Shadow(
+                                      color: Color(preset.glowColor!),
+                                      blurRadius: 8,
+                                    ),
+                                  if (preset.shadowColor != null)
+                                    Shadow(
+                                      color: Color(preset.shadowColor!),
+                                      blurRadius: preset.shadowBlur,
+                                      offset: Offset(preset.shadowOffsetX, preset.shadowOffsetY),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Preset Name & Category
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              preset.name,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              preset.category,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -268,6 +436,243 @@ class _TextEditorSheetState extends State<TextEditorSheet> with SingleTickerProv
               ),
             );
           }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCurveAndGlowTab() {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      children: [
+        // 1. Curved Text Section
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceElevated,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.gesture, color: AppColors.primaryLight, size: 20),
+                      const SizedBox(width: 8),
+                      Text('Curved Text Arc', style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  Text(
+                    '${_config.curveAngle.toStringAsFixed(0)}°',
+                    style: AppTypography.timecode.copyWith(color: AppColors.primary, fontSize: 13),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _config.curveAngle == 0.0
+                    ? 'Flat (Straight Line)'
+                    : _config.curveAngle > 0
+                        ? 'Convex Arc (Arch Dome Upwards)'
+                        : 'Concave Arc (Smile Valley Downwards)',
+                style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 8),
+              Slider(
+                value: _config.curveAngle,
+                min: -180.0,
+                max: 180.0,
+                divisions: 72,
+                activeColor: AppColors.primary,
+                inactiveColor: AppColors.border,
+                onChanged: (val) {
+                  setState(() => _config = _config.copyWith(curveAngle: val));
+                  _applyChange();
+                },
+              ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  ActionChip(
+                    label: const Text('Flat 0°'),
+                    onPressed: () {
+                      setState(() => _config = _config.copyWith(curveAngle: 0.0));
+                      _applyChange();
+                    },
+                  ),
+                  ActionChip(
+                    label: const Text('Arch +45°'),
+                    onPressed: () {
+                      setState(() => _config = _config.copyWith(curveAngle: 45.0));
+                      _applyChange();
+                    },
+                  ),
+                  ActionChip(
+                    label: const Text('Dome +90°'),
+                    onPressed: () {
+                      setState(() => _config = _config.copyWith(curveAngle: 90.0));
+                      _applyChange();
+                    },
+                  ),
+                  ActionChip(
+                    label: const Text('Smile -45°'),
+                    onPressed: () {
+                      setState(() => _config = _config.copyWith(curveAngle: -45.0));
+                      _applyChange();
+                    },
+                  ),
+                  ActionChip(
+                    label: const Text('Valley -90°'),
+                    onPressed: () {
+                      setState(() => _config = _config.copyWith(curveAngle: -90.0));
+                      _applyChange();
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // 2. Outer Glow / Neon Aura Section
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceElevated,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.flare, color: AppColors.accent, size: 20),
+                      const SizedBox(width: 8),
+                      Text('Neon Glow & Outer Halo', style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  if (_config.glowRadius > 0)
+                    IconButton(
+                      icon: const Icon(Icons.clear, size: 18, color: AppColors.textMuted),
+                      tooltip: 'Clear Glow',
+                      onPressed: () {
+                        setState(() => _config = _config.copyWith(glowColor: null, glowRadius: 0.0, glowIntensity: 0.0));
+                        _applyChange();
+                      },
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Glow Colors
+              const Text('Halo Color', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  0xFFFF0855, // Crimson Red
+                  0xFFFFDC00, // Solar Yellow
+                  0xFF00E200, // Cyber Green
+                  0xFF00F0FF, // Cyan Aqua
+                  0xFFBD00FF, // Electric Purple
+                  0xFFFF7100, // Sunset Orange
+                  0xFFFFFFFF, // Pure White
+                ].map((colorHex) {
+                  final isSelected = _config.glowColor == colorHex && _config.glowRadius > 0;
+                  return InkWell(
+                    onTap: () {
+                      setState(() => _config = _config.copyWith(
+                            glowColor: colorHex,
+                            glowRadius: _config.glowRadius == 0 ? 16.0 : _config.glowRadius,
+                            glowIntensity: _config.glowIntensity == 0 ? 0.9 : _config.glowIntensity,
+                          ));
+                      _applyChange();
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Color(colorHex),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(colorHex).withOpacity(0.6),
+                            blurRadius: 6,
+                          ),
+                        ],
+                        border: Border.all(
+                          color: isSelected ? Colors.white : Colors.transparent,
+                          width: 2.5,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 14),
+
+              // Glow Radius
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Glow Spread / Radius', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  Text('${_config.glowRadius.toInt()} pt', style: AppTypography.timecode.copyWith(fontSize: 12)),
+                ],
+              ),
+              Slider(
+                value: _config.glowRadius,
+                min: 0.0,
+                max: 30.0,
+                activeColor: AppColors.accent,
+                inactiveColor: AppColors.border,
+                onChanged: (val) {
+                  setState(() => _config = _config.copyWith(
+                        glowRadius: val,
+                        glowColor: _config.glowColor ?? 0xFF00F0FF,
+                        glowIntensity: _config.glowIntensity == 0 ? 0.9 : _config.glowIntensity,
+                      ));
+                  _applyChange();
+                },
+              ),
+
+              // Glow Intensity
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Glow Intensity / Opacity', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  Text('${(_config.glowIntensity * 100).toInt()}%', style: AppTypography.timecode.copyWith(fontSize: 12)),
+                ],
+              ),
+              Slider(
+                value: _config.glowIntensity,
+                min: 0.0,
+                max: 1.0,
+                activeColor: AppColors.accent,
+                inactiveColor: AppColors.border,
+                onChanged: (val) {
+                  setState(() => _config = _config.copyWith(
+                        glowIntensity: val,
+                        glowColor: _config.glowColor ?? 0xFF00F0FF,
+                        glowRadius: _config.glowRadius == 0 ? 16.0 : _config.glowRadius,
+                      ));
+                  _applyChange();
+                },
+              ),
+            ],
+          ),
         ),
       ],
     );
