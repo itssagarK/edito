@@ -134,6 +134,15 @@ class AiToolsHub extends StatelessWidget {
       tool: EditorTool.mosaic,
       isAi: true,
     ),
+    _StudioToolItem(
+      title: 'Teleprompter',
+      subtitle: 'Live script & speech prompter',
+      icon: Icons.subtitles_outlined,
+      color: Color(0xFF00FF88),
+      tool: EditorTool.teleprompter,
+      isAi: true,
+      isPro: true,
+    ),
   ];
 
   @override

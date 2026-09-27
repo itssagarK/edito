@@ -3,6 +3,7 @@ import 'track.dart';
 import 'clip.dart';
 import 'media_asset.dart';
 import '../features/image_editor/models/video_layout_config.dart';
+import '../features/teleprompter/models/teleprompter_config.dart';
 
 class Project extends Equatable {
   final String id;
@@ -15,6 +16,7 @@ class Project extends Equatable {
   final int height;
   final String? thumbnailPath;
   final VideoLayoutConfig layoutConfig;
+  final TeleprompterConfig teleprompter;
   final List<Track> tracks;
   final List<MediaAsset> assets;
 
@@ -30,6 +32,7 @@ class Project extends Equatable {
     this.height = 1080,
     this.thumbnailPath,
     this.layoutConfig = const VideoLayoutConfig(),
+    this.teleprompter = const TeleprompterConfig(),
     this.tracks = const [],
     this.assets = const [],
   })  : title = title ?? name ?? 'Untitled Project',
@@ -141,6 +144,7 @@ class Project extends Equatable {
     int? height,
     String? thumbnailPath,
     VideoLayoutConfig? layoutConfig,
+    TeleprompterConfig? teleprompter,
     List<Track>? tracks,
     List<MediaAsset>? assets,
   }) {
@@ -155,6 +159,7 @@ class Project extends Equatable {
       height: height ?? this.height,
       thumbnailPath: thumbnailPath ?? this.thumbnailPath,
       layoutConfig: layoutConfig ?? this.layoutConfig,
+      teleprompter: teleprompter ?? this.teleprompter,
       tracks: tracks ?? this.tracks,
       assets: assets ?? this.assets,
     );
@@ -171,6 +176,7 @@ class Project extends Equatable {
         'height': height,
         'thumbnailPath': thumbnailPath,
         'layoutConfig': layoutConfig.toJson(),
+        'teleprompter': teleprompter.toJson(),
         'tracks': tracks.map((t) => t.toJson()).toList(),
         'assets': assets.map((a) => a.toJson()).toList(),
       };
@@ -188,6 +194,9 @@ class Project extends Equatable {
         layoutConfig: json['layoutConfig'] != null
             ? VideoLayoutConfig.fromJson(json['layoutConfig'] as Map<String, dynamic>)
             : const VideoLayoutConfig(),
+        teleprompter: json['teleprompter'] != null
+            ? TeleprompterConfig.fromJson(json['teleprompter'] as Map<String, dynamic>)
+            : const TeleprompterConfig(),
         tracks: (json['tracks'] as List<dynamic>?)
                 ?.map((t) => Track.fromJson(t as Map<String, dynamic>))
                 .toList() ??
@@ -210,6 +219,7 @@ class Project extends Equatable {
         height,
         thumbnailPath,
         layoutConfig,
+        teleprompter,
         tracks,
         assets,
       ];

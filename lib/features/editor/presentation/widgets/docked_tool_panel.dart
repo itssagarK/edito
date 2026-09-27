@@ -36,6 +36,7 @@ import '../../../denoise/presentation/widgets/denoise_sheet.dart';
 import '../../../voice_effects/presentation/widgets/voice_effects_sheet.dart';
 import '../../../edge_aura/presentation/widgets/edge_aura_sheet.dart';
 import '../../../mosaic/presentation/widgets/mosaic_sheet.dart';
+import '../../../teleprompter/presentation/widgets/teleprompter_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
 
@@ -125,6 +126,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'AI Video Glow & Edge Aura';
       case EditorTool.mosaic:
         return 'Smart Mosaic & Privacy Censor';
+      case EditorTool.teleprompter:
+        return 'Creator Teleprompter Studio';
       case EditorTool.effects:
         return 'Cinematic Transitions';
       default:
@@ -196,6 +199,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.record_voice_over;
       case EditorTool.mosaic:
         return Icons.blur_on;
+      case EditorTool.teleprompter:
+        return Icons.subtitles_outlined;
       default:
         return Icons.edit;
     }
@@ -642,6 +647,14 @@ class DockedToolPanel extends StatelessWidget {
               onSaveClip(updatedClip);
             }
           },
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.teleprompter:
+        return TeleprompterSheet(
+          config: project.teleprompter,
+          onSave: (cfg) => onSaveProject(project.copyWith(teleprompter: cfg)),
           isDocked: true,
           onDone: onClose,
         );

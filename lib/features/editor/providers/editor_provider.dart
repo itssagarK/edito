@@ -42,6 +42,7 @@ enum EditorTool {
   voiceEffects,
   edgeAura,
   mosaic,
+  teleprompter,
 }
 
 class EditorState {

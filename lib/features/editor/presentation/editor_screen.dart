@@ -477,6 +477,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openEdgeAuraModal();
         break;
 
+      case EditorTool.mosaic:
+        _openMosaicModal();
+        break;
+
+      case EditorTool.teleprompter:
+        _openTeleprompterModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -802,6 +810,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openEdgeAuraModal() {
     _openDockedTool(EditorTool.edgeAura, trackType: TrackType.video, purpose: 'AI Video Glow & Edge Aura');
+  }
+
+  void _openMosaicModal() {
+    _openDockedTool(EditorTool.mosaic, trackType: TrackType.video, purpose: 'Smart Mosaic & Privacy Censor');
+  }
+
+  void _openTeleprompterModal() {
+    _openDockedTool(EditorTool.teleprompter, trackType: TrackType.video, purpose: 'Creator Teleprompter');
   }
 
   Clip? _findTargetClip() {
