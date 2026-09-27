@@ -473,6 +473,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openVoiceEffectsModal();
         break;
 
+      case EditorTool.edgeAura:
+        _openEdgeAuraModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -794,6 +798,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openVoiceEffectsModal() {
     _openDockedTool(EditorTool.voiceEffects, trackType: TrackType.video, purpose: 'CapCut Pro Voice Changer');
+  }
+
+  void _openEdgeAuraModal() {
+    _openDockedTool(EditorTool.edgeAura, trackType: TrackType.video, purpose: 'AI Video Glow & Edge Aura');
   }
 
   Clip? _findTargetClip() {

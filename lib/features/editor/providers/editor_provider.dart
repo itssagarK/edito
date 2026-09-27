@@ -40,6 +40,7 @@ enum EditorTool {
   relight,
   denoise,
   voiceEffects,
+  edgeAura,
 }
 
 class EditorState {

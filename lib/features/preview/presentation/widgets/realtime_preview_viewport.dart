@@ -60,6 +60,8 @@ import '../../../relight/services/relight_compiler_service.dart';
 import '../../../denoise/models/denoise_config.dart';
 import '../../../denoise/services/denoise_compiler_service.dart';
 import '../../../voice_effects/models/voice_effects_config.dart';
+import '../../../edge_aura/models/edge_aura_config.dart';
+import '../../../edge_aura/services/edge_aura_compiler_service.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';
@@ -587,6 +589,25 @@ class RealtimePreviewViewport extends ConsumerWidget {
           DenoiseCompilerService.calculateColorMatrix(clip.denoise),
         ),
         child: videoContent,
+      );
+    }
+
+    if (clip.edgeAura.isEnabled && clip.edgeAura.style != EdgeGlowStyle.none && clip.edgeAura.intensity > 0.0) {
+      videoContent = Stack(
+        fit: StackFit.passthrough,
+        children: [
+          videoContent,
+          Positioned.fill(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return EdgeAuraCompilerService.buildAuraOverlay(
+                  clip.edgeAura,
+                  Size(constraints.maxWidth, constraints.maxHeight),
+                );
+              },
+            ),
+          ),
+        ],
       );
     }
 
@@ -1287,6 +1308,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 9,
                       color: Color(0xFF00E5FF),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.edgeAura.badge.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Color(clip.edgeAura.colorValue)),
+                  ),
+                  child: Text(
+                    clip.edgeAura.badge,
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: Color(clip.edgeAura.colorValue),
                       fontWeight: FontWeight.bold,
                     ),
                   ),

@@ -30,6 +30,7 @@ import '../features/color_match/models/color_match_config.dart';
 import '../features/relight/models/relight_config.dart';
 import '../features/denoise/models/denoise_config.dart';
 import '../features/voice_effects/models/voice_effects_config.dart';
+import '../features/edge_aura/models/edge_aura_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -77,6 +78,7 @@ class Clip extends Equatable {
   final RelightConfig relight;
   final DenoiseConfig denoise;
   final VoiceEffectsConfig voiceEffects;
+  final EdgeAuraConfig edgeAura;
 
   const Clip({
     required this.id,
@@ -124,6 +126,7 @@ class Clip extends Equatable {
     this.relight = const RelightConfig(),
     this.denoise = const DenoiseConfig(),
     this.voiceEffects = const VoiceEffectsConfig(),
+    this.edgeAura = const EdgeAuraConfig(),
   });
 
   Clip copyWith({
@@ -172,6 +175,7 @@ class Clip extends Equatable {
     RelightConfig? relight,
     DenoiseConfig? denoise,
     VoiceEffectsConfig? voiceEffects,
+    EdgeAuraConfig? edgeAura,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -219,6 +223,7 @@ class Clip extends Equatable {
       relight: relight ?? this.relight,
       denoise: denoise ?? this.denoise,
       voiceEffects: voiceEffects ?? this.voiceEffects,
+      edgeAura: edgeAura ?? this.edgeAura,
     );
   }
 
@@ -268,6 +273,7 @@ class Clip extends Equatable {
         'relight': relight.toJson(),
         'denoise': denoise.toJson(),
         'voiceEffects': voiceEffects.toJson(),
+        'edgeAura': edgeAura.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -383,6 +389,9 @@ class Clip extends Equatable {
         voiceEffects: json['voiceEffects'] != null
             ? VoiceEffectsConfig.fromJson(json['voiceEffects'] as Map<String, dynamic>)
             : const VoiceEffectsConfig(),
+        edgeAura: json['edgeAura'] != null
+            ? EdgeAuraConfig.fromJson(json['edgeAura'] as Map<String, dynamic>)
+            : const EdgeAuraConfig(),
       );
 
   @override
@@ -432,5 +441,6 @@ class Clip extends Equatable {
         relight,
         denoise,
         voiceEffects,
+        edgeAura,
       ];
 }

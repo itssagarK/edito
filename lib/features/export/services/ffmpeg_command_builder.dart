@@ -44,6 +44,8 @@ import '../../denoise/models/denoise_config.dart';
 import '../../denoise/services/denoise_compiler_service.dart';
 import '../../voice_effects/models/voice_effects_config.dart';
 import '../../voice_effects/services/voice_effects_compiler_service.dart';
+import '../../edge_aura/models/edge_aura_config.dart';
+import '../../edge_aura/services/edge_aura_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -228,6 +230,12 @@ class FFmpegCommandBuilder {
         if (clip.denoise.isEnabled && clip.denoise.level != DenoiseLevel.none) {
           final denoiseFilters = DenoiseCompilerService.generateFFmpegFilters(clip.denoise);
           vFilters.addAll(denoiseFilters);
+        }
+
+        // CapCut Pro AI Video Glow & Edge Aura Studio
+        if (clip.edgeAura.isEnabled && clip.edgeAura.style != EdgeGlowStyle.none && clip.edgeAura.intensity > 0.0) {
+          final edgeAuraFilters = EdgeAuraCompilerService.generateFFmpegFilters(clip.edgeAura);
+          vFilters.addAll(edgeAuraFilters);
         }
 
         // Text Titles & DrawText Burn-In (clip-relative coordinates, resolution-scaled font)
