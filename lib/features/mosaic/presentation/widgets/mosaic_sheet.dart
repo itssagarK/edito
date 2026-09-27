@@ -110,7 +110,7 @@ class _MosaicSheetState extends State<MosaicSheet> {
               children: [
                 Text(
                   'Smart Mosaic & Privacy Censor',
-                  style: AppTypography.subheading.copyWith(fontWeight: FontWeight.bold),
+                  style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.bold),
                 ),
                 Text(
                   'Face obscuration & confidential blur studio',
@@ -139,7 +139,7 @@ class _MosaicSheetState extends State<MosaicSheet> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        color: AppColors.surfaceElevated,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: _config.isEnabled ? const Color(0xFF00F0FF).withOpacity(0.5) : AppColors.border,
@@ -161,7 +161,7 @@ class _MosaicSheetState extends State<MosaicSheet> {
                 children: [
                   Text(
                     'Enable Privacy Censor',
-                    style: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
+                    style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
                   ),
                   Text(
                     _config.isEnabled ? 'Active on current clip' : 'Disabled (Tap to activate)',
@@ -223,7 +223,7 @@ class _MosaicSheetState extends State<MosaicSheet> {
       child: ActionChip(
         avatar: Icon(icon, size: 16, color: const Color(0xFF00F0FF)),
         label: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-        backgroundColor: AppColors.surfaceLight,
+        backgroundColor: AppColors.surfaceElevated,
         side: BorderSide(color: AppColors.border),
         onPressed: () => _applyPreset(preset),
       ),
@@ -252,7 +252,7 @@ class _MosaicSheetState extends State<MosaicSheet> {
               label: Text(t.label),
               selected: isSelected,
               selectedColor: const Color(0xFF00F0FF).withOpacity(0.25),
-              backgroundColor: AppColors.surfaceLight,
+              backgroundColor: AppColors.surfaceElevated,
               labelStyle: TextStyle(
                 color: isSelected ? const Color(0xFF00F0FF) : AppColors.textPrimary,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -316,7 +316,7 @@ class _MosaicSheetState extends State<MosaicSheet> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? const Color(0xFF00F0FF).withOpacity(0.2)
-                          : AppColors.surfaceLight,
+                          : AppColors.surfaceElevated,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: isSelected ? const Color(0xFF00F0FF) : AppColors.border,
@@ -354,7 +354,7 @@ class _MosaicSheetState extends State<MosaicSheet> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        color: AppColors.surfaceElevated,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
@@ -484,7 +484,7 @@ class _MosaicSheetState extends State<MosaicSheet> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        color: AppColors.surfaceElevated,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
@@ -493,7 +493,7 @@ class _MosaicSheetState extends State<MosaicSheet> {
           if (_config.shape != MosaicShape.fullFrame)
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text('Invert Censor Mask', style: AppTypography.body),
+              title: Text('Invert Censor Mask', style: AppTypography.bodyMedium),
               subtitle: Text(
                 'Blur entire video outside the selected focus region',
                 style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
