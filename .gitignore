@@ -39,3 +39,5 @@ migrate_working_dir/
 **/android/**/*.jks
 
 *.apk
+*.zip
+EditorCopy/

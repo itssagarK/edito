@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/constants/edito_brand.dart';
 import '../../models/relight_config.dart';
 import '../../services/relight_compiler_service.dart';
 
@@ -27,16 +28,8 @@ class _RelightSheetState extends State<RelightSheet> {
   late RelightConfig _config;
   bool _isComparing = false; // Hold to compare raw unlit footage
 
-  static const List<int> _colorPalette = [
-    0xFFFFE8D6, // Soft Warm White
-    0xFFFFF5EB, // Studio Daylight
-    0xFFFFB347, // Golden Amber
-    0xFFFF9F43, // Tungsten Warmth
-    0xFF00CEC9, // Electric Cyan
-    0xFFFF007F, // Neon Magenta
-    0xFF55EFC4, // Mint Emerald
-    0xFFA29BFE, // Electric Lavender
-  ];
+  static final List<int> _colorPalette =
+      EditoBrand.studioLightingPalette.map((c) => c.value).toList();
 
   @override
   void initState() {

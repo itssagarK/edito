@@ -10,6 +10,7 @@ import '../../enhancement/models/video_enhancement_config.dart';
 import '../../overlays/models/text_overlay_config.dart';
 import '../../smoothing/models/video_smoother_config.dart';
 import '../../transitions/models/transition_type.dart';
+import '../../image_editor/models/video_layout_config.dart';
 import '../../project/services/project_storage_service.dart';
 
 final projectListProvider = StateNotifierProvider<ProjectListNotifier, List<Project>>((ref) {
@@ -227,5 +228,76 @@ class ProjectListNotifier extends StateNotifier<List<Project>> {
         if (p.id == updated.id) updated else p
     ];
     await ProjectStorageService.saveProject(updated);
+  }
+
+  Future<Project> createNewProjectWithRatio(
+    VideoLayoutRatio ratio, {
+    String title = 'Untitled Project',
+  }) async {
+    final now = DateTime.now();
+    final videoTrackId = const Uuid().v4();
+    final audioTrackId = const Uuid().v4();
+
+    final newProj = Project(
+      id: const Uuid().v4(),
+      title: title,
+      createdAt: now,
+      updatedAt: now,
+      durationMs: 0,
+      width: ratio.defaultWidth,
+      height: ratio.defaultHeight,
+      layoutConfig: VideoLayoutConfig(ratio: ratio),
+      assets: const [],
+      tracks: [
+        Track(
+          id: videoTrackId,
+          name: 'Video Track 1',
+          type: TrackType.video,
+          order: 0,
+          clips: const [],
+        ),
+        Track(
+          id: audioTrackId,
+          name: 'Audio Track 1',
+          type: TrackType.audio,
+          order: 1,
+          clips: const [],
+        ),
+      ],
+    );
+
+    state = [newProj, ...state];
+    await ProjectStorageService.saveProject(newProj);
+    return newProj;
+  }
+
+  Future<Project> duplicateProject(Project project) async {
+    final now = DateTime.now();
+    final newId = const Uuid().v4();
+    final duplicatedTracks = project.tracks.map((t) {
+      final newTrackId = const Uuid().v4();
+      final duplicatedClips = t.clips.map((c) {
+        return c.copyWith(id: const Uuid().v4(), trackId: newTrackId);
+      }).toList();
+      return t.copyWith(id: newTrackId, clips: duplicatedClips);
+    }).toList();
+
+    final duplicated = project.copyWith(
+      id: newId,
+      title: '${project.title} (Copy)',
+      createdAt: now,
+      updatedAt: now,
+      tracks: duplicatedTracks,
+    );
+
+    state = [duplicated, ...state];
+    await ProjectStorageService.saveProject(duplicated);
+    return duplicated;
+  }
+
+  Future<void> renameProject(String id, String newTitle) async {
+    final proj = state.firstWhere((p) => p.id == id, orElse: () => state.first);
+    final updated = proj.copyWith(title: newTitle, updatedAt: DateTime.now());
+    await updateProject(updated);
   }
 }
