@@ -1,9 +1,9 @@
 import 'dart:math';
 import 'package:uuid/uuid.dart';
-import '../../../../models/clip.dart';
-import '../../../../models/media_asset.dart';
-import '../../../../models/project.dart';
-import '../../../../models/track.dart';
+import '../../../models/clip.dart';
+import '../../../models/media_asset.dart';
+import '../../../models/project.dart';
+import '../../../models/track.dart';
 import '../../audio/models/audio_effects_config.dart';
 import '../../captions/models/caption_line.dart';
 import '../models/tts_voice_profile.dart';

@@ -271,7 +271,7 @@ class _VoiceEffectsSheetState extends State<VoiceEffectsSheet> {
           const SizedBox(width: 8),
           Text(
             'CapCut Pro Voice Changer',
-            style: AppTypography.subtitle2.copyWith(
+            style: AppTypography.titleMedium.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.bold,
             ),
@@ -311,7 +311,7 @@ class _VoiceEffectsSheetState extends State<VoiceEffectsSheet> {
               label: Text(cat.label),
               selected: isSelected,
               selectedColor: AppColors.primary.withOpacity(0.25),
-              backgroundColor: AppColors.cardSurface,
+              backgroundColor: AppColors.cardBackground,
               labelStyle: AppTypography.caption.copyWith(
                 color: isSelected ? AppColors.primary : AppColors.textSecondary,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -361,7 +361,7 @@ class _VoiceEffectsSheetState extends State<VoiceEffectsSheet> {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? color.withOpacity(0.18)
-                      : AppColors.cardSurface,
+                      : AppColors.cardBackground,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected ? color : AppColors.border,
@@ -413,7 +413,7 @@ class _VoiceEffectsSheetState extends State<VoiceEffectsSheet> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.border),
       ),
@@ -476,7 +476,7 @@ class _VoiceEffectsSheetState extends State<VoiceEffectsSheet> {
           children: [
             Text(
               'Pitch Shift (Semitones)',
-              style: AppTypography.body2.copyWith(color: AppColors.textSecondary),
+              style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
             ),
             Row(
               children: [
@@ -552,7 +552,7 @@ class _VoiceEffectsSheetState extends State<VoiceEffectsSheet> {
           children: [
             Text(
               label,
-              style: AppTypography.body2.copyWith(color: AppColors.textSecondary),
+              style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
             ),
             Text(
               text,

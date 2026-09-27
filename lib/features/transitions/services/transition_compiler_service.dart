@@ -1,5 +1,5 @@
 import 'dart:math' as math;
-import '../../../../models/clip.dart';
+import '../../../models/clip.dart';
 import '../models/transition_type.dart';
 
 /// Compiler service that generates deterministic FFmpeg xfade filter graphs
