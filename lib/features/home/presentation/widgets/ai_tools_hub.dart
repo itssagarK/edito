@@ -74,7 +74,7 @@ class AiToolsHub extends StatelessWidget {
       subtitle: '1-tap background removal',
       icon: Icons.content_cut,
       color: Color(0xFFBD00FF),
-      tool: EditorTool.smartCutout,
+      tool: EditorTool.chromaKey,
       isAi: true,
     ),
     _StudioToolItem(
