@@ -79,6 +79,7 @@ class EditingToolbar extends StatelessWidget {
       _ToolItem(EditorTool.edgeAura, 'Edge Aura', Icons.flare),
       _ToolItem(EditorTool.mosaic, 'Mosaic', Icons.blur_on),
       _ToolItem(EditorTool.teleprompter, 'Prompter', Icons.subtitles_outlined),
+      _ToolItem(EditorTool.splitScreen, 'Split Screen', Icons.grid_view_rounded),
       _ToolItem(EditorTool.borders, 'Border', Icons.border_outer),
       _ToolItem(EditorTool.clipWorkflow, 'Actions', Icons.movie_filter_outlined),
       _ToolItem(EditorTool.layout, 'Reframe', Icons.aspect_ratio),
@@ -162,6 +163,7 @@ class EditingToolbar extends StatelessWidget {
       _ToolItem(EditorTool.hdConverter, 'HD Ultra', Icons.high_quality),
       _ToolItem(EditorTool.beats, 'Beats', Icons.music_note),
       _ToolItem(EditorTool.teleprompter, 'Prompter', Icons.subtitles_outlined),
+      _ToolItem(EditorTool.splitScreen, 'Split Screen', Icons.grid_view_rounded),
     ];
 
     return KeyedSubtree(

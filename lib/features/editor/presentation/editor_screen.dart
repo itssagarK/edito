@@ -485,6 +485,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openTeleprompterModal();
         break;
 
+      case EditorTool.splitScreen:
+        _openSplitScreenModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -818,6 +822,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openTeleprompterModal() {
     _openDockedTool(EditorTool.teleprompter, trackType: TrackType.video, purpose: 'Creator Teleprompter');
+  }
+
+  void _openSplitScreenModal() {
+    _openDockedTool(EditorTool.splitScreen, trackType: TrackType.video, purpose: 'Split Screen Collage');
   }
 
   Clip? _findTargetClip() {

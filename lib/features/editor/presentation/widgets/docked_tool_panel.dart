@@ -37,6 +37,7 @@ import '../../../voice_effects/presentation/widgets/voice_effects_sheet.dart';
 import '../../../edge_aura/presentation/widgets/edge_aura_sheet.dart';
 import '../../../mosaic/presentation/widgets/mosaic_sheet.dart';
 import '../../../teleprompter/presentation/widgets/teleprompter_sheet.dart';
+import '../../../split_screen/presentation/widgets/split_screen_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
 
@@ -128,6 +129,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'Smart Mosaic & Privacy Censor';
       case EditorTool.teleprompter:
         return 'Creator Teleprompter Studio';
+      case EditorTool.splitScreen:
+        return 'Split Screen Collage Studio';
       case EditorTool.effects:
         return 'Cinematic Transitions';
       default:
@@ -201,6 +204,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.blur_on;
       case EditorTool.teleprompter:
         return Icons.subtitles_outlined;
+      case EditorTool.splitScreen:
+        return Icons.grid_view_rounded;
       default:
         return Icons.edit;
     }
@@ -655,6 +660,14 @@ class DockedToolPanel extends StatelessWidget {
         return TeleprompterSheet(
           config: project.teleprompter,
           onSave: (cfg) => onSaveProject(project.copyWith(teleprompter: cfg)),
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.splitScreen:
+        return SplitScreenSheet(
+          config: project.splitScreen,
+          onSave: (cfg) => onSaveProject(project.copyWith(splitScreen: cfg)),
           isDocked: true,
           onDone: onClose,
         );

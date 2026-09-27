@@ -43,6 +43,7 @@ enum EditorTool {
   edgeAura,
   mosaic,
   teleprompter,
+  splitScreen,
 }
 
 class EditorState {

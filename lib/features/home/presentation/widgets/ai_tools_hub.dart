@@ -143,6 +143,14 @@ class AiToolsHub extends StatelessWidget {
       isAi: true,
       isPro: true,
     ),
+    _StudioToolItem(
+      title: 'Split Screen',
+      subtitle: 'Multi-grid video collage',
+      icon: Icons.grid_view_rounded,
+      color: Color(0xFFBD00FF),
+      tool: EditorTool.splitScreen,
+      isPro: true,
+    ),
   ];
 
   @override
