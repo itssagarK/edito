@@ -41,6 +41,7 @@ enum EditorTool {
   denoise,
   voiceEffects,
   edgeAura,
+  mosaic,
 }
 
 class EditorState {

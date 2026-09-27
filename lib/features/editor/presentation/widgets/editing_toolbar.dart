@@ -77,6 +77,7 @@ class EditingToolbar extends StatelessWidget {
       _ToolItem(EditorTool.denoise, 'Denoise', Icons.noise_control_off),
       _ToolItem(EditorTool.voiceEffects, 'Voice Effect', Icons.mic_external_on),
       _ToolItem(EditorTool.edgeAura, 'Edge Aura', Icons.flare),
+      _ToolItem(EditorTool.mosaic, 'Mosaic', Icons.blur_on),
       _ToolItem(EditorTool.borders, 'Border', Icons.border_outer),
       _ToolItem(EditorTool.clipWorkflow, 'Actions', Icons.movie_filter_outlined),
       _ToolItem(EditorTool.layout, 'Reframe', Icons.aspect_ratio),

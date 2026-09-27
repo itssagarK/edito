@@ -127,7 +127,7 @@ class _MaskSheetState extends State<MaskSheet> with SingleTickerProviderStateMix
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.15),
+                  color: AppColors.accent.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.masks, color: AppColors.accent, size: 18),
@@ -160,7 +160,7 @@ class _MaskSheetState extends State<MaskSheet> with SingleTickerProviderStateMix
                 style: IconButton.styleFrom(
                   padding: const EdgeInsets.all(8),
                   backgroundColor: _config.inverted
-                      ? AppColors.accent.withValues(alpha: 0.15)
+                      ? AppColors.accent.withOpacity(0.15)
                       : Colors.transparent,
                 ),
                 onPressed: _config.isActive
@@ -429,7 +429,7 @@ class _MaskSheetState extends State<MaskSheet> with SingleTickerProviderStateMix
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 side: BorderSide(color: isCurrent ? AppColors.accent : AppColors.border),
-                backgroundColor: isCurrent ? AppColors.accent.withValues(alpha: 0.15) : null,
+                backgroundColor: isCurrent ? AppColors.accent.withOpacity(0.15) : null,
               ),
               onPressed: () => _updateConfig(_config.copyWith(rotation: deg)),
               child: Text('${deg.toInt()}°', style: AppTypography.micro),

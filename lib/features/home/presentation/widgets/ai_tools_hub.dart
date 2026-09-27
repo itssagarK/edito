@@ -126,6 +126,14 @@ class AiToolsHub extends StatelessWidget {
       isPro: false,
       isAi: false,
     ),
+    _StudioToolItem(
+      title: 'Smart Mosaic',
+      subtitle: 'Privacy & face blur',
+      icon: Icons.blur_on,
+      color: Color(0xFF00F0FF),
+      tool: EditorTool.mosaic,
+      isAi: true,
+    ),
   ];
 
   @override

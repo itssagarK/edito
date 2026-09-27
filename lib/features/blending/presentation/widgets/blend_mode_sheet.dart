@@ -105,7 +105,7 @@ class _BlendModeSheetState extends State<BlendModeSheet> with SingleTickerProvid
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.15),
+                  color: AppColors.accent.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.layers, color: AppColors.accent, size: 20),
@@ -248,7 +248,7 @@ class _BlendModeSheetState extends State<BlendModeSheet> with SingleTickerProvid
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.accent.withValues(alpha: 0.15) : AppColors.surface,
+              color: isSelected ? AppColors.accent.withOpacity(0.15) : AppColors.surface,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isSelected ? AppColors.accent : AppColors.border,

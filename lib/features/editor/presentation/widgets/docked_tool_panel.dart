@@ -35,6 +35,7 @@ import '../../../relight/presentation/widgets/relight_sheet.dart';
 import '../../../denoise/presentation/widgets/denoise_sheet.dart';
 import '../../../voice_effects/presentation/widgets/voice_effects_sheet.dart';
 import '../../../edge_aura/presentation/widgets/edge_aura_sheet.dart';
+import '../../../mosaic/presentation/widgets/mosaic_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
 
@@ -122,6 +123,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'CapCut Pro Voice Changer';
       case EditorTool.edgeAura:
         return 'AI Video Glow & Edge Aura';
+      case EditorTool.mosaic:
+        return 'Smart Mosaic & Privacy Censor';
       case EditorTool.effects:
         return 'Cinematic Transitions';
       default:
@@ -191,6 +194,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.music_note;
       case EditorTool.tts:
         return Icons.record_voice_over;
+      case EditorTool.mosaic:
+        return Icons.blur_on;
       default:
         return Icons.edit;
     }
@@ -620,6 +625,25 @@ class DockedToolPanel extends StatelessWidget {
           },
           isDocked: true,
           onClose: onClose,
+        );
+
+      case EditorTool.mosaic:
+        return MosaicSheet(
+          clip: clip,
+          onSave: (updatedClip, {bool applyToAll = false}) {
+            if (applyToAll) {
+              final updatedTracks = project.tracks.map((track) {
+                if (track.type != TrackType.video) return track;
+                final updatedClips = track.clips.map((c) => c.copyWith(mosaic: updatedClip.mosaic)).toList();
+                return track.copyWith(clips: updatedClips);
+              }).toList();
+              onSaveProject(project.copyWith(tracks: updatedTracks));
+            } else {
+              onSaveClip(updatedClip);
+            }
+          },
+          isDocked: true,
+          onDone: onClose,
         );
 
       case EditorTool.effects:

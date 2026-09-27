@@ -88,6 +88,7 @@ void main() {
       expect(find.text('Voice Changer'), findsOneWidget);
       expect(find.text('Video Glow'), findsOneWidget);
       expect(find.text('De-Noise'), findsOneWidget);
+      expect(find.text('Smart Mosaic'), findsOneWidget);
 
       // Tap on Voice Changer tool
       final voiceChangerFinder = find.byKey(const ValueKey('home_ai_tool_voiceEffects'));

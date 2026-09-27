@@ -31,6 +31,7 @@ import '../features/relight/models/relight_config.dart';
 import '../features/denoise/models/denoise_config.dart';
 import '../features/voice_effects/models/voice_effects_config.dart';
 import '../features/edge_aura/models/edge_aura_config.dart';
+import '../features/mosaic/models/mosaic_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -79,6 +80,7 @@ class Clip extends Equatable {
   final DenoiseConfig denoise;
   final VoiceEffectsConfig voiceEffects;
   final EdgeAuraConfig edgeAura;
+  final MosaicConfig mosaic;
 
   const Clip({
     required this.id,
@@ -127,6 +129,7 @@ class Clip extends Equatable {
     this.denoise = const DenoiseConfig(),
     this.voiceEffects = const VoiceEffectsConfig(),
     this.edgeAura = const EdgeAuraConfig(),
+    this.mosaic = const MosaicConfig(),
   });
 
   Clip copyWith({
@@ -176,6 +179,7 @@ class Clip extends Equatable {
     DenoiseConfig? denoise,
     VoiceEffectsConfig? voiceEffects,
     EdgeAuraConfig? edgeAura,
+    MosaicConfig? mosaic,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -224,6 +228,7 @@ class Clip extends Equatable {
       denoise: denoise ?? this.denoise,
       voiceEffects: voiceEffects ?? this.voiceEffects,
       edgeAura: edgeAura ?? this.edgeAura,
+      mosaic: mosaic ?? this.mosaic,
     );
   }
 
@@ -274,6 +279,7 @@ class Clip extends Equatable {
         'denoise': denoise.toJson(),
         'voiceEffects': voiceEffects.toJson(),
         'edgeAura': edgeAura.toJson(),
+        'mosaic': mosaic.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -392,6 +398,9 @@ class Clip extends Equatable {
         edgeAura: json['edgeAura'] != null
             ? EdgeAuraConfig.fromJson(json['edgeAura'] as Map<String, dynamic>)
             : const EdgeAuraConfig(),
+        mosaic: json['mosaic'] != null
+            ? MosaicConfig.fromJson(json['mosaic'] as Map<String, dynamic>)
+            : const MosaicConfig(),
       );
 
   @override
@@ -442,5 +451,6 @@ class Clip extends Equatable {
         denoise,
         voiceEffects,
         edgeAura,
+        mosaic,
       ];
 }

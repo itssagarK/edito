@@ -46,6 +46,8 @@ import '../../voice_effects/models/voice_effects_config.dart';
 import '../../voice_effects/services/voice_effects_compiler_service.dart';
 import '../../edge_aura/models/edge_aura_config.dart';
 import '../../edge_aura/services/edge_aura_compiler_service.dart';
+import '../../mosaic/models/mosaic_config.dart';
+import '../../mosaic/services/mosaic_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -236,6 +238,18 @@ class FFmpegCommandBuilder {
         if (clip.edgeAura.isEnabled && clip.edgeAura.style != EdgeGlowStyle.none && clip.edgeAura.intensity > 0.0) {
           final edgeAuraFilters = EdgeAuraCompilerService.generateFFmpegFilters(clip.edgeAura);
           vFilters.addAll(edgeAuraFilters);
+        }
+
+        // CapCut Pro AI Smart Mosaic & Privacy Censor Blur Studio
+        if (clip.mosaic.isActive) {
+          final mosaicFilters = MosaicCompilerService.generateFFmpegFilters(
+            clip.mosaic,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (mosaicFilters.isNotEmpty) {
+            vFilters.addAll(mosaicFilters);
+          }
         }
 
         // Text Titles & DrawText Burn-In (clip-relative coordinates, resolution-scaled font)

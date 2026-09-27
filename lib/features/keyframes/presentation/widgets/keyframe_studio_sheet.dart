@@ -269,7 +269,7 @@ class _KeyframeStudioSheetState extends State<KeyframeStudioSheet> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.15),
+                  color: AppColors.accent.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.animation, color: AppColors.accent, size: 20),
@@ -342,7 +342,7 @@ class _KeyframeStudioSheetState extends State<KeyframeStudioSheet> {
               // Add / Remove Keyframe Diamond Button
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: hasKey ? Colors.redAccent.withValues(alpha: 0.2) : AppColors.accent,
+                  backgroundColor: hasKey ? Colors.redAccent.withOpacity(0.2) : AppColors.accent,
                   foregroundColor: hasKey ? Colors.redAccent : Colors.black,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   shape: RoundedRectangleBorder(
