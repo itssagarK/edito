@@ -46,6 +46,7 @@ enum EditorTool {
   splitScreen,
   objectRemoval,
   faceReshape,
+  colorWheels,
 }
 
 class EditorState {

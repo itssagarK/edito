@@ -34,6 +34,7 @@ import '../features/edge_aura/models/edge_aura_config.dart';
 import '../features/mosaic/models/mosaic_config.dart';
 import '../features/object_removal/models/object_removal_config.dart';
 import '../features/face_reshape/models/face_reshape_config.dart';
+import '../features/color_wheels/models/color_wheels_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -85,6 +86,7 @@ class Clip extends Equatable {
   final MosaicConfig mosaic;
   final ObjectRemovalConfig objectRemoval;
   final FaceReshapeConfig faceReshape;
+  final ColorWheelsConfig colorWheels;
 
   const Clip({
     required this.id,
@@ -136,6 +138,7 @@ class Clip extends Equatable {
     this.mosaic = const MosaicConfig(),
     this.objectRemoval = const ObjectRemovalConfig(),
     this.faceReshape = const FaceReshapeConfig(),
+    this.colorWheels = const ColorWheelsConfig(),
   });
 
   Clip copyWith({
@@ -188,6 +191,7 @@ class Clip extends Equatable {
     MosaicConfig? mosaic,
     ObjectRemovalConfig? objectRemoval,
     FaceReshapeConfig? faceReshape,
+    ColorWheelsConfig? colorWheels,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -239,6 +243,7 @@ class Clip extends Equatable {
       mosaic: mosaic ?? this.mosaic,
       objectRemoval: objectRemoval ?? this.objectRemoval,
       faceReshape: faceReshape ?? this.faceReshape,
+      colorWheels: colorWheels ?? this.colorWheels,
     );
   }
 
@@ -292,6 +297,7 @@ class Clip extends Equatable {
         'mosaic': mosaic.toJson(),
         'objectRemoval': objectRemoval.toJson(),
         'faceReshape': faceReshape.toJson(),
+        'colorWheels': colorWheels.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -419,6 +425,9 @@ class Clip extends Equatable {
         faceReshape: json['faceReshape'] != null
             ? FaceReshapeConfig.fromJson(json['faceReshape'] as Map<String, dynamic>)
             : const FaceReshapeConfig(),
+        colorWheels: json['colorWheels'] != null
+            ? ColorWheelsConfig.fromJson(json['colorWheels'] as Map<String, dynamic>)
+            : const ColorWheelsConfig(),
       );
 
   @override
@@ -472,5 +481,6 @@ class Clip extends Equatable {
         mosaic,
         objectRemoval,
         faceReshape,
+        colorWheels,
       ];
 }

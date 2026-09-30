@@ -39,8 +39,8 @@ Get the official compiled release APK and install it directly on any Android dev
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.62/app-release.apk">
-        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.62%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
+      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.63/app-release.apk">
+        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.63%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
       </a>
       <br>
       <sub><b>Target:</b> <code>ARM64-v8a</code>, <code>ARMeabi-v7a</code>, <code>x86_64</code> &nbsp;•&nbsp; <b>Min SDK:</b> Android 7.0+ (API 24+) &nbsp;•&nbsp; <b>Target SDK:</b> Android 16 (API 36)</sub>
@@ -48,7 +48,7 @@ Get the official compiled release APK and install it directly on any Android dev
   </tr>
   <tr>
     <td align="center">
-      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.62"><b>v1.0.62 Production Release on GitHub</b></a>
+      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.63"><b>v1.0.63 Production Release on GitHub</b></a>
     </td>
   </tr>
 </table>
@@ -56,6 +56,14 @@ Get the official compiled release APK and install it directly on any Android dev
 ---
 
 ## 🌟 Latest Flagship Studios & Features
+
+### 🎨 Pro 3-Way & Log Color Wheels Studio (v1.0.63)
+- **Dual-Engine Professional Grading:** Seamlessly switch between Primary Color Wheels (Lift, Gamma, Gain, Offset) and Log Color Wheels (Shadow, Midtone, Highlight, Offset) ported from studio architectures.
+- **LumaMix Luminance Decoupling:** Dedicated $0\%\text{ to }100\%$ control preserving exposure relationships while shifting chromatic hue bias, eliminating highlight blowout and shadow clipping.
+- **Cubic Hermite Range Crossover Splitting:** Dynamic Low Range ($10\%\text{ to }50\%$) and High Range ($50\%\text{ to }90\%$) threshold crossovers with cubic Hermite weighting for silky, zero-artifact transitions.
+- **Interactive Disc Dials & Vertical Pedestal Sliders:** Precision touch-disc wheels with draggable pucks, 360° hue rings, saturation radii, and independent luminance pedestal sliders.
+- **6 Curated Cinematic Presets:** Blockbuster Teal & Orange, Vintage Kodak 500T, Moody Cyberpunk, Golden Hour Sunset, Bleach Bypass Silver, and Commercial Clean Pop.
+- **Deterministic FFmpeg Filter Compilation:** Maps wheel vectors and luminance pedestal parameters into hardware-accelerated `colorbalance` and `eq` filter graphs for 4K video exports.
 
 ### 👤 AI Face Reshape & 3D Feature Sculpting Studio (v1.0.62)
 - **Comprehensive 21-Parameter Sculpting Engine:** Complete micro-refinement covering face slimming, V-line jaw, jawbone width, pointy chin, chin length, cheekbones, forehead, temples, eye size/span/tilt/corner/elevation, nose slimming/bridge, mouth size, plump lip volume, and smile corner lift.
@@ -230,6 +238,7 @@ Get the official compiled release APK and install it directly on any Android dev
 
 | Version | Milestone Feature | Release Highlights |
 |:---:|---|---|
+| **v1.0.63** | **Pro Color Wheels Studio** | Primary & Log wheels, LumaMix decoupling, Low/High Range crossover, 6 presets, 4K export |
 | **v1.0.62** | **AI Face Reshape & 3D Sculpt** | 21-parameter facial sculpting, 5 aesthetic presets, interactive landmark wireframe, 4K export |
 | **v1.0.61** | **AI Magic Eraser Pen** | Deep inpainting & smart delogo, interactive brush/eraser/box selection, live mask overlay |
 | **v1.0.60** | **Split-Screen Studio** | 10 multi-grid collage layouts, interactive slot HUD, divider styling, `xstack` export |

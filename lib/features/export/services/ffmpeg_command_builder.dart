@@ -51,6 +51,7 @@ import '../../mosaic/services/mosaic_compiler_service.dart';
 import '../../object_removal/models/object_removal_config.dart';
 import '../../object_removal/services/object_removal_compiler_service.dart';
 import '../../face_reshape/services/face_reshape_compiler_service.dart';
+import '../../color_wheels/services/color_wheels_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -276,6 +277,16 @@ class FFmpegCommandBuilder {
           );
           if (reshapeFilters.isNotEmpty) {
             vFilters.addAll(reshapeFilters);
+          }
+        }
+
+        // CapCut Pro Primary & Log Color Wheels Studio
+        if (clip.colorWheels.isActive) {
+          final wheelFilters = ColorWheelsCompilerService.generateFFmpegFilters(
+            clip.colorWheels,
+          );
+          if (wheelFilters.isNotEmpty) {
+            vFilters.addAll(wheelFilters);
           }
         }
 

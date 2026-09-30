@@ -497,6 +497,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openFaceReshapeModal();
         break;
 
+      case EditorTool.colorWheels:
+        _openColorWheelsModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -842,6 +846,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openFaceReshapeModal() {
     _openDockedTool(EditorTool.faceReshape, trackType: TrackType.video, purpose: 'AI Face Reshape & 3D Sculpt');
+  }
+
+  void _openColorWheelsModal() {
+    _openDockedTool(EditorTool.colorWheels, trackType: TrackType.video, purpose: 'Pro Color Wheels Studio');
   }
 
   Clip? _findTargetClip() {

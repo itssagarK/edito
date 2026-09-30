@@ -169,6 +169,15 @@ class AiToolsHub extends StatelessWidget {
       isAi: true,
       isPro: true,
     ),
+    _StudioToolItem(
+      title: 'Color Wheels',
+      subtitle: 'Primary & Log color grading',
+      icon: Icons.donut_large,
+      color: Color(0xFFFFD700),
+      tool: EditorTool.colorWheels,
+      isAi: false,
+      isPro: true,
+    ),
   ];
 
   @override
