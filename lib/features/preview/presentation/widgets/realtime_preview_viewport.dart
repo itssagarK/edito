@@ -72,6 +72,8 @@ import '../../../color_wheels/services/color_wheels_compiler_service.dart';
 import '../../../doodle/models/doodle_config.dart';
 import '../../../doodle/services/doodle_compiler_service.dart';
 import '../../../doodle/presentation/widgets/doodle_canvas_overlay.dart';
+import '../../../curves/models/curves_config.dart';
+import '../../../curves/services/curves_compiler_service.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';
@@ -654,6 +656,15 @@ class RealtimePreviewViewport extends ConsumerWidget {
       videoContent = ColorFiltered(
         colorFilter: ColorFilter.matrix(
           ColorWheelsCompilerService.generate4x5ColorMatrix(clip.colorWheels),
+        ),
+        child: videoContent,
+      );
+    }
+
+    if (clip.curves.isActive) {
+      videoContent = ColorFiltered(
+        colorFilter: ColorFilter.matrix(
+          CurvesCompilerService.compileSkiaMatrix(clip.curves),
         ),
         child: videoContent,
       );
@@ -1509,6 +1520,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 9,
                       color: Color(0xFF00E676),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.curves.isActive)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF00E5FF)),
+                  ),
+                  child: const Text(
+                    'CURVES: RGB SPLINE',
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFF00E5FF),
                       fontWeight: FontWeight.bold,
                     ),
                   ),

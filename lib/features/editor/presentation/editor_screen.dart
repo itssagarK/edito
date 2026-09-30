@@ -505,6 +505,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openDoodleModal();
         break;
 
+      case EditorTool.curves:
+        _openCurvesModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -858,6 +862,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openDoodleModal() {
     _openDockedTool(EditorTool.doodle, trackType: TrackType.video, purpose: 'Creative Doodle & Brush');
+  }
+
+  void _openCurvesModal() {
+    _openDockedTool(EditorTool.curves, trackType: TrackType.video, purpose: 'RGB Curves Studio');
   }
 
   Clip? _findTargetClip() {

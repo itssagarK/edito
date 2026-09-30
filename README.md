@@ -39,8 +39,8 @@ Get the official compiled release APK and install it directly on any Android dev
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.64/app-release.apk">
-        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.64%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
+      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.65/app-release.apk">
+        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.65%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
       </a>
       <br>
       <sub><b>Target:</b> <code>ARM64-v8a</code>, <code>ARMeabi-v7a</code>, <code>x86_64</code> &nbsp;•&nbsp; <b>Min SDK:</b> Android 7.0+ (API 24+) &nbsp;•&nbsp; <b>Target SDK:</b> Android 16 (API 36)</sub>
@@ -48,7 +48,7 @@ Get the official compiled release APK and install it directly on any Android dev
   </tr>
   <tr>
     <td align="center">
-      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.64"><b>v1.0.64 Production Release on GitHub</b></a>
+      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.65"><b>v1.0.65 Production Release on GitHub</b></a>
     </td>
   </tr>
 </table>
@@ -56,6 +56,13 @@ Get the official compiled release APK and install it directly on any Android dev
 ---
 
 ## 🌟 Latest Flagship Studios & Features
+
+### 📈 Pro RGB Curves & Luma Spline Studio (v1.0.65)
+- **4-Channel Independent Spline Grading:** Precision tonal and chromatic curve sculpting across Master/Luma (`ALL / Y`), Red (`R`), Green (`G`), and Blue (`B`) channels ported from native CapCut Pro and DaVinci Resolve grading engines.
+- **Fritsch-Carlson Monotonic Cubic Hermite Interpolation:** Enforces strictly monotonic slope weighting, eliminating overshoot, color fringing, and artificial banding across complex custom curve shapes.
+- **Interactive 2D Cartesian Coordinate Canvas:** Touch-interactive $240\times240$ coordinate grid with 4x4 division guides, diagonal identity reference line, tap-to-add control points (up to 8 points), touch-drag point repositioning, and double-tap point deletion.
+- **7 Signature Cinematic Curve Presets:** Linear Neutral, S-Curve Punchy Contrast, Faded Matte Film Print, Cross Process, Teal & Orange Blockbuster, Punchy Pop Dynamic Range, and Bleach Bypass Silver Halide.
+- **Real-Time Skia 60 FPS Engine & 4K FFmpeg Export:** Real-time 4x5 Skia matrix hardware compilation in preview viewport and native hardware-accelerated FFmpeg `curves=m='...':r='...':g='...':b='...'` export filter graphs.
 
 ### ✏️ Creative Brush & Doodle Drawing Studio (v1.0.64)
 - **Multi-Brush Creative Engine:** Seamlessly paint and sketch directly on video viewports with 6 dedicated brush types: **Precision Pen** (smooth vector ink), **Neon Glow** (triple-pass radiant halo with brilliant white core), **Highlighter** (broad translucent miter strokes), **Directional Arrow** (auto-oriented arrowhead tips), **Dashed Line** (rhythmic dashed patterns), and **Eraser** (proximity-based stroke removal).
@@ -245,6 +252,7 @@ Get the official compiled release APK and install it directly on any Android dev
 
 | Version | Milestone Feature | Release Highlights |
 |:---:|---|---|
+| **v1.0.65** | **Pro RGB Curves Studio** | 4-channel spline curves (Y/R/G/B), Fritsch-Carlson interpolation, 7 presets, 4K export |
 | **v1.0.64** | **Creative Doodle Studio** | 6 brush modes (Pen, Neon, Highlighter, Arrow, Dashed, Eraser), Bezier smoothing, 4K export |
 | **v1.0.63** | **Pro Color Wheels Studio** | Primary & Log wheels, LumaMix decoupling, Low/High Range crossover, 6 presets, 4K export |
 | **v1.0.62** | **AI Face Reshape & 3D Sculpt** | 21-parameter facial sculpting, 5 aesthetic presets, interactive landmark wireframe, 4K export |

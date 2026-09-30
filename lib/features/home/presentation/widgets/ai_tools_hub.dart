@@ -187,6 +187,15 @@ class AiToolsHub extends StatelessWidget {
       isAi: false,
       isPro: true,
     ),
+    _StudioToolItem(
+      title: 'RGB Curves',
+      subtitle: 'Luma & 4-channel spline grading',
+      icon: Icons.show_chart,
+      color: Color(0xFF00E5FF),
+      tool: EditorTool.curves,
+      isAi: false,
+      isPro: true,
+    ),
   ];
 
   @override

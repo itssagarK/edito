@@ -36,6 +36,7 @@ import '../features/object_removal/models/object_removal_config.dart';
 import '../features/face_reshape/models/face_reshape_config.dart';
 import '../features/color_wheels/models/color_wheels_config.dart';
 import '../features/doodle/models/doodle_config.dart';
+import '../features/curves/models/curves_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -89,6 +90,7 @@ class Clip extends Equatable {
   final FaceReshapeConfig faceReshape;
   final ColorWheelsConfig colorWheels;
   final DoodleConfig doodle;
+  final CurvesConfig curves;
 
   const Clip({
     required this.id,
@@ -142,6 +144,7 @@ class Clip extends Equatable {
     this.faceReshape = const FaceReshapeConfig(),
     this.colorWheels = const ColorWheelsConfig(),
     this.doodle = const DoodleConfig(),
+    this.curves = const CurvesConfig(),
   });
 
   Clip copyWith({
@@ -195,6 +198,8 @@ class Clip extends Equatable {
     ObjectRemovalConfig? objectRemoval,
     FaceReshapeConfig? faceReshape,
     ColorWheelsConfig? colorWheels,
+    DoodleConfig? doodle,
+    CurvesConfig? curves,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -248,6 +253,7 @@ class Clip extends Equatable {
       faceReshape: faceReshape ?? this.faceReshape,
       colorWheels: colorWheels ?? this.colorWheels,
       doodle: doodle ?? this.doodle,
+      curves: curves ?? this.curves,
     );
   }
 
@@ -303,6 +309,7 @@ class Clip extends Equatable {
         'faceReshape': faceReshape.toJson(),
         'colorWheels': colorWheels.toJson(),
         'doodle': doodle.toJson(),
+        'curves': curves.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -436,6 +443,9 @@ class Clip extends Equatable {
         doodle: json['doodle'] != null
             ? DoodleConfig.fromJson(json['doodle'] as Map<String, dynamic>)
             : const DoodleConfig(),
+        curves: json['curves'] != null
+            ? CurvesConfig.fromJson(json['curves'] as Map<String, dynamic>)
+            : const CurvesConfig(),
       );
 
   @override
@@ -491,5 +501,6 @@ class Clip extends Equatable {
         faceReshape,
         colorWheels,
         doodle,
+        curves,
       ];
 }

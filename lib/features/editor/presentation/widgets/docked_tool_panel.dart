@@ -42,6 +42,7 @@ import '../../../object_removal/presentation/widgets/object_removal_sheet.dart';
 import '../../../face_reshape/presentation/widgets/face_reshape_sheet.dart';
 import '../../../color_wheels/presentation/widgets/color_wheels_studio_sheet.dart';
 import '../../../doodle/presentation/widgets/doodle_studio_sheet.dart';
+import '../../../curves/presentation/widgets/curves_studio_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
 
@@ -143,6 +144,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'Pro Color Wheels Studio';
       case EditorTool.doodle:
         return 'Creative Doodle & Brush';
+      case EditorTool.curves:
+        return 'RGB Curves Studio';
       case EditorTool.effects:
         return 'Cinematic Transitions';
       default:
@@ -226,6 +229,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.donut_large;
       case EditorTool.doodle:
         return Icons.draw;
+      case EditorTool.curves:
+        return Icons.show_chart;
       default:
         return Icons.edit;
     }
@@ -757,6 +762,25 @@ class DockedToolPanel extends StatelessWidget {
               final updatedTracks = project.tracks.map((track) {
                 if (track.type != TrackType.video) return track;
                 final updatedClips = track.clips.map((c) => c.copyWith(doodle: updatedClip.doodle)).toList();
+                return track.copyWith(clips: updatedClips);
+              }).toList();
+              onSaveProject(project.copyWith(tracks: updatedTracks));
+            } else {
+              onSaveClip(updatedClip);
+            }
+          },
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.curves:
+        return CurvesStudioSheet(
+          clip: clip,
+          onSave: (updatedClip, {bool applyToAll = false}) {
+            if (applyToAll) {
+              final updatedTracks = project.tracks.map((track) {
+                if (track.type != TrackType.video) return track;
+                final updatedClips = track.clips.map((c) => c.copyWith(curves: updatedClip.curves)).toList();
                 return track.copyWith(clips: updatedClips);
               }).toList();
               onSaveProject(project.copyWith(tracks: updatedTracks));

@@ -53,6 +53,7 @@ import '../../object_removal/services/object_removal_compiler_service.dart';
 import '../../face_reshape/services/face_reshape_compiler_service.dart';
 import '../../color_wheels/services/color_wheels_compiler_service.dart';
 import '../../doodle/services/doodle_compiler_service.dart';
+import '../../curves/services/curves_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -300,6 +301,16 @@ class FFmpegCommandBuilder {
           );
           if (doodleFilters.isNotEmpty) {
             vFilters.addAll(doodleFilters);
+          }
+        }
+
+        // CapCut Pro RGB Curves & Luma Spline Color Grading Studio
+        if (clip.curves.isActive) {
+          final curveFilters = CurvesCompilerService.generateFFmpegFilters(
+            clip.curves,
+          );
+          if (curveFilters.isNotEmpty) {
+            vFilters.addAll(curveFilters);
           }
         }
 
