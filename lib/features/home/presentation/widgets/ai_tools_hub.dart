@@ -178,6 +178,15 @@ class AiToolsHub extends StatelessWidget {
       isAi: false,
       isPro: true,
     ),
+    _StudioToolItem(
+      title: 'Creative Doodle',
+      subtitle: 'Freehand neon, pen & drawing',
+      icon: Icons.draw,
+      color: Color(0xFFFF2D55),
+      tool: EditorTool.doodle,
+      isAi: false,
+      isPro: true,
+    ),
   ];
 
   @override

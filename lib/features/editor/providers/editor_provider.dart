@@ -47,6 +47,7 @@ enum EditorTool {
   objectRemoval,
   faceReshape,
   colorWheels,
+  doodle,
 }
 
 class EditorState {

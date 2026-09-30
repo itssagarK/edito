@@ -52,6 +52,7 @@ import '../../object_removal/models/object_removal_config.dart';
 import '../../object_removal/services/object_removal_compiler_service.dart';
 import '../../face_reshape/services/face_reshape_compiler_service.dart';
 import '../../color_wheels/services/color_wheels_compiler_service.dart';
+import '../../doodle/services/doodle_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -287,6 +288,18 @@ class FFmpegCommandBuilder {
           );
           if (wheelFilters.isNotEmpty) {
             vFilters.addAll(wheelFilters);
+          }
+        }
+
+        // CapCut Pro Creative Brush & Doodle Drawing Studio
+        if (clip.doodle.isActive) {
+          final doodleFilters = DoodleCompilerService.generateFFmpegFilters(
+            clip.doodle,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (doodleFilters.isNotEmpty) {
+            vFilters.addAll(doodleFilters);
           }
         }
 

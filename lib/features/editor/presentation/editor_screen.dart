@@ -501,6 +501,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openColorWheelsModal();
         break;
 
+      case EditorTool.doodle:
+        _openDoodleModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -850,6 +854,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openColorWheelsModal() {
     _openDockedTool(EditorTool.colorWheels, trackType: TrackType.video, purpose: 'Pro Color Wheels Studio');
+  }
+
+  void _openDoodleModal() {
+    _openDockedTool(EditorTool.doodle, trackType: TrackType.video, purpose: 'Creative Doodle & Brush');
   }
 
   Clip? _findTargetClip() {

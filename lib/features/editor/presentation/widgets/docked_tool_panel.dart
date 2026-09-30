@@ -41,6 +41,7 @@ import '../../../split_screen/presentation/widgets/split_screen_sheet.dart';
 import '../../../object_removal/presentation/widgets/object_removal_sheet.dart';
 import '../../../face_reshape/presentation/widgets/face_reshape_sheet.dart';
 import '../../../color_wheels/presentation/widgets/color_wheels_studio_sheet.dart';
+import '../../../doodle/presentation/widgets/doodle_studio_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
 
@@ -140,6 +141,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'AI Face Reshape & 3D Sculpt';
       case EditorTool.colorWheels:
         return 'Pro Color Wheels Studio';
+      case EditorTool.doodle:
+        return 'Creative Doodle & Brush';
       case EditorTool.effects:
         return 'Cinematic Transitions';
       default:
@@ -221,6 +224,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.face;
       case EditorTool.colorWheels:
         return Icons.donut_large;
+      case EditorTool.doodle:
+        return Icons.draw;
       default:
         return Icons.edit;
     }
@@ -733,6 +738,25 @@ class DockedToolPanel extends StatelessWidget {
               final updatedTracks = project.tracks.map((track) {
                 if (track.type != TrackType.video) return track;
                 final updatedClips = track.clips.map((c) => c.copyWith(colorWheels: updatedClip.colorWheels)).toList();
+                return track.copyWith(clips: updatedClips);
+              }).toList();
+              onSaveProject(project.copyWith(tracks: updatedTracks));
+            } else {
+              onSaveClip(updatedClip);
+            }
+          },
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.doodle:
+        return DoodleStudioSheet(
+          clip: clip,
+          onSave: (updatedClip, {bool applyToAll = false}) {
+            if (applyToAll) {
+              final updatedTracks = project.tracks.map((track) {
+                if (track.type != TrackType.video) return track;
+                final updatedClips = track.clips.map((c) => c.copyWith(doodle: updatedClip.doodle)).toList();
                 return track.copyWith(clips: updatedClips);
               }).toList();
               onSaveProject(project.copyWith(tracks: updatedTracks));

@@ -69,6 +69,9 @@ import '../../../object_removal/presentation/widgets/object_removal_brush_overla
 import '../../../face_reshape/presentation/widgets/face_reshape_landmarks_overlay.dart';
 import '../../../color_wheels/models/color_wheels_config.dart';
 import '../../../color_wheels/services/color_wheels_compiler_service.dart';
+import '../../../doodle/models/doodle_config.dart';
+import '../../../doodle/services/doodle_compiler_service.dart';
+import '../../../doodle/presentation/widgets/doodle_canvas_overlay.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';
@@ -359,6 +362,22 @@ class RealtimePreviewViewport extends ConsumerWidget {
                               onConfigChanged: (newConfig) {
                                 final targetClip = currentFrame.primaryVideoClip!;
                                 final updatedClip = targetClip.copyWith(faceReshape: newConfig);
+                                if (project != null) {
+                                  final updatedProject = project.updateClip(updatedClip);
+                                  ref.read(editorProvider.notifier).updateProject(updatedProject);
+                                }
+                              },
+                            ),
+                          ),
+
+                        // Interactive Creative Brush & Doodle Drawing Canvas Overlay
+                        if (editorState.activeTool == EditorTool.doodle && currentFrame?.primaryVideoClip != null)
+                          Positioned.fill(
+                            child: DoodleCanvasOverlay(
+                              config: currentFrame!.primaryVideoClip!.doodle,
+                              onConfigChanged: (newConfig) {
+                                final targetClip = currentFrame.primaryVideoClip!;
+                                final updatedClip = targetClip.copyWith(doodle: newConfig);
                                 if (project != null) {
                                   final updatedProject = project.updateClip(updatedClip);
                                   ref.read(editorProvider.notifier).updateProject(updatedProject);
@@ -677,6 +696,28 @@ class RealtimePreviewViewport extends ConsumerWidget {
                       color: Color(clip.objectRemoval.maskColorValue),
                       opacity: clip.objectRemoval.opacity,
                     ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (clip.doodle.isActive) {
+      videoContent = Stack(
+        fit: StackFit.passthrough,
+        children: [
+          videoContent,
+          Positioned.fill(
+            child: IgnorePointer(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final size = Size(constraints.maxWidth, constraints.maxHeight);
+                  return CustomPaint(
+                    size: size,
+                    painter: _StaticDoodlePainter(config: clip.doodle),
                   );
                 },
               ),
@@ -1451,6 +1492,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 9,
                       color: Color(0xFFFFD700),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.doodle.isActive)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF00E676)),
+                  ),
+                  child: Text(
+                    'DOODLE: ${clip.doodle.strokes.length} STROKES',
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFF00E676),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -2328,6 +2386,25 @@ class _StaticMaskPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _StaticMaskPainter oldDelegate) {
     return oldDelegate.path != path || oldDelegate.color != color || oldDelegate.opacity != opacity;
+  }
+}
+
+class _StaticDoodlePainter extends CustomPainter {
+  final DoodleConfig config;
+
+  const _StaticDoodlePainter({required this.config});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0 || !config.isActive) return;
+    for (final stroke in config.strokes) {
+      DoodleCompilerService.paintStroke(canvas, stroke, size);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _StaticDoodlePainter oldDelegate) {
+    return oldDelegate.config != config;
   }
 }
 

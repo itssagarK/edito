@@ -83,6 +83,7 @@ class EditingToolbar extends StatelessWidget {
       _ToolItem(EditorTool.objectRemoval, 'Eraser', Icons.auto_fix_high),
       _ToolItem(EditorTool.faceReshape, 'Reshape', Icons.face),
       _ToolItem(EditorTool.colorWheels, 'Wheels', Icons.donut_large),
+      _ToolItem(EditorTool.doodle, 'Doodle', Icons.draw),
       _ToolItem(EditorTool.borders, 'Border', Icons.border_outer),
       _ToolItem(EditorTool.clipWorkflow, 'Actions', Icons.movie_filter_outlined),
       _ToolItem(EditorTool.layout, 'Reframe', Icons.aspect_ratio),
@@ -170,6 +171,7 @@ class EditingToolbar extends StatelessWidget {
       _ToolItem(EditorTool.objectRemoval, 'Eraser', Icons.auto_fix_high),
       _ToolItem(EditorTool.faceReshape, 'Reshape', Icons.face),
       _ToolItem(EditorTool.colorWheels, 'Wheels', Icons.donut_large),
+      _ToolItem(EditorTool.doodle, 'Doodle', Icons.draw),
     ];
 
     return KeyedSubtree(

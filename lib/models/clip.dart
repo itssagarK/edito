@@ -35,6 +35,7 @@ import '../features/mosaic/models/mosaic_config.dart';
 import '../features/object_removal/models/object_removal_config.dart';
 import '../features/face_reshape/models/face_reshape_config.dart';
 import '../features/color_wheels/models/color_wheels_config.dart';
+import '../features/doodle/models/doodle_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -87,6 +88,7 @@ class Clip extends Equatable {
   final ObjectRemovalConfig objectRemoval;
   final FaceReshapeConfig faceReshape;
   final ColorWheelsConfig colorWheels;
+  final DoodleConfig doodle;
 
   const Clip({
     required this.id,
@@ -139,6 +141,7 @@ class Clip extends Equatable {
     this.objectRemoval = const ObjectRemovalConfig(),
     this.faceReshape = const FaceReshapeConfig(),
     this.colorWheels = const ColorWheelsConfig(),
+    this.doodle = const DoodleConfig(),
   });
 
   Clip copyWith({
@@ -244,6 +247,7 @@ class Clip extends Equatable {
       objectRemoval: objectRemoval ?? this.objectRemoval,
       faceReshape: faceReshape ?? this.faceReshape,
       colorWheels: colorWheels ?? this.colorWheels,
+      doodle: doodle ?? this.doodle,
     );
   }
 
@@ -298,6 +302,7 @@ class Clip extends Equatable {
         'objectRemoval': objectRemoval.toJson(),
         'faceReshape': faceReshape.toJson(),
         'colorWheels': colorWheels.toJson(),
+        'doodle': doodle.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -428,6 +433,9 @@ class Clip extends Equatable {
         colorWheels: json['colorWheels'] != null
             ? ColorWheelsConfig.fromJson(json['colorWheels'] as Map<String, dynamic>)
             : const ColorWheelsConfig(),
+        doodle: json['doodle'] != null
+            ? DoodleConfig.fromJson(json['doodle'] as Map<String, dynamic>)
+            : const DoodleConfig(),
       );
 
   @override
@@ -482,5 +490,6 @@ class Clip extends Equatable {
         objectRemoval,
         faceReshape,
         colorWheels,
+        doodle,
       ];
 }
