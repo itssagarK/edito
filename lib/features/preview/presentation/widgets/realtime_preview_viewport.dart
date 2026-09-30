@@ -66,6 +66,7 @@ import '../../../edge_aura/services/edge_aura_compiler_service.dart';
 import '../../../object_removal/models/object_removal_config.dart';
 import '../../../object_removal/services/object_removal_compiler_service.dart';
 import '../../../object_removal/presentation/widgets/object_removal_brush_overlay.dart';
+import '../../../face_reshape/presentation/widgets/face_reshape_landmarks_overlay.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';
@@ -340,6 +341,22 @@ class RealtimePreviewViewport extends ConsumerWidget {
                               onConfigChanged: (newConfig) {
                                 final targetClip = currentFrame.primaryVideoClip!;
                                 final updatedClip = targetClip.copyWith(objectRemoval: newConfig);
+                                if (project != null) {
+                                  final updatedProject = project.updateClip(updatedClip);
+                                  ref.read(editorProvider.notifier).updateProject(updatedProject);
+                                }
+                              },
+                            ),
+                          ),
+
+                        // Interactive AI Face Reshape & 3D Feature Sculpting Mesh Overlay
+                        if (editorState.activeTool == EditorTool.faceReshape && currentFrame?.primaryVideoClip != null)
+                          Positioned.fill(
+                            child: FaceReshapeLandmarksOverlay(
+                              config: currentFrame!.primaryVideoClip!.faceReshape,
+                              onConfigChanged: (newConfig) {
+                                final targetClip = currentFrame.primaryVideoClip!;
+                                final updatedClip = targetClip.copyWith(faceReshape: newConfig);
                                 if (project != null) {
                                   final updatedProject = project.updateClip(updatedClip);
                                   ref.read(editorProvider.notifier).updateProject(updatedProject);
@@ -1389,6 +1406,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 9,
                       color: Color(0xFFFF2D55),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.faceReshape.isActive)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF00E5FF)),
+                  ),
+                  child: const Text(
+                    'AI RESHAPE: 3D SCULPT',
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFF00E5FF),
                       fontWeight: FontWeight.bold,
                     ),
                   ),

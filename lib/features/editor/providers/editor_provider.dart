@@ -45,6 +45,7 @@ enum EditorTool {
   teleprompter,
   splitScreen,
   objectRemoval,
+  faceReshape,
 }
 
 class EditorState {

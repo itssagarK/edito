@@ -50,6 +50,7 @@ import '../../mosaic/models/mosaic_config.dart';
 import '../../mosaic/services/mosaic_compiler_service.dart';
 import '../../object_removal/models/object_removal_config.dart';
 import '../../object_removal/services/object_removal_compiler_service.dart';
+import '../../face_reshape/services/face_reshape_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -263,6 +264,18 @@ class FFmpegCommandBuilder {
           );
           if (removalFilters.isNotEmpty) {
             vFilters.addAll(removalFilters);
+          }
+        }
+
+        // CapCut Pro AI Face Reshape & 3D Feature Sculpting Studio
+        if (clip.faceReshape.isActive) {
+          final reshapeFilters = FaceReshapeCompilerService.generateFFmpegFilters(
+            clip.faceReshape,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (reshapeFilters.isNotEmpty) {
+            vFilters.addAll(reshapeFilters);
           }
         }
 

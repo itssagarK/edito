@@ -33,6 +33,7 @@ import '../features/voice_effects/models/voice_effects_config.dart';
 import '../features/edge_aura/models/edge_aura_config.dart';
 import '../features/mosaic/models/mosaic_config.dart';
 import '../features/object_removal/models/object_removal_config.dart';
+import '../features/face_reshape/models/face_reshape_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -83,6 +84,7 @@ class Clip extends Equatable {
   final EdgeAuraConfig edgeAura;
   final MosaicConfig mosaic;
   final ObjectRemovalConfig objectRemoval;
+  final FaceReshapeConfig faceReshape;
 
   const Clip({
     required this.id,
@@ -133,6 +135,7 @@ class Clip extends Equatable {
     this.edgeAura = const EdgeAuraConfig(),
     this.mosaic = const MosaicConfig(),
     this.objectRemoval = const ObjectRemovalConfig(),
+    this.faceReshape = const FaceReshapeConfig(),
   });
 
   Clip copyWith({
@@ -184,6 +187,7 @@ class Clip extends Equatable {
     EdgeAuraConfig? edgeAura,
     MosaicConfig? mosaic,
     ObjectRemovalConfig? objectRemoval,
+    FaceReshapeConfig? faceReshape,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -234,6 +238,7 @@ class Clip extends Equatable {
       edgeAura: edgeAura ?? this.edgeAura,
       mosaic: mosaic ?? this.mosaic,
       objectRemoval: objectRemoval ?? this.objectRemoval,
+      faceReshape: faceReshape ?? this.faceReshape,
     );
   }
 
@@ -286,6 +291,7 @@ class Clip extends Equatable {
         'edgeAura': edgeAura.toJson(),
         'mosaic': mosaic.toJson(),
         'objectRemoval': objectRemoval.toJson(),
+        'faceReshape': faceReshape.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -410,6 +416,9 @@ class Clip extends Equatable {
         objectRemoval: json['objectRemoval'] != null
             ? ObjectRemovalConfig.fromJson(json['objectRemoval'] as Map<String, dynamic>)
             : const ObjectRemovalConfig(),
+        faceReshape: json['faceReshape'] != null
+            ? FaceReshapeConfig.fromJson(json['faceReshape'] as Map<String, dynamic>)
+            : const FaceReshapeConfig(),
       );
 
   @override
@@ -462,5 +471,6 @@ class Clip extends Equatable {
         edgeAura,
         mosaic,
         objectRemoval,
+        faceReshape,
       ];
 }

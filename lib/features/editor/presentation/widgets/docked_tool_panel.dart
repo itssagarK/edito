@@ -39,6 +39,7 @@ import '../../../mosaic/presentation/widgets/mosaic_sheet.dart';
 import '../../../teleprompter/presentation/widgets/teleprompter_sheet.dart';
 import '../../../split_screen/presentation/widgets/split_screen_sheet.dart';
 import '../../../object_removal/presentation/widgets/object_removal_sheet.dart';
+import '../../../face_reshape/presentation/widgets/face_reshape_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
 
@@ -123,7 +124,7 @@ class DockedToolPanel extends StatelessWidget {
       case EditorTool.denoise:
         return 'AI Video De-Noise';
       case EditorTool.voiceEffects:
-        return 'CapCut Pro Voice Changer';
+        return 'AI Voice Changer & Effects';
       case EditorTool.edgeAura:
         return 'AI Video Glow & Edge Aura';
       case EditorTool.mosaic:
@@ -134,6 +135,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'Split Screen Collage Studio';
       case EditorTool.objectRemoval:
         return 'AI Magic Eraser & Object Removal';
+      case EditorTool.faceReshape:
+        return 'AI Face Reshape & 3D Sculpt';
       case EditorTool.effects:
         return 'Cinematic Transitions';
       default:
@@ -211,6 +214,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.grid_view_rounded;
       case EditorTool.objectRemoval:
         return Icons.auto_fix_high;
+      case EditorTool.faceReshape:
+        return Icons.face;
       default:
         return Icons.edit;
     }
@@ -685,6 +690,25 @@ class DockedToolPanel extends StatelessWidget {
               final updatedTracks = project.tracks.map((track) {
                 if (track.type != TrackType.video) return track;
                 final updatedClips = track.clips.map((c) => c.copyWith(objectRemoval: updatedClip.objectRemoval)).toList();
+                return track.copyWith(clips: updatedClips);
+              }).toList();
+              onSaveProject(project.copyWith(tracks: updatedTracks));
+            } else {
+              onSaveClip(updatedClip);
+            }
+          },
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.faceReshape:
+        return FaceReshapeSheet(
+          clip: clip,
+          onSave: (updatedClip, {bool applyToAll = false}) {
+            if (applyToAll) {
+              final updatedTracks = project.tracks.map((track) {
+                if (track.type != TrackType.video) return track;
+                final updatedClips = track.clips.map((c) => c.copyWith(faceReshape: updatedClip.faceReshape)).toList();
                 return track.copyWith(clips: updatedClips);
               }).toList();
               onSaveProject(project.copyWith(tracks: updatedTracks));

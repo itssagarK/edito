@@ -493,6 +493,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openObjectRemovalModal();
         break;
 
+      case EditorTool.faceReshape:
+        _openFaceReshapeModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -834,6 +838,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openObjectRemovalModal() {
     _openDockedTool(EditorTool.objectRemoval, trackType: TrackType.video, purpose: 'AI Magic Eraser & Object Removal');
+  }
+
+  void _openFaceReshapeModal() {
+    _openDockedTool(EditorTool.faceReshape, trackType: TrackType.video, purpose: 'AI Face Reshape & 3D Sculpt');
   }
 
   Clip? _findTargetClip() {

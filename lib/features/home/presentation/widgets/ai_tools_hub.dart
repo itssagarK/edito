@@ -160,6 +160,15 @@ class AiToolsHub extends StatelessWidget {
       isAi: true,
       isPro: true,
     ),
+    _StudioToolItem(
+      title: 'AI Face Reshape',
+      subtitle: '3D facial sculpting & contour',
+      icon: Icons.face,
+      color: Color(0xFF00E5FF),
+      tool: EditorTool.faceReshape,
+      isAi: true,
+      isPro: true,
+    ),
   ];
 
   @override
