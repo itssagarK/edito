@@ -489,6 +489,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openSplitScreenModal();
         break;
 
+      case EditorTool.objectRemoval:
+        _openObjectRemovalModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -826,6 +830,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openSplitScreenModal() {
     _openDockedTool(EditorTool.splitScreen, trackType: TrackType.video, purpose: 'Split Screen Collage');
+  }
+
+  void _openObjectRemovalModal() {
+    _openDockedTool(EditorTool.objectRemoval, trackType: TrackType.video, purpose: 'AI Magic Eraser & Object Removal');
   }
 
   Clip? _findTargetClip() {

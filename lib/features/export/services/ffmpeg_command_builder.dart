@@ -48,6 +48,8 @@ import '../../edge_aura/models/edge_aura_config.dart';
 import '../../edge_aura/services/edge_aura_compiler_service.dart';
 import '../../mosaic/models/mosaic_config.dart';
 import '../../mosaic/services/mosaic_compiler_service.dart';
+import '../../object_removal/models/object_removal_config.dart';
+import '../../object_removal/services/object_removal_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -249,6 +251,18 @@ class FFmpegCommandBuilder {
           );
           if (mosaicFilters.isNotEmpty) {
             vFilters.addAll(mosaicFilters);
+          }
+        }
+
+        // CapCut Pro AI Object Removal & Magic Eraser Pen Suite
+        if (clip.objectRemoval.isActive) {
+          final removalFilters = ObjectRemovalCompilerService.generateFFmpegFilters(
+            clip.objectRemoval,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (removalFilters.isNotEmpty) {
+            vFilters.addAll(removalFilters);
           }
         }
 

@@ -63,6 +63,9 @@ import '../../../denoise/services/denoise_compiler_service.dart';
 import '../../../voice_effects/models/voice_effects_config.dart';
 import '../../../edge_aura/models/edge_aura_config.dart';
 import '../../../edge_aura/services/edge_aura_compiler_service.dart';
+import '../../../object_removal/models/object_removal_config.dart';
+import '../../../object_removal/services/object_removal_compiler_service.dart';
+import '../../../object_removal/presentation/widgets/object_removal_brush_overlay.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';
@@ -328,6 +331,22 @@ class RealtimePreviewViewport extends ConsumerWidget {
                             }
                             return widgets;
                           }),
+
+                        // Interactive AI Object Removal & Magic Eraser Pen Canvas Overlay
+                        if (editorState.activeTool == EditorTool.objectRemoval && currentFrame?.primaryVideoClip != null)
+                          Positioned.fill(
+                            child: ObjectRemovalBrushOverlay(
+                              config: currentFrame!.primaryVideoClip!.objectRemoval,
+                              onConfigChanged: (newConfig) {
+                                final targetClip = currentFrame.primaryVideoClip!;
+                                final updatedClip = targetClip.copyWith(objectRemoval: newConfig);
+                                if (project != null) {
+                                  final updatedProject = project.updateClip(updatedClip);
+                                  ref.read(editorProvider.notifier).updateProject(updatedProject);
+                                }
+                              },
+                            ),
+                          ),
 
                         // Safe-Zone Grid Overlays (90% action safe, 80% title safe)
                         if (previewState.showSafeGuides)
@@ -606,6 +625,33 @@ class RealtimePreviewViewport extends ConsumerWidget {
                   Size(constraints.maxWidth, constraints.maxHeight),
                 );
               },
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (clip.objectRemoval.isActive && clip.objectRemoval.showMaskOverlay) {
+      videoContent = Stack(
+        fit: StackFit.passthrough,
+        children: [
+          videoContent,
+          Positioned.fill(
+            child: IgnorePointer(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final size = Size(constraints.maxWidth, constraints.maxHeight);
+                  final maskPath = ObjectRemovalCompilerService.buildMaskPath(clip.objectRemoval, size);
+                  return CustomPaint(
+                    size: size,
+                    painter: _StaticMaskPainter(
+                      path: maskPath,
+                      color: Color(clip.objectRemoval.maskColorValue),
+                      opacity: clip.objectRemoval.opacity,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ],
@@ -900,11 +946,11 @@ class RealtimePreviewViewport extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.accentWarm),
+                    border: Border.all(color: AppColors.accent),
                   ),
                   child: Text(
                     AIVideoSmootherService.getSmootherBadge(clip.smoother),
-                    style: const TextStyle(fontSize: 9, color: AppColors.accentWarm, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
                   ),
                 ),
               if (clip.chromaKey.isEnabled)
@@ -1326,6 +1372,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 9,
                       color: Color(clip.edgeAura.colorValue),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.objectRemoval.isActive)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFFFF2D55)),
+                  ),
+                  child: Text(
+                    'AI ERASER: ${clip.objectRemoval.mode.label.toUpperCase()}',
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFFFF2D55),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -2172,5 +2235,37 @@ class _FilmStripBorderPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _FilmStripBorderPainter oldDelegate) =>
       oldDelegate.borderColor != borderColor || oldDelegate.borderWidth != borderWidth;
+}
+
+class _StaticMaskPainter extends CustomPainter {
+  final Path path;
+  final Color color;
+  final double opacity;
+
+  const _StaticMaskPainter({
+    required this.path,
+    required this.color,
+    required this.opacity,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0) return;
+    final fillPaint = Paint()
+      ..color = color.withOpacity(opacity * 0.45)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(path, fillPaint);
+
+    final strokePaint = Paint()
+      ..color = color.withOpacity(0.85)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    canvas.drawPath(path, strokePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _StaticMaskPainter oldDelegate) {
+    return oldDelegate.path != path || oldDelegate.color != color || oldDelegate.opacity != opacity;
+  }
 }
 

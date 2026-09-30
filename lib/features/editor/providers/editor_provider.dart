@@ -44,6 +44,7 @@ enum EditorTool {
   mosaic,
   teleprompter,
   splitScreen,
+  objectRemoval,
 }
 
 class EditorState {

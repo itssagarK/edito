@@ -32,6 +32,7 @@ import '../features/denoise/models/denoise_config.dart';
 import '../features/voice_effects/models/voice_effects_config.dart';
 import '../features/edge_aura/models/edge_aura_config.dart';
 import '../features/mosaic/models/mosaic_config.dart';
+import '../features/object_removal/models/object_removal_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -81,6 +82,7 @@ class Clip extends Equatable {
   final VoiceEffectsConfig voiceEffects;
   final EdgeAuraConfig edgeAura;
   final MosaicConfig mosaic;
+  final ObjectRemovalConfig objectRemoval;
 
   const Clip({
     required this.id,
@@ -130,6 +132,7 @@ class Clip extends Equatable {
     this.voiceEffects = const VoiceEffectsConfig(),
     this.edgeAura = const EdgeAuraConfig(),
     this.mosaic = const MosaicConfig(),
+    this.objectRemoval = const ObjectRemovalConfig(),
   });
 
   Clip copyWith({
@@ -180,6 +183,7 @@ class Clip extends Equatable {
     VoiceEffectsConfig? voiceEffects,
     EdgeAuraConfig? edgeAura,
     MosaicConfig? mosaic,
+    ObjectRemovalConfig? objectRemoval,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -229,6 +233,7 @@ class Clip extends Equatable {
       voiceEffects: voiceEffects ?? this.voiceEffects,
       edgeAura: edgeAura ?? this.edgeAura,
       mosaic: mosaic ?? this.mosaic,
+      objectRemoval: objectRemoval ?? this.objectRemoval,
     );
   }
 
@@ -280,6 +285,7 @@ class Clip extends Equatable {
         'voiceEffects': voiceEffects.toJson(),
         'edgeAura': edgeAura.toJson(),
         'mosaic': mosaic.toJson(),
+        'objectRemoval': objectRemoval.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -401,6 +407,9 @@ class Clip extends Equatable {
         mosaic: json['mosaic'] != null
             ? MosaicConfig.fromJson(json['mosaic'] as Map<String, dynamic>)
             : const MosaicConfig(),
+        objectRemoval: json['objectRemoval'] != null
+            ? ObjectRemovalConfig.fromJson(json['objectRemoval'] as Map<String, dynamic>)
+            : const ObjectRemovalConfig(),
       );
 
   @override
@@ -452,5 +461,6 @@ class Clip extends Equatable {
         voiceEffects,
         edgeAura,
         mosaic,
+        objectRemoval,
       ];
 }

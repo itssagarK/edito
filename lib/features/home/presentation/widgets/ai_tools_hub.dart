@@ -151,6 +151,15 @@ class AiToolsHub extends StatelessWidget {
       tool: EditorTool.splitScreen,
       isPro: true,
     ),
+    _StudioToolItem(
+      title: 'Magic Eraser',
+      subtitle: 'AI object & watermark removal',
+      icon: Icons.auto_fix_high,
+      color: Color(0xFFFF2D55),
+      tool: EditorTool.objectRemoval,
+      isAi: true,
+      isPro: true,
+    ),
   ];
 
   @override

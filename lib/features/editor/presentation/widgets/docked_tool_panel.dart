@@ -38,6 +38,7 @@ import '../../../edge_aura/presentation/widgets/edge_aura_sheet.dart';
 import '../../../mosaic/presentation/widgets/mosaic_sheet.dart';
 import '../../../teleprompter/presentation/widgets/teleprompter_sheet.dart';
 import '../../../split_screen/presentation/widgets/split_screen_sheet.dart';
+import '../../../object_removal/presentation/widgets/object_removal_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
 
@@ -131,6 +132,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'Creator Teleprompter Studio';
       case EditorTool.splitScreen:
         return 'Split Screen Collage Studio';
+      case EditorTool.objectRemoval:
+        return 'AI Magic Eraser & Object Removal';
       case EditorTool.effects:
         return 'Cinematic Transitions';
       default:
@@ -206,6 +209,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.subtitles_outlined;
       case EditorTool.splitScreen:
         return Icons.grid_view_rounded;
+      case EditorTool.objectRemoval:
+        return Icons.auto_fix_high;
       default:
         return Icons.edit;
     }
@@ -668,6 +673,25 @@ class DockedToolPanel extends StatelessWidget {
         return SplitScreenSheet(
           config: project.splitScreen,
           onSave: (cfg) => onSaveProject(project.copyWith(splitScreen: cfg)),
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.objectRemoval:
+        return ObjectRemovalSheet(
+          clip: clip,
+          onSave: (updatedClip, {bool applyToAll = false}) {
+            if (applyToAll) {
+              final updatedTracks = project.tracks.map((track) {
+                if (track.type != TrackType.video) return track;
+                final updatedClips = track.clips.map((c) => c.copyWith(objectRemoval: updatedClip.objectRemoval)).toList();
+                return track.copyWith(clips: updatedClips);
+              }).toList();
+              onSaveProject(project.copyWith(tracks: updatedTracks));
+            } else {
+              onSaveClip(updatedClip);
+            }
+          },
           isDocked: true,
           onDone: onClose,
         );

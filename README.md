@@ -39,8 +39,8 @@ Get the official compiled release APK and install it directly on any Android dev
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.60/app-release.apk">
-        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.60%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
+      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.61/app-release.apk">
+        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.61%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
       </a>
       <br>
       <sub><b>Target:</b> <code>ARM64-v8a</code>, <code>ARMeabi-v7a</code>, <code>x86_64</code> &nbsp;•&nbsp; <b>Min SDK:</b> Android 7.0+ (API 24+) &nbsp;•&nbsp; <b>Target SDK:</b> Android 16 (API 36)</sub>
@@ -48,7 +48,7 @@ Get the official compiled release APK and install it directly on any Android dev
   </tr>
   <tr>
     <td align="center">
-      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.60"><b>v1.0.60 Production Release on GitHub</b></a>
+      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.61"><b>v1.0.61 Production Release on GitHub</b></a>
     </td>
   </tr>
 </table>
@@ -56,6 +56,13 @@ Get the official compiled release APK and install it directly on any Android dev
 ---
 
 ## 🌟 Latest Flagship Studios & Features
+
+### 🪄 AI Magic Eraser & Object Removal Pen Studio (v1.0.61)
+- **Deep Inpainting & Boundary Texture Synthesis:** Seamlessly obliterates watermarks, logos, wires, photobombers, and facial blemishes with edge-preserving boundary reconstruction.
+- **Interactive Multi-Tool Selection Suite:** Freehand Brush Pen with live circular reticle, precision Eraser to rub out mask boundaries, and Box Select for instant geometric watermark targeting.
+- **Dynamic Pen Size & Feathering Controls:** Adjustable brush stroke width ($6\text{ to }100\text{ px}$) and soft edge feathering ($0\%\text{ to }100\%$) for seamless blending.
+- **4 Specialized Removal Modes:** AI Magic Eraser (Deep Inpainting), Smart Delogo (fast bilateral interpolation), Privacy Blur (smooth Gaussian defocus), and Clone Stamp (exemplar texture synthesis).
+- **Interactive Canvas HUD & Live Mask Overlay:** Real-time coral-red translucent highlight mask overlay (`#FF2D55`) with instant Undo/Redo history, mask inversion, and deterministic FFmpeg filter compilation into 4K video exports.
 
 ### 📱 Multi-Grid Split-Screen Video Studio (v1.0.60)
 - **10 Dynamic Multi-Grid Layouts:** 2-Split Vertical/Horizontal, 3-Strip Vertical/Horizontal, 3-T Collage (Top/Bottom), 4-Grid Quad Matrix, 5-Collage, 6-Matrix, and 9-Wall video mosaics.
@@ -217,6 +224,7 @@ Get the official compiled release APK and install it directly on any Android dev
 
 | Version | Milestone Feature | Release Highlights |
 |:---:|---|---|
+| **v1.0.61** | **AI Magic Eraser Pen** | Deep inpainting & smart delogo, interactive brush/eraser/box selection, live mask overlay |
 | **v1.0.60** | **Split-Screen Studio** | 10 multi-grid collage layouts, interactive slot HUD, divider styling, `xstack` export |
 | **v1.0.59** | **Curved Text & Typography** | 20 signature preset styles, $-180^\circ$ to $+180^\circ$ circular arc deformation, 6-tab dock |
 | **v1.0.58** | **Creator Teleprompter** | Floating semi-transparent prompter HUD, 20–300 wpm autoscroll, mirror flip mode |
