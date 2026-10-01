@@ -24,6 +24,10 @@ for df in dart_files:
     if 'AppColors.surfaceLight' in content:
         errors.append(f'{df}: uses AppColors.surfaceLight')
 
+    if re.search(r'\bmath\.', content):
+        if "import 'dart:math'" not in content and 'import "dart:math"' not in content:
+            errors.append(f'{df}: uses math. without importing dart:math')
+
     # Const AppTypography check: AppTypography getters cannot be used in const expressions
     for m in re.finditer(r"\bconst\b", content):
         start = m.start()
