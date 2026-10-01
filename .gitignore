@@ -40,4 +40,6 @@ migrate_working_dir/
 
 *.apk
 *.zip
+*.idsig
+*.jks
 EditorCopy/
