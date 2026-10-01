@@ -205,6 +205,15 @@ class AiToolsHub extends StatelessWidget {
       isAi: false,
       isPro: true,
     ),
+    _StudioToolItem(
+      title: 'Vignette Studio',
+      subtitle: 'Atmospheric spotlight & shading',
+      icon: Icons.blur_circular,
+      color: Color(0xFF6C5CE7),
+      tool: EditorTool.vignette,
+      isAi: false,
+      isPro: true,
+    ),
   ];
 
   @override

@@ -39,8 +39,8 @@ Get the official compiled release APK and install it directly on any Android dev
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.66/app-release.apk">
-        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.66%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
+      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.67/app-release.apk">
+        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.67%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
       </a>
       <br>
       <sub><b>Target:</b> <code>ARM64-v8a</code>, <code>ARMeabi-v7a</code>, <code>x86_64</code> &nbsp;•&nbsp; <b>Min SDK:</b> Android 7.0+ (API 24+) &nbsp;•&nbsp; <b>Target SDK:</b> Android 16 (API 36)</sub>
@@ -48,7 +48,7 @@ Get the official compiled release APK and install it directly on any Android dev
   </tr>
   <tr>
     <td align="center">
-      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.66"><b>v1.0.66 Production Release on GitHub</b></a>
+      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.67"><b>v1.0.67 Production Release on GitHub</b></a>
     </td>
   </tr>
 </table>
@@ -56,6 +56,14 @@ Get the official compiled release APK and install it directly on any Android dev
 ---
 
 ## 🌟 Latest Flagship Studios & Features
+
+### 💡 Cinematic Spotlight & Atmospheric Vignette Studio (v1.0.67)
+- **ByteDance/CapCut Pro Optical Shader Architecture:** Direct mathematical port of CapCut Pro's native shader falloff formulas (`dark_angle.frag`, `gles2_filter.frag`) featuring cubic Hermite smoothstep edge illumination attenuation ($3t^2 - 2t^3$).
+- **Dual Light/Dark Optical Modes:** Seamlessly toggles between classic Hollywood Dark Film Vignette ($0\%\text{ to }100\%$) and radiant high-key Frost Spotlight Halo ($-100\%\text{ to }0\%$) for angelic glow or ethereal dream sequences.
+- **Anamorphic Aspect Deformation & Roundness:** Precision control over oval falloff shaping from $-100\%$ (2.39:1 Cinemascope widescreen horizontal oval) to $+100\%$ (vertical portrait oval), with $0\%$ being natural spherical lens falloff.
+- **Interactive Viewport Aiming Reticle:** Draggable optical center crosshair reticle $(X, Y)$ allows creators to lock the spotlight or corner shadow falloff directly onto moving subjects, off-center actors, or focal objects.
+- **6 Curated Rim Color Tints & 7 Studio Presets:** Noir Black (`#000000`), Vintage Sepia (`#382012`), Midnight Blue (`#0A192F`), Warm Amber (`#3B1E08`), Emerald Forest (`#0C2417`), and Frost White (`#FFFFFF`). Presets: 35mm Film, Vintage Drama, Anamorphic, Dreamy Light, Action Lock, Golden Hour, and Off.
+- **Real-Time Skia 60 FPS Viewport & 4K FFmpeg Engine:** Renders live Skia RadialGradient shaders in the preview viewport and compiles native hardware-accelerated `vignette=a=...:x0=...:y0=...:aspect=...:mode=...` and color grading filter chains for 4K video exports.
 
 ### 🎞️ Cinematic Film Grain & Texture Particles Studio (v1.0.66)
 - **6 Photographic Film Stocks & Texture Profiles:** 35mm Motion Picture Negative (Kodak Vision3 500T organic grain), 16mm Indie Cinema Emulsion (Arri grainy texture), Super 8mm Vintage Home Movie (chunky celluloid grain), Silver Halide (pure monochrome B&W archival grain), Analog Tape (90s VHS magnetic tape hiss and scanline drift), and Digital ISO sensor noise.
@@ -259,6 +267,7 @@ Get the official compiled release APK and install it directly on any Android dev
 
 | Version | Milestone Feature | Release Highlights |
 |:---:|---|---|
+| **v1.0.67** | **Cinematic Vignette & Spotlight** | Optical smoothstep falloff, anamorphic oval, interactive aiming reticle, 6 color tints, 4K export |
 | **v1.0.66** | **Cinematic Film Grain Studio** | 6 film stocks (35mm/16mm/Super8), polynomial luma masking, 7 presets, 4K export |
 | **v1.0.65** | **Pro RGB Curves Studio** | 4-channel spline curves (Y/R/G/B), Fritsch-Carlson interpolation, 7 presets, 4K export |
 | **v1.0.64** | **Creative Doodle Studio** | 6 brush modes (Pen, Neon, Highlighter, Arrow, Dashed, Eraser), Bezier smoothing, 4K export |

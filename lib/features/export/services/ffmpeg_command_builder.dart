@@ -55,6 +55,8 @@ import '../../color_wheels/services/color_wheels_compiler_service.dart';
 import '../../doodle/services/doodle_compiler_service.dart';
 import '../../curves/services/curves_compiler_service.dart';
 import '../../film_grain/services/film_grain_compiler_service.dart';
+import '../../vignette/models/vignette_config.dart';
+import '../../vignette/services/vignette_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -322,6 +324,18 @@ class FFmpegCommandBuilder {
           );
           if (grainFilters.isNotEmpty) {
             vFilters.addAll(grainFilters);
+          }
+        }
+
+        // CapCut Pro Cinematic Spotlight & Atmospheric Vignette Studio
+        if (clip.vignette.hasActiveVignette) {
+          final vignetteFilters = VignetteCompilerService.generateFFmpegFilters(
+            clip.vignette,
+            width: targetW,
+            height: targetH,
+          );
+          if (vignetteFilters.isNotEmpty) {
+            vFilters.addAll(vignetteFilters);
           }
         }
 

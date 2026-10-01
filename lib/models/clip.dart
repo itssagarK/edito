@@ -38,6 +38,7 @@ import '../features/color_wheels/models/color_wheels_config.dart';
 import '../features/doodle/models/doodle_config.dart';
 import '../features/curves/models/curves_config.dart';
 import '../features/film_grain/models/film_grain_config.dart';
+import '../features/vignette/models/vignette_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -93,6 +94,7 @@ class Clip extends Equatable {
   final DoodleConfig doodle;
   final CurvesConfig curves;
   final FilmGrainConfig filmGrain;
+  final VignetteConfig vignette;
 
   const Clip({
     required this.id,
@@ -148,6 +150,7 @@ class Clip extends Equatable {
     this.doodle = const DoodleConfig(),
     this.curves = const CurvesConfig(),
     this.filmGrain = const FilmGrainConfig(),
+    this.vignette = const VignetteConfig(),
   });
 
   Clip copyWith({
@@ -204,6 +207,7 @@ class Clip extends Equatable {
     DoodleConfig? doodle,
     CurvesConfig? curves,
     FilmGrainConfig? filmGrain,
+    VignetteConfig? vignette,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -259,6 +263,7 @@ class Clip extends Equatable {
       doodle: doodle ?? this.doodle,
       curves: curves ?? this.curves,
       filmGrain: filmGrain ?? this.filmGrain,
+      vignette: vignette ?? this.vignette,
     );
   }
 
@@ -316,6 +321,7 @@ class Clip extends Equatable {
         'doodle': doodle.toJson(),
         'curves': curves.toJson(),
         'filmGrain': filmGrain.toJson(),
+        'vignette': vignette.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -455,6 +461,9 @@ class Clip extends Equatable {
         filmGrain: json['filmGrain'] != null
             ? FilmGrainConfig.fromJson(json['filmGrain'] as Map<String, dynamic>)
             : const FilmGrainConfig(),
+        vignette: json['vignette'] != null
+            ? VignetteConfig.fromJson(json['vignette'] as Map<String, dynamic>)
+            : const VignetteConfig(),
       );
 
   @override
@@ -512,5 +521,6 @@ class Clip extends Equatable {
         doodle,
         curves,
         filmGrain,
+        vignette,
       ];
 }

@@ -513,6 +513,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openFilmGrainModal();
         break;
 
+      case EditorTool.vignette:
+        _openVignetteModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -874,6 +878,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openFilmGrainModal() {
     _openDockedTool(EditorTool.filmGrain, trackType: TrackType.video, purpose: 'Cinematic Film Grain');
+  }
+
+  void _openVignetteModal() {
+    _openDockedTool(EditorTool.vignette, trackType: TrackType.video, purpose: 'Cinematic Vignette & Spotlight');
   }
 
   Clip? _findTargetClip() {

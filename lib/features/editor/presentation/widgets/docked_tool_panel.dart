@@ -44,6 +44,8 @@ import '../../../color_wheels/presentation/widgets/color_wheels_studio_sheet.dar
 import '../../../doodle/presentation/widgets/doodle_studio_sheet.dart';
 import '../../../curves/presentation/widgets/curves_studio_sheet.dart';
 import '../../../film_grain/presentation/widgets/film_grain_studio_sheet.dart';
+import '../../../vignette/models/vignette_config.dart';
+import '../../../vignette/presentation/widgets/vignette_studio_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
 
@@ -149,6 +151,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'RGB Curves Studio';
       case EditorTool.filmGrain:
         return 'Cinematic Film Grain';
+      case EditorTool.vignette:
+        return 'Cinematic Vignette & Spotlight';
       case EditorTool.effects:
         return 'Cinematic Transitions';
       default:
@@ -236,6 +240,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.show_chart;
       case EditorTool.filmGrain:
         return Icons.grain;
+      case EditorTool.vignette:
+        return Icons.blur_circular;
       default:
         return Icons.edit;
     }
@@ -814,6 +820,25 @@ class DockedToolPanel extends StatelessWidget {
           },
           isDocked: true,
           onDone: onClose,
+        );
+
+      case EditorTool.vignette:
+        return VignetteStudioSheet(
+          initialConfig: clip.vignette,
+          onChanged: (config) {
+            onSaveClip(clip.copyWith(vignette: config));
+          },
+          onReset: () {
+            onSaveClip(clip.copyWith(vignette: const VignetteConfig()));
+          },
+          onApplyToAll: () {
+            final updatedTracks = project.tracks.map((track) {
+              if (track.type != TrackType.video) return track;
+              final updatedClips = track.clips.map((c) => c.copyWith(vignette: clip.vignette)).toList();
+              return track.copyWith(clips: updatedClips);
+            }).toList();
+            onSaveProject(project.copyWith(tracks: updatedTracks));
+          },
         );
 
       case EditorTool.effects:

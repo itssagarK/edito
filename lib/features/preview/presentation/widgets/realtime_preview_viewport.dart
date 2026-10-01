@@ -77,6 +77,9 @@ import '../../../curves/services/curves_compiler_service.dart';
 import '../../../film_grain/models/film_grain_config.dart';
 import '../../../film_grain/services/film_grain_compiler_service.dart';
 import '../../../film_grain/presentation/widgets/film_grain_preview_overlay.dart';
+import '../../../vignette/models/vignette_config.dart';
+import '../../../vignette/services/vignette_compiler_service.dart';
+import '../../../vignette/presentation/widgets/vignette_preview_overlay.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';
@@ -750,6 +753,39 @@ class RealtimePreviewViewport extends ConsumerWidget {
             child: FilmGrainPreviewOverlay(
               config: clip.filmGrain,
               seed: currentPositionMs ~/ 40,
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (clip.vignette.hasActiveVignette) {
+      final activeTool = ref.watch(editorProvider.select((s) => s.activeTool));
+      final selectedClipId = ref.watch(editorProvider.select((s) => s.selectedClipId));
+      final isVignetteToolActive = activeTool == EditorTool.vignette && selectedClipId == clip.id;
+
+      videoContent = Stack(
+        fit: StackFit.passthrough,
+        children: [
+          videoContent,
+          Positioned.fill(
+            child: VignettePreviewOverlay(
+              config: clip.vignette,
+              showReticle: isVignetteToolActive,
+              onCenterChanged: isVignetteToolActive
+                  ? (newOffset) {
+                      final updatedClip = clip.copyWith(
+                        vignette: clip.vignette.copyWith(
+                          centerX: newOffset.dx,
+                          centerY: newOffset.dy,
+                        ),
+                      );
+                      final project = ref.read(editorProvider).project;
+                      if (project != null) {
+                        ref.read(editorProvider.notifier).updateProject(project.updateClip(updatedClip));
+                      }
+                    }
+                  : null,
             ),
           ),
         ],
@@ -1572,6 +1608,25 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 9,
                       color: Color(0xFFFFB300),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.vignette.hasActiveVignette)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF6C5CE7)),
+                  ),
+                  child: Text(
+                    clip.vignette.intensity < 0
+                        ? 'SPOTLIGHT: ${(clip.vignette.intensity.abs() * 100).toInt()}%'
+                        : 'VIGNETTE: ${(clip.vignette.intensity * 100).toInt()}%',
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFF6C5CE7),
                       fontWeight: FontWeight.bold,
                     ),
                   ),

@@ -50,6 +50,7 @@ enum EditorTool {
   doodle,
   curves,
   filmGrain,
+  vignette,
 }
 
 class EditorState {

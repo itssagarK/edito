@@ -85,6 +85,7 @@ class EditingToolbar extends StatelessWidget {
       _ToolItem(EditorTool.colorWheels, 'Wheels', Icons.donut_large),
       _ToolItem(EditorTool.curves, 'Curves', Icons.show_chart),
       _ToolItem(EditorTool.filmGrain, 'Grain', Icons.grain),
+      _ToolItem(EditorTool.vignette, 'Vignette', Icons.blur_circular),
       _ToolItem(EditorTool.doodle, 'Doodle', Icons.draw),
       _ToolItem(EditorTool.borders, 'Border', Icons.border_outer),
       _ToolItem(EditorTool.clipWorkflow, 'Actions', Icons.movie_filter_outlined),
@@ -175,6 +176,7 @@ class EditingToolbar extends StatelessWidget {
       _ToolItem(EditorTool.colorWheels, 'Wheels', Icons.donut_large),
       _ToolItem(EditorTool.curves, 'Curves', Icons.show_chart),
       _ToolItem(EditorTool.filmGrain, 'Grain', Icons.grain),
+      _ToolItem(EditorTool.vignette, 'Vignette', Icons.blur_circular),
       _ToolItem(EditorTool.doodle, 'Doodle', Icons.draw),
     ];
 
