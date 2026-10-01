@@ -87,7 +87,7 @@ class _FilmGrainStudioSheetState extends State<FilmGrainStudioSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Film Grain Studio',
                           style: AppTypography.titleMedium,
                         ),
@@ -232,7 +232,7 @@ class _FilmGrainStudioSheetState extends State<FilmGrainStudioSheet> {
               // 1. Intensity Slider
               Row(
                 children: [
-                  const SizedBox(
+                  SizedBox(
                     width: 110,
                     child: Text('Grain Intensity', style: AppTypography.caption),
                   ),
@@ -271,7 +271,7 @@ class _FilmGrainStudioSheetState extends State<FilmGrainStudioSheet> {
               // 2. Grain Size Slider
               Row(
                 children: [
-                  const SizedBox(
+                  SizedBox(
                     width: 110,
                     child: Text('Grain Size', style: AppTypography.caption),
                   ),
@@ -307,7 +307,7 @@ class _FilmGrainStudioSheetState extends State<FilmGrainStudioSheet> {
               // 3. Roughness / Chromatic Noise Slider
               Row(
                 children: [
-                  const SizedBox(
+                  SizedBox(
                     width: 110,
                     child: Text('Chroma Noise', style: AppTypography.caption),
                   ),
@@ -343,7 +343,7 @@ class _FilmGrainStudioSheetState extends State<FilmGrainStudioSheet> {
               // 4. Shadow Suppression (Blacks Protection)
               Row(
                 children: [
-                  const SizedBox(
+                  SizedBox(
                     width: 110,
                     child: Text('Protect Blacks', style: AppTypography.caption),
                   ),

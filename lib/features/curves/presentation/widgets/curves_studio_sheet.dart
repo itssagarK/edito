@@ -91,7 +91,7 @@ class _CurvesStudioSheetState extends State<CurvesStudioSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'RGB Curves Studio',
                           style: AppTypography.titleMedium,
                         ),
@@ -227,7 +227,7 @@ class _CurvesStudioSheetState extends State<CurvesStudioSheet> {
               // Master Intensity Slider
               Row(
                 children: [
-                  const SizedBox(
+                  SizedBox(
                     width: 100,
                     child: Text(
                       'Master Intensity',

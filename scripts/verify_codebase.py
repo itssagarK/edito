@@ -24,6 +24,29 @@ for df in dart_files:
     if 'AppColors.surfaceLight' in content:
         errors.append(f'{df}: uses AppColors.surfaceLight')
 
+    # Const AppTypography check: AppTypography getters cannot be used in const expressions
+    for m in re.finditer(r"\bconst\b", content):
+        start = m.start()
+        sub = content[start:start+400]
+        parens = 0
+        opened = False
+        expr = []
+        for char in sub:
+            expr.append(char)
+            if char == '(':
+                parens += 1
+                opened = True
+            elif char == ')':
+                parens -= 1
+                if opened and parens == 0:
+                    break
+            elif char == ';' and parens == 0:
+                break
+        expr_str = "".join(expr)
+        if "AppTypography" in expr_str:
+            line_no = content[:start].count('\n') + 1
+            errors.append(f'{df}:{line_no}: invalid const wrapping AppTypography')
+
     # Import rule: widgets/ to models/ or services/ within that feature require ../../
     normalized_path = df.replace('\\', '/')
     if '/presentation/widgets/' in normalized_path:
