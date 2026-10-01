@@ -54,7 +54,7 @@ enum FilmGrainType {
       case FilmGrainType.silverHalide:
         return Icons.filter_b_and_w;
       case FilmGrainType.analogTape:
-        return Icons.cassette;
+        return Icons.album;
       case FilmGrainType.digitalIso:
         return Icons.grain;
     }

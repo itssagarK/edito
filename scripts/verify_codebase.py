@@ -23,6 +23,8 @@ for df in dart_files:
         errors.append(f'{df}: uses filledStyleFrom')
     if 'AppColors.surfaceLight' in content:
         errors.append(f'{df}: uses AppColors.surfaceLight')
+    if 'Icons.cassette' in content:
+        errors.append(f'{df}: uses non-existent Icons.cassette')
 
     if re.search(r'\bmath\.', content):
         if "import 'dart:math'" not in content and 'import "dart:math"' not in content:
