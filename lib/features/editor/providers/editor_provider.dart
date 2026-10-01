@@ -49,6 +49,7 @@ enum EditorTool {
   colorWheels,
   doodle,
   curves,
+  filmGrain,
 }
 
 class EditorState {

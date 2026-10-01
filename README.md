@@ -39,8 +39,8 @@ Get the official compiled release APK and install it directly on any Android dev
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.65/app-release.apk">
-        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.65%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
+      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.66/app-release.apk">
+        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.66%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
       </a>
       <br>
       <sub><b>Target:</b> <code>ARM64-v8a</code>, <code>ARMeabi-v7a</code>, <code>x86_64</code> &nbsp;•&nbsp; <b>Min SDK:</b> Android 7.0+ (API 24+) &nbsp;•&nbsp; <b>Target SDK:</b> Android 16 (API 36)</sub>
@@ -48,7 +48,7 @@ Get the official compiled release APK and install it directly on any Android dev
   </tr>
   <tr>
     <td align="center">
-      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.65"><b>v1.0.65 Production Release on GitHub</b></a>
+      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.66"><b>v1.0.66 Production Release on GitHub</b></a>
     </td>
   </tr>
 </table>
@@ -56,6 +56,13 @@ Get the official compiled release APK and install it directly on any Android dev
 ---
 
 ## 🌟 Latest Flagship Studios & Features
+
+### 🎞️ Cinematic Film Grain & Texture Particles Studio (v1.0.66)
+- **6 Photographic Film Stocks & Texture Profiles:** 35mm Motion Picture Negative (Kodak Vision3 500T organic grain), 16mm Indie Cinema Emulsion (Arri grainy texture), Super 8mm Vintage Home Movie (chunky celluloid grain), Silver Halide (pure monochrome B&W archival grain), Analog Tape (90s VHS magnetic tape hiss and scanline drift), and Digital ISO sensor noise.
+- **Dynamic Luminance Masking Math:** Direct port of CapCut Pro's native polynomial luminance masking curve ($y = \text{strength} - \text{mask}$), protecting deep crushed blacks and peak highlights while injecting rich organic micro-contrast into midtones.
+- **Micro-Refinement Grain Controls:** Precision sliders for Grain Intensity ($0\%\text{ to }100\%$), Grain Size ($0.5\times\text{ to }3.0\times$), Roughness / Chromatic Noise ($0\%\text{ to }100\%$), Black Protection ($0\%\text{ to }100\%$), and Temporal Motion frame variation toggle.
+- **7 Curated Cinematic Grain Presets:** Kodak 500T, Fuji 16mm, Super 8, Noir B&W, VHS Tape, Subtle 35mm, and Neutral Off.
+- **Real-Time Skia Viewport Engine & 4K FFmpeg Export:** Real-time procedural particle simulation overlay in the preview viewport and hardware-accelerated FFmpeg `noise=c0s=...:c0f=t+u:c1s=...:c2s=...` export filter graphs for 4K video exports.
 
 ### 📈 Pro RGB Curves & Luma Spline Studio (v1.0.65)
 - **4-Channel Independent Spline Grading:** Precision tonal and chromatic curve sculpting across Master/Luma (`ALL / Y`), Red (`R`), Green (`G`), and Blue (`B`) channels ported from native CapCut Pro and DaVinci Resolve grading engines.
@@ -252,6 +259,7 @@ Get the official compiled release APK and install it directly on any Android dev
 
 | Version | Milestone Feature | Release Highlights |
 |:---:|---|---|
+| **v1.0.66** | **Cinematic Film Grain Studio** | 6 film stocks (35mm/16mm/Super8), polynomial luma masking, 7 presets, 4K export |
 | **v1.0.65** | **Pro RGB Curves Studio** | 4-channel spline curves (Y/R/G/B), Fritsch-Carlson interpolation, 7 presets, 4K export |
 | **v1.0.64** | **Creative Doodle Studio** | 6 brush modes (Pen, Neon, Highlighter, Arrow, Dashed, Eraser), Bezier smoothing, 4K export |
 | **v1.0.63** | **Pro Color Wheels Studio** | Primary & Log wheels, LumaMix decoupling, Low/High Range crossover, 6 presets, 4K export |

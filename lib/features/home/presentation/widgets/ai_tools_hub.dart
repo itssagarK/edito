@@ -196,6 +196,15 @@ class AiToolsHub extends StatelessWidget {
       isAi: false,
       isPro: true,
     ),
+    _StudioToolItem(
+      title: 'Film Grain',
+      subtitle: 'Celluloid & analog particles',
+      icon: Icons.grain,
+      color: Color(0xFFFFB300),
+      tool: EditorTool.filmGrain,
+      isAi: false,
+      isPro: true,
+    ),
   ];
 
   @override

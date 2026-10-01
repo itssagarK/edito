@@ -54,6 +54,7 @@ import '../../face_reshape/services/face_reshape_compiler_service.dart';
 import '../../color_wheels/services/color_wheels_compiler_service.dart';
 import '../../doodle/services/doodle_compiler_service.dart';
 import '../../curves/services/curves_compiler_service.dart';
+import '../../film_grain/services/film_grain_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class FFmpegCommandResult {
@@ -311,6 +312,16 @@ class FFmpegCommandBuilder {
           );
           if (curveFilters.isNotEmpty) {
             vFilters.addAll(curveFilters);
+          }
+        }
+
+        // CapCut Pro Cinematic Film Grain & Texture Particles Studio
+        if (clip.filmGrain.isActive) {
+          final grainFilters = FilmGrainCompilerService.generateFFmpegFilters(
+            clip.filmGrain,
+          );
+          if (grainFilters.isNotEmpty) {
+            vFilters.addAll(grainFilters);
           }
         }
 

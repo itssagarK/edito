@@ -37,6 +37,7 @@ import '../features/face_reshape/models/face_reshape_config.dart';
 import '../features/color_wheels/models/color_wheels_config.dart';
 import '../features/doodle/models/doodle_config.dart';
 import '../features/curves/models/curves_config.dart';
+import '../features/film_grain/models/film_grain_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -91,6 +92,7 @@ class Clip extends Equatable {
   final ColorWheelsConfig colorWheels;
   final DoodleConfig doodle;
   final CurvesConfig curves;
+  final FilmGrainConfig filmGrain;
 
   const Clip({
     required this.id,
@@ -145,6 +147,7 @@ class Clip extends Equatable {
     this.colorWheels = const ColorWheelsConfig(),
     this.doodle = const DoodleConfig(),
     this.curves = const CurvesConfig(),
+    this.filmGrain = const FilmGrainConfig(),
   });
 
   Clip copyWith({
@@ -200,6 +203,7 @@ class Clip extends Equatable {
     ColorWheelsConfig? colorWheels,
     DoodleConfig? doodle,
     CurvesConfig? curves,
+    FilmGrainConfig? filmGrain,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -254,6 +258,7 @@ class Clip extends Equatable {
       colorWheels: colorWheels ?? this.colorWheels,
       doodle: doodle ?? this.doodle,
       curves: curves ?? this.curves,
+      filmGrain: filmGrain ?? this.filmGrain,
     );
   }
 
@@ -310,6 +315,7 @@ class Clip extends Equatable {
         'colorWheels': colorWheels.toJson(),
         'doodle': doodle.toJson(),
         'curves': curves.toJson(),
+        'filmGrain': filmGrain.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -446,6 +452,9 @@ class Clip extends Equatable {
         curves: json['curves'] != null
             ? CurvesConfig.fromJson(json['curves'] as Map<String, dynamic>)
             : const CurvesConfig(),
+        filmGrain: json['filmGrain'] != null
+            ? FilmGrainConfig.fromJson(json['filmGrain'] as Map<String, dynamic>)
+            : const FilmGrainConfig(),
       );
 
   @override
@@ -502,5 +511,6 @@ class Clip extends Equatable {
         colorWheels,
         doodle,
         curves,
+        filmGrain,
       ];
 }

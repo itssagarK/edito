@@ -509,6 +509,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openCurvesModal();
         break;
 
+      case EditorTool.filmGrain:
+        _openFilmGrainModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -866,6 +870,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openCurvesModal() {
     _openDockedTool(EditorTool.curves, trackType: TrackType.video, purpose: 'RGB Curves Studio');
+  }
+
+  void _openFilmGrainModal() {
+    _openDockedTool(EditorTool.filmGrain, trackType: TrackType.video, purpose: 'Cinematic Film Grain');
   }
 
   Clip? _findTargetClip() {

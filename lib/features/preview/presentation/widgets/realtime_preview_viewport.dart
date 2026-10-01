@@ -74,6 +74,9 @@ import '../../../doodle/services/doodle_compiler_service.dart';
 import '../../../doodle/presentation/widgets/doodle_canvas_overlay.dart';
 import '../../../curves/models/curves_config.dart';
 import '../../../curves/services/curves_compiler_service.dart';
+import '../../../film_grain/models/film_grain_config.dart';
+import '../../../film_grain/services/film_grain_compiler_service.dart';
+import '../../../film_grain/presentation/widgets/film_grain_preview_overlay.dart';
 import '../../models/aspect_ratio_preset.dart';
 import '../../models/compositor_frame.dart';
 import '../../providers/preview_playback_provider.dart';
@@ -732,6 +735,21 @@ class RealtimePreviewViewport extends ConsumerWidget {
                   );
                 },
               ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (clip.filmGrain.isActive) {
+      videoContent = Stack(
+        fit: StackFit.passthrough,
+        children: [
+          videoContent,
+          Positioned.fill(
+            child: FilmGrainPreviewOverlay(
+              config: clip.filmGrain,
+              seed: currentPositionMs ~/ 40,
             ),
           ),
         ],
@@ -1537,6 +1555,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 9,
                       color: Color(0xFF00E5FF),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              if (clip.filmGrain.isActive)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFFFFB300)),
+                  ),
+                  child: Text(
+                    'GRAIN: ${clip.filmGrain.type.label.toUpperCase()}',
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFFFFB300),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
