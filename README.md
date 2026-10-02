@@ -32,25 +32,44 @@
 
 ---
 
-## 📥 Instant APK Download
+## 📥 Official Editions & APK Downloads
 
-Get the official compiled release APK and install it directly on any Android device:
+Download the official release APKs directly from this repository:
 
 <table>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/itssagarK/edito/releases/download/v1.0.67/app-release.apk">
-        <img src="https://img.shields.io/badge/⚡%20DIRECT%20DOWNLOAD-Edito%20v1.0.67%20APK%20(Universal)-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
-      </a>
-      <br>
-      <sub><b>Target:</b> <code>ARM64-v8a</code>, <code>ARMeabi-v7a</code>, <code>x86_64</code> &nbsp;•&nbsp; <b>Min SDK:</b> Android 7.0+ (API 24+) &nbsp;•&nbsp; <b>Target SDK:</b> Android 16 (API 36)</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      📦 <b>Latest Release Notes:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.67"><b>v1.0.67 Production Release on GitHub</b></a>
-    </td>
-  </tr>
+  <thead>
+    <tr>
+      <th align="center">🎬 Edito (Universal Pro Edition)</th>
+      <th align="center">👑 Edito Premium (Flagship Studio Edition)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center">
+        <b>Package:</b> <code>com.edito.app</code> &nbsp;|&nbsp; <b>Version:</b> <code>v1.0.69</code><br>
+        <b>Size:</b> <code>88.7 MB</code> &nbsp;|&nbsp; <b>Architecture:</b> Universal<br><br>
+        <a href="https://github.com/itssagarK/edito/releases/download/v1.0.69/app-release.apk">
+          <img src="https://img.shields.io/badge/⚡%20DOWNLOAD-Edito%20v1.0.69%20APK-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="38" alt="Download Edito APK" />
+        </a>
+        <br><br>
+        <sub>⚡ 60 FPS Skia GPU Compositor &bull; AI Voice Enhancer<br>True-Peak Limiter &bull; Magnetic Timeline Snapping &bull; 4K FFmpeg</sub>
+      </td>
+      <td align="center">
+        <b>Package:</b> <code>com.edito.premiumpak</code> &nbsp;|&nbsp; <b>Version:</b> <code>v2.1.0</code><br>
+        <b>Size:</b> <code>343.1 MB</code> &nbsp;|&nbsp; <b>Architecture:</b> Universal<br><br>
+        <a href="https://github.com/itssagarK/edito/releases/download/v1.0.69/edito-premium.apk">
+          <img src="https://img.shields.io/badge/👑%20DOWNLOAD-Edito%20Premium%20APK-FF7675?style=for-the-badge&logo=android&logoColor=white" height="38" alt="Download Edito Premium APK" />
+        </a>
+        <br><br>
+        <sub>🎨 Full Flagship Studio &bull; Decoupled Architecture<br>Deep Generative AI &bull; Smart Cutout &bull; Standalone Pipeline</sub>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" align="center">
+        📦 <b>Latest GitHub Release:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.69"><b>v1.0.69 Official Release (Both APKs Included)</b></a>
+      </td>
+    </tr>
+  </tbody>
 </table>
 
 ---

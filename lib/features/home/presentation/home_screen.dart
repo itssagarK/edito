@@ -134,6 +134,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ],
               ),
               const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.star, size: 16, color: AppColors.accent),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Available Editions:',
+                          style: AppTypography.bodySmall.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _buildFeatureSpecItem('Edito Pro: Universal Flutter + Skia 60 FPS Engine'),
+                    _buildFeatureSpecItem('Edito Premium: Full Flagship Studio (Standalone APK)'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               Text(
                 'Engine Specs & Features:',
                 style: AppTypography.bodySmall.copyWith(
