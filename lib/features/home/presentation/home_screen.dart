@@ -129,22 +129,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         EditoBrand.brandTagline,
                         style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
                       ),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceElevated,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: AppColors.accent.withOpacity(0.3)),
-                        ),
-                        child: Text(
-                          EditoBrand.guestName,
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.accent,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ],
@@ -282,33 +266,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ],
                     ),
                     const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceElevated,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.accent.withOpacity(0.4),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.verified_user_outlined, size: 13, color: AppColors.accent),
-                          const SizedBox(width: 5),
-                          Text(
-                            EditoBrand.guestName,
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 4),
                     IconButton(
                       icon: const Icon(Icons.info_outline, color: AppColors.textSecondary),
                       onPressed: _showAboutDialog,

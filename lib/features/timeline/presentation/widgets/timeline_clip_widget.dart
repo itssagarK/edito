@@ -15,6 +15,7 @@ class TimelineClipWidget extends StatelessWidget {
   final Function(double dx) onTrimLeft;
   final Function(double dx) onTrimRight;
   final Function(double dx) onDragMove;
+  final VoidCallback? onDragEnd;
 
   const TimelineClipWidget({
     super.key,
@@ -26,6 +27,7 @@ class TimelineClipWidget extends StatelessWidget {
     required this.onTrimLeft,
     required this.onTrimRight,
     required this.onDragMove,
+    this.onDragEnd,
   });
 
   @override
@@ -40,6 +42,8 @@ class TimelineClipWidget extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       onHorizontalDragUpdate: isSelected ? (d) => onDragMove(d.delta.dx) : null,
+      onHorizontalDragEnd: isSelected ? (_) => onDragEnd?.call() : null,
+      onHorizontalDragCancel: isSelected ? () => onDragEnd?.call() : null,
       child: Container(
         width: displayWidth,
         height: 48,
@@ -238,6 +242,8 @@ class TimelineClipWidget extends StatelessWidget {
                 width: 14,
                 child: GestureDetector(
                   onHorizontalDragUpdate: (details) => onTrimLeft(details.delta.dx),
+                  onHorizontalDragEnd: (_) => onDragEnd?.call(),
+                  onHorizontalDragCancel: () => onDragEnd?.call(),
                   child: Container(
                     decoration: const BoxDecoration(
                       color: Colors.white,
@@ -262,6 +268,8 @@ class TimelineClipWidget extends StatelessWidget {
                 width: 14,
                 child: GestureDetector(
                   onHorizontalDragUpdate: (details) => onTrimRight(details.delta.dx),
+                  onHorizontalDragEnd: (_) => onDragEnd?.call(),
+                  onHorizontalDragCancel: () => onDragEnd?.call(),
                   child: Container(
                     decoration: const BoxDecoration(
                       color: Colors.white,

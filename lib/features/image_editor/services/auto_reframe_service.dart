@@ -8,9 +8,11 @@ class AutoReframeService {
     required int targetHeight,
     int trackIndex = 0,
   }) {
+    final evenTargetW = (targetWidth ~/ 2) * 2;
+    final evenTargetH = (targetHeight ~/ 2) * 2;
     final padPx = layout.framePadding.round();
-    final innerW = (targetWidth - (padPx * 2)).clamp(32, targetWidth);
-    final innerH = (targetHeight - (padPx * 2)).clamp(32, targetHeight);
+    final innerW = ((evenTargetW - (padPx * 2)).clamp(32, evenTargetW) ~/ 2) * 2;
+    final innerH = ((evenTargetH - (padPx * 2)).clamp(32, evenTargetH) ~/ 2) * 2;
 
     switch (layout.reframeMode) {
       case AutoReframeMode.fitWithBlur:

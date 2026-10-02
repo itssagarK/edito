@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 
 /// Edito Pro Brand Identity, Studio Color Tables, and Creative Asset Constants
 class EditoBrand {
-  static const String appName = 'Edito - ISI Government';
-  static const String appTitle = 'Edito - ISI Government';
+  static const String appName = 'Edito';
+  static const String appTitle = 'Edito Pro';
   static const String brandTagline = 'AI-Powered Cinematic Mobile NLE';
   static const String proBadge = 'PRO';
   static const String aiBadge = 'AI';
-  static const String guestName = 'Guest: ISI Government';
 
   // 36 Curated Studio Lighting Colors extracted from CapCut Pro Studio assets
   static const List<Color> studioLightingPalette = [

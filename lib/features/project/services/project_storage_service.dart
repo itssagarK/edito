@@ -48,7 +48,8 @@ class ProjectStorageService {
   static Future<List<Project>> loadAllProjects() async {
     try {
       final dir = await _projectsDir;
-      final files = dir.listSync().whereType<File>().where((f) => f.path.endsWith('.edito.json'));
+      final entities = await dir.list().toList();
+      final files = entities.whereType<File>().where((f) => f.path.endsWith('.edito.json'));
 
       final projects = <Project>[];
       for (final file in files) {

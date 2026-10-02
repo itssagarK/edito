@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -274,6 +275,8 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
                               child: GestureDetector(
                                 onTapDown: (details) => _handleRulerTap(details.localPosition.dx, pps),
                                 onHorizontalDragUpdate: (details) => _handleRulerDrag(details.localPosition.dx, pps),
+                                onHorizontalDragEnd: (_) => _handleDragEnd(),
+                                onHorizontalDragCancel: () => _handleDragEnd(),
                                 child: CustomPaint(
                                   size: Size(timelineWidth, 32),
                                   painter: _TimelineRulerPainter(pps: pps, totalDurationMs: totalDurationMs),
@@ -315,6 +318,7 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
                                           onTrimLeft: (dx) => _handleTrimLeft(clip.id, dx, pps),
                                           onTrimRight: (dx) => _handleTrimRight(clip.id, dx, pps),
                                           onDragMove: (dx) => _handleMoveClip(clip.id, track.id, dx, pps),
+                                          onDragEnd: _handleDragEnd,
                                         ),
                                       );
                                     }).toList(),
@@ -457,11 +461,23 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
       rawMs,
       playheadMs: widget.playheadPositionMs,
     );
+    if (snap.isSnapped && _activeSnapGuideMs != snap.snappedTimeMs) {
+      HapticFeedback.selectionClick();
+    }
     setState(() {
       _activeSnapGuideMs = snap.isSnapped ? snap.snappedTimeMs : null;
       _activeSnapTarget = snap.snapTarget;
     });
     widget.onSeek(snap.snappedTimeMs);
+  }
+
+  void _handleDragEnd() {
+    if (_activeSnapGuideMs != null || _activeSnapTarget != null) {
+      setState(() {
+        _activeSnapGuideMs = null;
+        _activeSnapTarget = null;
+      });
+    }
   }
 
   void _handleTrimLeft(String clipId, double dx, double pps) {
@@ -476,6 +492,9 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
             ignoreClipId: clipId,
             playheadMs: widget.playheadPositionMs,
           );
+          if (snap.isSnapped && _activeSnapGuideMs != snap.snappedTimeMs) {
+            HapticFeedback.selectionClick();
+          }
           setState(() {
             _activeSnapGuideMs = snap.isSnapped ? snap.snappedTimeMs : null;
             _activeSnapTarget = snap.snapTarget;
@@ -507,6 +526,9 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
             ignoreClipId: clipId,
             playheadMs: widget.playheadPositionMs,
           );
+          if (snap.isSnapped && _activeSnapGuideMs != snap.snappedTimeMs) {
+            HapticFeedback.selectionClick();
+          }
           setState(() {
             _activeSnapGuideMs = snap.isSnapped ? snap.snappedTimeMs : null;
             _activeSnapTarget = snap.snapTarget;
@@ -538,6 +560,9 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
             ignoreClipId: clipId,
             playheadMs: widget.playheadPositionMs,
           );
+          if (snap.isSnapped && _activeSnapGuideMs != snap.snappedTimeMs) {
+            HapticFeedback.selectionClick();
+          }
           setState(() {
             _activeSnapGuideMs = snap.isSnapped ? snap.snappedTimeMs : null;
             _activeSnapTarget = snap.snapTarget;
