@@ -18,7 +18,7 @@ def main():
         print("Failed to get GitHub token.")
         return
 
-    req = urllib.request.Request('https://api.github.com/repos/itssagarK/edito/releases/tags/v1.0.70', headers={
+    req = urllib.request.Request('https://api.github.com/repos/itssagarK/edito/releases/tags/v1.0.71', headers={
         'Authorization': f'token {token}',
         'User-Agent': 'Edito-Agent',
         'Accept': 'application/vnd.github.v3+json'

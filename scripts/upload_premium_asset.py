@@ -26,7 +26,7 @@ def main():
     file_size = os.path.getsize(apk_path)
     print(f"Target file: {apk_path} ({file_size} bytes)")
 
-    upload_url = "https://uploads.github.com/repos/itssagarK/edito/releases/401825540/assets?name=edito-premium.apk"
+    upload_url = "https://uploads.github.com/repos/itssagarK/edito/releases/401871755/assets?name=edito-premium.apk"
     print(f"Uploading to {upload_url} via curl.exe...")
 
     cmd = [
