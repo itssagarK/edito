@@ -39,6 +39,7 @@ import '../features/doodle/models/doodle_config.dart';
 import '../features/curves/models/curves_config.dart';
 import '../features/film_grain/models/film_grain_config.dart';
 import '../features/vignette/models/vignette_config.dart';
+import '../features/transform/models/video_transform_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -95,6 +96,7 @@ class Clip extends Equatable {
   final CurvesConfig curves;
   final FilmGrainConfig filmGrain;
   final VignetteConfig vignette;
+  final VideoTransformConfig transform;
 
   const Clip({
     required this.id,
@@ -151,6 +153,7 @@ class Clip extends Equatable {
     this.curves = const CurvesConfig(),
     this.filmGrain = const FilmGrainConfig(),
     this.vignette = const VignetteConfig(),
+    this.transform = const VideoTransformConfig(),
   });
 
   Clip copyWith({
@@ -208,6 +211,7 @@ class Clip extends Equatable {
     CurvesConfig? curves,
     FilmGrainConfig? filmGrain,
     VignetteConfig? vignette,
+    VideoTransformConfig? transform,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -264,6 +268,7 @@ class Clip extends Equatable {
       curves: curves ?? this.curves,
       filmGrain: filmGrain ?? this.filmGrain,
       vignette: vignette ?? this.vignette,
+      transform: transform ?? this.transform,
     );
   }
 
@@ -322,6 +327,7 @@ class Clip extends Equatable {
         'curves': curves.toJson(),
         'filmGrain': filmGrain.toJson(),
         'vignette': vignette.toJson(),
+        'transform': transform.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -464,6 +470,9 @@ class Clip extends Equatable {
         vignette: json['vignette'] != null
             ? VignetteConfig.fromJson(json['vignette'] as Map<String, dynamic>)
             : const VignetteConfig(),
+        transform: json['transform'] != null
+            ? VideoTransformConfig.fromJson(json['transform'] as Map<String, dynamic>)
+            : const VideoTransformConfig(),
       );
 
   @override
@@ -522,5 +531,6 @@ class Clip extends Equatable {
         curves,
         filmGrain,
         vignette,
+        transform,
       ];
 }

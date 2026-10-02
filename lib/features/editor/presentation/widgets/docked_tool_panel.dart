@@ -49,6 +49,7 @@ import '../../../vignette/presentation/widgets/vignette_studio_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
 import '../../../audio/presentation/widgets/sound_effects_sheet.dart';
+import '../../../transform/presentation/widgets/transform_studio_sheet.dart';
 
 class DockedToolPanel extends StatelessWidget {
   final EditorTool tool;
@@ -158,6 +159,18 @@ class DockedToolPanel extends StatelessWidget {
         return 'Cinematic Transitions';
       case EditorTool.soundEffects:
         return 'Sound Effects Studio';
+      case EditorTool.transform:
+        return 'Transform & Basic Edit';
+      case EditorTool.deleteClip:
+        return 'Delete Clip';
+      case EditorTool.duplicateClip:
+        return 'Duplicate Clip';
+      case EditorTool.freezeFrame:
+        return 'Freeze Frame';
+      case EditorTool.reverseClip:
+        return 'Reverse Playback';
+      case EditorTool.extractAudio:
+        return 'Extract Audio Track';
       default:
         return tool.name.toUpperCase();
     }
@@ -247,6 +260,18 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.grain;
       case EditorTool.vignette:
         return Icons.blur_circular;
+      case EditorTool.transform:
+        return Icons.crop_rotate;
+      case EditorTool.deleteClip:
+        return Icons.delete_outline;
+      case EditorTool.duplicateClip:
+        return Icons.control_point_duplicate;
+      case EditorTool.freezeFrame:
+        return Icons.ac_unit;
+      case EditorTool.reverseClip:
+        return Icons.replay;
+      case EditorTool.extractAudio:
+        return Icons.music_note;
       default:
         return Icons.edit;
     }
@@ -866,6 +891,14 @@ class DockedToolPanel extends StatelessWidget {
           playheadPositionMs: clip.startTimeMs,
           onSaveProject: onSaveProject,
           isDocked: true,
+        );
+
+      case EditorTool.transform:
+        return TransformStudioSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
         );
 
       default:

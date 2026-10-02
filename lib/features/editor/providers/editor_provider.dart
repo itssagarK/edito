@@ -52,6 +52,12 @@ enum EditorTool {
   filmGrain,
   vignette,
   soundEffects,
+  transform,
+  deleteClip,
+  duplicateClip,
+  freezeFrame,
+  reverseClip,
+  extractAudio,
 }
 
 class EditorState {

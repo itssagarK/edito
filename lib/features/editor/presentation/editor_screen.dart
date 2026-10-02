@@ -517,6 +517,30 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openVignetteModal();
         break;
 
+      case EditorTool.transform:
+        _openTransformModal();
+        break;
+
+      case EditorTool.deleteClip:
+        _handleDeleteAction();
+        break;
+
+      case EditorTool.duplicateClip:
+        _handleDuplicateAction();
+        break;
+
+      case EditorTool.extractAudio:
+        _handleExtractAudioAction();
+        break;
+
+      case EditorTool.freezeFrame:
+        _handleFreezeFrameAction();
+        break;
+
+      case EditorTool.reverseClip:
+        _handleReverseAction();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -580,12 +604,122 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   void _handleTrimAction() {
     final targetClip = _findOrCreateTargetClip(trackType: TrackType.video, purpose: 'Trim');
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('✂️ Selected Clip: Drag the yellow handles on the timeline left or right to trim'),
-        duration: const Duration(milliseconds: 1500),
+        duration: Duration(milliseconds: 1500),
         backgroundColor: AppColors.primary,
       ),
     );
+  }
+
+  void _openTransformModal() {
+    _openDockedTool(EditorTool.transform, trackType: TrackType.video, purpose: 'Transform');
+  }
+
+  void _handleDeleteAction() {
+    final editorState = ref.read(editorProvider);
+    final project = editorState.project;
+    final selectedClipId = editorState.selectedClipId;
+    if (project == null || selectedClipId == null) return;
+
+    final updated = TimelineEditingService.deleteClip(project, selectedClipId, ripple: true);
+    ref.read(editorProvider.notifier).updateProject(updated);
+    ref.read(editorProvider.notifier).selectClip(null);
+    ref.read(projectListProvider.notifier).updateProject(updated);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('🗑️ Clip deleted (timeline rippled)'),
+        duration: Duration(milliseconds: 900),
+        backgroundColor: AppColors.primary,
+      ),
+    );
+  }
+
+  void _handleDuplicateAction() {
+    final editorState = ref.read(editorProvider);
+    final project = editorState.project;
+    final targetClip = _findTargetClip();
+    if (project == null || targetClip == null) return;
+
+    final updated = TimelineEditingService.duplicateClip(project, targetClip.id);
+    ref.read(editorProvider.notifier).updateProject(updated);
+    ref.read(projectListProvider.notifier).updateProject(updated);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('📋 Clip duplicated on timeline'),
+        duration: Duration(milliseconds: 900),
+        backgroundColor: AppColors.primary,
+      ),
+    );
+  }
+
+  void _handleExtractAudioAction() {
+    final editorState = ref.read(editorProvider);
+    final project = editorState.project;
+    final targetClip = _findTargetClip();
+    if (project == null || targetClip == null) return;
+
+    final updated = TimelineEditingService.extractAudio(project, targetClip.id);
+    if (updated != null) {
+      ref.read(editorProvider.notifier).updateProject(updated);
+      ref.read(projectListProvider.notifier).updateProject(updated);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🎵 Audio extracted to dedicated track! Video muted.'),
+          duration: Duration(milliseconds: 1200),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+    }
+  }
+
+  void _handleFreezeFrameAction() {
+    final editorState = ref.read(editorProvider);
+    final project = editorState.project;
+    final playhead = editorState.playheadPositionMs;
+    final targetClip = _findTargetClip();
+    if (project == null || targetClip == null) return;
+
+    final updated = TimelineEditingService.freezeFrame(
+      project,
+      targetClip.id,
+      playhead,
+      freezeDurationMs: 3000,
+    );
+    if (updated != null) {
+      ref.read(editorProvider.notifier).updateProject(updated);
+      ref.read(projectListProvider.notifier).updateProject(updated);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('❄️ Inserted 3s Freeze Frame at ${(playhead / 1000.0).toStringAsFixed(1)}s'),
+          duration: const Duration(milliseconds: 1000),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+    }
+  }
+
+  void _handleReverseAction() {
+    final editorState = ref.read(editorProvider);
+    final project = editorState.project;
+    final targetClip = _findTargetClip();
+    if (project == null || targetClip == null) return;
+
+    final updated = TimelineEditingService.toggleReverseClip(project, targetClip.id);
+    if (updated != null) {
+      ref.read(editorProvider.notifier).updateProject(updated);
+      ref.read(projectListProvider.notifier).updateProject(updated);
+      final isNowRev = !targetClip.isReversed;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isNowRev ? '⏪ Video & Audio playback set to REVERSE' : '▶️ Playback restored to FORWARD'),
+          duration: const Duration(milliseconds: 900),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+    }
   }
 
   void _openDockedTool(EditorTool tool, {TrackType trackType = TrackType.video, String purpose = 'Edit'}) {

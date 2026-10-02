@@ -46,18 +46,18 @@ Download the official release APKs directly from this repository:
   <tbody>
     <tr>
       <td align="center">
-        <b>Package:</b> <code>com.edito.app</code> &nbsp;|&nbsp; <b>Version:</b> <code>v1.0.70</code><br>
+        <b>Package:</b> <code>com.edito.app</code> &nbsp;|&nbsp; <b>Version:</b> <code>v1.0.71</code><br>
         <b>Size:</b> <code>88.9 MB</code> &nbsp;|&nbsp; <b>Architecture:</b> Universal<br><br>
-        <a href="https://github.com/itssagarK/edito/releases/download/v1.0.70/app-release.apk">
-          <img src="https://img.shields.io/badge/⚡%20DOWNLOAD-Edito%20v1.0.70%20APK-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="38" alt="Download Edito APK" />
+        <a href="https://github.com/itssagarK/edito/releases/download/v1.0.71/app-release.apk">
+          <img src="https://img.shields.io/badge/⚡%20DOWNLOAD-Edito%20v1.0.71%20APK-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="38" alt="Download Edito APK" />
         </a>
         <br><br>
-        <sub>⚡ 60 FPS Skia GPU Compositor &bull; Sound Effects Studio (SFX)<br>AlbertSans Typography &bull; True-Peak Limiter &bull; 4K FFmpeg</sub>
+        <sub>⚡ 60 FPS Skia GPU Compositor &bull; Transform Studio (Rotate/Mirror)<br>Sound Effects Studio (SFX) &bull; AlbertSans Typography &bull; 4K FFmpeg</sub>
       </td>
       <td align="center">
         <b>Package:</b> <code>com.edito.premiumpak</code> &nbsp;|&nbsp; <b>Version:</b> <code>v2.1.0</code><br>
         <b>Size:</b> <code>343.1 MB</code> &nbsp;|&nbsp; <b>Architecture:</b> Universal<br><br>
-        <a href="https://github.com/itssagarK/edito/releases/download/v1.0.69/edito-premium.apk">
+        <a href="https://github.com/itssagarK/edito/releases/download/v1.0.71/edito-premium.apk">
           <img src="https://img.shields.io/badge/👑%20DOWNLOAD-Edito%20Premium%20APK-FF7675?style=for-the-badge&logo=android&logoColor=white" height="38" alt="Download Edito Premium APK" />
         </a>
         <br><br>
@@ -66,7 +66,7 @@ Download the official release APKs directly from this repository:
     </tr>
     <tr>
       <td colspan="2" align="center">
-        📦 <b>Latest GitHub Release:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.70"><b>v1.0.70 Official Release (Both APKs Included)</b></a>
+        📦 <b>Latest GitHub Release:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.71"><b>v1.0.71 Official Release (Both APKs Included)</b></a>
       </td>
     </tr>
   </tbody>
@@ -75,6 +75,11 @@ Download the official release APKs directly from this repository:
 ---
 
 ## 🌟 Latest Flagship Studios & Features
+
+### 🔄 Spatial Transform & Quick Clip Workflow Studio (v1.0.71)
+- **CapCut-Style Spatial Transform Studio:** 1-tap 90-degree step rotations (0°, 90°, 180°, 270°), horizontal mirroring (`hflip`), vertical flipping (`vflip`), and scale zoom sliders (0.5x to 3.0x with presets for Fit, Fill, Zoom, and Dramatic).
+- **GPU Skia & 4K FFmpeg Pipeline:** Instant real-time 60 FPS viewport rendering with affine Matrix4 transforms and hardware-accelerated FFmpeg export filter compilation (`transpose=1`, `transpose=2`, `hflip`, `vflip`).
+- **High-Velocity Contextual Dock:** Directly surfaces primary clip actions on the bottom dock for instant 1-tap execution: Split, Speed, Volume, Transform, Delete (with ripple delete), Duplicate, Extract Audio (to dedicated audio track), Freeze Frame (3s hold), Reverse Playback, and Sound FX.
 
 ### 💡 Cinematic Spotlight & Atmospheric Vignette Studio (v1.0.67)
 - **ByteDance/CapCut Pro Optical Shader Architecture:** Direct mathematical port of CapCut Pro's native shader falloff formulas (`dark_angle.frag`, `gles2_filter.frag`) featuring cubic Hermite smoothstep edge illumination attenuation ($3t^2 - 2t^3$).

@@ -944,6 +944,20 @@ class RealtimePreviewViewport extends ConsumerWidget {
       );
     }
 
+    if (clip.transform.isActive) {
+      final rad = clip.transform.rotationDegrees * math.pi / 180.0;
+      final scaleX = (clip.transform.isFlippedHorizontal ? -1.0 : 1.0) * clip.transform.scale;
+      final scaleY = (clip.transform.isFlippedVertical ? -1.0 : 1.0) * clip.transform.scale;
+
+      videoContent = Transform(
+        alignment: Alignment.center,
+        transform: Matrix4.identity()
+          ..rotateZ(rad)
+          ..scale(scaleX, scaleY, 1.0),
+        child: videoContent,
+      );
+    }
+
     if (clip.vfx.isActive) {
       videoContent = VfxPreviewWrapper(
         config: clip.vfx,

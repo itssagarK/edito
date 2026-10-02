@@ -192,6 +192,21 @@ class FFmpegCommandBuilder {
           }
         }
 
+        // Spatial Video Transforms: 90-degree step rotations & mirror / flip
+        if (clip.transform.rotationDegrees == 90) {
+          vFilters.add('transpose=1');
+        } else if (clip.transform.rotationDegrees == 180) {
+          vFilters.add('hflip,vflip');
+        } else if (clip.transform.rotationDegrees == 270) {
+          vFilters.add('transpose=2');
+        }
+        if (clip.transform.isFlippedHorizontal) {
+          vFilters.add('hflip');
+        }
+        if (clip.transform.isFlippedVertical) {
+          vFilters.add('vflip');
+        }
+
         // Chroma Key / Green Screen Removal (applied BEFORE scale/pad so native resolution pixels are keyed without Lanczos interpolation fringing)
         if (clip.chromaKey.isEnabled) {
           final chromaFilters = ChromaKeyCompilerService.generateFFmpegFilters(clip.chromaKey);
