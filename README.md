@@ -46,13 +46,13 @@ Download the official release APKs directly from this repository:
   <tbody>
     <tr>
       <td align="center">
-        <b>Package:</b> <code>com.edito.app</code> &nbsp;|&nbsp; <b>Version:</b> <code>v1.0.69</code><br>
-        <b>Size:</b> <code>88.7 MB</code> &nbsp;|&nbsp; <b>Architecture:</b> Universal<br><br>
-        <a href="https://github.com/itssagarK/edito/releases/download/v1.0.69/app-release.apk">
-          <img src="https://img.shields.io/badge/⚡%20DOWNLOAD-Edito%20v1.0.69%20APK-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="38" alt="Download Edito APK" />
+        <b>Package:</b> <code>com.edito.app</code> &nbsp;|&nbsp; <b>Version:</b> <code>v1.0.70</code><br>
+        <b>Size:</b> <code>88.9 MB</code> &nbsp;|&nbsp; <b>Architecture:</b> Universal<br><br>
+        <a href="https://github.com/itssagarK/edito/releases/download/v1.0.70/app-release.apk">
+          <img src="https://img.shields.io/badge/⚡%20DOWNLOAD-Edito%20v1.0.70%20APK-6C5CE7?style=for-the-badge&logo=android&logoColor=white" height="38" alt="Download Edito APK" />
         </a>
         <br><br>
-        <sub>⚡ 60 FPS Skia GPU Compositor &bull; AI Voice Enhancer<br>True-Peak Limiter &bull; Magnetic Timeline Snapping &bull; 4K FFmpeg</sub>
+        <sub>⚡ 60 FPS Skia GPU Compositor &bull; Sound Effects Studio (SFX)<br>AlbertSans Typography &bull; True-Peak Limiter &bull; 4K FFmpeg</sub>
       </td>
       <td align="center">
         <b>Package:</b> <code>com.edito.premiumpak</code> &nbsp;|&nbsp; <b>Version:</b> <code>v2.1.0</code><br>
@@ -66,7 +66,7 @@ Download the official release APKs directly from this repository:
     </tr>
     <tr>
       <td colspan="2" align="center">
-        📦 <b>Latest GitHub Release:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.69"><b>v1.0.69 Official Release (Both APKs Included)</b></a>
+        📦 <b>Latest GitHub Release:</b> <a href="https://github.com/itssagarK/edito/releases/tag/v1.0.70"><b>v1.0.70 Official Release (Both APKs Included)</b></a>
       </td>
     </tr>
   </tbody>

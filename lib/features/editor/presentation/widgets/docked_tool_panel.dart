@@ -48,6 +48,7 @@ import '../../../vignette/models/vignette_config.dart';
 import '../../../vignette/presentation/widgets/vignette_studio_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
+import '../../../audio/presentation/widgets/sound_effects_sheet.dart';
 
 class DockedToolPanel extends StatelessWidget {
   final EditorTool tool;
@@ -155,6 +156,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'Cinematic Vignette & Spotlight';
       case EditorTool.effects:
         return 'Cinematic Transitions';
+      case EditorTool.soundEffects:
+        return 'Sound Effects Studio';
       default:
         return tool.name.toUpperCase();
     }
@@ -162,6 +165,8 @@ class DockedToolPanel extends StatelessWidget {
 
   IconData get _toolIcon {
     switch (tool) {
+      case EditorTool.soundEffects:
+        return Icons.music_note;
       case EditorTool.effects:
         return Icons.auto_awesome;
       case EditorTool.color:
@@ -853,6 +858,14 @@ class DockedToolPanel extends StatelessWidget {
             }).toList();
             onSaveProject(project.copyWith(tracks: updatedTracks));
           },
+        );
+
+      case EditorTool.soundEffects:
+        return SoundEffectsSheet(
+          project: project,
+          playheadPositionMs: clip.startTimeMs,
+          onSaveProject: onSaveProject,
+          isDocked: true,
         );
 
       default:

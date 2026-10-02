@@ -350,7 +350,7 @@ class _TextEditorSheetState extends State<TextEditorSheet> with SingleTickerProv
   }
 
   Widget _buildStyleTab() {
-    final fonts = ['Inter', 'BebasNeue', 'JetBrainsMono', 'Montserrat', 'Pacifico'];
+    final fonts = ['Inter', 'AlbertSans', 'BebasNeue', 'JetBrainsMono', 'Montserrat', 'Pacifico'];
     final colors = [0xFFFFFFFF, 0xFFFFEAA7, 0xFF00CEC9, 0xFF6C5CE7, 0xFFFF7675, 0xFF55E6C1, 0xFFFD79A8];
 
     return ListView(

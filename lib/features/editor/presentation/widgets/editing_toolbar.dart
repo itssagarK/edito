@@ -60,6 +60,7 @@ class EditingToolbar extends StatelessWidget {
       _ToolItem(EditorTool.keyframes, 'Animation', Icons.animation),
       _ToolItem(EditorTool.tracking, 'Tracking', Icons.my_location),
       _ToolItem(EditorTool.audio, 'Volume', Icons.volume_up_outlined),
+      _ToolItem(EditorTool.soundEffects, 'Sound FX', Icons.speaker),
       _ToolItem(EditorTool.chromaKey, 'Cutout', Icons.blur_linear),
       _ToolItem(EditorTool.retouch, 'Retouch', Icons.face_retouching_natural),
       _ToolItem(EditorTool.mask, 'Mask', Icons.masks),
@@ -154,6 +155,7 @@ class EditingToolbar extends StatelessWidget {
     final globalTools = [
       _ToolItem(EditorTool.select, 'Edit', Icons.movie_creation_outlined),
       _ToolItem(EditorTool.audio, 'Audio', Icons.mic_none),
+      _ToolItem(EditorTool.soundEffects, 'Sound FX', Icons.speaker),
       _ToolItem(EditorTool.text, 'Text', Icons.title),
       _ToolItem(EditorTool.captions, 'Captions', Icons.closed_caption),
       _ToolItem(EditorTool.tts, 'AI Voice', Icons.record_voice_over),

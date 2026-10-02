@@ -51,6 +51,7 @@ enum EditorTool {
   curves,
   filmGrain,
   vignette,
+  soundEffects,
 }
 
 class EditorState {

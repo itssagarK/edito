@@ -214,6 +214,15 @@ class AiToolsHub extends StatelessWidget {
       isAi: false,
       isPro: true,
     ),
+    _StudioToolItem(
+      title: 'Sound FX Studio',
+      subtitle: 'Whooshes, impacts & risers',
+      icon: Icons.speaker,
+      color: Color(0xFF00E5FF),
+      tool: EditorTool.soundEffects,
+      isAi: false,
+      isPro: true,
+    ),
   ];
 
   @override

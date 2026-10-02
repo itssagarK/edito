@@ -1,7 +1,7 @@
 name: edito
 description: "Edito - Professional High-Performance Video Editor for Android"
 publish_to: 'none'
-version: 1.0.69+70
+version: 1.0.70+71
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -43,3 +43,11 @@ flutter:
   assets:
     - assets/icons/
     - assets/images/
+    - assets/fonts/
+    - assets/audio/
+
+  fonts:
+    - family: AlbertSans
+      fonts:
+        - asset: assets/fonts/AlbertSans-ExtraBold.ttf
+          weight: 800
