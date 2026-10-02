@@ -204,6 +204,22 @@ class TimelineClipWidget extends StatelessWidget {
                           style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFFFFD700)),
                         ),
                       ),
+                    if (clip.transform.isActive)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        margin: const EdgeInsets.only(right: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF9B51E0).withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(3),
+                          border: Border.all(color: const Color(0xFF9B51E0), width: 0.8),
+                        ),
+                        child: Text(
+                          clip.transform.rotationDegrees != 0
+                              ? '🔄 ${clip.transform.rotationDegrees}°'
+                              : (clip.transform.isFlippedHorizontal ? '🪞' : '↕️'),
+                          style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFFD6A2E8)),
+                        ),
+                      ),
                     if (clip.isMuted)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
