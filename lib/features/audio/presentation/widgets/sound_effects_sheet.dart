@@ -5,6 +5,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
 import '../../../../models/project.dart';
 import '../../../../models/track.dart';
+import '../../../../models/media_asset.dart';
 import '../../models/sound_effect_item.dart';
 import 'waveform_painter.dart';
 
@@ -87,39 +88,51 @@ class _SoundEffectsSheetState extends State<SoundEffectsSheet> {
 
     final startTime = widget.playheadPositionMs;
     final duration = item.durationMs;
+    final sfxAssetId = 'asset_sfx_${DateTime.now().millisecondsSinceEpoch}';
 
-    // Create new audio clip for the sound effect
-    final newClip = Clip(
-      id: 'sfx_${DateTime.now().millisecondsSinceEpoch}',
-      name: item.name,
-      type: ClipType.audio,
-      startTimeMs: startTime,
+    final sfxAsset = MediaAsset(
+      id: sfxAssetId,
+      path: item.assetPath ?? 'procedural://${item.id}',
+      fileName: item.name,
+      type: MediaType.audio,
       durationMs: duration,
-      sourceDurationMs: duration,
-      sourcePath: item.assetPath ?? 'procedural://${item.id}',
     );
 
     // Locate or create audio track
     final tracks = List<Track>.from(widget.project.tracks);
     int audioTrackIndex = tracks.indexWhere((t) => t.type == TrackType.audio);
+    String trackId;
 
     if (audioTrackIndex == -1) {
-      // Create new audio track
+      trackId = 'track_audio_${DateTime.now().millisecondsSinceEpoch}';
       final newTrack = Track(
-        id: 'track_audio_${DateTime.now().millisecondsSinceEpoch}',
+        id: trackId,
         name: 'Audio SFX',
         type: TrackType.audio,
-        clips: [newClip],
+        clips: const [],
       );
       tracks.add(newTrack);
+      audioTrackIndex = tracks.length - 1;
     } else {
-      // Append clip to existing track
-      final existingTrack = tracks[audioTrackIndex];
-      final updatedClips = List<Clip>.from(existingTrack.clips)..add(newClip);
-      tracks[audioTrackIndex] = existingTrack.copyWith(clips: updatedClips);
+      trackId = tracks[audioTrackIndex].id;
     }
 
-    final updatedProject = widget.project.copyWith(tracks: tracks);
+    final newClip = Clip(
+      id: 'clip_sfx_${DateTime.now().millisecondsSinceEpoch}',
+      assetId: sfxAssetId,
+      trackId: trackId,
+      startTimeMs: startTime,
+      durationMs: duration,
+      sourceInMs: 0,
+      sourceOutMs: duration,
+    );
+
+    final existingTrack = tracks[audioTrackIndex];
+    final updatedClips = List<Clip>.from(existingTrack.clips)..add(newClip);
+    tracks[audioTrackIndex] = existingTrack.copyWith(clips: updatedClips);
+
+    final updatedAssets = List<MediaAsset>.from(widget.project.assets)..add(sfxAsset);
+    final updatedProject = widget.project.copyWith(tracks: tracks, assets: updatedAssets);
     widget.onSaveProject(updatedProject);
 
     ScaffoldMessenger.of(context).showSnackBar(
