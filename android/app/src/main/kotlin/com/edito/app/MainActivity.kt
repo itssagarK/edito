@@ -550,6 +550,50 @@ class MainActivity: FlutterActivity() {
                         }
                     }.start()
                 }
+                "detectVoiceActivity" -> {
+                    val audioPath = call.argument<String>("audioPath")
+                    val sensitivity = call.argument<Double>("thresholdSensitivity") ?: 0.70
+
+                    if (audioPath.isNullOrBlank()) {
+                        result.error("INVALID_ARGS", "audioPath cannot be empty", null)
+                        return@setMethodCallHandler
+                    }
+
+                    Thread {
+                        try {
+                            val res = detectVoiceActivityPipeline(audioPath, sensitivity)
+                            runOnUiThread { result.success(res) }
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "Voice activity detection error: ${e.message}", e)
+                            runOnUiThread {
+                                result.error("VAD_FAILED", e.message, e.localizedMessage)
+                            }
+                        }
+                    }.start()
+                }
+                "detectAudioBeats" -> {
+                    val audioPath = call.argument<String>("audioPath")
+                    val sensitivity = call.argument<Double>("sensitivity") ?: 0.70
+                    val minBpm = call.argument<Double>("minBpm") ?: 60.0
+                    val maxBpm = call.argument<Double>("maxBpm") ?: 200.0
+
+                    if (audioPath.isNullOrBlank()) {
+                        result.error("INVALID_ARGS", "audioPath cannot be empty", null)
+                        return@setMethodCallHandler
+                    }
+
+                    Thread {
+                        try {
+                            val res = detectAudioBeatsPipeline(audioPath, sensitivity, minBpm, maxBpm)
+                            runOnUiThread { result.success(res) }
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "Audio beat detection error: ${e.message}", e)
+                            runOnUiThread {
+                                result.error("BEAT_DETECTION_FAILED", e.message, e.localizedMessage)
+                            }
+                        }
+                    }.start()
+                }
                 else -> result.notImplemented()
             }
         }
@@ -1947,6 +1991,216 @@ class MainActivity: FlutterActivity() {
             )
         } finally {
             try { retriever.release() } catch (_: Exception) {}
+        }
+    }
+
+    private fun detectVoiceActivityPipeline(
+        audioPath: String,
+        sensitivity: Double = 0.70
+    ): Map<String, Any> {
+        val audioFile = File(audioPath)
+        if (!audioFile.exists() || audioFile.length() < 44) {
+            throw IllegalArgumentException("Audio file does not exist or is empty: $audioPath")
+        }
+
+        val wavFile = if (audioPath.endsWith(".wav", ignoreCase = true)) {
+            audioFile
+        } else {
+            val tempWav = File(applicationContext.cacheDir, "vad_temp_${System.currentTimeMillis()}.wav")
+            extractAudioToWavPipeline(audioPath, tempWav.absolutePath, 16000, 1)
+            tempWav
+        }
+
+        try {
+            val fileBytes = wavFile.readBytes()
+            if (fileBytes.size < 44) {
+                return mapOf("success" to true, "speechSegments" to emptyList<Map<String, Any>>(), "durationMs" to 0)
+            }
+
+            val sampleRate = ByteBuffer.wrap(fileBytes, 24, 4).order(ByteOrder.LITTLE_ENDIAN).int
+            val pcmDataOffset = 44
+            val numSamples = (fileBytes.size - pcmDataOffset) / 2
+            val shortBuf = ByteBuffer.wrap(fileBytes, pcmDataOffset, fileBytes.size - pcmDataOffset).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
+
+            val frameSize = (sampleRate * 0.025).toInt()
+            val hopSize = (sampleRate * 0.010).toInt()
+            val numFrames = (numSamples - frameSize) / hopSize
+
+            val energies = FloatArray(numFrames.coerceAtLeast(0))
+            var maxEnergy = 1e-6f
+
+            for (f in 0 until numFrames) {
+                var sumSquare = 0.0
+                val startSample = f * hopSize
+                for (s in 0 until frameSize) {
+                    val v = shortBuf.get(startSample + s).toDouble() / 32768.0
+                    sumSquare += v * v
+                }
+                val rms = Math.sqrt(sumSquare / frameSize).toFloat()
+                energies[f] = rms
+                if (rms > maxEnergy) maxEnergy = rms
+            }
+
+            val baseRatio = (0.04f + (1.0f - sensitivity.toFloat()) * 0.08f)
+            val speechThreshold = (maxEnergy * baseRatio).coerceAtLeast(0.010f)
+            val minSpeechFrames = (0.20 / 0.010).toInt()
+            val minSilenceFrames = (0.30 / 0.010).toInt()
+
+            val speechSegments = mutableListOf<Map<String, Int>>()
+            var inSpeech = false
+            var speechStartFrame = 0
+            var silenceCount = 0
+
+            for (f in 0 until numFrames) {
+                val isSpeech = energies[f] > speechThreshold
+                if (isSpeech) {
+                    if (!inSpeech) {
+                        inSpeech = true
+                        speechStartFrame = f
+                    }
+                    silenceCount = 0
+                } else {
+                    if (inSpeech) {
+                        silenceCount++
+                        if (silenceCount >= minSilenceFrames) {
+                            val endFrame = f - silenceCount
+                            if (endFrame - speechStartFrame >= minSpeechFrames) {
+                                val sMs = (speechStartFrame * 10L).toInt()
+                                val eMs = (endFrame * 10L).toInt()
+                                speechSegments.add(mapOf("startMs" to sMs, "endMs" to eMs))
+                            }
+                            inSpeech = false
+                            silenceCount = 0
+                        }
+                    }
+                }
+            }
+
+            if (inSpeech) {
+                val endFrame = numFrames - 1
+                if (endFrame - speechStartFrame >= minSpeechFrames) {
+                    val sMs = (speechStartFrame * 10L).toInt()
+                    val eMs = (endFrame * 10L).toInt()
+                    speechSegments.add(mapOf("startMs" to sMs, "endMs" to eMs))
+                }
+            }
+
+            val totalDurMs = ((numSamples.toDouble() / sampleRate) * 1000.0).toInt()
+            return mapOf(
+                "success" to true,
+                "speechSegments" to speechSegments,
+                "durationMs" to totalDurMs
+            )
+        } finally {
+            if (wavFile != audioFile && wavFile.exists()) {
+                try { wavFile.delete() } catch (_: Exception) {}
+            }
+        }
+    }
+
+    private fun detectAudioBeatsPipeline(
+        audioPath: String,
+        sensitivity: Double = 0.70,
+        minBpm: Double = 60.0,
+        maxBpm: Double = 200.0
+    ): Map<String, Any> {
+        val audioFile = File(audioPath)
+        if (!audioFile.exists() || audioFile.length() < 44) {
+            throw IllegalArgumentException("Audio file does not exist or is empty: $audioPath")
+        }
+
+        val wavFile = if (audioPath.endsWith(".wav", ignoreCase = true)) {
+            audioFile
+        } else {
+            val tempWav = File(applicationContext.cacheDir, "beats_temp_${System.currentTimeMillis()}.wav")
+            extractAudioToWavPipeline(audioPath, tempWav.absolutePath, 16000, 1)
+            tempWav
+        }
+
+        try {
+            val fileBytes = wavFile.readBytes()
+            if (fileBytes.size < 44) {
+                return mapOf("success" to true, "bpm" to 120.0, "beatsMs" to emptyList<Int>())
+            }
+
+            val sampleRate = ByteBuffer.wrap(fileBytes, 24, 4).order(ByteOrder.LITTLE_ENDIAN).int
+            val pcmDataOffset = 44
+            val numSamples = (fileBytes.size - pcmDataOffset) / 2
+            val shortBuf = ByteBuffer.wrap(fileBytes, pcmDataOffset, fileBytes.size - pcmDataOffset).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
+
+            val frameSize = (sampleRate * 0.020).toInt()
+            val hopSize = (sampleRate * 0.010).toInt()
+            val numFrames = (numSamples - frameSize) / hopSize
+            if (numFrames <= 2) {
+                return mapOf("success" to true, "bpm" to 120.0, "beatsMs" to emptyList<Int>())
+            }
+
+            val frameEnergies = FloatArray(numFrames)
+            for (f in 0 until numFrames) {
+                var sum = 0.0
+                val start = f * hopSize
+                for (s in 0 until frameSize) {
+                    val v = shortBuf.get(start + s).toDouble() / 32768.0
+                    sum += v * v
+                }
+                frameEnergies[f] = Math.sqrt(sum / frameSize).toFloat()
+            }
+
+            val flux = FloatArray(numFrames)
+            for (f in 1 until numFrames) {
+                val diff = frameEnergies[f] - frameEnergies[f - 1]
+                flux[f] = if (diff > 0f) diff else 0f
+            }
+
+            val winSize = 20
+            val minIntervalFrames = ((60000.0 / maxBpm.coerceAtLeast(60.0)) / 10.0).toInt().coerceAtLeast(1)
+            val beatsList = mutableListOf<Int>()
+            var lastBeatFrame = -minIntervalFrames
+
+            for (f in 1 until numFrames - 1) {
+                val wStart = (f - winSize / 2).coerceAtLeast(0)
+                val wEnd = (f + winSize / 2).coerceAtMost(numFrames)
+                var localSum = 0f
+                for (w in wStart until wEnd) {
+                    localSum += flux[w]
+                }
+                val localMean = localSum / (wEnd - wStart)
+                val threshold = localMean * (1.1f + (1.0f - sensitivity.toFloat()) * 1.4f) + 0.02f
+
+                if (flux[f] > flux[f - 1] && flux[f] >= flux[f + 1] && flux[f] >= threshold) {
+                    if (f - lastBeatFrame >= minIntervalFrames) {
+                        beatsList.add(f * 10)
+                        lastBeatFrame = f
+                    }
+                }
+            }
+
+            var detectedBpm = 120.0
+            if (beatsList.size >= 3) {
+                val intervals = mutableListOf<Int>()
+                for (i in 1 until beatsList.size) {
+                    val diff = beatsList[i] - beatsList[i - 1]
+                    if (diff in 250..1500) {
+                        intervals.add(diff)
+                    }
+                }
+                if (intervals.isNotEmpty()) {
+                    intervals.sort()
+                    val medianMs = intervals[intervals.size / 2]
+                    detectedBpm = (60000.0 / medianMs).coerceIn(minBpm, maxBpm)
+                }
+            }
+
+            return mapOf(
+                "success" to true,
+                "bpm" to Math.round(detectedBpm * 10.0) / 10.0,
+                "beatsMs" to beatsList,
+                "totalBeats" to beatsList.size
+            )
+        } finally {
+            if (wavFile != audioFile && wavFile.exists()) {
+                try { wavFile.delete() } catch (_: Exception) {}
+            }
         }
     }
 

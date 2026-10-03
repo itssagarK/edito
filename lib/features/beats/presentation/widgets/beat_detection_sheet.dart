@@ -77,6 +77,36 @@ class _BeatDetectionSheetState extends State<BeatDetectionSheet> {
     _applyChange();
   }
 
+  bool _isAnalyzingBeats = false;
+
+  Future<void> _runSpectralOnsetDetection() async {
+    setState(() => _isAnalyzingBeats = true);
+    try {
+      final res = await BeatDetectorService.detectBeatsFromAudioFile(
+        audioPath: widget.clip.assetId,
+        durationMs: widget.clip.durationMs,
+        sensitivity: _config.sensitivity,
+      );
+
+      final beats = (res['beats'] as List<dynamic>?)?.map((e) => (e as num).toInt()).toList() ?? [];
+      final bpm = (res['bpm'] as num?)?.toDouble() ?? _config.bpm;
+
+      setState(() {
+        _config = _config.copyWith(
+          isEnabled: true,
+          mode: BeatDetectionMode.auto,
+          bpm: bpm,
+          beatTimestampsMs: beats,
+        );
+      });
+      _applyChange();
+    } finally {
+      if (mounted) {
+        setState(() => _isAnalyzingBeats = false);
+      }
+    }
+  }
+
   void _handleTapTempo() {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     _tapTimestamps.add(nowMs);
@@ -236,6 +266,43 @@ class _BeatDetectionSheetState extends State<BeatDetectionSheet> {
                 ),
               ],
             ),
+          ),
+
+          // AI Spectral Onset Detection Button Card
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+            child: _isAnalyzingBeats
+                ? Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFD700).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.4)),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFFFD700)),
+                        ),
+                        SizedBox(width: 8),
+                        Text('Analyzing audio transients & spectral flux...', style: TextStyle(fontSize: 11, color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  )
+                : OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFFFD700), width: 1.2),
+                      foregroundColor: const Color(0xFFFFD700),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    icon: const Icon(Icons.psychology, size: 16),
+                    label: const Text('AI SPECTRAL ONSET SCAN (OFFLINE)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                    onPressed: _runSpectralOnsetDetection,
+                  ),
           ),
 
           const SizedBox(height: 6),

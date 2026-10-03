@@ -15,12 +15,30 @@ class AudioDuckingService {
   static List<AudioInterval> getForegroundSpeechIntervals(Project project) {
     final intervals = <AudioInterval>[];
     for (final track in project.tracks) {
-      if (track.type == TrackType.video && !track.isMuted) {
+      if (!track.isMuted) {
         for (final clip in track.clips) {
           if (!clip.isMuted) {
-            final startSec = clip.startTimeMs / 1000.0;
-            final endSec = (clip.startTimeMs + clip.durationMs) / 1000.0;
-            intervals.add(AudioInterval(startSec, endSec));
+            // Video tracks or foreground audio clips (not background ducked tracks) produce speech
+            final isForeground = track.type == TrackType.video || (!clip.audioEffects.isDuckingEnabled && track.type == TrackType.audio);
+            if (!isForeground) continue;
+
+            if (clip.audioEffects.isVadDuckingEnabled && clip.audioEffects.hasCustomSpeechIntervals) {
+              // Precise on-device VAD speech segments
+              for (final pair in clip.audioEffects.speechIntervalsMs) {
+                if (pair.length >= 2) {
+                  final startSec = (clip.startTimeMs + pair[0]) / 1000.0;
+                  final endSec = (clip.startTimeMs + pair[1]) / 1000.0;
+                  if (endSec > startSec) {
+                    intervals.add(AudioInterval(startSec, endSec));
+                  }
+                }
+              }
+            } else if (track.type == TrackType.video) {
+              // Fallback to clip duration for legacy video clips without VAD
+              final startSec = clip.startTimeMs / 1000.0;
+              final endSec = (clip.startTimeMs + clip.durationMs) / 1000.0;
+              intervals.add(AudioInterval(startSec, endSec));
+            }
           }
         }
       }

@@ -2,7 +2,7 @@
 
 > **Last Updated:** 2026-10-03  
 > **Target:** High-Performance, 100% On-Device & Offline AI Video Editing Engine (Edito)  
-> **Status:** Phase 0, 1, 2, 3, 4 **COMPLETED** | Phase 5 (F5: Smart Auto-Ducking & Beat Sync) **IN PROGRESS**
+> **Status:** Phase 0, 1, 2, 3, 4, 5 **COMPLETED** | Phase 6 (F6: AI Upscaler & Enhancer) **IN PROGRESS**
 
 ---
 
@@ -45,9 +45,9 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 | **1** | **F1** | Auto Captions (Whisper STT) | Whisper Tiny int8 / Sherpa-ONNX / Native VAD | MIT | ✅ **COMPLETED** (`af4d1cc`) |
 | **2** | **F2** | Real Subject Segmentation | MediaPipe Selfie Segmentation (TFLite) | Apache-2.0 | ✅ **COMPLETED** (`128a471`) |
 | **3** | **F3** | Auto Subject Tracking (Zoom) | MediaPipe Face / Centroid + Kalman/EMA | Apache-2.0 | ✅ **COMPLETED** |
-| **4** | **F4** | Neural Noise Removal | FFmpeg `arnndn` (RNNoise) | BSD-3 | ✅ **COMPLETED** |
-| **5** | **F5** | Smart Auto-Ducking & Beat Sync | Silero VAD / Energy VAD + Onset Detection | MIT | 🔄 **IN PROGRESS** |
-| **6** | **F6** | AI Upscaler & Enhancer | Real-ESRGAN Compact (ncnn/ONNX, Tiled) | BSD-3 | ⏳ PENDING |
+| **4** | **F4** | Neural Noise Removal | FFmpeg `arnndn` (RNNoise) | BSD-3 | ✅ **COMPLETED** (`397f2e1`) |
+| **5** | **F5** | Smart Auto-Ducking & Beat Sync | Silero VAD / Energy VAD + Onset Detection | MIT | ✅ **COMPLETED** |
+| **6** | **F6** | AI Upscaler & Enhancer | Real-ESRGAN Compact (ncnn/ONNX, Tiled) | BSD-3 | 🔄 **IN PROGRESS** |
 
 ---
 
@@ -129,15 +129,24 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 
 ---
 
-### Phase 5: F5 - Smart Auto-Ducking and Beat Sync 🔄 [IN PROGRESS]
+### Phase 5: F5 - Smart Auto-Ducking and Beat Sync ✅ [COMPLETED]
 **Goal:** Intelligent background music attenuation during speech, plus music beat grid snapping.
 - **Ducking:** Silero VAD (MIT) / Energy VAD envelope detector to generate smooth sidechain ducking volume automation.
 - **Beat Sync:** FFT spectral flux onset detector to snap timeline cuts to music tempo beats.
 - **UI:** Visual ducking curve and beat marker dots on timeline.
+- [x] Extended `AudioEffectsConfig` with `isVadDuckingEnabled` and `speechIntervalsMs` (backward compatible).
+- [x] Upgraded `AudioDuckingService` to duck only during detected foreground speech segments.
+- [x] Implemented `AudioVadService` (`lib/features/audio/services/audio_vad_service.dart`).
+- [x] Enhanced `BeatDetectorService` with half-wave rectified spectral flux onset detection and statistical BPM estimation.
+- [x] Added native pipelines `detectVoiceActivityPipeline` and `detectAudioBeatsPipeline` to `MainActivity.kt` and `scripts/configure_android.py`.
+- [x] Added AI VAD speech activity scanner card and status badges in `AudioMixerSheet`.
+- [x] Added AI Spectral Onset Scan button in `BeatDetectionSheet`.
+- [x] Added comprehensive unit tests in `test/audio_vad_ducking_test.dart` and `test/beat_sync_onset_test.dart`.
+- [x] Verified 100% clean with `python scripts/verify_codebase.py` (336 files).
 
 ---
 
-### Phase 6: F6 - AI Upscaler & Image Enhancer ⏳ [PENDING]
+### Phase 6: F6 - AI Upscaler & Image Enhancer 🔄 [IN PROGRESS]
 **Goal:** Super-resolution for thumbnails, cover images, and short clip frames.
 - **Model:** Real-ESRGAN Compact (BSD-3-Clause) via ncnn/ONNX.
 - **Safety:** Tiled execution (256x256 tiles with 16px overlap) to prevent Android out-of-memory.
@@ -164,11 +173,18 @@ If this environment restarts or your session closes abruptly, follow this 4-step
   - EMA focus smoothing, auto-tracking canvas preview, and manual override.
   - Linter verification: 100% clean (332 files).
 
-- **2026-10-03 [F4 Neural Noise Removal]:**
-  - Added RNNoise BSD-3 recurrent neural noise removal.
-  - Integrated brickwall true-peak limiter (`alimiter=limit=0.95...`) and interactive hold-to-compare A/B auditioning.
+- **2026-10-03 [Commit `397f2e1`]:**
+  - Added F4 Neural Noise Removal (RNNoise BSD-3).
+  - Brickwall limiter ceiling, interactive hold-to-compare A/B auditioning.
   - Added unit test suite `test/neural_noise_removal_test.dart`.
   - Linter verification: 100% clean (333 files).
+
+- **2026-10-03 [F5 Smart Auto-Ducking & Beat Sync]:**
+  - Added on-device VAD speech segmentation and sidechain auto-ducking envelopes.
+  - Added spectral flux transient onset detector, statistical BPM calculation, and magnetic beat snap.
+  - Added twin platform channel methods `detectVoiceActivity` & `detectAudioBeats` in `MainActivity.kt` and `scripts/configure_android.py`.
+  - Added unit test suites `test/audio_vad_ducking_test.dart` and `test/beat_sync_onset_test.dart`.
+  - Linter verification: 100% clean (336 files).
 
 ---
 

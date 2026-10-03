@@ -266,6 +266,10 @@ class AudioEffectsConfig extends Equatable {
   final double duckingThresholdDb;     // -40.0 to -10.0 dB
   final int duckingAttackMs;           // 10 to 300 ms
   final int duckingReleaseMs;          // 50 to 1500 ms
+  final bool isVadDuckingEnabled;      // AI Voice Activity Detection-driven speech ducking
+  final List<List<int>> speechIntervalsMs; // Precise [startMs, endMs] speech timestamps detected by VAD
+
+  bool get hasCustomSpeechIntervals => speechIntervalsMs.isNotEmpty;
 
   // Vocal Isolation & De-Esser
   final VocalIsolationMode vocalIsolationMode;
@@ -329,6 +333,8 @@ class AudioEffectsConfig extends Equatable {
     this.duckingThresholdDb = -20.0,
     this.duckingAttackMs = 50,
     this.duckingReleaseMs = 300,
+    this.isVadDuckingEnabled = true,
+    this.speechIntervalsMs = const [],
     this.vocalIsolationMode = VocalIsolationMode.none,
     this.vocalIsolationIntensity = 0.80,
     this.deEsserIntensity = 0.0,
@@ -471,6 +477,8 @@ class AudioEffectsConfig extends Equatable {
     double? duckingThresholdDb,
     int? duckingAttackMs,
     int? duckingReleaseMs,
+    bool? isVadDuckingEnabled,
+    List<List<int>>? speechIntervalsMs,
     VocalIsolationMode? vocalIsolationMode,
     double? vocalIsolationIntensity,
     double? deEsserIntensity,
@@ -524,6 +532,8 @@ class AudioEffectsConfig extends Equatable {
       duckingThresholdDb: duckingThresholdDb ?? this.duckingThresholdDb,
       duckingAttackMs: duckingAttackMs ?? this.duckingAttackMs,
       duckingReleaseMs: duckingReleaseMs ?? this.duckingReleaseMs,
+      isVadDuckingEnabled: isVadDuckingEnabled ?? this.isVadDuckingEnabled,
+      speechIntervalsMs: speechIntervalsMs ?? this.speechIntervalsMs,
       vocalIsolationMode: vocalIsolationMode ?? this.vocalIsolationMode,
       vocalIsolationIntensity: vocalIsolationIntensity ?? this.vocalIsolationIntensity,
       deEsserIntensity: deEsserIntensity ?? this.deEsserIntensity,
@@ -573,6 +583,8 @@ class AudioEffectsConfig extends Equatable {
         'duckingThresholdDb': duckingThresholdDb,
         'duckingAttackMs': duckingAttackMs,
         'duckingReleaseMs': duckingReleaseMs,
+        'isVadDuckingEnabled': isVadDuckingEnabled,
+        'speechIntervalsMs': speechIntervalsMs,
         'vocalIsolationMode': vocalIsolationMode.name,
         'vocalIsolationIntensity': vocalIsolationIntensity,
         'deEsserIntensity': deEsserIntensity,
@@ -644,6 +656,11 @@ class AudioEffectsConfig extends Equatable {
       duckingThresholdDb: (json['duckingThresholdDb'] as num?)?.toDouble() ?? -20.0,
       duckingAttackMs: (json['duckingAttackMs'] as num?)?.toInt() ?? 50,
       duckingReleaseMs: (json['duckingReleaseMs'] as num?)?.toInt() ?? 300,
+      isVadDuckingEnabled: json['isVadDuckingEnabled'] as bool? ?? true,
+      speechIntervalsMs: (json['speechIntervalsMs'] as List<dynamic>?)
+              ?.map((item) => (item as List<dynamic>).map((e) => (e as num).toInt()).toList())
+              .toList() ??
+          const [],
       vocalIsolationMode: VocalIsolationMode.values.firstWhere(
         (m) => m.name == json['vocalIsolationMode'],
         orElse: () => VocalIsolationMode.none,
@@ -703,6 +720,8 @@ class AudioEffectsConfig extends Equatable {
         duckingThresholdDb,
         duckingAttackMs,
         duckingReleaseMs,
+        isVadDuckingEnabled,
+        speechIntervalsMs,
         vocalIsolationMode,
         vocalIsolationIntensity,
         deEsserIntensity,

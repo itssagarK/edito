@@ -4,6 +4,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
 import '../../models/audio_effects_config.dart';
 import '../../services/ai_voice_enhancer_service.dart';
+import '../../services/audio_vad_service.dart';
 import 'acoustic_space_visualizer.dart';
 import 'parametric_eq_curve_widget.dart';
 
@@ -60,6 +61,31 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
       audioEffects: _effects,
     );
     widget.onSave(updated);
+  }
+
+  bool _isScanningVad = false;
+
+  Future<void> _handleScanVad() async {
+    setState(() => _isScanningVad = true);
+    try {
+      final mediaPath = widget.clip.assetId.isNotEmpty ? widget.clip.assetId : '';
+      final segments = await AudioVadService.detectVoiceActivity(
+        filePath: mediaPath,
+        durationMs: widget.clip.durationMs,
+      );
+      setState(() {
+        _effects = _effects.copyWith(
+          isDuckingEnabled: true,
+          isVadDuckingEnabled: true,
+          speechIntervalsMs: segments,
+        );
+      });
+      _applyChange();
+    } finally {
+      if (mounted) {
+        setState(() => _isScanningVad = false);
+      }
+    }
   }
 
   void _applyEqualizerPreset(EqualizerPreset preset) {
@@ -1138,6 +1164,130 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 10),
+                // On-Device VAD Speech Activity Card
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: _effects.isVadDuckingEnabled ? const Color(0xFF00E5FF).withOpacity(0.5) : AppColors.border,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.record_voice_over, color: Color(0xFF00E5FF), size: 16),
+                              const SizedBox(width: 6),
+                              Text(
+                                'AI Voice Activity Ducking (VAD)',
+                                style: AppTypography.titleMedium.copyWith(fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          Switch(
+                            value: _effects.isVadDuckingEnabled,
+                            activeColor: const Color(0xFF00E5FF),
+                            onChanged: (val) {
+                              setState(() => _effects = _effects.copyWith(isVadDuckingEnabled: val));
+                              _applyChange();
+                            },
+                          ),
+                        ],
+                      ),
+                      Text(
+                        'Attenuates music ONLY when human voice is actively detected, preserving music volume during conversational pauses.',
+                        style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                      ),
+                      if (_effects.isVadDuckingEnabled) ...[
+                        const SizedBox(height: 8),
+                        if (_isScanningVad)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00E5FF)),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text('Scanning voice activity...', style: TextStyle(fontSize: 11, color: Color(0xFF00E5FF))),
+                                ],
+                              ),
+                            ),
+                          )
+                        else
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: Color(0xFF00E5FF)),
+                                    foregroundColor: const Color(0xFF00E5FF),
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  icon: const Icon(Icons.graphic_eq, size: 16),
+                                  label: Text(
+                                    _effects.hasCustomSpeechIntervals ? 'RE-SCAN VAD ACTIVITY' : 'SCAN SPEECH ACTIVITY',
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                  ),
+                                  onPressed: _handleScanVad,
+                                ),
+                              ),
+                              if (_effects.hasCustomSpeechIntervals) ...[
+                                const SizedBox(width: 6),
+                                IconButton(
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: AppColors.surface,
+                                    padding: const EdgeInsets.all(6),
+                                    minimumSize: const Size(32, 32),
+                                  ),
+                                  icon: const Icon(Icons.clear, size: 16, color: Colors.redAccent),
+                                  tooltip: 'Clear VAD scan',
+                                  onPressed: () {
+                                    setState(() => _effects = _effects.copyWith(speechIntervalsMs: []));
+                                    _applyChange();
+                                  },
+                                ),
+                              ],
+                            ],
+                          ),
+                        if (_effects.hasCustomSpeechIntervals) ...[
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00E5FF).withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.check_circle, size: 14, color: Color(0xFF00E5FF)),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    AudioVadService.getSpeechSummary(_effects.speechIntervalsMs),
+                                    style: const TextStyle(fontSize: 10, color: Color(0xFF00E5FF), fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ],
+                  ),
                 ),
               ],
             ],
