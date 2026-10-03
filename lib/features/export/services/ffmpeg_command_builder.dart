@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:math' as math;
 import '../../../models/clip.dart';
 import '../../../models/media_asset.dart';
 import '../../../models/project.dart';
@@ -57,7 +59,15 @@ import '../../curves/services/curves_compiler_service.dart';
 import '../../film_grain/services/film_grain_compiler_service.dart';
 import '../../vignette/models/vignette_config.dart';
 import '../../vignette/services/vignette_compiler_service.dart';
+import '../../transform/services/video_transform_compiler_service.dart';
 import '../models/export_preset.dart';
+
+class _UpperClipLayer {
+  final String label;
+  final Clip clip;
+  final int trackIndex;
+  const _UpperClipLayer(this.label, this.clip, this.trackIndex);
+}
 
 class FFmpegCommandResult {
   final List<String> arguments;
@@ -96,10 +106,29 @@ class FFmpegCommandBuilder {
 
     final inputAssets = project.assets.where((a) => usedAssetIds.contains(a.id)).toList();
     final assetIndexMap = <String, int>{};
+    final inputPathIndexMap = <String, int>{};
 
     for (int i = 0; i < inputAssets.length; i++) {
       assetIndexMap[inputAssets[i].id] = i;
+      inputPathIndexMap[inputAssets[i].path] = i;
       args.addAll(['-i', inputAssets[i].path]);
+    }
+
+    // Register any Real-ESRGAN upscaled assets as dedicated input streams
+    for (final track in project.tracks) {
+      for (final clip in track.clips) {
+        if (clip.enhancement.useNeuralRealEsrgan &&
+            clip.enhancement.upscaledAssetPath != null &&
+            clip.enhancement.upscaledAssetPath!.isNotEmpty &&
+            File(clip.enhancement.upscaledAssetPath!).existsSync()) {
+          final upPath = clip.enhancement.upscaledAssetPath!;
+          if (!inputPathIndexMap.containsKey(upPath)) {
+            final nextIdx = args.where((arg) => arg == '-i').length;
+            inputPathIndexMap[upPath] = nextIdx;
+            args.addAll(['-i', upPath]);
+          }
+        }
+      }
     }
 
     // If no assets, create a black video generator fallback
@@ -144,13 +173,36 @@ class FFmpegCommandBuilder {
 
     int clipCounter = 0;
     final trackOutputLabels = <String>[];
+    final upperClipLayers = <_UpperClipLayer>[];
 
     for (int tIdx = 0; tIdx < videoTracks.length; tIdx++) {
       final track = videoTracks[tIdx];
       final trackClipLabels = <String>[];
 
-      for (final clip in track.clips) {
-        final inputIdx = assetIndexMap[clip.assetId] ?? 0;
+      // For Track 0, sort clips by startTimeMs to ensure timeline gap alignment
+      final clipsToProcess = tIdx == 0
+          ? (List<Clip>.from(track.clips)..sort((a, b) => a.startTimeMs.compareTo(b.startTimeMs)))
+          : track.clips;
+
+      // Check for initial gap at the start of Track 0
+      if (tIdx == 0 && clipsToProcess.isNotEmpty && clipsToProcess.first.startTimeMs > 0) {
+        final headGapSec = (clipsToProcess.first.startTimeMs / 1000.0).toStringAsFixed(3);
+        final gapLabel = '[vgap_head]';
+        filterComplexSegments.add('color=c=black:s=${targetW}x${targetH}:r=${config.framerate.fpsValue}:d=$headGapSec,setsar=1 $gapLabel');
+        trackClipLabels.add(gapLabel);
+      }
+
+      for (int cIdx = 0; cIdx < clipsToProcess.length; cIdx++) {
+        final clip = clipsToProcess[cIdx];
+        final upscaledPath = (clip.enhancement.useNeuralRealEsrgan &&
+                clip.enhancement.upscaledAssetPath != null &&
+                clip.enhancement.upscaledAssetPath!.isNotEmpty &&
+                File(clip.enhancement.upscaledAssetPath!).existsSync())
+            ? clip.enhancement.upscaledAssetPath!
+            : null;
+        final inputIdx = upscaledPath != null
+            ? (inputPathIndexMap[upscaledPath] ?? (assetIndexMap[clip.assetId] ?? 0))
+            : (assetIndexMap[clip.assetId] ?? 0);
         final startSec = (clip.sourceInMs / 1000.0).toStringAsFixed(3);
         final endSec = (clip.sourceOutMs / 1000.0).toStringAsFixed(3);
         final speed = clip.speed;
@@ -192,19 +244,14 @@ class FFmpegCommandBuilder {
           }
         }
 
-        // Spatial Video Transforms: 90-degree step rotations & mirror / flip
-        if (clip.transform.rotationDegrees == 90) {
-          vFilters.add('transpose=1');
-        } else if (clip.transform.rotationDegrees == 180) {
-          vFilters.add('hflip,vflip');
-        } else if (clip.transform.rotationDegrees == 270) {
-          vFilters.add('transpose=2');
-        }
-        if (clip.transform.isFlippedHorizontal) {
-          vFilters.add('hflip');
-        }
-        if (clip.transform.isFlippedVertical) {
-          vFilters.add('vflip');
+        // Spatial Video Transforms: rotations, mirror flips, scale zooms, and canvas translations
+        final transformFilters = VideoTransformCompilerService.generateFFmpegFilters(
+          clip.transform,
+          targetWidth: targetW,
+          targetHeight: targetH,
+        );
+        if (transformFilters.isNotEmpty) {
+          vFilters.addAll(transformFilters);
         }
 
         // Chroma Key / Green Screen Removal (applied BEFORE scale/pad so native resolution pixels are keyed without Lanczos interpolation fringing)
@@ -545,46 +592,63 @@ class FFmpegCommandBuilder {
         }
 
         filterComplexSegments.add('[$inputIdx:v]${vFilters.join(',')} [$vLabel]');
-        trackClipLabels.add('[$vLabel]');
+        if (tIdx == 0) {
+          trackClipLabels.add('[$vLabel]');
+          // Check for inter-clip gap between clip cIdx and clip cIdx + 1
+          if (cIdx < clipsToProcess.length - 1) {
+            final curEndMs = clip.startTimeMs + clip.durationMs;
+            final nextStartMs = clipsToProcess[cIdx + 1].startTimeMs;
+            if (nextStartMs > curEndMs) {
+              final gapSec = ((nextStartMs - curEndMs) / 1000.0).toStringAsFixed(3);
+              final gapLabel = '[vgap_$cIdx]';
+              filterComplexSegments.add('color=c=black:s=${targetW}x${targetH}:r=${config.framerate.fpsValue}:d=$gapSec,setsar=1 $gapLabel');
+              trackClipLabels.add(gapLabel);
+            }
+          }
+        } else {
+          upperClipLayers.add(_UpperClipLayer(vLabel, clip, tIdx));
+        }
         clipCounter++;
       }
 
-      // Track assembly: join clips within the same track
-      String trackOutLabel;
-      if (trackClipLabels.isEmpty) {
-        continue;
-      } else if (trackClipLabels.length == 1) {
-        trackOutLabel = trackClipLabels[0];
-      } else if (track.clips.any((c) => c.transitionIn.isEnabled)) {
-        String cur = trackClipLabels[0];
-        double cumulativeOffset = 0.0;
-        for (int i = 1; i < trackClipLabels.length; i++) {
-          final nextStream = trackClipLabels[i];
-          final nextClip = track.clips[i];
-          final trans = nextClip.transitionIn;
-          final outLabel = i == trackClipLabels.length - 1 ? '[track_$tIdx]' : '[vtrans_${tIdx}_$i]';
+      // Track assembly for Track 0:
+      if (tIdx == 0) {
+        String trackOutLabel;
+        if (trackClipLabels.isEmpty) {
+          continue;
+        } else if (trackClipLabels.length == 1) {
+          trackOutLabel = trackClipLabels[0];
+        } else if (track.clips.any((c) => c.transitionIn.isEnabled)) {
+          String cur = trackClipLabels[0];
+          double cumulativeOffset = 0.0;
+          for (int i = 1; i < trackClipLabels.length; i++) {
+            final nextStream = trackClipLabels[i];
+            final nextClip = i < track.clips.length ? track.clips[i] : null;
+            final trans = nextClip?.transitionIn;
+            final outLabel = i == trackClipLabels.length - 1 ? '[track_0]' : '[vtrans_0_$i]';
 
-          if (trans.isEnabled && trans.type.ffmpegXFadeName.isNotEmpty) {
-            final prevClip = track.clips[i - 1];
-            final prevSec = prevClip.durationMs / 1000.0;
-            cumulativeOffset += prevSec - (trans.durationMs / 1000.0);
-            final xfade = TransitionCompilerService.generateFFmpegXFade(
-              trans,
-              offsetSec: cumulativeOffset.clamp(0.1, 86400.0),
-            );
-            filterComplexSegments.add('$cur$nextStream $xfade $outLabel');
-          } else {
-            filterComplexSegments.add('$cur$nextStream concat=n=2:v=1:a=0 $outLabel');
+            if (trans != null && trans.isEnabled && trans.type.ffmpegXFadeName.isNotEmpty) {
+              final prevClip = track.clips[i - 1];
+              final prevSec = prevClip.durationMs / 1000.0;
+              cumulativeOffset += prevSec - (trans.durationMs / 1000.0);
+              final xfade = TransitionCompilerService.generateFFmpegXFade(
+                trans,
+                offsetSec: cumulativeOffset.clamp(0.1, 86400.0),
+              );
+              filterComplexSegments.add('$cur$nextStream $xfade $outLabel');
+            } else {
+              filterComplexSegments.add('$cur$nextStream concat=n=2:v=1:a=0 $outLabel');
+            }
+            cur = outLabel;
           }
-          cur = outLabel;
+          trackOutLabel = cur;
+        } else {
+          trackOutLabel = '[track_0]';
+          filterComplexSegments.add('${trackClipLabels.join('')} concat=n=${trackClipLabels.length}:v=1:a=0 $trackOutLabel');
         }
-        trackOutLabel = cur;
-      } else {
-        trackOutLabel = '[track_$tIdx]';
-        filterComplexSegments.add('${trackClipLabels.join('')} concat=n=${trackClipLabels.length}:v=1:a=0 $trackOutLabel');
-      }
 
-      trackOutputLabels.add(trackOutLabel);
+        trackOutputLabels.add(trackOutLabel);
+      }
     }
 
     // Audio Chains across all tracks
@@ -672,30 +736,24 @@ class FFmpegCommandBuilder {
 
     // Multi-Track Video Layered Overlay Compositing
     String currentVideoStream;
-    if (videoTracks.isEmpty) {
+    if (videoTracks.isEmpty || trackOutputLabels.isEmpty) {
       filterComplexSegments.add('color=c=black:s=${targetW}x${targetH}:r=${config.framerate.fpsValue}:d=$totalDurationSec,setsar=1 [vbase]');
       currentVideoStream = '[vbase]';
     } else {
       currentVideoStream = trackOutputLabels[0]; // Track 0 renders first as the background canvas!
-      for (int t = 1; t < trackOutputLabels.length; t++) {
-        final upperTrackStream = trackOutputLabels[t];
-        final upperTrackClips = videoTracks[t].clips;
-        final minStart = upperTrackClips.map((c) => c.startTimeMs).reduce((a, b) => a < b ? a : b) / 1000.0;
-        final maxEnd = upperTrackClips.map((c) => c.startTimeMs + c.durationMs).reduce((a, b) => a > b ? a : b) / 1000.0;
-        final compLabel = '[vcomp$t]';
-
-        // Check if upper track clips configure a custom blend mode
-        final activeBlendClip = upperTrackClips.firstWhere(
-          (c) => c.blendMode.isEnabled,
-          orElse: () => upperTrackClips.first,
-        );
+      int compCounter = 0;
+      for (final layer in upperClipLayers) {
+        final upperClip = layer.clip;
+        final startSec = (upperClip.startTimeMs / 1000.0).toStringAsFixed(3);
+        final endSec = ((upperClip.startTimeMs + upperClip.durationMs) / 1000.0).toStringAsFixed(3);
+        final compLabel = '[vcomp_${compCounter++}]';
 
         final compositorFilter = BlendModeCompilerService.generateFFmpegLayerCompositor(
-          config: activeBlendClip.blendMode,
+          config: upperClip.blendMode,
           baseLabel: currentVideoStream.replaceAll('[', '').replaceAll(']', ''),
-          overlayLabel: upperTrackStream.replaceAll('[', '').replaceAll(']', ''),
+          overlayLabel: layer.label,
           outputLabel: compLabel.replaceAll('[', '').replaceAll(']', ''),
-          enableExpression: 'between(t,${minStart.toStringAsFixed(2)},${maxEnd.toStringAsFixed(2)})',
+          enableExpression: 'between(t,$startSec,$endSec)',
         );
         filterComplexSegments.add(compositorFilter);
         currentVideoStream = compLabel;

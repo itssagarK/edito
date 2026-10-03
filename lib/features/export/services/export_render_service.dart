@@ -208,9 +208,16 @@ class ExportRenderService {
                 (a) => a.id == clip.assetId,
                 orElse: () => const MediaAsset(id: '', path: '', fileName: '', type: MediaType.video, durationMs: 0),
               );
-              if (asset.path.isNotEmpty) {
+              final effectiveSourcePath = (clip.enhancement.useNeuralRealEsrgan &&
+                      clip.enhancement.upscaledAssetPath != null &&
+                      clip.enhancement.upscaledAssetPath!.isNotEmpty &&
+                      File(clip.enhancement.upscaledAssetPath!).existsSync())
+                  ? clip.enhancement.upscaledAssetPath!
+                  : asset.path;
+
+              if (effectiveSourcePath.isNotEmpty) {
                 clipsData.add({
-                  'sourcePath': asset.path,
+                  'sourcePath': effectiveSourcePath,
                   'startTimeMs': clip.startTimeMs,
                   'durationMs': clip.durationMs,
                   'sourceInMs': clip.sourceInMs,

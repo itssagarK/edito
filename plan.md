@@ -2,7 +2,7 @@
 
 > **Last Updated:** 2026-10-03  
 > **Target:** High-Performance, 100% On-Device & Offline AI Video Editing Engine (Edito)  
-> **Status:** Phase 0, 1, 2, 3, 4, 5, 6 **ALL COMPLETED** | 100% On-Device & Offline AI Feature Suite Complete
+> **Status:** Phase 0, 1, 2, 3, 4, 5, 6, 7 **ALL COMPLETED** | 100% On-Device & Offline AI Feature Suite & Unified Rendering Engine Complete
 
 ---
 
@@ -160,6 +160,26 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 - [x] Verified 100% clean with `python scripts/verify_codebase.py` (338 files).
 
 ---
+
+### Phase 7: Full Rendering Pipeline & Preview/Export Parity Audit ✅ [COMPLETED]
+**Goal:** Guarantee complete 1:1 mathematical parity between real-time viewport preview rendering and exported video output across all parameters, edits, AI features, transforms, and multi-track timing.
+- [x] **Real-ESRGAN Upscaled Asset Parity:**
+  - Resolved `primaryAsset` in `TimelineCompositorService.evaluateFrame` to use `upscaledAssetPath` when neural enhancement is active.
+  - Registered upscaled asset paths as dedicated input streams in `FFmpegCommandBuilder.buildArguments` for video frames while preserving original audio channels.
+  - Wired `upscaledAssetPath` into Tier 2 hardware `MediaCodec` frame renderer in `ExportRenderService`.
+- [x] **Spatial Transforms Compiler Service:**
+  - Created `VideoTransformCompilerService` (`lib/features/transform/services/video_transform_compiler_service.dart`).
+  - Compiles 90/180/270 rotations, horizontal/vertical flips, zoom-in punch crop (`crop + scale`), zoom-out shrink (`scale + pad`), and on-canvas translation (`positionX`, `positionY`).
+- [x] **Track 0 Timeline Gap Preservation:**
+  - Added initial head gap and inter-clip gap black canvas fillers in `FFmpegCommandBuilder` so Track 0 never squashes clips or desynchronizes audio and subtitles.
+  - Single-clip projects starting at 0 preserve exact `[v0]` labels and backward compatibility.
+- [x] **Upper Video Tracks Multi-Clip Layer Compositing:**
+  - Enabled per-clip layer compositing via `BlendModeCompilerService.generateFFmpegLayerCompositor` with clip-specific blend modes and exact `between(t, startSec, endSec)` time windows.
+- [x] **Character Zoom Preview Parity:**
+  - Added radial focus vignette and saturation/contrast subject aura to `RealtimePreviewViewport` matching export filter output.
+- [x] **Testing & Verification:**
+  - Created unit test suite `test/rendering_fidelity_test.dart`.
+  - Ran `python scripts/verify_codebase.py` (340 Dart files scanned, 100% clean).
 
 ## 4. Work Log & Recent Commit History
 

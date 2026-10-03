@@ -901,6 +901,43 @@ class RealtimePreviewViewport extends ConsumerWidget {
           child: videoContent,
         ),
       );
+
+      if (clip.characterZoom.addSubjectAura) {
+        videoContent = ColorFiltered(
+          colorFilter: ColorFilter.matrix(
+            ColorFilterCompilerService.compileColorMatrix(
+              const ColorGradingConfig(contrast: 1.08, saturation: 1.20),
+            ),
+          ),
+          child: videoContent,
+        );
+      }
+
+      if (clip.characterZoom.addFocusVignette) {
+        videoContent = Stack(
+          fit: StackFit.passthrough,
+          children: [
+            videoContent,
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment((cx - 0.5) * 2.0, (cy - 0.5) * 2.0),
+                      radius: 0.85,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.65),
+                      ],
+                      stops: const [0.4, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      }
     }
 
     if (clip.parallax3d.isEnabled && clip.parallax3d.style != Parallax3DStyle.none) {

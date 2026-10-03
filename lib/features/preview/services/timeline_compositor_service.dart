@@ -82,7 +82,24 @@ class TimelineCompositorService {
       if (track.type == TrackType.video) {
         // Video layer: top-most active video clip takes visual priority
         primaryVideoClip = activeClip;
-        primaryAsset = asset;
+
+        // Check if clip has an on-device Real-ESRGAN upscaled asset
+        if (activeClip.enhancement.useNeuralRealEsrgan &&
+            activeClip.enhancement.upscaledAssetPath != null &&
+            activeClip.enhancement.upscaledAssetPath!.isNotEmpty &&
+            File(activeClip.enhancement.upscaledAssetPath!).existsSync()) {
+          primaryAsset = (asset != null)
+              ? asset.copyWith(path: activeClip.enhancement.upscaledAssetPath!)
+              : MediaAsset(
+                  id: activeClip.assetId,
+                  path: activeClip.enhancement.upscaledAssetPath!,
+                  fileName: 'upscaled.png',
+                  type: MediaType.image,
+                  durationMs: activeClip.durationMs,
+                );
+        } else {
+          primaryAsset = asset;
+        }
         sourceFrameTimeMs = computedSourceMs;
 
         // If video track has audio and is not muted, add to audio mixer with isPrimaryVideoAudio = true
