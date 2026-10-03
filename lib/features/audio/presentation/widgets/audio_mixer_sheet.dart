@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
+import '../../../../models/media_asset.dart';
+import '../../../../models/project.dart';
 import '../../models/audio_effects_config.dart';
+import '../../services/ai_silence_remover_service.dart';
 import '../../services/ai_voice_enhancer_service.dart';
 import '../../services/audio_vad_service.dart';
 import 'acoustic_space_visualizer.dart';
@@ -11,6 +14,8 @@ import 'parametric_eq_curve_widget.dart';
 class AudioMixerSheet extends StatefulWidget {
   final Clip clip;
   final Function(Clip updatedClip) onSave;
+  final Project? project;
+  final Function(Project updatedProject)? onProjectChanged;
   final bool isDocked;
   final VoidCallback? onDone;
 
@@ -18,17 +23,30 @@ class AudioMixerSheet extends StatefulWidget {
     super.key,
     required this.clip,
     required this.onSave,
+    this.project,
+    this.onProjectChanged,
     this.isDocked = false,
     this.onDone,
   });
 
-  static Future<void> show(BuildContext context, {required Clip clip, required Function(Clip) onSave}) {
+  static Future<void> show(
+    BuildContext context, {
+    required Clip clip,
+    required Function(Clip) onSave,
+    Project? project,
+    Function(Project)? onProjectChanged,
+  }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       barrierColor: Colors.black.withOpacity(0.20),
       backgroundColor: Colors.transparent,
-      builder: (context) => AudioMixerSheet(clip: clip, onSave: onSave),
+      builder: (context) => AudioMixerSheet(
+        clip: clip,
+        onSave: onSave,
+        project: project,
+        onProjectChanged: onProjectChanged,
+      ),
     );
   }
 
@@ -85,6 +103,73 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
       if (mounted) {
         setState(() => _isScanningVad = false);
       }
+    }
+  }
+
+  bool _isAnalyzingSilence = false;
+  SilenceAnalysisResult? _silenceAnalysis;
+  double _silenceSensitivity = 0.70;
+
+  String _getMediaPath() {
+    if (widget.project != null) {
+      final asset = widget.project!.assets.firstWhere(
+        (a) => a.id == widget.clip.assetId,
+        orElse: () => const MediaAsset(id: '', path: '', fileName: '', type: MediaType.video, durationMs: 0),
+      );
+      if (asset.path.isNotEmpty) return asset.path;
+    }
+    return widget.clip.assetId;
+  }
+
+  Future<void> _handleAnalyzeSilence() async {
+    setState(() => _isAnalyzingSilence = true);
+    try {
+      final mediaPath = _getMediaPath();
+      final result = await AiSilenceRemoverService.analyzeClipForSilences(
+        clip: widget.clip,
+        mediaPath: mediaPath,
+        minSilenceMs: 350,
+        sensitivity: _silenceSensitivity,
+      );
+      setState(() {
+        _silenceAnalysis = result;
+        // Also update speech intervals for VAD ducking
+        if (result.speechSegments.isNotEmpty) {
+          _effects = _effects.copyWith(
+            speechIntervalsMs: result.speechSegments,
+          );
+        }
+      });
+      _applyChange();
+    } finally {
+      if (mounted) {
+        setState(() => _isAnalyzingSilence = false);
+      }
+    }
+  }
+
+  void _handleApplyJumpCut() {
+    if (_silenceAnalysis == null || _silenceAnalysis!.silenceSegments.isEmpty) return;
+    if (widget.project == null || widget.onProjectChanged == null) return;
+
+    final updated = AiSilenceRemoverService.removeSilencesFromClip(
+      project: widget.project!,
+      clipId: widget.clip.id,
+      analysis: _silenceAnalysis!,
+    );
+
+    if (updated != null) {
+      widget.onProjectChanged!(updated);
+      final count = _silenceAnalysis!.silenceCount;
+      final savedSec = (_silenceAnalysis!.totalSilenceDurationMs / 1000.0).toStringAsFixed(1);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✂️ AI Jump-Cut: Removed $count dead pauses (saved ${savedSec}s) and rippled timeline!'),
+          duration: const Duration(milliseconds: 1500),
+          backgroundColor: const Color(0xFF00E676),
+        ),
+      );
+      setState(() => _silenceAnalysis = null);
     }
   }
 
@@ -1287,6 +1372,111 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
                         ],
                       ],
                     ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // AI Silence Remover & Smart Jump-Cut Card
+        _buildCard(
+          title: '✂️ AI Silence Remover (Smart Jump-Cut)',
+          subtitle: 'Excises unvoiced dead air (>350ms) and ripples speech contiguously',
+          badge: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFF00E676).withOpacity(0.2),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: const Color(0xFF00E676), width: 0.8),
+            ),
+            child: const Text('100% OFFLINE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF00E676))),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Text('Silence Threshold:', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                  Expanded(
+                    child: Slider(
+                      value: _silenceSensitivity,
+                      min: 0.20,
+                      max: 0.95,
+                      divisions: 15,
+                      activeColor: const Color(0xFF00E676),
+                      inactiveColor: AppColors.border,
+                      onChanged: (val) {
+                        setState(() => _silenceSensitivity = val);
+                      },
+                    ),
+                  ),
+                  Text('${(_silenceSensitivity * 100).toInt()}%', style: const TextStyle(fontSize: 11, color: Color(0xFF00E676), fontWeight: FontWeight.bold)),
+                ],
+              ),
+              if (_silenceAnalysis != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00E676).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFF00E676).withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Column(
+                        children: [
+                          const Text('Dead Air', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
+                          Text('${(_silenceAnalysis!.totalSilenceDurationMs / 1000.0).toStringAsFixed(1)}s', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF00E676))),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          const Text('Gaps', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
+                          Text('${_silenceAnalysis!.silenceCount}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          const Text('Speech', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
+                          Text('${_silenceAnalysis!.speechPercentage.toStringAsFixed(0)}%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF00E676))),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                if (widget.onProjectChanged != null)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.flash_on, size: 14),
+                      label: Text('Apply AI Jump-Cut (Ripple Delete ${_silenceAnalysis!.silenceCount} Silences)'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF00E676),
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
+                      onPressed: _handleApplyJumpCut,
+                    ),
+                  ),
+              ] else ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    icon: _isAnalyzingSilence
+                        ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00E676)))
+                        : const Icon(Icons.content_cut, size: 14),
+                    label: Text(_isAnalyzingSilence ? 'Scanning Dead-Air Silences...' : 'Scan Dead-Air Silences'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF00E676),
+                      side: const BorderSide(color: Color(0xFF00E676)),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                    onPressed: _isAnalyzingSilence ? null : _handleAnalyzeSilence,
                   ),
                 ),
               ],

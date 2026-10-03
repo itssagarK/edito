@@ -1,6 +1,55 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import '../../../core/ai/services/on_device_segmentation_service.dart';
 import '../models/video_layout_config.dart';
 
 class AutoReframeService {
+  /// Automatically analyzes video frames on-device using subject segmentation
+  /// to detect the average horizontal center-of-mass of the speaker / main subject.
+  ///
+  /// Returns the optimal focalPointX [-1.0, 1.0] for centering the subject in 9:16 vertical video crops.
+  static Future<double> detectOptimalSpeakerFocalPoint({
+    required String videoPath,
+    required int durationMs,
+    int sampleCount = 5,
+  }) async {
+    if (videoPath.isEmpty || !File(videoPath).existsSync() || durationMs <= 0) {
+      return 0.0;
+    }
+
+    try {
+      final sampleTimes = <int>[];
+      final step = durationMs ~/ (sampleCount + 1);
+      for (int i = 1; i <= sampleCount; i++) {
+        sampleTimes.add(step * i);
+      }
+
+      double sumCentroidX = 0.0;
+      int validSamples = 0;
+
+      for (final t in sampleTimes) {
+        final seg = await OnDeviceSegmentationService.instance.segmentVideoFrame(
+          videoPath: videoPath,
+          timeMs: t,
+        );
+        if (seg.isSuccess) {
+          sumCentroidX += seg.centroidX;
+          validSamples++;
+        }
+      }
+
+      if (validSamples > 0) {
+        final avgX = sumCentroidX / validSamples; // 0.0 (left) to 1.0 (right), 0.5 center
+        // Convert [0.0, 1.0] to pan-and-scan focalPointX [-1.0, 1.0]
+        final fx = ((avgX - 0.5) * 2.0).clamp(-0.85, 0.85);
+        return fx;
+      }
+    } catch (e) {
+      debugPrint('Auto-reframe speaker detection note: $e');
+    }
+
+    return 0.0;
+  }
   /// Generates the deterministic FFmpeg filter expression for canvas reframing
   static String generateFFmpegFilter({
     required VideoLayoutConfig layout,

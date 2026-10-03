@@ -558,7 +558,9 @@ class DockedToolPanel extends StatelessWidget {
       case EditorTool.audio:
         return AudioMixerSheet(
           clip: clip,
+          project: project,
           onSave: onSaveClip,
+          onProjectChanged: onSaveProject,
           isDocked: true,
           onDone: onClose,
         );

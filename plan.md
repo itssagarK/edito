@@ -47,6 +47,8 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 | **4** | **F4** | Neural Noise Removal | FFmpeg `arnndn` (RNNoise) | BSD-3 | ✅ **COMPLETED** (`397f2e1`) |
 | **5** | **F5** | Smart Auto-Ducking & Beat Sync | Silero VAD / Energy VAD + Onset Detection | MIT | ✅ **COMPLETED** (`a62ac48`) |
 | **6** | **F6** | AI Upscaler & Enhancer | Real-ESRGAN Compact (ncnn/ONNX, Tiled) | BSD-3 | ✅ **COMPLETED** |
+| **7** | **RENDER** | Unified Preview & Export Parity | Transforms, Gaps, Compositor, Real-ESRGAN | Internal | ✅ **COMPLETED** (`7fb2867`) |
+| **8** | **AI-SUITE** | Built-in AI Suite (Silence Cut, Scene Split, Optical Track, Auto-Reframe) | Silero/Energy VAD, Shot Boundary, MediaPipe | MIT / Apache-2.0 | ✅ **COMPLETED** |
 
 ---
 
@@ -180,6 +182,31 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 - [x] **Testing & Verification:**
   - Created unit test suite `test/rendering_fidelity_test.dart`.
   - Ran `python scripts/verify_codebase.py` (340 Dart files scanned, 100% clean).
+
+---
+
+### Phase 8: Built-in On-Device AI Features Suite ✅ [COMPLETED]
+**Goal:** Empower creators with essential on-device AI features that CapCut Pro and Premiere Pro possess, running 100% offline with complete preview/export rendering fidelity:
+- [x] **Feature 8.1: AI Silence Remover & Smart Jump-Cut (Audio AI):**
+  - Created `AiSilenceRemoverService` (`lib/features/audio/services/ai_silence_remover_service.dart`).
+  - Detects dead-air pauses and unvoiced intervals (>350ms) using on-device VAD.
+  - Slices speech sub-clips non-destructively, calculates precise `sourceInMs`/`sourceOutMs`, and ripples following timeline clips.
+  - Wired into `ClipWorkflowSheet` and `AudioMixerSheet` with sensitivity controls and dead-air statistics.
+- [x] **Feature 8.2: AI Scene Cut Detector & Auto-Split (Vision AI):**
+  - Added twin platform channel methods `"detectSceneCuts"` and `detectSceneCutsPipeline` to `MainActivity.kt` and `scripts/configure_android.py`.
+  - Created `AiSceneDetectorService` (`lib/features/timeline/services/ai_scene_detector_service.dart`) with luminance frame delta analysis and fallback.
+  - Slices long footage into independent scene clips with 1 tap in `ClipWorkflowSheet`.
+- [x] **Feature 8.3: AI Real Optical Motion Tracking (Vision AI):**
+  - Upgraded `MotionTrackingService.generateOpticalTrajectoryFromVideo` (`lib/features/tracking/services/motion_tracking_service.dart`).
+  - Samples video frames and tracks real subject centroid and bounding box using on-device MediaPipe segmentation with EMA smoothing.
+  - Wired live tracking progress into `MotionTrackingSheet`.
+- [x] **Feature 8.4: AI Auto-Reframe (Dynamic Speaker Centering):**
+  - Added `AutoReframeService.detectOptimalSpeakerFocalPoint` (`lib/features/image_editor/services/auto_reframe_service.dart`).
+  - Auto-centers 9:16 vertical video crops on the active speaker.
+  - Added 1-tap "AI Auto-Center Speaker" button in `VideoLayoutSheet`.
+- [x] **Testing & Verification:**
+  - Added comprehensive unit test suite `test/built_in_ai_features_test.dart`.
+  - Scanned 343 Dart files with `python scripts/verify_codebase.py` (100% CLEAN).
 
 ## 4. Work Log & Recent Commit History
 

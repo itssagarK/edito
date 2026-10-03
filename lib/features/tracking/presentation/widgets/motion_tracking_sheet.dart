@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
+import '../../../../models/media_asset.dart';
 import '../../../../models/project.dart';
 import '../../models/motion_tracking_config.dart';
 import '../../services/motion_tracking_service.dart';
@@ -82,22 +83,26 @@ class _MotionTrackingSheetState extends State<MotionTrackingSheet> {
   void _runTrackingAnalysis() async {
     setState(() {
       _isAnalyzing = true;
-      _analysisProgress = 0.1;
+      _analysisProgress = 0.05;
     });
 
-    await Future.delayed(const Duration(milliseconds: 180));
-    setState(() => _analysisProgress = 0.45);
+    final asset = widget.project.assets.firstWhere(
+      (a) => a.id == widget.targetClip.assetId,
+      orElse: () => const MediaAsset(id: '', path: '', fileName: '', type: MediaType.video, durationMs: 0),
+    );
+    final videoPath = asset.path.isNotEmpty ? asset.path : widget.targetClip.assetId;
 
-    await Future.delayed(const Duration(milliseconds: 180));
-    setState(() => _analysisProgress = 0.85);
-
-    // Solve trajectory
-    final trajectory = MotionTrackingService.generateTrajectory(
+    // Solve trajectory via on-device optical/centroid tracking
+    final trajectory = await MotionTrackingService.generateOpticalTrajectoryFromVideo(
+      videoPath: videoPath,
       totalDurationMs: widget.targetClip.durationMs,
       targetType: _config.targetType,
       startX: _config.reticleX,
       startY: _config.reticleY,
       smoothingFactor: _config.smoothingFactor,
+      onProgress: (p) {
+        if (mounted) setState(() => _analysisProgress = p);
+      },
     );
 
     setState(() {

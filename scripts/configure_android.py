@@ -730,6 +730,28 @@ class MainActivity: FlutterActivity() {
                         }
                     }.start()
                 }
+                "detectSceneCuts" -> {
+                    val videoPath = call.argument<String>("videoPath")
+                    val durationMs = (call.argument<Number>("durationMs"))?.toLong() ?: 0L
+                    val sensitivity = call.argument<Double>("thresholdSensitivity") ?: 0.40
+
+                    if (videoPath.isNullOrBlank()) {
+                        result.error("INVALID_ARGS", "videoPath cannot be empty", null)
+                        return@setMethodCallHandler
+                    }
+
+                    Thread {
+                        try {
+                            val res = detectSceneCutsPipeline(videoPath, durationMs, sensitivity)
+                            runOnUiThread { result.success(res) }
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "Scene cut detection error: ${e.message}", e)
+                            runOnUiThread {
+                                result.error("SCENE_DETECTION_FAILED", e.message, e.localizedMessage)
+                            }
+                        }
+                    }.start()
+                }
                 else -> result.notImplemented()
             }
         }
@@ -2420,6 +2442,88 @@ class MainActivity: FlutterActivity() {
         } finally {
             originalBitmap.recycle()
             targetBitmap.recycle()
+        }
+    }
+
+    private fun detectSceneCutsPipeline(
+        videoPath: String,
+        durationMs: Long,
+        sensitivity: Double = 0.40
+    ): Map<String, Any> {
+        val retriever = MediaMetadataRetriever()
+        val cuts = mutableListOf<Long>()
+        try {
+            setRetrieverDataSource(retriever, videoPath)
+            var actualDurationMs = durationMs
+            if (actualDurationMs <= 0L) {
+                val durStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                actualDurationMs = durStr?.toLongOrNull() ?: 10000L
+            }
+
+            val stepMs = 300L
+            val totalSteps = (actualDurationMs / stepMs).toInt().coerceIn(2, 600)
+            val sampleW = 64
+            val sampleH = 36
+            var prevLuma: FloatArray? = null
+
+            val cutThreshold = (0.50 - (sensitivity.coerceIn(0.1, 0.9) * 0.35)).toFloat().coerceIn(0.12f, 0.45f)
+
+            for (step in 0 until totalSteps) {
+                val timeMs = step * stepMs
+                val timeUs = timeMs * 1000L
+                val bmp = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                    try {
+                        retriever.getScaledFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST, sampleW, sampleH)
+                    } catch (_: Exception) {
+                        retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST)
+                    }
+                } else {
+                    retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST)
+                } ?: continue
+
+                val scaled = if (bmp.width != sampleW || bmp.height != sampleH) {
+                    Bitmap.createScaledBitmap(bmp, sampleW, sampleH, false)
+                } else {
+                    bmp
+                }
+
+                val pixels = IntArray(sampleW * sampleH)
+                scaled.getPixels(pixels, 0, sampleW, 0, 0, sampleW, sampleH)
+                if (scaled !== bmp) scaled.recycle()
+                bmp.recycle()
+
+                val curLuma = FloatArray(sampleW * sampleH)
+                for (p in pixels.indices) {
+                    val c = pixels[p]
+                    val r = (c shr 16) and 0xFF
+                    val g = (c shr 8) and 0xFF
+                    val b = c and 0xFF
+                    curLuma[p] = (0.299f * r + 0.587f * g + 0.114f * b) / 255.0f
+                }
+
+                if (prevLuma != null) {
+                    var diffSum = 0.0f
+                    for (p in curLuma.indices) {
+                        diffSum += Math.abs(curLuma[p] - prevLuma[p])
+                    }
+                    val avgDiff = diffSum / curLuma.size
+                    if (avgDiff >= cutThreshold) {
+                        if (cuts.isEmpty() || (timeMs - cuts.last()) > 500L) {
+                            cuts.add(timeMs)
+                        }
+                    }
+                }
+                prevLuma = curLuma
+            }
+
+            return mapOf(
+                "isSuccess" to true,
+                "sceneCuts" to cuts,
+                "totalCuts" to cuts.size,
+                "durationMs" to actualDurationMs
+            )
+        } finally {
+            try { retriever.release() } catch (_: Exception) {}
         }
     }
 

@@ -40,6 +40,7 @@ class VideoLayoutSheet extends StatefulWidget {
 
 class _VideoLayoutSheetState extends State<VideoLayoutSheet> {
   late VideoLayoutConfig _config;
+  bool _isDetectingSpeaker = false;
 
   @override
   void initState() {
@@ -54,6 +55,42 @@ class _VideoLayoutSheetState extends State<VideoLayoutSheet> {
       height: _config.ratio.defaultHeight,
     );
     widget.onSave(updated);
+  }
+
+  Future<void> _handleAutoCenterSpeaker() async {
+    setState(() => _isDetectingSpeaker = true);
+    try {
+      String videoPath = '';
+      int durationMs = widget.project.durationMs;
+
+      for (final asset in widget.project.assets) {
+        if (asset.path.isNotEmpty) {
+          videoPath = asset.path;
+          durationMs = asset.durationMs > 0 ? asset.durationMs : durationMs;
+          break;
+        }
+      }
+
+      if (videoPath.isNotEmpty) {
+        final optimalFx = await AutoReframeService.detectOptimalSpeakerFocalPoint(
+          videoPath: videoPath,
+          durationMs: durationMs,
+        );
+        setState(() => _config = _config.copyWith(focalPointX: optimalFx));
+        _applyChange();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('🎯 AI Auto-Reframe: Centered crop on speaker (${(optimalFx * 100).toInt()}% pan offset)!'),
+              duration: const Duration(milliseconds: 1200),
+              backgroundColor: const Color(0xFF38EF7D),
+            ),
+          );
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _isDetectingSpeaker = false);
+    }
   }
 
   @override
@@ -320,6 +357,26 @@ class _VideoLayoutSheetState extends State<VideoLayoutSheet> {
                               style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            icon: _isDetectingSpeaker
+                                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF38EF7D)))
+                                : const Icon(Icons.person_search, size: 16),
+                            label: Text(
+                              _isDetectingSpeaker ? 'Tracking Speaker Position...' : 'AI Auto-Center Speaker',
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF38EF7D),
+                              side: const BorderSide(color: Color(0xFF38EF7D)),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            onPressed: _isDetectingSpeaker ? null : _handleAutoCenterSpeaker,
+                          ),
                         ),
                       ],
                     ),

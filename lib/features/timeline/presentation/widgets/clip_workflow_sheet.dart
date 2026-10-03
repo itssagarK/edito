@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
+import '../../../../models/media_asset.dart';
 import '../../../../models/project.dart';
+import '../../../audio/services/ai_silence_remover_service.dart';
+import '../../services/ai_scene_detector_service.dart';
 import '../../services/timeline_editing_service.dart';
 
 class ClipWorkflowSheet extends StatefulWidget {
@@ -51,6 +54,14 @@ class _ClipWorkflowSheetState extends State<ClipWorkflowSheet> {
   late Clip _currentClip;
   late Project _currentProject;
   int _freezeDurationSec = 3;
+
+  bool _isAnalyzingSilence = false;
+  SilenceAnalysisResult? _silenceAnalysis;
+  double _silenceSensitivity = 0.70;
+
+  bool _isScanningSceneCuts = false;
+  SceneCutAnalysisResult? _sceneCutAnalysis;
+  double _sceneSensitivity = 0.40;
 
   @override
   void initState() {
@@ -132,6 +143,93 @@ class _ClipWorkflowSheetState extends State<ClipWorkflowSheet> {
         backgroundColor: AppColors.primary,
       ),
     );
+  }
+
+  String _getMediaPath() {
+    final asset = _currentProject.assets.firstWhere(
+      (a) => a.id == _currentClip.assetId,
+      orElse: () => const MediaAsset(id: '', path: '', fileName: '', type: MediaType.video, durationMs: 0),
+    );
+    return asset.path.isNotEmpty ? asset.path : _currentClip.assetId;
+  }
+
+  Future<void> _handleAnalyzeSilence() async {
+    setState(() => _isAnalyzingSilence = true);
+    try {
+      final mediaPath = _getMediaPath();
+      final result = await AiSilenceRemoverService.analyzeClipForSilences(
+        clip: _currentClip,
+        mediaPath: mediaPath,
+        minSilenceMs: 350,
+        sensitivity: _silenceSensitivity,
+      );
+      setState(() => _silenceAnalysis = result);
+    } finally {
+      if (mounted) setState(() => _isAnalyzingSilence = false);
+    }
+  }
+
+  void _handleApplyJumpCut() {
+    if (_silenceAnalysis == null || _silenceAnalysis!.silenceSegments.isEmpty) return;
+
+    final updated = AiSilenceRemoverService.removeSilencesFromClip(
+      project: _currentProject,
+      clipId: _currentClip.id,
+      analysis: _silenceAnalysis!,
+    );
+
+    if (updated != null) {
+      _updateProject(updated);
+      final count = _silenceAnalysis!.silenceCount;
+      final savedSec = (_silenceAnalysis!.totalSilenceDurationMs / 1000.0).toStringAsFixed(1);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✂️ AI Jump-Cut: Removed $count silent pauses (saved ${savedSec}s dead air) and rippled timeline!'),
+          duration: const Duration(milliseconds: 1500),
+          backgroundColor: const Color(0xFF00E676),
+        ),
+      );
+      setState(() => _silenceAnalysis = null);
+    }
+  }
+
+  Future<void> _handleScanSceneCuts() async {
+    setState(() => _isScanningSceneCuts = true);
+    try {
+      final mediaPath = _getMediaPath();
+      final result = await AiSceneDetectorService.detectSceneCuts(
+        videoPath: mediaPath,
+        durationMs: _currentClip.durationMs,
+        sensitivity: _sceneSensitivity,
+      );
+      setState(() => _sceneCutAnalysis = result);
+    } finally {
+      if (mounted) setState(() => _isScanningSceneCuts = false);
+    }
+  }
+
+  void _handleApplySceneSplits() {
+    if (_sceneCutAnalysis == null || _sceneCutAnalysis!.cutTimestampsMs.isEmpty) return;
+
+    final updated = AiSceneDetectorService.splitClipAtSceneCuts(
+      project: _currentProject,
+      clipId: _currentClip.id,
+      cutTimestampsMs: _sceneCutAnalysis!.cutTimestampsMs,
+    );
+
+    if (updated != null) {
+      _updateProject(updated);
+      final cutCount = _sceneCutAnalysis!.totalCuts;
+      final sceneCount = _sceneCutAnalysis!.totalScenes;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('🎬 AI Scene Split: Created $sceneCount independent scene clips from $cutCount cuts!'),
+          duration: const Duration(milliseconds: 1500),
+          backgroundColor: const Color(0xFF2979FF),
+        ),
+      );
+      setState(() => _sceneCutAnalysis = null);
+    }
   }
 
   @override
@@ -366,7 +464,247 @@ class _ClipWorkflowSheetState extends State<ClipWorkflowSheet> {
               ),
               const SizedBox(height: 12),
 
-              // 4. Duplicate & Speed Retime Quick Buttons
+              // 4. AI Silence Remover & Smart Jump-Cut Card
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _silenceAnalysis != null ? const Color(0xFF00E676) : AppColors.border,
+                    width: _silenceAnalysis != null ? 1.5 : 1.0,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.content_cut, color: Color(0xFF00E676), size: 18),
+                            SizedBox(width: 8),
+                            Text('AI Silence Remover (Smart Jump-Cut)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
+                          ],
+                        ),
+                        Text(
+                          '🤖 100% OFFLINE VAD',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Color(0xFF00E676)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Scans speech and automatically excises dead-air gaps (>350ms), rippling speech contiguously for snappy social media retention.',
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Text('Sensitivity:', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                        Expanded(
+                          child: Slider(
+                            value: _silenceSensitivity,
+                            min: 0.20,
+                            max: 0.95,
+                            divisions: 15,
+                            activeColor: const Color(0xFF00E676),
+                            inactiveColor: AppColors.border,
+                            onChanged: (val) {
+                              setState(() => _silenceSensitivity = val);
+                            },
+                          ),
+                        ),
+                        Text('${(_silenceSensitivity * 100).toInt()}%', style: const TextStyle(fontSize: 12, color: Color(0xFF00E676), fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    if (_silenceAnalysis != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        margin: const EdgeInsets.only(bottom: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00E676).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFF00E676).withOpacity(0.4)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Column(
+                              children: [
+                                const Text('Dead Air', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                                Text('${(_silenceAnalysis!.totalSilenceDurationMs / 1000.0).toStringAsFixed(1)}s', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF00E676))),
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                const Text('Silent Gaps', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                                Text('${_silenceAnalysis!.silenceCount}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                const Text('Speech Ratio', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                                Text('${_silenceAnalysis!.speechPercentage.toStringAsFixed(0)}%', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF00E676))),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.flash_on, size: 16),
+                          label: Text('Apply AI Jump-Cut (Remove ${_silenceAnalysis!.silenceCount} Silences)'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF00E676),
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          onPressed: _handleApplyJumpCut,
+                        ),
+                      ),
+                    ] else ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          icon: _isAnalyzingSilence
+                              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00E676)))
+                              : const Icon(Icons.graphic_eq, size: 16),
+                          label: Text(_isAnalyzingSilence ? 'Scanning Speech Intervals...' : 'Analyze Dead-Air Silences'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF00E676),
+                            side: const BorderSide(color: Color(0xFF00E676)),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          onPressed: _isAnalyzingSilence ? null : _handleAnalyzeSilence,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // 5. AI Scene Cut Detection & Auto-Split Card
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _sceneCutAnalysis != null ? const Color(0xFF2979FF) : AppColors.border,
+                    width: _sceneCutAnalysis != null ? 1.5 : 1.0,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.auto_awesome, color: Color(0xFF2979FF), size: 18),
+                            SizedBox(width: 8),
+                            Text('AI Scene Cut Detector & Auto-Split', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
+                          ],
+                        ),
+                        Text(
+                          '🤖 SHOT BOUNDARY AI',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Color(0xFF2979FF)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Scans video frame visual deltas to detect shot transitions, and automatically cuts long footage into separate scene clips with 1 tap.',
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Text('Sensitivity:', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                        Expanded(
+                          child: Slider(
+                            value: _sceneSensitivity,
+                            min: 0.15,
+                            max: 0.85,
+                            divisions: 14,
+                            activeColor: const Color(0xFF2979FF),
+                            inactiveColor: AppColors.border,
+                            onChanged: (val) {
+                              setState(() => _sceneSensitivity = val);
+                            },
+                          ),
+                        ),
+                        Text('${(_sceneSensitivity * 100).toInt()}%', style: const TextStyle(fontSize: 12, color: Color(0xFF2979FF), fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    if (_sceneCutAnalysis != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        margin: const EdgeInsets.only(bottom: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2979FF).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFF2979FF).withOpacity(0.4)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Column(
+                              children: [
+                                const Text('Detected Cuts', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                                Text('${_sceneCutAnalysis!.totalCuts}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF2979FF))),
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                const Text('New Scene Clips', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                                Text('${_sceneCutAnalysis!.totalScenes}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.call_split, size: 16),
+                          label: Text('Split Timeline into ${_sceneCutAnalysis!.totalScenes} Clips'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2979FF),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          onPressed: _handleApplySceneSplits,
+                        ),
+                      ),
+                    ] else ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          icon: _isScanningSceneCuts
+                              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF2979FF)))
+                              : const Icon(Icons.movie_filter, size: 16),
+                          label: Text(_isScanningSceneCuts ? 'Analyzing Shot Boundaries...' : 'Scan Video for Scene Cuts'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF2979FF),
+                            side: const BorderSide(color: Color(0xFF2979FF)),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          onPressed: _isScanningSceneCuts ? null : _handleScanSceneCuts,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // 6. Duplicate & Speed Retime Quick Buttons
               Row(
                 children: [
                   Expanded(
