@@ -6,32 +6,42 @@ class VideoTransformConfig extends Equatable {
   final int rotationDegrees; // 0, 90, 180, 270
   final bool isFlippedHorizontal; // Horizontal mirror (left <-> right)
   final bool isFlippedVertical; // Vertical flip (upside down)
-  final double scale; // 0.5 to 3.0 (1.0 = 100% normal)
+  final double scale; // 0.1 to 5.0 (1.0 = 100% normal)
+  final double positionX; // 0.0 to 1.0 (0.5 = center)
+  final double positionY; // 0.0 to 1.0 (0.5 = center)
 
   const VideoTransformConfig({
     this.rotationDegrees = 0,
     this.isFlippedHorizontal = false,
     this.isFlippedVertical = false,
     this.scale = 1.0,
+    this.positionX = 0.5,
+    this.positionY = 0.5,
   });
 
   bool get isActive =>
       rotationDegrees != 0 ||
       isFlippedHorizontal ||
       isFlippedVertical ||
-      (scale - 1.0).abs() > 0.001;
+      (scale - 1.0).abs() > 0.001 ||
+      (positionX - 0.5).abs() > 0.001 ||
+      (positionY - 0.5).abs() > 0.001;
 
   VideoTransformConfig copyWith({
     int? rotationDegrees,
     bool? isFlippedHorizontal,
     bool? isFlippedVertical,
     double? scale,
+    double? positionX,
+    double? positionY,
   }) {
     return VideoTransformConfig(
       rotationDegrees: rotationDegrees ?? this.rotationDegrees,
       isFlippedHorizontal: isFlippedHorizontal ?? this.isFlippedHorizontal,
       isFlippedVertical: isFlippedVertical ?? this.isFlippedVertical,
       scale: scale ?? this.scale,
+      positionX: positionX ?? this.positionX,
+      positionY: positionY ?? this.positionY,
     );
   }
 
@@ -40,6 +50,8 @@ class VideoTransformConfig extends Equatable {
         'isFlippedHorizontal': isFlippedHorizontal,
         'isFlippedVertical': isFlippedVertical,
         'scale': scale,
+        'positionX': positionX,
+        'positionY': positionY,
       };
 
   factory VideoTransformConfig.fromJson(Map<String, dynamic>? json) {
@@ -49,6 +61,8 @@ class VideoTransformConfig extends Equatable {
       isFlippedHorizontal: json['isFlippedHorizontal'] as bool? ?? false,
       isFlippedVertical: json['isFlippedVertical'] as bool? ?? false,
       scale: (json['scale'] as num?)?.toDouble() ?? 1.0,
+      positionX: (json['positionX'] as num?)?.toDouble() ?? 0.5,
+      positionY: (json['positionY'] as num?)?.toDouble() ?? 0.5,
     );
   }
 
@@ -58,5 +72,7 @@ class VideoTransformConfig extends Equatable {
         isFlippedHorizontal,
         isFlippedVertical,
         scale,
+        positionX,
+        positionY,
       ];
 }

@@ -49,12 +49,15 @@ import '../../../vignette/presentation/widgets/vignette_studio_sheet.dart';
 import '../../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../../transitions/models/transition_type.dart';
 import '../../../audio/presentation/widgets/sound_effects_sheet.dart';
+import '../../../audio/presentation/widgets/audio_recorder_sheet.dart';
 import '../../../transform/presentation/widgets/transform_studio_sheet.dart';
 
 class DockedToolPanel extends StatelessWidget {
   final EditorTool tool;
   final Clip clip;
   final Project project;
+  final int playheadPositionMs;
+  final ValueChanged<int>? onSeek;
   final Function(Clip updatedClip) onSaveClip;
   final Function(Project updatedProject) onSaveProject;
   final VoidCallback onClose;
@@ -67,6 +70,8 @@ class DockedToolPanel extends StatelessWidget {
     required this.tool,
     required this.clip,
     required this.project,
+    this.playheadPositionMs = 0,
+    this.onSeek,
     required this.onSaveClip,
     required this.onSaveProject,
     required this.onClose,
@@ -171,6 +176,8 @@ class DockedToolPanel extends StatelessWidget {
         return 'Reverse Playback';
       case EditorTool.extractAudio:
         return 'Extract Audio Track';
+      case EditorTool.audioRecord:
+        return 'Voiceover Studio';
       default:
         return tool.name.toUpperCase();
     }
@@ -272,6 +279,8 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.replay;
       case EditorTool.extractAudio:
         return Icons.music_note;
+      case EditorTool.audioRecord:
+        return Icons.mic;
       default:
         return Icons.edit;
     }
@@ -507,6 +516,8 @@ class DockedToolPanel extends StatelessWidget {
       case EditorTool.keyframes:
         return KeyframeStudioSheet(
           clip: clip,
+          currentPlayheadMs: playheadPositionMs,
+          onSeek: onSeek,
           onSave: onSaveClip,
           onDone: onClose,
         );
@@ -515,8 +526,16 @@ class DockedToolPanel extends StatelessWidget {
         return ClipWorkflowSheet(
           project: project,
           clip: clip,
-          playheadPositionMs: clip.startTimeMs,
+          playheadPositionMs: playheadPositionMs > 0 ? playheadPositionMs : clip.startTimeMs,
           onProjectChanged: onSaveProject,
+          onDone: onClose,
+        );
+
+      case EditorTool.audioRecord:
+        return AudioRecorderSheet(
+          project: project,
+          currentPlayheadMs: playheadPositionMs,
+          onProjectUpdated: onSaveProject,
           onDone: onClose,
         );
 

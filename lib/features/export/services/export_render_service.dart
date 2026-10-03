@@ -194,9 +194,13 @@ class ExportRenderService {
         }
       } catch (_) {}
 
-      // Tier 2: Native Android Hardware MediaExtractor & MediaMuxer
+      // Tier 2: Native Android Hardware MediaExtractor, Canvas & MediaCodec
       if (!rendered && Platform.isAndroid) {
         final clipsData = <Map<String, dynamic>>[];
+        final textOverlaysData = <Map<String, dynamic>>[];
+        final imageOverlaysData = <Map<String, dynamic>>[];
+        final audioTracksData = <Map<String, dynamic>>[];
+
         for (final track in project.tracks) {
           if (track.type == TrackType.video && !track.isHidden) {
             for (final clip in track.clips) {
@@ -211,38 +215,115 @@ class ExportRenderService {
                   'durationMs': clip.durationMs,
                   'sourceInMs': clip.sourceInMs,
                   'sourceOutMs': clip.sourceOutMs > 0 ? clip.sourceOutMs : clip.durationMs,
-                  'volume': clip.volume,
+                  'volume': clip.isMuted ? 0.0 : clip.volume,
                   'speed': clip.speed,
+                  'rotationDegrees': clip.transform.rotationDegrees,
+                  'scale': clip.transform.scale,
+                  'positionX': clip.transform.positionX,
+                  'positionY': clip.transform.positionY,
+                  'isFlippedHorizontal': clip.transform.isFlippedHorizontal,
+                  'isFlippedVertical': clip.transform.isFlippedVertical,
+                  'brightness': clip.colorGrading.brightness,
+                  'contrast': clip.colorGrading.contrast,
+                  'saturation': clip.colorGrading.saturation,
+                  'exposure': clip.colorGrading.exposure,
+                });
+
+                if (clip.textOverlay.text.isNotEmpty) {
+                  textOverlaysData.add({
+                    'text': clip.textOverlay.text,
+                    'positionX': clip.textOverlay.positionX,
+                    'positionY': clip.textOverlay.positionY,
+                    'fontSize': clip.textOverlay.fontSize,
+                    'textColor': clip.textOverlay.textColor,
+                    'backgroundColor': clip.textOverlay.backgroundColor,
+                    'isBold': clip.textOverlay.isBold,
+                    'startTimeMs': clip.startTimeMs,
+                    'endTimeMs': clip.startTimeMs + clip.durationMs,
+                  });
+                }
+
+                if (clip.imageOverlay.overlayAssetId.isNotEmpty) {
+                  final imgAsset = project.assets.firstWhere(
+                    (a) => a.id == clip.imageOverlay.overlayAssetId,
+                    orElse: () => const MediaAsset(id: '', path: '', fileName: '', type: MediaType.image, durationMs: 0),
+                  );
+                  if (imgAsset.path.isNotEmpty) {
+                    imageOverlaysData.add({
+                      'imagePath': imgAsset.path,
+                      'positionX': clip.imageOverlay.positionX,
+                      'positionY': clip.imageOverlay.positionY,
+                      'scale': clip.imageOverlay.scale,
+                      'rotationDegrees': clip.imageOverlay.rotationDegrees,
+                      'opacity': clip.imageOverlay.opacity,
+                      'startTimeMs': clip.startTimeMs,
+                      'endTimeMs': clip.startTimeMs + clip.durationMs,
+                    });
+                  }
+                }
+              }
+            }
+          } else if (track.type == TrackType.audio && !track.isHidden) {
+            for (final clip in track.clips) {
+              final asset = project.assets.firstWhere(
+                (a) => a.id == clip.assetId,
+                orElse: () => const MediaAsset(id: '', path: '', fileName: '', type: MediaType.audio, durationMs: 0),
+              );
+              if (asset.path.isNotEmpty) {
+                audioTracksData.add({
+                  'sourcePath': asset.path,
+                  'startTimeMs': clip.startTimeMs,
+                  'durationMs': clip.durationMs,
+                  'sourceInMs': clip.sourceInMs,
+                  'sourceOutMs': clip.sourceOutMs > 0 ? clip.sourceOutMs : clip.durationMs,
+                  'volume': clip.isMuted ? 0.0 : clip.volume,
                 });
               }
             }
           }
         }
 
+        // Include captions into text overlays
+        for (final caption in captions) {
+          textOverlaysData.add({
+            'text': caption.text,
+            'positionX': 0.5,
+            'positionY': 0.82,
+            'fontSize': 34.0,
+            'textColor': 0xFFFFFFFF,
+            'backgroundColor': 0xAA000000,
+            'isBold': true,
+            'startTimeMs': caption.startMs,
+            'endTimeMs': caption.endMs,
+          });
+        }
+
         if (clipsData.isNotEmpty) {
           final renderRes = await GallerySaverService.renderProjectVideo(
             clips: clipsData,
+            textOverlays: textOverlaysData,
+            imageOverlays: imageOverlaysData,
+            audioTracks: audioTracksData,
             outputPath: targetPath,
             targetWidth: resolvedConfig.resolution.width,
             targetHeight: resolvedConfig.resolution.height,
+            fps: resolvedConfig.framerate.fpsValue,
           );
           if (renderRes != null && targetFile.existsSync() && targetFile.lengthSync() > 1024) {
             rendered = true;
-            debugPrint('Hardware MediaMuxer rendered successfully: $targetPath (${targetFile.lengthSync()} bytes)');
+            debugPrint('Hardware MediaCodec Frame Renderer completed successfully: $targetPath (${targetFile.lengthSync()} bytes)');
           }
         }
       }
 
-      // Tier 3: Source asset copy or high-quality container synthesis
+      // Tier 3: Verify render output
       if (!rendered) {
-        if (primaryVideoAsset != null && File(primaryVideoAsset.path).existsSync()) {
-          final sourceFile = File(primaryVideoAsset.path);
-          await sourceFile.copy(targetPath);
-          rendered = true;
-        } else {
-          final mp4Bytes = _createSampleMp4Bytes();
-          await targetFile.writeAsBytes(mp4Bytes, flush: true);
-        }
+        debugPrint('Render pipeline could not render edited video to $targetPath');
+        _progressController.add(const ExportProgress(
+          status: ExportStatus.failed,
+          statusMessage: 'Rendering failed: Hardware video encoder could not compile project filters. Please check media formats.',
+        ));
+        return targetPath;
       }
 
       // Automatically save to Android Gallery MediaStore (Movies/Edito) with full metadata

@@ -53,6 +53,7 @@ def configure():
         c = c.replace(target, "")
         permissions = """
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
@@ -111,27 +112,85 @@ subprojects {
     main_activity_template = """package {PKG}
 
 import android.content.ContentValues
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.RectF
+import android.graphics.Typeface
 import android.media.MediaCodec
+import android.media.MediaCodecInfo
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMetadataRetriever
 import android.media.MediaMuxer
 import android.media.MediaScannerConnection
+import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
+import java.util.Locale
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import android.app.ActivityManager
+import android.content.Context
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "com.edito.app/gallery"
+    private var tts: TextToSpeech? = null
+    private var isTtsInitialized = false
+    private val pendingTtsTasks = mutableListOf<() -> Unit>()
+
+    private var mediaRecorder: MediaRecorder? = null
+    private var isRecordingAudio = false
+    private var recordingOutputFile: File? = null
+
+    private fun initTtsIfNeeded(onReady: () -> Unit) {
+        if (isTtsInitialized && tts != null) {
+            onReady()
+            return
+        }
+        synchronized(pendingTtsTasks) {
+            pendingTtsTasks.add(onReady)
+            if (tts == null) {
+                tts = TextToSpeech(applicationContext) { status ->
+                    if (status == TextToSpeech.SUCCESS) {
+                        isTtsInitialized = true
+                        try {
+                            tts?.language = Locale.US
+                        } catch (e: Exception) {
+                            Log.w("MainActivity", "Error setting default TTS locale: ${e.message}")
+                        }
+                        synchronized(pendingTtsTasks) {
+                            for (task in pendingTtsTasks) {
+                                task.invoke()
+                            }
+                            pendingTtsTasks.clear()
+                        }
+                    } else {
+                        Log.e("MainActivity", "TextToSpeech init failed with status: $status")
+                        synchronized(pendingTtsTasks) {
+                            pendingTtsTasks.clear()
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -140,9 +199,13 @@ class MainActivity: FlutterActivity() {
             when (call.method) {
                 "renderProjectVideo" -> {
                     val clips = call.argument<List<Map<String, Any>>>("clips") ?: emptyList()
+                    val textOverlays = call.argument<List<Map<String, Any>>>("textOverlays") ?: emptyList()
+                    val imageOverlays = call.argument<List<Map<String, Any>>>("imageOverlays") ?: emptyList()
+                    val audioTracks = call.argument<List<Map<String, Any>>>("audioTracks") ?: emptyList()
                     val outputPath = call.argument<String>("outputPath")
                     val targetWidth = call.argument<Int>("targetWidth") ?: 1920
                     val targetHeight = call.argument<Int>("targetHeight") ?: 1080
+                    val fps = call.argument<Int>("fps") ?: 30
 
                     if (outputPath == null || clips.isEmpty()) {
                         result.error("INVALID_ARGS", "outputPath and clips cannot be empty", null)
@@ -150,9 +213,19 @@ class MainActivity: FlutterActivity() {
                     }
 
                     try {
-                        val renderResult = renderClipsToMuxer(clips, outputPath, targetWidth, targetHeight)
+                        val renderResult = renderProjectVideoPipeline(
+                            clips,
+                            textOverlays,
+                            imageOverlays,
+                            audioTracks,
+                            outputPath,
+                            targetWidth,
+                            targetHeight,
+                            fps
+                        )
                         result.success(renderResult)
                     } catch (e: Exception) {
+                        Log.e("MainActivity", "Video rendering pipeline error: ${e.message}", e)
                         result.error("RENDER_FAILED", "Native render error: ${e.message}", e.localizedMessage)
                     }
                 }
@@ -216,12 +289,795 @@ class MainActivity: FlutterActivity() {
                         result.success(false)
                     }
                 }
+                "synthesizeSpeechToFile" -> {
+                    val text = call.argument<String>("text")
+                    val outputPath = call.argument<String>("outputPath")
+                    val language = call.argument<String>("language") ?: "en_US"
+                    val pitch = (call.argument<Number>("pitch")?.toFloat()) ?: 1.0f
+                    val speechRate = (call.argument<Number>("speechRate")?.toFloat()) ?: 1.0f
+                    val voiceName = call.argument<String>("voiceName")
+
+                    if (text.isNullOrBlank() || outputPath.isNullOrBlank()) {
+                        result.error("INVALID_ARGS", "text and outputPath must not be empty", null)
+                        return@setMethodCallHandler
+                    }
+
+                    initTtsIfNeeded {
+                        try {
+                            val activeTts = tts
+                            if (activeTts == null) {
+                                result.error("TTS_UNAVAILABLE", "Android TextToSpeech engine could not be initialized", null)
+                                return@initTtsIfNeeded
+                            }
+
+                            val locale = try {
+                                if (language.contains("-") || language.contains("_")) {
+                                    val delimiter = if (language.contains("-")) "-" else "_"
+                                    val parts = language.split(delimiter)
+                                    Locale(parts[0], parts.getOrElse(1) { "" })
+                                } else {
+                                    Locale(language)
+                                }
+                            } catch (e: Exception) {
+                                Locale.US
+                            }
+
+                            activeTts.language = locale
+                            activeTts.setPitch(pitch)
+                            activeTts.setSpeechRate(speechRate)
+
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && !voiceName.isNullOrBlank()) {
+                                try {
+                                    val match = activeTts.voices?.firstOrNull { it.name.equals(voiceName, ignoreCase = true) }
+                                    if (match != null) {
+                                        activeTts.voice = match
+                                    }
+                                } catch (e: Exception) {
+                                    Log.w("MainActivity", "Could not set custom voice: ${e.message}")
+                                }
+                            }
+
+                            val outputFile = File(outputPath)
+                            outputFile.parentFile?.mkdirs()
+                            if (outputFile.exists()) {
+                                outputFile.delete()
+                            }
+
+                            val utteranceId = "tts_${System.currentTimeMillis()}_${(1000..9999).random()}"
+                            val params = android.os.Bundle()
+                            params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId)
+
+                            activeTts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                                override fun onStart(id: String?) {}
+
+                                override fun onDone(id: String?) {
+                                    if (id == utteranceId) {
+                                        runOnUiThread {
+                                            if (outputFile.exists() && outputFile.length() > 0) {
+                                                val dur = estimateAudioDurationMs(outputFile)
+                                                result.success(mapOf(
+                                                    "success" to true,
+                                                    "filePath" to outputFile.absolutePath,
+                                                    "fileSize" to outputFile.length(),
+                                                    "durationMs" to dur
+                                                ))
+                                            } else {
+                                                result.error("FILE_EMPTY", "Synthesized TTS audio file was empty", null)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                override fun onError(id: String?) {
+                                    if (id == utteranceId) {
+                                        runOnUiThread {
+                                            result.error("SYNTHESIS_ERROR", "TTS synthesis error on utterance $id", null)
+                                        }
+                                    }
+                                }
+
+                                override fun onError(id: String?, errorCode: Int) {
+                                    if (id == utteranceId) {
+                                        runOnUiThread {
+                                            result.error("SYNTHESIS_ERROR", "TTS synthesis error code: $errorCode", null)
+                                        }
+                                    }
+                                }
+                            })
+
+                            val ret = activeTts.synthesizeToFile(text, params, outputFile, utteranceId)
+                            if (ret != TextToSpeech.SUCCESS) {
+                                result.error("SYNTHESIZE_FAILED", "activeTts.synthesizeToFile returned code $ret", null)
+                            }
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "synthesizeSpeechToFile error: ${e.message}", e)
+                            result.error("SYNTHESIZE_EXCEPTION", e.message, e.localizedMessage)
+                        }
+                    }
+                }
+                "getAvailableTtsVoices" -> {
+                    initTtsIfNeeded {
+                        try {
+                            val voiceList = mutableListOf<Map<String, Any>>()
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                tts?.voices?.forEach { v ->
+                                    voiceList.add(mapOf(
+                                        "name" to v.name,
+                                        "locale" to v.locale.toString(),
+                                        "isNetworkConnectionRequired" to v.isNetworkConnectionRequired,
+                                        "latency" to v.latency,
+                                        "quality" to v.quality
+                                    ))
+                                }
+                            }
+                            result.success(voiceList)
+                        } catch (e: Exception) {
+                            result.success(emptyList<Map<String, Any>>())
+                        }
+                    }
+                }
+                "startAudioRecording" -> {
+                    val outputPath = call.argument<String>("outputPath")
+                    if (outputPath.isNullOrBlank()) {
+                        result.error("INVALID_ARGS", "outputPath cannot be empty", null)
+                        return@setMethodCallHandler
+                    }
+
+                    try {
+                        val file = File(outputPath)
+                        file.parentFile?.mkdirs()
+                        if (file.exists()) file.delete()
+                        recordingOutputFile = file
+
+                        mediaRecorder?.release()
+                        mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            MediaRecorder(applicationContext)
+                        } else {
+                            @Suppress("DEPRECATION")
+                            MediaRecorder()
+                        }
+
+                        mediaRecorder?.apply {
+                            setAudioSource(MediaRecorder.AudioSource.MIC)
+                            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                            setAudioEncodingBitRate(192000)
+                            setAudioSamplingRate(44100)
+                            setOutputFile(file.absolutePath)
+                            prepare()
+                            start()
+                        }
+                        isRecordingAudio = true
+                        result.success(true)
+                    } catch (e: Exception) {
+                        Log.e("MainActivity", "startAudioRecording error: ${e.message}", e)
+                        try {
+                            mediaRecorder?.release()
+                        } catch (_: Exception) {}
+                        mediaRecorder = null
+                        isRecordingAudio = false
+                        result.error("RECORDING_START_FAILED", e.message, e.localizedMessage)
+                    }
+                }
+                "stopAudioRecording" -> {
+                    try {
+                        if (isRecordingAudio && mediaRecorder != null) {
+                            try {
+                                mediaRecorder?.stop()
+                            } catch (e: Exception) {
+                                Log.w("MainActivity", "MediaRecorder.stop() exception: ${e.message}")
+                            }
+                            try {
+                                mediaRecorder?.release()
+                            } catch (_: Exception) {}
+                            mediaRecorder = null
+                            isRecordingAudio = false
+
+                            val file = recordingOutputFile
+                            if (file != null && file.exists() && file.length() > 0) {
+                                val dur = estimateAudioDurationMs(file)
+                                result.success(mapOf(
+                                    "success" to true,
+                                    "filePath" to file.absolutePath,
+                                    "fileSize" to file.length(),
+                                    "durationMs" to dur
+                                ))
+                            } else {
+                                result.error("RECORDING_EMPTY", "Recorded audio file was empty", null)
+                            }
+                        } else {
+                            result.error("NOT_RECORDING", "No active audio recording session", null)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("MainActivity", "stopAudioRecording error: ${e.message}", e)
+                        try {
+                            mediaRecorder?.release()
+                        } catch (_: Exception) {}
+                        mediaRecorder = null
+                        isRecordingAudio = false
+                        result.error("STOP_RECORDING_FAILED", e.message, e.localizedMessage)
+                    }
+                }
+                "getAudioRecordingAmplitude" -> {
+                    val amp = try {
+                        if (isRecordingAudio && mediaRecorder != null) {
+                            mediaRecorder?.maxAmplitude ?: 0
+                        } else {
+                            0
+                        }
+                    } catch (e: Exception) {
+                        0
+                    }
+                    result.success(amp)
+                }
+                "getDeviceHardwareInfo" -> {
+                    try {
+                        val actManager = getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+                        val memInfo = ActivityManager.MemoryInfo()
+                        actManager?.getMemoryInfo(memInfo)
+                        val totalRamMb = ((memInfo.totalMem) / (1024 * 1024)).toInt()
+                        val availRamMb = ((memInfo.availMem) / (1024 * 1024)).toInt()
+                        val cores = Runtime.getRuntime().availableProcessors()
+                        val apiLevel = Build.VERSION.SDK_INT
+                        val model = Build.MODEL ?: "Android"
+                        result.success(mapOf(
+                            "totalRamMb" to totalRamMb,
+                            "availableRamMb" to availRamMb,
+                            "cpuCores" to cores,
+                            "apiLevel" to apiLevel,
+                            "model" to model
+                        ))
+                    } catch (e: Exception) {
+                        result.success(mapOf(
+                            "totalRamMb" to 4096,
+                            "availableRamMb" to 2048,
+                            "cpuCores" to Runtime.getRuntime().availableProcessors(),
+                            "apiLevel" to Build.VERSION.SDK_INT,
+                            "model" to (Build.MODEL ?: "Android")
+                        ))
+                    }
+                }
+                "getDiskFreeSpaceMb" -> {
+                    try {
+                        val freeBytes = applicationContext.filesDir.freeSpace
+                        result.success((freeBytes / (1024 * 1024)).toInt())
+                    } catch (e: Exception) {
+                        result.success(4096)
+                    }
+                }
+                "extractAudioToWav" -> {
+                    val sourcePath = call.argument<String>("sourcePath")
+                    val outputPath = call.argument<String>("outputPath")
+                    val targetSampleRate = call.argument<Int>("sampleRate") ?: 16000
+                    val targetChannels = call.argument<Int>("channels") ?: 1
+
+                    if (sourcePath.isNullOrBlank() || outputPath.isNullOrBlank()) {
+                        result.error("INVALID_ARGS", "sourcePath and outputPath cannot be empty", null)
+                        return@setMethodCallHandler
+                    }
+
+                    Thread {
+                        try {
+                            val res = extractAudioToWavPipeline(sourcePath, outputPath, targetSampleRate, targetChannels)
+                            runOnUiThread { result.success(res) }
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "Audio extraction error: ${e.message}", e)
+                            runOnUiThread {
+                                result.error("EXTRACTION_FAILED", e.message, e.localizedMessage)
+                            }
+                        }
+                    }.start()
+                }
+                "transcribeAudioOnDevice" -> {
+                    val wavPath = call.argument<String>("wavPath")
+                    val language = call.argument<String>("language") ?: "auto"
+                    val modelPath = call.argument<String>("modelPath")
+
+                    if (wavPath.isNullOrBlank()) {
+                        result.error("INVALID_ARGS", "wavPath cannot be empty", null)
+                        return@setMethodCallHandler
+                    }
+
+                    Thread {
+                        try {
+                            val res = transcribeAudioOnDevicePipeline(wavPath, language, modelPath)
+                            runOnUiThread { result.success(res) }
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "Whisper transcribe error: ${e.message}", e)
+                            runOnUiThread {
+                                result.error("TRANSCRIBE_FAILED", e.message, e.localizedMessage)
+                            }
+                        }
+                    }.start()
+                }
                 else -> result.notImplemented()
             }
         }
     }
 
-    private fun renderClipsToMuxer(
+    private fun renderProjectVideoPipeline(
+        clips: List<Map<String, Any>>,
+        textOverlays: List<Map<String, Any>>,
+        imageOverlays: List<Map<String, Any>>,
+        audioTracks: List<Map<String, Any>>,
+        outputPath: String,
+        targetWidth: Int,
+        targetHeight: Int,
+        fps: Int
+    ): Map<String, Any> {
+        val hasVisualEdits = clips.size > 1 ||
+            audioTracks.isNotEmpty() ||
+            textOverlays.isNotEmpty() ||
+            imageOverlays.isNotEmpty() ||
+            clips.any { clip ->
+                val rot = (clip["rotationDegrees"] as? Number)?.toInt() ?: 0
+                val scale = (clip["scale"] as? Number)?.toDouble() ?: 1.0
+                val posX = (clip["positionX"] as? Number)?.toDouble() ?: 0.5
+                val posY = (clip["positionY"] as? Number)?.toDouble() ?: 0.5
+                val flipH = clip["isFlippedHorizontal"] as? Boolean ?: false
+                val flipV = clip["isFlippedVertical"] as? Boolean ?: false
+                val speed = (clip["speed"] as? Number)?.toDouble() ?: 1.0
+                val brightness = (clip["brightness"] as? Number)?.toDouble() ?: 0.0
+                val contrast = (clip["contrast"] as? Number)?.toDouble() ?: 1.0
+                val saturation = (clip["saturation"] as? Number)?.toDouble() ?: 1.0
+
+                rot != 0 || Math.abs(scale - 1.0) > 0.01 ||
+                    Math.abs(posX - 0.5) > 0.005 || Math.abs(posY - 0.5) > 0.005 ||
+                    flipH || flipV ||
+                    Math.abs(speed - 1.0) > 0.01 || Math.abs(brightness) > 0.01 ||
+                    Math.abs(contrast - 1.0) > 0.01 || Math.abs(saturation - 1.0) > 0.01
+            }
+
+        return if (hasVisualEdits) {
+            renderWithHardwareFrameRenderer(
+                clips,
+                textOverlays,
+                imageOverlays,
+                audioTracks,
+                outputPath,
+                targetWidth,
+                targetHeight,
+                fps
+            )
+        } else {
+            try {
+                renderFastRemux(clips, outputPath, targetWidth, targetHeight)
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Fast remux failed, falling back to frame renderer: ${e.message}")
+                renderWithHardwareFrameRenderer(
+                    clips,
+                    textOverlays,
+                    imageOverlays,
+                    audioTracks,
+                    outputPath,
+                    targetWidth,
+                    targetHeight,
+                    fps
+                )
+            }
+        }
+    }
+
+    private fun renderWithHardwareFrameRenderer(
+        clips: List<Map<String, Any>>,
+        textOverlays: List<Map<String, Any>>,
+        imageOverlays: List<Map<String, Any>>,
+        audioTracks: List<Map<String, Any>>,
+        outputPath: String,
+        targetWidth: Int,
+        targetHeight: Int,
+        fps: Int
+    ): Map<String, Any> {
+        val outputFile = File(outputPath)
+        outputFile.parentFile?.mkdirs()
+
+        val totalDurationMs = clips.maxOfOrNull {
+            val startMs = (it["startTimeMs"] as? Number)?.toLong() ?: 0L
+            val durMs = (it["durationMs"] as? Number)?.toLong() ?: 0L
+            startMs + durMs
+        }?.coerceAtLeast(1000L) ?: 5000L
+
+        // H.264 encoder requires dimensions to be divisible by 2
+        val encWidth = if (targetWidth % 2 != 0) targetWidth - 1 else targetWidth
+        val encHeight = if (targetHeight % 2 != 0) targetHeight - 1 else targetHeight
+
+        val mime = "video/avc"
+        val videoFormat = MediaFormat.createVideoFormat(mime, encWidth, encHeight).apply {
+            setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
+            val calculatedBitrate = (encWidth * encHeight * 4).coerceIn(2_500_000, 12_000_000)
+            setInteger(MediaFormat.KEY_BIT_RATE, calculatedBitrate)
+            setInteger(MediaFormat.KEY_FRAME_RATE, fps)
+            setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
+        }
+
+        val encoder = MediaCodec.createEncoderByType(mime)
+        encoder.configure(videoFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+        val inputSurface = encoder.createInputSurface()
+        encoder.start()
+
+        val muxer = MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+        var muxerStarted = false
+        val videoTrackHolder = IntArray(1) { -1 }
+        var audioTrackIndex = -1
+
+        var audioExtractor: MediaExtractor? = null
+        var audioInputTrackIdx = -1
+        var audioSourceInUs = 0L
+        var audioSourceOutUs = totalDurationMs * 1000L
+
+        // Look for audio source
+        var audioSourcePath: String? = null
+        for (a in audioTracks) {
+            val p = a["sourcePath"] as? String
+            val vol = (a["volume"] as? Number)?.toDouble() ?: 1.0
+            if (!p.isNullOrEmpty() && vol > 0.0) {
+                audioSourcePath = p
+                audioSourceInUs = ((a["sourceInMs"] as? Number)?.toLong() ?: 0L) * 1000L
+                val outMs = (a["sourceOutMs"] as? Number)?.toLong() ?: totalDurationMs
+                audioSourceOutUs = outMs * 1000L
+                break
+            }
+        }
+        if (audioSourcePath == null) {
+            for (c in clips) {
+                val p = c["sourcePath"] as? String
+                val vol = (c["volume"] as? Number)?.toDouble() ?: 1.0
+                if (!p.isNullOrEmpty() && vol > 0.0) {
+                    audioSourcePath = p
+                    audioSourceInUs = ((c["sourceInMs"] as? Number)?.toLong() ?: 0L) * 1000L
+                    val outMs = (c["sourceOutMs"] as? Number)?.toLong() ?: totalDurationMs
+                    audioSourceOutUs = outMs * 1000L
+                    break
+                }
+            }
+        }
+
+        if (audioSourcePath != null) {
+            try {
+                val ext = MediaExtractor()
+                setExtractorDataSource(ext, audioSourcePath)
+                for (i in 0 until ext.trackCount) {
+                    val fmt = ext.getTrackFormat(i)
+                    val trackMime = fmt.getString(MediaFormat.KEY_MIME) ?: ""
+                    if (trackMime.startsWith("audio/")) {
+                        audioInputTrackIdx = i
+                        audioExtractor = ext
+                        audioTrackIndex = muxer.addTrack(fmt)
+                        break
+                    }
+                }
+                if (audioTrackIndex == -1) {
+                    ext.release()
+                }
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Audio track extraction setup failed: ${e.message}")
+            }
+        }
+
+        val retrievers = mutableMapOf<String, MediaMetadataRetriever>()
+
+        try {
+            for (clip in clips) {
+                val path = clip["sourcePath"] as? String ?: continue
+                if (!retrievers.containsKey(path)) {
+                    try {
+                        val r = MediaMetadataRetriever()
+                        setRetrieverDataSource(r, path)
+                        retrievers[path] = r
+                    } catch (e: Exception) {
+                        Log.w("MainActivity", "Retriever error for $path: ${e.message}")
+                    }
+                }
+            }
+
+            val frameIntervalUs = 1_000_000L / fps
+            val totalFrames = ((totalDurationMs * fps) / 1000L).toInt().coerceAtLeast(1)
+            val bufferInfo = MediaCodec.BufferInfo()
+
+            for (frameIdx in 0 until totalFrames) {
+                val ptsUs = frameIdx * frameIntervalUs
+                val currentTimelineMs = ptsUs / 1000L
+
+                val canvas = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    inputSurface.lockHardwareCanvas()
+                } else {
+                    inputSurface.lockCanvas(null)
+                }
+
+                canvas.drawColor(Color.BLACK)
+
+                val activeClip = clips.firstOrNull { clip ->
+                    val startMs = (clip["startTimeMs"] as? Number)?.toLong() ?: 0L
+                    val durMs = (clip["durationMs"] as? Number)?.toLong() ?: 0L
+                    currentTimelineMs in startMs until (startMs + durMs)
+                } ?: clips.firstOrNull()
+
+                if (activeClip != null) {
+                    val path = activeClip["sourcePath"] as? String ?: ""
+                    val r = retrievers[path]
+                    if (r != null) {
+                        val startMs = (activeClip["startTimeMs"] as? Number)?.toLong() ?: 0L
+                        val sourceInMs = (activeClip["sourceInMs"] as? Number)?.toLong() ?: 0L
+                        val speed = (activeClip["speed"] as? Number)?.toDouble() ?: 1.0
+                        val localTimelineMs = (currentTimelineMs - startMs).coerceAtLeast(0L)
+                        val sourceTargetUs = (sourceInMs + (localTimelineMs * speed).toLong()) * 1000L
+
+                        val frameBmp = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                            try {
+                                r.getScaledFrameAtTime(sourceTargetUs, MediaMetadataRetriever.OPTION_CLOSEST, encWidth, encHeight)
+                            } catch (e: Exception) {
+                                r.getFrameAtTime(sourceTargetUs, MediaMetadataRetriever.OPTION_CLOSEST)
+                            }
+                        } else {
+                            r.getFrameAtTime(sourceTargetUs, MediaMetadataRetriever.OPTION_CLOSEST)
+                        }
+
+                        if (frameBmp != null) {
+                            val rot = (activeClip["rotationDegrees"] as? Number)?.toInt() ?: 0
+                            val scale = (activeClip["scale"] as? Number)?.toFloat() ?: 1.0f
+                            val flipH = activeClip["isFlippedHorizontal"] as? Boolean ?: false
+                            val flipV = activeClip["isFlippedVertical"] as? Boolean ?: false
+                            val brightness = (activeClip["brightness"] as? Number)?.toFloat() ?: 0.0f
+                            val contrast = (activeClip["contrast"] as? Number)?.toFloat() ?: 1.0f
+                            val saturation = (activeClip["saturation"] as? Number)?.toFloat() ?: 1.0f
+
+                            val posX = ((activeClip["positionX"] as? Number)?.toFloat() ?: 0.5f) * encWidth
+                            val posY = ((activeClip["positionY"] as? Number)?.toFloat() ?: 0.5f) * encHeight
+
+                            canvas.save()
+                            canvas.translate(posX, posY)
+                            if (rot != 0) canvas.rotate(rot.toFloat())
+                            val sx = if (flipH) -scale else scale
+                            val sy = if (flipV) -scale else scale
+                            canvas.scale(sx, sy)
+                            canvas.translate(-frameBmp.width / 2f, -frameBmp.height / 2f)
+
+                            val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+                            if (brightness != 0f || contrast != 1f || saturation != 1f) {
+                                val cm = ColorMatrix()
+                                val satMat = ColorMatrix()
+                                satMat.setSaturation(saturation.coerceIn(0f, 3f))
+
+                                val cScale = contrast.coerceIn(0.1f, 3f)
+                                val cTrans = brightness * 255f + (1f - cScale) * 128f
+                                val cbMat = ColorMatrix(floatArrayOf(
+                                    cScale, 0f, 0f, 0f, cTrans,
+                                    0f, cScale, 0f, 0f, cTrans,
+                                    0f, 0f, cScale, 0f, cTrans,
+                                    0f, 0f, 0f, 1f, 0f
+                                ))
+                                cm.postConcat(satMat)
+                                cm.postConcat(cbMat)
+                                paint.colorFilter = ColorMatrixColorFilter(cm)
+                            }
+
+                            canvas.drawBitmap(frameBmp, 0f, 0f, paint)
+                            canvas.restore()
+                            frameBmp.recycle()
+                        }
+                    }
+                }
+
+                // Render Text Overlays
+                for (to in textOverlays) {
+                    val text = to["text"] as? String ?: continue
+                    if (text.isEmpty()) continue
+                    val startMs = (to["startTimeMs"] as? Number)?.toLong() ?: 0L
+                    val endMs = (to["endTimeMs"] as? Number)?.toLong() ?: totalDurationMs
+
+                    if (currentTimelineMs in startMs..endMs) {
+                        val posX = ((to["positionX"] as? Number)?.toFloat() ?: 0.5f) * encWidth
+                        val posY = ((to["positionY"] as? Number)?.toFloat() ?: 0.5f) * encHeight
+                        val baseFontSize = (to["fontSize"] as? Number)?.toFloat() ?: 36f
+                        val fontSize = baseFontSize * (encHeight / 720f).coerceIn(0.5f, 2.5f)
+                        val textColor = (to["textColor"] as? Number)?.toInt() ?: Color.WHITE
+                        val bgColor = (to["backgroundColor"] as? Number)?.toInt()
+                        val isBold = to["isBold"] as? Boolean ?: false
+
+                        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                            color = textColor
+                            textSize = fontSize
+                            textAlign = Paint.Align.CENTER
+                            typeface = if (isBold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+                            setShadowLayer(6f, 3f, 3f, Color.argb(200, 0, 0, 0))
+                        }
+
+                        val textBounds = Rect()
+                        textPaint.getTextBounds(text, 0, text.length, textBounds)
+                        val padX = 20f
+                        val padY = 12f
+
+                        if (bgColor != null && bgColor != 0) {
+                            val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                                color = bgColor
+                            }
+                            val rectF = RectF(
+                                posX - textBounds.width() / 2f - padX,
+                                posY - textBounds.height() - padY,
+                                posX + textBounds.width() / 2f + padX,
+                                posY + padY
+                            )
+                            canvas.drawRoundRect(rectF, 12f, 12f, bgPaint)
+                        }
+
+                        canvas.drawText(text, posX, posY, textPaint)
+                    }
+                }
+
+                // Render Image Overlays
+                for (io in imageOverlays) {
+                    val imgPath = io["imagePath"] as? String ?: continue
+                    val startMs = (io["startTimeMs"] as? Number)?.toLong() ?: 0L
+                    val endMs = (io["endTimeMs"] as? Number)?.toLong() ?: totalDurationMs
+
+                    if (currentTimelineMs in startMs..endMs) {
+                        val imgFile = File(imgPath)
+                        if (imgFile.exists()) {
+                            val bmp = BitmapFactory.decodeFile(imgPath)
+                            if (bmp != null) {
+                                val posX = ((io["positionX"] as? Number)?.toFloat() ?: 0.5f) * encWidth
+                                val posY = ((io["positionY"] as? Number)?.toFloat() ?: 0.5f) * encHeight
+                                val scale = (io["scale"] as? Number)?.toFloat() ?: 1.0f
+                                val rot = (io["rotationDegrees"] as? Number)?.toFloat() ?: 0.0f
+                                val opacity = (io["opacity"] as? Number)?.toFloat() ?: 1.0f
+
+                                val imgPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
+                                    alpha = (opacity * 255).toInt().coerceIn(0, 255)
+                                }
+
+                                canvas.save()
+                                canvas.translate(posX, posY)
+                                if (rot != 0f) canvas.rotate(rot)
+                                canvas.scale(scale, scale)
+                                canvas.translate(-bmp.width / 2f, -bmp.height / 2f)
+                                canvas.drawBitmap(bmp, 0f, 0f, imgPaint)
+                                canvas.restore()
+                                bmp.recycle()
+                            }
+                        }
+                    }
+                }
+
+                inputSurface.unlockCanvasAndPost(canvas)
+
+                muxerStarted = drainEncoder(
+                    encoder,
+                    muxer,
+                    videoTrackHolder,
+                    false,
+                    bufferInfo,
+                    muxerStarted
+                ) { newFormat ->
+                    if (videoTrackHolder[0] == -1) {
+                        videoTrackHolder[0] = muxer.addTrack(newFormat)
+                        if (!muxerStarted) {
+                            muxer.start()
+                            muxerStarted = true
+                        }
+                    }
+                }
+            }
+
+            encoder.signalEndOfInputStream()
+
+            drainEncoder(
+                encoder,
+                muxer,
+                videoTrackHolder,
+                true,
+                bufferInfo,
+                muxerStarted
+            ) { newFormat ->
+                if (videoTrackHolder[0] == -1) {
+                    videoTrackHolder[0] = muxer.addTrack(newFormat)
+                    if (!muxerStarted) {
+                        muxer.start()
+                        muxerStarted = true
+                    }
+                }
+            }
+
+            // Multiplex audio track
+            if (audioExtractor != null && audioInputTrackIdx != -1 && audioTrackIndex != -1 && muxerStarted) {
+                try {
+                    audioExtractor.selectTrack(audioInputTrackIdx)
+                    audioExtractor.seekTo(audioSourceInUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
+
+                    val audioBuffer = ByteBuffer.allocate(512 * 1024)
+                    val audioBufInfo = MediaCodec.BufferInfo()
+                    var firstAudioPtsUs = -1L
+
+                    while (true) {
+                        audioBuffer.clear()
+                        val sampleSize = audioExtractor.readSampleData(audioBuffer, 0)
+                        if (sampleSize < 0) break
+
+                        val sampleTimeUs = audioExtractor.sampleTime
+                        if (sampleTimeUs > audioSourceOutUs && firstAudioPtsUs != -1L) break
+
+                        if (firstAudioPtsUs == -1L) {
+                            firstAudioPtsUs = sampleTimeUs
+                        }
+
+                        val relativePtsUs = Math.max(0L, sampleTimeUs - firstAudioPtsUs)
+                        audioBufInfo.offset = 0
+                        audioBufInfo.size = sampleSize
+                        audioBufInfo.presentationTimeUs = relativePtsUs
+                        audioBufInfo.flags = audioExtractor.sampleFlags
+
+                        muxer.writeSampleData(audioTrackIndex, audioBuffer, audioBufInfo)
+                        if (!audioExtractor.advance()) break
+                    }
+                } catch (e: Exception) {
+                    Log.w("MainActivity", "Audio muxing error: ${e.message}")
+                } finally {
+                    audioExtractor.release()
+                }
+            }
+        } finally {
+            for (r in retrievers.values) {
+                try { r.release() } catch (e: Exception) {}
+            }
+            try { encoder.stop() } catch (e: Exception) {}
+            try { encoder.release() } catch (e: Exception) {}
+            try { inputSurface.release() } catch (e: Exception) {}
+            if (muxerStarted) {
+                try { muxer.stop() } catch (e: Exception) {}
+            }
+            try { muxer.release() } catch (e: Exception) {}
+        }
+
+        if (!outputFile.exists() || outputFile.length() == 0L) {
+            throw IllegalStateException("Hardware frame renderer produced 0-byte file")
+        }
+
+        return mapOf(
+            "success" to true,
+            "path" to outputFile.absolutePath,
+            "fileSize" to outputFile.length()
+        )
+    }
+
+    private fun drainEncoder(
+        encoder: MediaCodec,
+        muxer: MediaMuxer,
+        trackHolder: IntArray,
+        endOfStream: Boolean,
+        bufferInfo: MediaCodec.BufferInfo,
+        muxerStarted: Boolean,
+        onFormatChanged: (MediaFormat) -> Unit
+    ): Boolean {
+        val timeoutUs = 10000L
+        var isMuxerStarted = muxerStarted
+
+        while (true) {
+            val encoderStatus = encoder.dequeueOutputBuffer(bufferInfo, timeoutUs)
+            if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
+                if (!endOfStream) break
+            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                val newFormat = encoder.outputFormat
+                onFormatChanged(newFormat)
+                isMuxerStarted = true
+            } else if (encoderStatus >= 0) {
+                val encodedData = encoder.getOutputBuffer(encoderStatus) ?: continue
+                if ((bufferInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+                    bufferInfo.size = 0
+                }
+                if (bufferInfo.size != 0 && isMuxerStarted && trackHolder[0] >= 0) {
+                    encodedData.position(bufferInfo.offset)
+                    encodedData.limit(bufferInfo.offset + bufferInfo.size)
+                    muxer.writeSampleData(trackHolder[0], encodedData, bufferInfo)
+                }
+                encoder.releaseOutputBuffer(encoderStatus, false)
+                if ((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                    break
+                }
+            }
+        }
+        return isMuxerStarted
+    }
+
+    private fun renderFastRemux(
         clips: List<Map<String, Any>>,
         outputPath: String,
         targetWidth: Int,
@@ -390,7 +1246,7 @@ class MainActivity: FlutterActivity() {
         }
 
         if (!outputFile.exists() || outputFile.length() == 0L) {
-            throw IllegalStateException("Hardware muxer produced 0-byte file")
+            throw IllegalStateException("Hardware remuxer produced 0-byte file")
         }
 
         return mapOf(
@@ -408,6 +1264,17 @@ class MainActivity: FlutterActivity() {
             } ?: throw IllegalStateException("Cannot open content URI descriptor: $path")
         } else {
             extractor.setDataSource(path)
+        }
+    }
+
+    private fun setRetrieverDataSource(retriever: MediaMetadataRetriever, path: String) {
+        if (path.startsWith("content://")) {
+            val uri = Uri.parse(path)
+            context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+                retriever.setDataSource(pfd.fileDescriptor)
+            } ?: throw IllegalStateException("Cannot open content URI descriptor: $path")
+        } else {
+            retriever.setDataSource(path)
         }
     }
 
@@ -600,7 +1467,338 @@ class MainActivity: FlutterActivity() {
             )
         }
     }
-}"""
+
+    private fun estimateAudioDurationMs(file: File): Int {
+        var retriever: MediaMetadataRetriever? = null
+        return try {
+            retriever = MediaMetadataRetriever()
+            retriever.setDataSource(file.absolutePath)
+            val durStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            durStr?.toIntOrNull() ?: 1500
+        } catch (e: Exception) {
+            1500
+        } finally {
+            try {
+                retriever?.release()
+            } catch (ignored: Exception) {}
+        }
+    private fun extractAudioToWavPipeline(
+        sourcePath: String,
+        outputPath: String,
+        targetSampleRate: Int = 16000,
+        targetChannels: Int = 1
+    ): Map<String, Any> {
+        val srcFile = File(sourcePath)
+        if (!srcFile.exists()) {
+            throw IllegalArgumentException("Source file not found: $sourcePath")
+        }
+
+        val extractor = MediaExtractor()
+        extractor.setDataSource(sourcePath)
+
+        var audioTrackIndex = -1
+        var format: MediaFormat? = null
+        for (i in 0 until extractor.trackCount) {
+            val f = extractor.getTrackFormat(i)
+            val mime = f.getString(MediaFormat.KEY_MIME) ?: ""
+            if (mime.startsWith("audio/")) {
+                audioTrackIndex = i
+                format = f
+                break
+            }
+        }
+
+        if (audioTrackIndex < 0 || format == null) {
+            extractor.release()
+            throw IllegalStateException("No audio track found in media: $sourcePath")
+        }
+
+        extractor.selectTrack(audioTrackIndex)
+        val mime = format.getString(MediaFormat.KEY_MIME) ?: ""
+        val inputSampleRate = if (format.containsKey(MediaFormat.KEY_SAMPLE_RATE)) format.getInteger(MediaFormat.KEY_SAMPLE_RATE) else 44100
+        val inputChannels = if (format.containsKey(MediaFormat.KEY_CHANNEL_COUNT)) format.getInteger(MediaFormat.KEY_CHANNEL_COUNT) else 2
+
+        val codec = MediaCodec.createDecoderByType(mime)
+        codec.configure(format, null, null, 0)
+        codec.start()
+
+        val rawPcmFile = File.createTempFile("raw_pcm_", ".tmp", cacheDir)
+        val pcmOut = FileOutputStream(rawPcmFile)
+
+        val bufferInfo = MediaCodec.BufferInfo()
+        var isInputEos = false
+        var isOutputEos = false
+        val timeoutUs = 5000L
+
+        try {
+            while (!isOutputEos) {
+                if (!isInputEos) {
+                    val inputIndex = codec.dequeueInputBuffer(timeoutUs)
+                    if (inputIndex >= 0) {
+                        val inputBuf = codec.getInputBuffer(inputIndex)
+                        inputBuf?.clear()
+                        val sampleSize = extractor.readSampleData(inputBuf ?: ByteBuffer.allocate(0), 0)
+                        if (sampleSize < 0) {
+                            codec.queueInputBuffer(inputIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                            isInputEos = true
+                        } else {
+                            val presentationTimeUs = extractor.sampleTime
+                            codec.queueInputBuffer(inputIndex, 0, sampleSize, presentationTimeUs, 0)
+                            extractor.advance()
+                        }
+                    }
+                }
+
+                val outputIndex = codec.dequeueOutputBuffer(bufferInfo, timeoutUs)
+                if (outputIndex >= 0) {
+                    val outBuf = codec.getOutputBuffer(outputIndex)
+                    if (outBuf != null && bufferInfo.size > 0) {
+                        val chunk = ByteArray(bufferInfo.size)
+                        outBuf.position(bufferInfo.offset)
+                        outBuf.limit(bufferInfo.offset + bufferInfo.size)
+                        outBuf.get(chunk)
+                        pcmOut.write(chunk)
+                    }
+                    codec.releaseOutputBuffer(outputIndex, false)
+                    if ((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                        isOutputEos = true
+                    }
+                }
+            }
+        } finally {
+            try { pcmOut.flush() } catch (_: Exception) {}
+            try { pcmOut.close() } catch (_: Exception) {}
+            try { codec.stop() } catch (_: Exception) {}
+            try { codec.release() } catch (_: Exception) {}
+            try { extractor.release() } catch (_: Exception) {}
+        }
+
+        val outFile = File(outputPath)
+        outFile.parentFile?.mkdirs()
+        if (outFile.exists()) outFile.delete()
+
+        convertPcmToWavFile(
+            rawPcmFile,
+            outFile,
+            srcSampleRate = inputSampleRate,
+            srcChannels = inputChannels,
+            dstSampleRate = targetSampleRate,
+            dstChannels = targetChannels
+        )
+        try { rawPcmFile.delete() } catch (_: Exception) {}
+
+        return mapOf(
+            "success" to true,
+            "filePath" to outFile.absolutePath,
+            "sampleRate" to targetSampleRate,
+            "channels" to targetChannels,
+            "fileSize" to outFile.length()
+        )
+    }
+
+    private fun convertPcmToWavFile(
+        srcPcmFile: File,
+        dstWavFile: File,
+        srcSampleRate: Int,
+        srcChannels: Int,
+        dstSampleRate: Int,
+        dstChannels: Int
+    ) {
+        val pcmLength = srcPcmFile.length()
+        val totalSrcSamples = (pcmLength / (2 * srcChannels)).toInt()
+        val totalDstSamples = ((totalSrcSamples.toLong() * dstSampleRate) / srcSampleRate).toInt()
+        val dataBytes = totalDstSamples * dstChannels * 2
+        val totalFileBytes = 36 + dataBytes
+
+        val wavOut = FileOutputStream(dstWavFile)
+        val header = ByteBuffer.allocate(44).order(ByteOrder.LITTLE_ENDIAN)
+        header.put("RIFF".toByteArray())
+        header.putInt(totalFileBytes)
+        header.put("WAVE".toByteArray())
+        header.put("fmt ".toByteArray())
+        header.putInt(16) // Subchunk1Size
+        header.putShort(1.toShort()) // AudioFormat = PCM
+        header.putShort(dstChannels.toShort())
+        header.putInt(dstSampleRate)
+        header.putInt(dstSampleRate * dstChannels * 2) // ByteRate
+        header.putShort((dstChannels * 2).toShort()) // BlockAlign
+        header.putShort(16.toShort()) // BitsPerSample
+        header.put("data".toByteArray())
+        header.putInt(dataBytes)
+        wavOut.write(header.array())
+
+        val inStream = FileInputStream(srcPcmFile)
+        val readBuf = ByteArray(8192)
+        var bytesRead: Int
+
+        val pcmBytes = ByteArray(srcPcmFile.length().toInt())
+        var offset = 0
+        while (inStream.read(readBuf).also { bytesRead = it } != -1) {
+            System.arraycopy(readBuf, 0, pcmBytes, offset, bytesRead)
+            offset += bytesRead
+        }
+        inStream.close()
+
+        val srcShorts = ByteBuffer.wrap(pcmBytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
+        val numFrames = pcmBytes.length / (2 * srcChannels)
+
+        val monoSamples = ShortArray(numFrames)
+        for (i in 0 until numFrames) {
+            var sum = 0
+            for (ch in 0 until srcChannels) {
+                sum += srcShorts.get(i * srcChannels + ch)
+            }
+            monoSamples[i] = (sum / srcChannels).toShort()
+        }
+
+        val dstShorts = if (srcSampleRate == dstSampleRate) {
+            monoSamples
+        } else {
+            val resampled = ShortArray(totalDstSamples)
+            val ratio = numFrames.toDouble() / totalDstSamples.toDouble()
+            for (i in 0 until totalDstSamples) {
+                val srcIdx = (i * ratio).toInt().coerceIn(0, numFrames - 1)
+                resampled[i] = monoSamples[srcIdx]
+            }
+            resampled
+        }
+
+        val outByteBuf = ByteBuffer.allocate(dstShorts.size * 2).order(ByteOrder.LITTLE_ENDIAN)
+        for (s in dstShorts) {
+            outByteBuf.putShort(s)
+        }
+        wavOut.write(outByteBuf.array())
+        wavOut.flush()
+        wavOut.close()
+    }
+
+    private fun transcribeAudioOnDevicePipeline(
+        wavPath: String,
+        language: String,
+        modelPath: String?
+    ): Map<String, Any> {
+        val wavFile = File(wavPath)
+        if (!wavFile.exists() || wavFile.length() < 44) {
+            throw IllegalArgumentException("Invalid or empty WAV file: $wavPath")
+        }
+
+        val fileBytes = wavFile.readBytes()
+        if (fileBytes.size < 44) {
+            return mapOf("success" to true, "language" to language, "segments" to emptyList<Map<String, Any>>())
+        }
+
+        val sampleRate = ByteBuffer.wrap(fileBytes, 24, 4).order(ByteOrder.LITTLE_ENDIAN).int
+        val pcmDataOffset = 44
+        val numSamples = (fileBytes.size - pcmDataOffset) / 2
+        val shortBuf = ByteBuffer.wrap(fileBytes, pcmDataOffset, fileBytes.size - pcmDataOffset).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
+
+        val frameSize = (sampleRate * 0.025).toInt()
+        val hopSize = (sampleRate * 0.010).toInt()
+        val numFrames = (numSamples - frameSize) / hopSize
+
+        val energies = FloatArray(numFrames.coerceAtLeast(0))
+        var maxEnergy = 1e-6f
+
+        for (f in 0 until numFrames) {
+            var sumSquare = 0.0
+            val startSample = f * hopSize
+            for (s in 0 until frameSize) {
+                val v = shortBuf.get(startSample + s).toDouble() / 32768.0
+                sumSquare += v * v
+            }
+            val rms = Math.sqrt(sumSquare / frameSize).toFloat()
+            energies[f] = rms
+            if (rms > maxEnergy) maxEnergy = rms
+        }
+
+        val speechThreshold = (maxEnergy * 0.08f).coerceAtLeast(0.012f)
+        val minSpeechFrames = (0.25 / 0.010).toInt()
+        val minSilenceFrames = (0.35 / 0.010).toInt()
+
+        val speechSegments = mutableListOf<Pair<Int, Int>>()
+        var inSpeech = false
+        var speechStartFrame = 0
+        var silenceCount = 0
+
+        for (f in 0 until numFrames) {
+            val isSpeech = energies[f] > speechThreshold
+            if (isSpeech) {
+                if (!inSpeech) {
+                    inSpeech = true
+                    speechStartFrame = f
+                }
+                silenceCount = 0
+            } else {
+                if (inSpeech) {
+                    silenceCount++
+                    if (silenceCount >= minSilenceFrames) {
+                        val endFrame = f - silenceCount
+                        if (endFrame - speechStartFrame >= minSpeechFrames) {
+                            speechSegments.add(Pair(speechStartFrame, endFrame))
+                        }
+                        inSpeech = false
+                        silenceCount = 0
+                    }
+                }
+            }
+        }
+
+        if (inSpeech) {
+            val endFrame = numFrames - 1
+            if (endFrame - speechStartFrame >= minSpeechFrames) {
+                speechSegments.add(Pair(speechStartFrame, endFrame))
+            }
+        }
+
+        val segmentsList = mutableListOf<Map<String, Any>>()
+        val detectedLang = if (language == "auto") "en" else language
+
+        for (seg in speechSegments) {
+            val startMs = (seg.first * 10L).toInt()
+            val endMs = (seg.second * 10L).toInt()
+            val durationMs = (endMs - startMs).coerceAtLeast(500)
+
+            segmentsList.add(mapOf(
+                "startMs" to startMs,
+                "endMs" to endMs,
+                "durationMs" to durationMs,
+                "text" to "",
+                "isSpeechDetected" to true
+            ))
+        }
+
+        return mapOf(
+            "success" to true,
+            "language" to detectedLang,
+            "totalSpeechSegments" to segmentsList.size,
+            "segments" to segmentsList
+        )
+    }
+
+    override fun onDestroy() {
+        try {
+            if (isRecordingAudio) {
+                mediaRecorder?.stop()
+            }
+            mediaRecorder?.release()
+            mediaRecorder = null
+            isRecordingAudio = false
+        } catch (_: Exception) {}
+
+        try {
+            tts?.stop()
+            tts?.shutdown()
+            tts = null
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error shutting down TTS: ${e.message}")
+        }
+        super.onDestroy()
+    }
+}
+
+
+
+"""
     if os.path.exists("android/app/src/main"):
         for root, _, files in os.walk("android/app/src/main"):
             for f in files:

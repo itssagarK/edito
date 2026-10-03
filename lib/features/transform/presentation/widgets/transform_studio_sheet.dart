@@ -214,7 +214,131 @@ class _TransformStudioSheetState extends State<TransformStudioSheet> {
               ],
             ),
           ),
-        ],
+
+          const SizedBox(height: 12),
+
+          // Position Translation Controls
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceElevated,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.open_with, color: AppColors.accent, size: 18),
+                        const SizedBox(width: 6),
+                        Text('Position & Alignment', style: AppTypography.labelMedium.copyWith(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        minimumSize: Size.zero,
+                      ),
+                      onPressed: () {
+                        _update(_config.copyWith(positionX: 0.5, positionY: 0.5));
+                      },
+                      child: const Text('Center', style: TextStyle(color: AppColors.accent, fontSize: 11)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const SizedBox(width: 24, child: Text('X:', style: TextStyle(color: AppColors.textSecondary, fontSize: 11))),
+                    Expanded(
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: AppColors.accent,
+                          thumbColor: AppColors.accent,
+                          overlayColor: AppColors.accent.withOpacity(0.2),
+                          inactiveTrackColor: AppColors.border,
+                        ),
+                        child: Slider(
+                          value: _config.positionX.clamp(0.0, 1.0),
+                          min: 0.0,
+                          max: 1.0,
+                          divisions: 100,
+                          onChanged: (val) {
+                            _update(_config.copyWith(positionX: val));
+                          },
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 44,
+                      child: Text(
+                        '${((_config.positionX - 0.5) * 200).round()}%',
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 11, fontFamily: 'monospace'),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const SizedBox(width: 24, child: Text('Y:', style: TextStyle(color: AppColors.textSecondary, fontSize: 11))),
+                    Expanded(
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: AppColors.accent,
+                          thumbColor: AppColors.accent,
+                          overlayColor: AppColors.accent.withOpacity(0.2),
+                          inactiveTrackColor: AppColors.border,
+                        ),
+                        child: Slider(
+                          value: _config.positionY.clamp(0.0, 1.0),
+                          min: 0.0,
+                          max: 1.0,
+                          divisions: 100,
+                          onChanged: (val) {
+                            _update(_config.copyWith(positionY: val));
+                          },
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 44,
+                      child: Text(
+                        '${((_config.positionY - 0.5) * 200).round()}%',
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 11, fontFamily: 'monospace'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceElevated,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.border.withOpacity(0.5)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.touch_app_outlined, size: 14, color: AppColors.accent),
+                SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Touch and drag or pinch on the preview canvas above to position & resize.',
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                  ),
+                ),
+              ],
+            ),
+          ),
       ),
     );
 

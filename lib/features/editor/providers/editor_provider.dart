@@ -58,6 +58,7 @@ enum EditorTool {
   freezeFrame,
   reverseClip,
   extractAudio,
+  audioRecord,
 }
 
 class EditorState {

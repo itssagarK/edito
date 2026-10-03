@@ -26,8 +26,33 @@ def main():
     file_size = os.path.getsize(apk_path)
     print(f"Target file: {apk_path} ({file_size} bytes)")
 
+    # 1. Check existing assets in release 401871755
+    req = urllib.request.Request('https://api.github.com/repos/itssagarK/edito/releases/401871755/assets', headers={
+        'Authorization': f'token {token}',
+        'User-Agent': 'Edito-Agent',
+        'Accept': 'application/vnd.github.v3+json'
+    })
+    
+    try:
+        with urllib.request.urlopen(req) as resp:
+            assets = json.loads(resp.read().decode())
+            for a in assets:
+                if a.get('name') == 'edito-premium.apk':
+                    old_id = a.get('id')
+                    print(f"Deleting old asset: {old_id}...")
+                    del_req = urllib.request.Request(f'https://api.github.com/repos/itssagarK/edito/releases/assets/{old_id}', headers={
+                        'Authorization': f'token {token}',
+                        'User-Agent': 'Edito-Agent',
+                        'Accept': 'application/vnd.github.v3+json'
+                    }, method='DELETE')
+                    with urllib.request.urlopen(del_req) as del_resp:
+                        print(f"Deleted old asset. HTTP Status: {del_resp.status}")
+    except Exception as e:
+        print(f"Error checking/deleting old asset: {e}")
+
+    # 2. Upload new asset
     upload_url = "https://uploads.github.com/repos/itssagarK/edito/releases/401871755/assets?name=edito-premium.apk"
-    print(f"Uploading to {upload_url} via curl.exe...")
+    print(f"Uploading new asset to {upload_url} via curl.exe...")
 
     cmd = [
         'curl.exe',

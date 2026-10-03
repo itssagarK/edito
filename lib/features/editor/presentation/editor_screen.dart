@@ -9,6 +9,7 @@ import '../../../models/project.dart';
 import '../../../models/track.dart';
 import '../providers/editor_provider.dart';
 import '../../audio/presentation/widgets/audio_mixer_sheet.dart';
+import '../../audio/presentation/widgets/audio_recorder_sheet.dart';
 import '../../borders/presentation/widgets/video_border_sheet.dart';
 import '../../captions/presentation/widgets/caption_manager_sheet.dart';
 import '../../character_zoom/presentation/widgets/character_zoom_sheet.dart';
@@ -38,6 +39,7 @@ import '../../tts/presentation/widgets/tts_voiceover_sheet.dart';
 import 'widgets/editor_app_bar.dart';
 import 'widgets/editing_toolbar.dart';
 import 'widgets/docked_tool_panel.dart';
+
 
 class EditorScreen extends ConsumerStatefulWidget {
   const EditorScreen({super.key});
@@ -173,6 +175,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                         tool: _activeDockedTool!,
                         clip: dockedClip!,
                         project: project,
+                        playheadPositionMs: editorState.playheadPositionMs,
+                        onSeek: (positionMs) {
+                          ref.read(previewPlaybackProvider.notifier).seek(positionMs);
+                        },
                         onSaveClip: (updatedClip) {
                           final proj = ref.read(editorProvider).project!;
                           final updatedProject = proj.updateClip(updatedClip);
@@ -541,6 +547,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _handleReverseAction();
         break;
 
+      case EditorTool.audioRecord:
+        _openAudioRecorderModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -777,7 +787,156 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   }
 
   void _openAudioToolsModal() {
-    _openDockedTool(EditorTool.audio, trackType: TrackType.audio, purpose: 'Audio Restoration & Mixer');
+    final editorState = ref.read(editorProvider);
+    if (editorState.selectedClipId != null) {
+      _openDockedTool(EditorTool.audio, trackType: TrackType.audio, purpose: 'Audio Restoration & Mixer');
+      return;
+    }
+
+    _showGlobalAudioSheet();
+  }
+
+  void _openAudioRecorderModal() {
+    final editorState = ref.read(editorProvider);
+    final project = editorState.project;
+    if (project == null) return;
+
+    AudioRecorderSheet.show(
+      context,
+      project: project,
+      currentPlayheadMs: editorState.playheadPositionMs,
+      onProjectUpdated: (updatedProject) {
+        ref.read(editorProvider.notifier).updateProject(updatedProject);
+        ref.read(projectListProvider.notifier).updateProject(updatedProject);
+      },
+    );
+  }
+
+  void _showGlobalAudioSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.music_note, color: AppColors.accent, size: 20),
+                        const SizedBox(width: 8),
+                        Text('Audio Studio', style: AppTypography.titleMedium.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: AppColors.textSecondary, size: 20),
+                      onPressed: () => Navigator.pop(sheetContext),
+                      style: IconButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(28, 28)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.18), shape: BoxShape.circle),
+                    child: const Icon(Icons.mic, color: Colors.redAccent, size: 22),
+                  ),
+                  title: const Text('Record Voiceover', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Record live microphone audio into timeline', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textMuted),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _openAudioRecorderModal();
+                  },
+                ),
+                const Divider(color: AppColors.border, height: 1),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.18), shape: BoxShape.circle),
+                    child: const Icon(Icons.graphic_eq, color: AppColors.accent, size: 22),
+                  ),
+                  title: const Text('Audio Mixer & EQ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Parametric EQ, ducking, limiter, vocal enhance', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textMuted),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _openDockedTool(EditorTool.audio, trackType: TrackType.audio, purpose: 'Audio Restoration & Mixer');
+                  },
+                ),
+                const Divider(color: AppColors.border, height: 1),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: AppColors.primaryLight.withOpacity(0.18), shape: BoxShape.circle),
+                    child: const Icon(Icons.speaker, color: AppColors.primaryLight, size: 22),
+                  ),
+                  title: const Text('Sound Effects (SFX)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Cinematic risers, impacts, whooshes, foley', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textMuted),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _openDockedTool(EditorTool.soundEffects, trackType: TrackType.audio, purpose: 'Sound Effects');
+                  },
+                ),
+                const Divider(color: AppColors.border, height: 1),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: const Color(0xFF20BF6B).withOpacity(0.18), shape: BoxShape.circle),
+                    child: const Icon(Icons.record_voice_over, color: Color(0xFF20BF6B), size: 22),
+                  ),
+                  title: const Text('Text to Speech (Voiceover)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Convert scripts to speech with Android TTS engine', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textMuted),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _openTTSModal();
+                  },
+                ),
+                const Divider(color: AppColors.border, height: 1),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: Colors.amberAccent.withOpacity(0.18), shape: BoxShape.circle),
+                    child: const Icon(Icons.music_note, color: Colors.amberAccent, size: 22),
+                  ),
+                  title: const Text('Extract Audio Track', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Detach audio from video onto dedicated track', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textMuted),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _handleExtractAudioAction();
+                  },
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _openEnhancementModal() {

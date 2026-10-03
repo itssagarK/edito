@@ -98,6 +98,7 @@ import '../../../smoothing/services/ai_video_smoother_service.dart';
 import '../../../smoothing/presentation/widgets/motion_blur_preview_wrapper.dart';
 import '../../../transitions/models/transition_type.dart';
 import '../../../transitions/presentation/widgets/transition_shader_painter.dart';
+import 'interactive_transform_box.dart';
 
 class RealtimePreviewViewport extends ConsumerWidget {
   final int currentPositionMs;
@@ -234,11 +235,16 @@ class RealtimePreviewViewport extends ConsumerWidget {
               child: Center(
                 child: AspectRatio(
                   aspectRatio: activeRatio.ratio,
-                  child: Container(
-                    decoration: _buildCanvasDecoration(layoutConfig),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      ref.read(editorProvider.notifier).clearSelection();
+                    },
+                    child: Container(
+                      decoration: _buildCanvasDecoration(layoutConfig),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
                         // 0. Cloned Blurred Video Background (TikTok/Shorts/Reels Signature Look)
                         if (layoutConfig.isBlurFill && currentFrame != null && currentFrame.hasVisualContent)
                           Positioned.fill(
@@ -277,7 +283,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
 
                         // 2. Picture-in-Picture & Creative Asset Badges / Image Overlays on Primary Clip
                         if (currentFrame?.primaryVideoClip != null && currentFrame!.primaryVideoClip!.imageOverlay.isEnabled)
-                          _buildImageOverlayWidget(currentFrame.primaryVideoClip!.imageOverlay),
+                          _buildImageOverlayWidget(context, ref, currentFrame.primaryVideoClip!, currentFrame.primaryVideoClip!.imageOverlay),
 
                         // 3. Live Video Transition In Animation Overlay
                         if (currentFrame?.primaryVideoClip != null)
@@ -310,7 +316,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
                                       trackingOffsetMs,
                                     )
                                   : overlayClip.imageOverlay;
-                              widgets.add(_buildImageOverlayWidget(effectiveImage));
+                              widgets.add(_buildImageOverlayWidget(context, ref, overlayClip, effectiveImage));
                             }
                             if (overlayClip.textOverlay.text.trim().isNotEmpty) {
                               final offsetMs = currentPositionMs - overlayClip.startTimeMs;
@@ -337,6 +343,9 @@ class RealtimePreviewViewport extends ConsumerWidget {
                                 ));
                               } else {
                                 widgets.add(_buildTextOverlayWidget(
+                                  context,
+                                  ref,
+                                  overlayClip,
                                   evaluatedText,
                                   clipOffsetMs: offsetMs,
                                   clipDurationMs: overlayClip.durationMs,
@@ -394,6 +403,62 @@ class RealtimePreviewViewport extends ConsumerWidget {
                             ),
                           ),
 
+                        // Interactive On-Canvas Video Transform & Spatial Gestures Overlay
+                        if (editorState.activeTool == EditorTool.transform && currentFrame?.primaryVideoClip != null)
+                          Positioned.fill(
+                            child: InteractiveTransformBox(
+                              isSelected: true,
+                              positionX: currentFrame!.primaryVideoClip!.transform.positionX,
+                              positionY: currentFrame!.primaryVideoClip!.transform.positionY,
+                              scale: currentFrame!.primaryVideoClip!.transform.scale,
+                              rotation: currentFrame!.primaryVideoClip!.transform.rotationDegrees.toDouble(),
+                              onPositionChanged: (newX, newY) {
+                                final targetClip = currentFrame.primaryVideoClip!;
+                                final updatedTransform = targetClip.transform.copyWith(
+                                  positionX: newX,
+                                  positionY: newY,
+                                );
+                                final updatedClip = targetClip.copyWith(transform: updatedTransform);
+                                if (project != null) {
+                                  final updatedProject = project.updateClip(updatedClip);
+                                  ref.read(editorProvider.notifier).updateProject(updatedProject);
+                                }
+                              },
+                              onTransformChanged: (newScale, newRot) {
+                                final targetClip = currentFrame.primaryVideoClip!;
+                                final updatedTransform = targetClip.transform.copyWith(
+                                  scale: newScale.clamp(0.2, 4.0),
+                                  rotationDegrees: (newRot.round() % 360 + 360) % 360,
+                                );
+                                final updatedClip = targetClip.copyWith(transform: updatedTransform);
+                                if (project != null) {
+                                  final updatedProject = project.updateClip(updatedClip);
+                                  ref.read(editorProvider.notifier).updateProject(updatedProject);
+                                }
+                              },
+                              onDelete: () {
+                                final targetClip = currentFrame.primaryVideoClip!;
+                                ref.read(editorProvider.notifier).deleteClip(targetClip.id);
+                              },
+                              onDuplicate: () {
+                                final targetClip = currentFrame.primaryVideoClip!;
+                                ref.read(editorProvider.notifier).duplicateClip(targetClip.id);
+                              },
+                              child: Container(
+                                width: 140,
+                                height: 90,
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: AppColors.accent.withOpacity(0.5), width: 1.5),
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: AppColors.accent.withOpacity(0.08),
+                                ),
+                                child: const Center(
+                                  child: Icon(Icons.crop_rotate, color: AppColors.accent, size: 28),
+                                ),
+                              ),
+                            ),
+                          ),
+
                         // Safe-Zone Grid Overlays (90% action safe, 80% title safe)
                         if (previewState.showSafeGuides)
                           const IgnorePointer(
@@ -424,6 +489,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
                   ),
                 ),
               ),
+            ),
             ),
           ),
         ),
@@ -949,12 +1015,15 @@ class RealtimePreviewViewport extends ConsumerWidget {
       final scaleX = (clip.transform.isFlippedHorizontal ? -1.0 : 1.0) * clip.transform.scale;
       final scaleY = (clip.transform.isFlippedVertical ? -1.0 : 1.0) * clip.transform.scale;
 
-      videoContent = Transform(
-        alignment: Alignment.center,
-        transform: Matrix4.identity()
-          ..rotateZ(rad)
-          ..scale(scaleX, scaleY, 1.0),
-        child: videoContent,
+      videoContent = FractionalTranslation(
+        translation: Offset(clip.transform.positionX - 0.5, clip.transform.positionY - 0.5),
+        child: Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..rotateZ(rad)
+            ..scale(scaleX, scaleY, 1.0),
+          child: videoContent,
+        ),
       );
     }
 
@@ -989,665 +1058,6 @@ class RealtimePreviewViewport extends ConsumerWidget {
           _buildVideoBorderOverlay(clip.border),
         if (clip.headerFooter.hasActiveOverlay)
           _buildHeaderFooterOverlay(clip.headerFooter),
-        // Live Floating HUD Badges
-        Positioned(
-          left: 12,
-          bottom: 12,
-          right: 12,
-          child: Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children: [
-              if (layoutConfig != null && AutoReframeService.getReframeBadge(layoutConfig).isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF38EF7D)),
-                  ),
-                  child: Text(
-                    AutoReframeService.getReframeBadge(layoutConfig),
-                    style: const TextStyle(fontSize: 9, color: Color(0xFF38EF7D), fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (clip.beatConfig.hasBeats)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFFFD700)),
-                  ),
-                  child: Text(
-                    BeatDetectorService.getBeatsBadge(clip.beatConfig),
-                    style: const TextStyle(fontSize: 9, color: Color(0xFFFFD700), fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (clip.colorGrading.activeLut != LutPreset.none)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.accent.withOpacity(0.5)),
-                  ),
-                  child: Text(
-                    'LUT: ${clip.colorGrading.activeLut.label.split(' ').first}',
-                    style: const TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (ColorFilterCompilerService.getHslBadge(clip.colorGrading).isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFFF5252)),
-                  ),
-                  child: Text(
-                    ColorFilterCompilerService.getHslBadge(clip.colorGrading),
-                    style: const TextStyle(fontSize: 9, color: Color(0xFFFF5252), fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (clip.enhancement.is8kUpscaleEnabled)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFFFF007F), Color(0xFF7928CA)]),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    '8K UHD (7680x4320)',
-                    style: TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                )
-              else if (clip.enhancement.hasActiveEnhancements)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.accent),
-                  ),
-                  child: const Text(
-                    '✨ AI ENHANCED',
-                    style: TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (AIVoiceEnhancerService.getAudioBadge(clip.audioEffects).isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.audioTrack),
-                  ),
-                  child: Text(
-                    AIVoiceEnhancerService.getAudioBadge(clip.audioEffects),
-                    style: const TextStyle(fontSize: 9, color: AppColors.audioTrack, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (clip.smoother.hasActiveSmoothing && AIVideoSmootherService.getSmootherBadge(clip.smoother).isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.accent),
-                  ),
-                  child: Text(
-                    AIVideoSmootherService.getSmootherBadge(clip.smoother),
-                    style: const TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (clip.chromaKey.isEnabled)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF00FF66)),
-                  ),
-                  child: Text(
-                    ChromaKeyCompilerService.getChromaBadge(clip.chromaKey),
-                    style: const TextStyle(fontSize: 9, color: Color(0xFF00FF66), fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (clip.smartCutout.isEnabled)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF00E5FF)),
-                  ),
-                  child: Text(
-                    SmartCutoutCompilerService.getCutoutBadge(clip.smartCutout),
-                    style: const TextStyle(fontSize: 9, color: Color(0xFF00E5FF), fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (clip.autoVelocity.isEnabled)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFFFD700)),
-                  ),
-                  child: Text(
-                    AutoVelocityService.getBadge(clip.autoVelocity),
-                    style: const TextStyle(fontSize: 9, color: Color(0xFFFFD700), fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (clip.mask.isActive)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFFFB300)),
-                  ),
-                  child: Text(
-                    '🎭 MASK: ${clip.mask.type.name.toUpperCase()}${clip.mask.inverted ? " (INV)" : ""}',
-                    style: const TextStyle(fontSize: 9, color: Color(0xFFFFB300), fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (clip.blendMode.isEnabled)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF00E5FF)),
-                  ),
-                  child: Text(
-                    '✨ BLEND: ${clip.blendMode.mode.label.toUpperCase()} (${(clip.blendMode.opacity * 100).round()}%)',
-                    style: const TextStyle(fontSize: 9, color: Color(0xFF00E5FF), fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (clip.keyframes.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFE040FB)),
-                  ),
-                  child: Text(
-                    '💎 KEYFRAMES (${clip.keyframes.length})',
-                    style: const TextStyle(fontSize: 9, color: Color(0xFFE040FB), fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (VfxCompilerService.getVfxBadge(clip.vfx).isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFFF0055)),
-                  ),
-                  child: Text(
-                    VfxCompilerService.getVfxBadge(clip.vfx),
-                    style: const TextStyle(fontSize: 9, color: Color(0xFFFF0055), fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (clip.transitionIn.isEnabled)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.primaryLight),
-                  ),
-                  child: Text(
-                    '🔀 ${clip.transitionIn.type.label.toUpperCase()}',
-                    style: const TextStyle(fontSize: 9, color: AppColors.primaryLight, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (clip.imageOverlay.isEnabled && PipCompilerService.getPipBadge(clip.imageOverlay).isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.accent),
-                  ),
-                  child: Text(
-                    PipCompilerService.getPipBadge(clip.imageOverlay),
-                    style: const TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (clip.characterHighlight.isEnabled)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: Color(clip.characterHighlight.highlightColor)),
-                  ),
-                  child: Text(
-                    CharacterHighlightCompilerService.getHighlightBadge(clip.characterHighlight),
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: Color(clip.characterHighlight.highlightColor),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.characterZoom.isEnabled)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.accent),
-                  ),
-                  child: Text(
-                    CharacterZoomCompilerService.getZoomBadge(clip.characterZoom),
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: AppColors.accent,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.border.isEnabled)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: Color(clip.border.primaryColor)),
-                  ),
-                  child: Text(
-                    VideoBorderCompilerService.getBorderBadge(clip.border),
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: Color(clip.border.primaryColor),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.headerFooter.hasActiveOverlay)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.accent),
-                  ),
-                  child: Text(
-                    HeaderFooterCompilerService.getHeaderFooterBadge(clip.headerFooter),
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: AppColors.accent,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.hdConverter.isEnabled)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF00E5FF)),
-                  ),
-                  child: Text(
-                    HdConverterService.getHdBadge(clip.hdConverter),
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFF00E5FF),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.isFreezeFrame)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF00E5FF)),
-                  ),
-                  child: const Text(
-                    '❄️ FREEZE FRAME',
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFF00E5FF),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.isReversed)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFFF5252)),
-                  ),
-                  child: const Text(
-                    '⏪ REVERSED',
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFFFF5252),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.kineticCaptions.badge.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: Color(clip.kineticCaptions.highlightColor)),
-                  ),
-                  child: Text(
-                    clip.kineticCaptions.badge,
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: Color(clip.kineticCaptions.highlightColor),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.motionTracking.badge.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF00E5FF)),
-                  ),
-                  child: Text(
-                    clip.motionTracking.badge,
-                    style: const TextStyle(
-                       fontSize: 9,
-                      color: Color(0xFF00E5FF),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.retouch.badge.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFFF80AB)),
-                  ),
-                  child: Text(
-                    clip.retouch.badge,
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFFFF80AB),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.parallax3d.badge.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF00E676)),
-                  ),
-                  child: Text(
-                    clip.parallax3d.badge,
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFF00E676),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.stabilization.badge.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF00CEC9)),
-                  ),
-                  child: Text(
-                    clip.stabilization.badge,
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFF00CEC9),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.vocalIsolation.badge.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF6C5CE7)),
-                  ),
-                  child: Text(
-                    clip.vocalIsolation.badge,
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFFA29BFE),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.colorMatch.badge.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFFF9F43)),
-                  ),
-                  child: Text(
-                    clip.colorMatch.badge,
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFFFF9F43),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.relight.badge.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFFFD166)),
-                  ),
-                  child: Text(
-                    clip.relight.badge,
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFFFFD166),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.denoise.badge.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF2ED573)),
-                  ),
-                  child: Text(
-                    clip.denoise.badge,
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFF2ED573),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.voiceEffects.badge.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF00E5FF)),
-                  ),
-                  child: Text(
-                    clip.voiceEffects.badge,
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFF00E5FF),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.edgeAura.badge.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: Color(clip.edgeAura.colorValue)),
-                  ),
-                  child: Text(
-                    clip.edgeAura.badge,
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: Color(clip.edgeAura.colorValue),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.objectRemoval.isActive)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFFF2D55)),
-                  ),
-                  child: Text(
-                    'AI ERASER: ${clip.objectRemoval.mode.label.toUpperCase()}',
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFFFF2D55),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.faceReshape.isActive)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF00E5FF)),
-                  ),
-                  child: const Text(
-                    'AI RESHAPE: 3D SCULPT',
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFF00E5FF),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.colorWheels.isActive)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFFFD700)),
-                  ),
-                  child: Text(
-                    'WHEELS: ${clip.colorWheels.mode.label.split(' ').first.toUpperCase()}',
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFFFFD700),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.doodle.isActive)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF00E676)),
-                  ),
-                  child: Text(
-                    'DOODLE: ${clip.doodle.strokes.length} STROKES',
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFF00E676),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.curves.isActive)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF00E5FF)),
-                  ),
-                  child: const Text(
-                    'CURVES: RGB SPLINE',
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFF00E5FF),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.filmGrain.isActive)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFFFB300)),
-                  ),
-                  child: Text(
-                    'GRAIN: ${clip.filmGrain.type.label.toUpperCase()}',
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFFFFB300),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (clip.vignette.hasActiveVignette)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF6C5CE7)),
-                  ),
-                  child: Text(
-                    clip.vignette.intensity < 0
-                        ? 'SPOTLIGHT: ${(clip.vignette.intensity.abs() * 100).toInt()}%'
-                        : 'VIGNETTE: ${(clip.vignette.intensity * 100).toInt()}%',
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFF6C5CE7),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -1743,6 +1153,9 @@ class RealtimePreviewViewport extends ConsumerWidget {
   }
 
   Widget _buildTextOverlayWidget(
+    BuildContext context,
+    WidgetRef ref,
+    Clip overlayClip,
     TextOverlayConfig config, {
     int clipOffsetMs = 0,
     int clipDurationMs = 2500,
@@ -1827,39 +1240,68 @@ class RealtimePreviewViewport extends ConsumerWidget {
     final effectiveScale = (config.scale * animScale).clamp(0.1, 5.0);
     final effectiveOpacity = (config.opacity * animOpacity).clamp(0.0, 1.0);
 
-    return Align(
-      alignment: Alignment(
-        (config.positionX * 2.0) - 1.0,
-        (config.positionY * 2.0) - 1.0,
-      ),
+    final selectedClipId = ref.watch(editorProvider.select((s) => s.selectedClipId));
+    final isSelected = selectedClipId == overlayClip.id;
+
+    return InteractiveTransformBox(
+      isSelected: isSelected,
+      positionX: config.positionX,
+      positionY: config.positionY,
+      scale: effectiveScale,
+      rotation: config.rotation,
+      onTap: () {
+        ref.read(editorProvider.notifier).selectClip(overlayClip.id);
+      },
+      onDoubleTap: () {
+        ref.read(editorProvider.notifier).selectClip(overlayClip.id);
+        ref.read(editorProvider.notifier).setActiveTool(EditorTool.text);
+      },
+      onDelete: () {
+        ref.read(editorProvider.notifier).deleteClip(overlayClip.id);
+      },
+      onDuplicate: () {
+        ref.read(editorProvider.notifier).duplicateClip(overlayClip.id);
+      },
+      onEdit: () {
+        ref.read(editorProvider.notifier).selectClip(overlayClip.id);
+        ref.read(editorProvider.notifier).setActiveTool(EditorTool.text);
+      },
+      onPositionChanged: (newX, newY) {
+        final project = ref.read(editorProvider).project;
+        if (project == null) return;
+        final updatedConfig = config.copyWith(positionX: newX, positionY: newY);
+        final updatedClip = overlayClip.copyWith(textOverlay: updatedConfig);
+        ref.read(editorProvider.notifier).updateProject(project.updateClip(updatedClip));
+      },
+      onTransformChanged: (newScale, newRot) {
+        final project = ref.read(editorProvider).project;
+        if (project == null) return;
+        final updatedConfig = config.copyWith(scale: newScale, rotation: newRot);
+        final updatedClip = overlayClip.copyWith(textOverlay: updatedConfig);
+        ref.read(editorProvider.notifier).updateProject(project.updateClip(updatedClip));
+      },
       child: Transform.translate(
         offset: Offset(0, animOffsetY),
-        child: Transform.scale(
-          scale: effectiveScale,
-          child: Transform.rotate(
-            angle: config.rotation * (3.14159 / 180.0),
-            child: Opacity(
-              opacity: effectiveOpacity,
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: config.boxPadding,
-                  vertical: config.boxPadding * 0.45,
-                ),
-                decoration: BoxDecoration(
-                  color: config.backgroundColor != null ? Color(config.backgroundColor!) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(config.boxCornerRadius),
-                ),
-                child: Builder(
-                  builder: (context) {
-                    final baseStyle = _resolveOverlayTextStyle(config);
-                    return CurvedTextWidget(
-                      config: config,
-                      baseStyle: baseStyle,
-                      displayText: displayText,
-                    );
-                  },
-                ),
-              ),
+        child: Opacity(
+          opacity: effectiveOpacity,
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: config.boxPadding,
+              vertical: config.boxPadding * 0.45,
+            ),
+            decoration: BoxDecoration(
+              color: config.backgroundColor != null ? Color(config.backgroundColor!) : Colors.transparent,
+              borderRadius: BorderRadius.circular(config.boxCornerRadius),
+            ),
+            child: Builder(
+              builder: (context) {
+                final baseStyle = _resolveOverlayTextStyle(config);
+                return CurvedTextWidget(
+                  config: config,
+                  baseStyle: baseStyle,
+                  displayText: displayText,
+                );
+              },
             ),
           ),
         ),
@@ -1867,9 +1309,48 @@ class RealtimePreviewViewport extends ConsumerWidget {
     );
   }
 
-  Widget _buildImageOverlayWidget(ImageOverlayConfig config) {
+  Widget _buildImageOverlayWidget(
+    BuildContext context,
+    WidgetRef ref,
+    Clip overlayClip,
+    ImageOverlayConfig config,
+  ) {
     if (!config.isEnabled) return const SizedBox.shrink();
-    return PipPreviewOverlay(config: config);
+
+    final selectedClipId = ref.watch(editorProvider.select((s) => s.selectedClipId));
+    final isSelected = selectedClipId == overlayClip.id;
+
+    return InteractiveTransformBox(
+      isSelected: isSelected,
+      positionX: config.positionX,
+      positionY: config.positionY,
+      scale: config.scale,
+      rotation: config.rotation,
+      onTap: () {
+        ref.read(editorProvider.notifier).selectClip(overlayClip.id);
+      },
+      onDelete: () {
+        ref.read(editorProvider.notifier).deleteClip(overlayClip.id);
+      },
+      onDuplicate: () {
+        ref.read(editorProvider.notifier).duplicateClip(overlayClip.id);
+      },
+      onPositionChanged: (newX, newY) {
+        final project = ref.read(editorProvider).project;
+        if (project == null) return;
+        final updatedConfig = config.copyWith(positionX: newX, positionY: newY);
+        final updatedClip = overlayClip.copyWith(imageOverlay: updatedConfig);
+        ref.read(editorProvider.notifier).updateProject(project.updateClip(updatedClip));
+      },
+      onTransformChanged: (newScale, newRot) {
+        final project = ref.read(editorProvider).project;
+        if (project == null) return;
+        final updatedConfig = config.copyWith(scale: newScale, rotation: newRot);
+        final updatedClip = overlayClip.copyWith(imageOverlay: updatedConfig);
+        ref.read(editorProvider.notifier).updateProject(project.updateClip(updatedClip));
+      },
+      child: PipPreviewOverlay(config: config),
+    );
   }
 
   Widget _buildTransitionOverlay(Clip clip, int currentPositionMs) {

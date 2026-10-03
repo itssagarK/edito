@@ -13,6 +13,11 @@ import '../../services/auto_caption_service.dart';
 import '../../services/srt_subtitle_service.dart';
 import '../../services/word_level_aligner_service.dart';
 import '../../services/caption_compiler_service.dart';
+import '../../services/whisper_transcription_service.dart';
+import '../../../../core/ai/ai_model_manager.dart';
+import '../../../../core/ai/models/ai_model_descriptor.dart';
+import '../../../../core/ai/on_device_inference_runner.dart';
+import '../../../../core/ai/widgets/model_download_dialog.dart';
 
 class CaptionManagerSheet extends StatefulWidget {
   final Project project;
@@ -63,6 +68,11 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
   int _karaokeInactiveColor = 0x99FFFFFF;
   int? _selectedCaptionIndex;
   bool _applyToAll = true;
+  bool _isTranscribing = false;
+  String _selectedLanguage = 'auto';
+  double _transcribeProgress = 0.0;
+  String _transcribeStatus = '';
+  CancellationToken? _transcribeCancelToken;
 
   static const List<String> availableFonts = [
     'Anton',
@@ -294,25 +304,130 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
     );
   }
 
-  void _generateAuto() {
+  Future<void> _generateAuto() async {
+    final script = _selfDescriptionController.text.trim();
+    if (script.isNotEmpty) {
+      _generateFromDescription();
+      return;
+    }
+
     setState(() {
       _captions = AutoCaptionService.generateAutoCaptions(
         widget.project,
         preset: _activePreset,
-      );
-      if (_captions.isNotEmpty) {
-        _captions = _captions.map((c) => c.copyWith(style: _currentStyle.copyWith(text: c.text))).toList();
-      }
+      ).map((c) => c.copyWith(style: _currentStyle.copyWith(text: c.text))).toList();
     });
     _applyAndSave();
     if (_captions.isNotEmpty && widget.onSeek != null) {
       widget.onSeek!(_captions.first.startTimeMs);
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✓ Auto-generated ${_captions.length} timed captions synchronized with video!'),
+        backgroundColor: AppColors.primary,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Future<void> _handleOnDeviceWhisper() async {
+    final model = (_selectedLanguage == 'en' || _selectedLanguage == 'auto')
+        ? AiModelCatalog.whisperTinyEn
+        : AiModelCatalog.whisperTinyMultilingual;
+
+    final isInstalled = await AiModelManager.isModelInstalled(model);
+    if (!isInstalled && mounted) {
+      final downloaded = await ModelDownloadDialog.show(context, model);
+      if (!downloaded || !mounted) return;
+    }
+
+    setState(() {
+      _isTranscribing = true;
+      _transcribeProgress = 0.05;
+      _transcribeStatus = 'Starting on-device speech transcription...';
+      _transcribeCancelToken = CancellationToken();
+    });
+
+    try {
+      final result = await WhisperTranscriptionService.transcribeProject(
+        widget.project,
+        preset: _activePreset,
+        language: _selectedLanguage,
+        preferredModel: model,
+        cancelToken: _transcribeCancelToken,
+        onProgress: (p, status) {
+          if (mounted) {
+            setState(() {
+              _transcribeProgress = p;
+              _transcribeStatus = status;
+            });
+          }
+        },
+      );
+
+      if (!mounted) return;
+      setState(() => _isTranscribing = false);
+
+      if (result.isSuccess && result.captions.isNotEmpty) {
+        setState(() {
+          _captions = result.captions
+              .map((c) => c.copyWith(style: _currentStyle.copyWith(text: c.text)))
+              .toList();
+        });
+        _applyAndSave();
+        if (_captions.isNotEmpty && widget.onSeek != null) {
+          widget.onSeek!(_captions.first.startTimeMs);
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✓ On-device AI transcribed ${_captions.length} captions (${result.detectedLanguage?.toUpperCase() ?? "EN"})!'),
+            backgroundColor: AppColors.primary,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.errorMessage ?? 'No speech detected or transcription failed.'),
+            backgroundColor: Colors.redAccent,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isTranscribing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Transcription error: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  void _cancelTranscription() {
+    _transcribeCancelToken?.cancel();
+    setState(() {
+      _isTranscribing = false;
+      _transcribeStatus = 'Cancelled by user';
+    });
   }
 
   void _generateFromDescription() {
     final text = _selfDescriptionController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please paste or type script text to slice into captions'),
+          duration: Duration(milliseconds: 1500),
+        ),
+      );
+      return;
+    }
 
     setState(() {
       _captions = AutoCaptionService.generateFromSelfDescription(
@@ -928,17 +1043,20 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                icon: const Icon(Icons.auto_awesome, size: 16),
-                label: const Text('AI Auto-Speech Sync', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                icon: const Icon(Icons.subtitles, size: 16),
+                label: const Text(
+                  'Auto-Timed Captions',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             OutlinedButton.icon(
               onPressed: _showImportSrtDialog,
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.accent,
                 side: const BorderSide(color: AppColors.border),
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               icon: const Icon(Icons.file_upload_outlined, size: 16),
@@ -988,6 +1106,140 @@ class _CaptionManagerSheetState extends State<CaptionManagerSheet> with TickerPr
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 8),
+        // On-Device Whisper Auto-Captions Section
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceElevated,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.mic, size: 14, color: AppColors.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Offline Whisper STT',
+                        style: AppTypography.labelSmall.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'MIT',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Language selector
+                  DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedLanguage,
+                      isDense: true,
+                      dropdownColor: AppColors.surfaceElevated,
+                      style: const TextStyle(fontSize: 11, color: Colors.white),
+                      items: const [
+                        DropdownMenuItem(value: 'auto', child: Text('🌐 Auto Detect')),
+                        DropdownMenuItem(value: 'en', child: Text('🇺🇸 English')),
+                        DropdownMenuItem(value: 'es', child: Text('🇪🇸 Spanish')),
+                        DropdownMenuItem(value: 'fr', child: Text('🇫🇷 French')),
+                        DropdownMenuItem(value: 'de', child: Text('🇩🇪 German')),
+                        DropdownMenuItem(value: 'ja', child: Text('🇯🇵 Japanese')),
+                        DropdownMenuItem(value: 'hi', child: Text('🇮🇳 Hindi')),
+                        DropdownMenuItem(value: 'it', child: Text('🇮🇹 Italian')),
+                        DropdownMenuItem(value: 'pt', child: Text('🇵🇹 Portuguese')),
+                      ],
+                      onChanged: _isTranscribing
+                          ? null
+                          : (val) {
+                              if (val != null) {
+                                setState(() => _selectedLanguage = val);
+                              }
+                            },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              if (_isTranscribing) ...[
+                LinearProgressIndicator(
+                  value: _transcribeProgress > 0 ? _transcribeProgress : null,
+                  backgroundColor: AppColors.surfaceBorder,
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  minHeight: 4,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _transcribeStatus.isNotEmpty ? _transcribeStatus : 'Transcribing speech...',
+                        style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: _cancelTranscription,
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: Colors.redAccent,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                SizedBox(
+                  width: double.infinity,
+                  height: 32,
+                  child: ElevatedButton.icon(
+                    onPressed: _handleOnDeviceWhisper,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    ),
+                    icon: const Icon(Icons.graphic_eq, size: 15),
+                    label: const Text(
+                      'Transcribe Audio with Whisper (100% On-Device)',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
         const SizedBox(height: 8),
         Row(

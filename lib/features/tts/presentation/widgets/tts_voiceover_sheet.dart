@@ -5,6 +5,7 @@ import '../../../../core/utils/timecode_formatter.dart';
 import '../../../../models/project.dart';
 import '../../../captions/services/auto_caption_service.dart';
 import '../../models/tts_voice_profile.dart';
+import '../../services/ai_voice_generation_service.dart';
 import '../../services/tts_generation_service.dart';
 
 class TTSVoiceoverSheet extends StatefulWidget {
@@ -49,6 +50,7 @@ class TTSVoiceoverSheet extends StatefulWidget {
 class _TTSVoiceoverSheetState extends State<TTSVoiceoverSheet> {
   late TextEditingController _textController;
   late TTSConfig _config;
+  bool _isGenerating = false;
 
   @override
   void initState() {
@@ -63,7 +65,7 @@ class _TTSVoiceoverSheetState extends State<TTSVoiceoverSheet> {
     super.dispose();
   }
 
-  void _handleGenerateVoiceover() {
+  Future<void> _handleGenerateVoiceover() async {
     final script = _textController.text.trim();
     if (script.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -75,46 +77,72 @@ class _TTSVoiceoverSheetState extends State<TTSVoiceoverSheet> {
       return;
     }
 
-    final updatedConfig = _config.copyWith(scriptText: script);
-    var updatedProject = TTSGenerationService.insertVoiceoverClip(
-      project: widget.project,
-      config: updatedConfig,
-      startTimeMs: widget.currentPlayheadMs,
-    );
+    setState(() => _isGenerating = true);
 
-    // Optional: Synchronize captions
-    if (updatedConfig.autoGenerateCaptions) {
-      final durationMs = TTSGenerationService.estimateSpokenDurationMs(
+    try {
+      final result = await AiVoiceGenerationService.generateVoiceover(
+        project: widget.project,
         script: script,
-        speechRate: updatedConfig.speechRate,
-      );
-      final captions = TTSGenerationService.generateSynchronizedCaptions(
-        script: script,
+        voice: _config.voice,
+        speedRate: _config.speechRate,
+        pitchShift: _config.pitchShift,
         startTimeMs: widget.currentPlayheadMs,
-        totalDurationMs: durationMs,
+        autoCaptions: _config.autoGenerateCaptions,
       );
-      if (captions.isNotEmpty) {
-        updatedProject = AutoCaptionService.syncCaptionsToTimeline(
-          updatedProject,
-          captions,
+
+      if (!mounted) return;
+      setState(() => _isGenerating = false);
+
+      if (result.isSuccess && result.project != null) {
+        var updatedProject = result.project!;
+        if (_config.autoGenerateCaptions) {
+          final captions = TTSGenerationService.generateSynchronizedCaptions(
+            script: script,
+            startTimeMs: widget.currentPlayheadMs,
+            totalDurationMs: result.durationMs,
+          );
+          if (captions.isNotEmpty) {
+            updatedProject = AutoCaptionService.syncCaptionsToTimeline(
+              updatedProject,
+              captions,
+            );
+          }
+        }
+
+        widget.onProjectChanged(updatedProject);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🎙️ Voiceover generated & added to timeline! (${_config.voice.displayName}, ${(result.durationMs / 1000).toStringAsFixed(1)}s)'),
+            duration: const Duration(seconds: 3),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+
+        if (widget.onDone != null) {
+          widget.onDone!();
+        } else {
+          Navigator.pop(context);
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.errorMessage ?? 'Voice synthesis failed.'),
+            duration: const Duration(seconds: 4),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
-    }
-
-    widget.onProjectChanged(updatedProject);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('🎙️ Voiceover generated and added to timeline! (${_config.voice.displayName})'),
-        duration: const Duration(seconds: 2),
-        backgroundColor: AppColors.surfaceElevated,
-      ),
-    );
-
-    if (widget.onDone != null) {
-      widget.onDone!();
-    } else {
-      Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isGenerating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Voiceover generation error: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     }
   }
 
@@ -160,7 +188,7 @@ class _TTSVoiceoverSheetState extends State<TTSVoiceoverSheet> {
                       children: [
                         const Icon(Icons.record_voice_over, color: Color(0xFF00E5FF), size: 22),
                         const SizedBox(width: 8),
-                        Text('AI Voiceover & Narration', style: AppTypography.titleLarge.copyWith(fontSize: 16)),
+                        Text('Voiceover & Narration', style: AppTypography.titleLarge.copyWith(fontSize: 16)),
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -170,7 +198,7 @@ class _TTSVoiceoverSheetState extends State<TTSVoiceoverSheet> {
                             border: Border.all(color: const Color(0xFF00E5FF).withOpacity(0.5)),
                           ),
                           child: const Text(
-                            'NEURAL TTS',
+                            'OFFLINE TTS',
                             style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF00E5FF)),
                           ),
                         ),
@@ -420,12 +448,20 @@ class _TTSVoiceoverSheetState extends State<TTSVoiceoverSheet> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  icon: const Icon(Icons.add_to_photos, size: 20),
+                  icon: _isGenerating
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                        )
+                      : const Icon(Icons.add_to_photos, size: 20),
                   label: Text(
-                    'Insert Voiceover at ${TimecodeFormatter.formatMilliseconds(widget.currentPlayheadMs)}',
+                    _isGenerating
+                        ? 'Synthesizing Voiceover...'
+                        : 'Insert Voiceover at ${TimecodeFormatter.formatMilliseconds(widget.currentPlayheadMs)}',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                   ),
-                  onPressed: _handleGenerateVoiceover,
+                  onPressed: _isGenerating ? null : _handleGenerateVoiceover,
                 ),
 
                 const SizedBox(height: 16),

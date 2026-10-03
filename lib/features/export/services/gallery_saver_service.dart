@@ -29,20 +29,28 @@ class GallerySaveResult {
 class GallerySaverService {
   static const MethodChannel _channel = MethodChannel('com.edito.app/gallery');
 
-  /// Renders/assembles project video clips on Android hardware via MediaExtractor & MediaMuxer
+  /// Renders/assembles project video clips on Android hardware via MediaExtractor, Canvas & MediaCodec
   static Future<Map<String, dynamic>?> renderProjectVideo({
     required List<Map<String, dynamic>> clips,
+    List<Map<String, dynamic>> textOverlays = const [],
+    List<Map<String, dynamic>> imageOverlays = const [],
+    List<Map<String, dynamic>> audioTracks = const [],
     required String outputPath,
     int targetWidth = 1920,
     int targetHeight = 1080,
+    int fps = 30,
   }) async {
     if (!Platform.isAndroid) return null;
     try {
       final result = await _channel.invokeMethod<Map>('renderProjectVideo', {
         'clips': clips,
+        'textOverlays': textOverlays,
+        'imageOverlays': imageOverlays,
+        'audioTracks': audioTracks,
         'outputPath': outputPath,
         'targetWidth': targetWidth,
         'targetHeight': targetHeight,
+        'fps': fps,
       });
       if (result != null && result['success'] == true) {
         return Map<String, dynamic>.from(result);

@@ -142,11 +142,11 @@ class _SmartCutoutSheetState extends State<SmartCutoutSheet> with SingleTickerPr
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Smart AI Cutout Studio',
+                  'Cutout & Chroma Studio',
                   style: AppTypography.titleMedium.copyWith(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  badge.isNotEmpty ? badge : 'One-tap portrait matting & glowing outlines',
+                  badge.isNotEmpty ? badge : 'Offline Chroma Key, Outlines & Backdrops',
                   style: AppTypography.caption.copyWith(
                     color: _config.isEnabled ? const Color(0xFF00E5FF) : AppColors.textSecondary,
                     fontSize: 11,
@@ -238,7 +238,7 @@ class _SmartCutoutSheetState extends State<SmartCutoutSheet> with SingleTickerPr
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('CAPCUT PRO PRESETS', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.1)),
+        Text('CUTOUT & OUTLINE PRESETS', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.1)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -514,7 +514,7 @@ class _SmartCutoutSheetState extends State<SmartCutoutSheet> with SingleTickerPr
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('TRADITIONAL GREEN SCREEN KEYER', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.1)),
+        Text('CHROMA KEY GREEN & BLUE SCREEN', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.1)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(12),
