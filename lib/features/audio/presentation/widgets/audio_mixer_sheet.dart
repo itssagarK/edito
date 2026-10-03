@@ -921,20 +921,121 @@ class _AudioMixerSheetState extends State<AudioMixerSheet> with SingleTickerProv
           const SizedBox(height: 12),
         ],
 
-        // AI Noise Reduction
-        _buildSliderCard(
-          title: 'Background Noise Reduction (FFT)',
-          valueText: '${(_effects.denoiseIntensity * 100).toInt()}% (-${(_effects.denoiseIntensity * 25).toStringAsFixed(1)}dB)',
-          color: AppColors.primaryLight,
-          value: _effects.denoiseIntensity,
-          min: 0.1,
-          max: 1.0,
-          onChanged: (v) {
-            setState(() => _effects = _effects.copyWith(denoiseIntensity: v));
-            _applyChange();
-          },
+        // RNNoise Neural Noise Removal (BSD-3-Clause)
+        Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF00E5FF).withOpacity(0.12),
+                AppColors.primary.withOpacity(0.12),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _effects.isNeuralDenoiseEnabled ? const Color(0xFF00E5FF) : AppColors.border,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.psychology, color: Color(0xFF00E5FF), size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Neural Noise Removal (RNNoise)',
+                        style: AppTypography.titleMedium.copyWith(fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  Switch(
+                    value: _effects.isNeuralDenoiseEnabled,
+                    activeColor: const Color(0xFF00E5FF),
+                    onChanged: (val) {
+                      setState(() => _effects = _effects.copyWith(
+                        isNeuralDenoiseEnabled: val,
+                        isVoiceEnhancerEnabled: true,
+                      ));
+                      _applyChange();
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'BSD-3 Licensed recurrent neural denoiser for offline background noise suppression',
+                style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 10),
+              ),
+              if (_effects.isNeuralDenoiseEnabled) ...[
+                const SizedBox(height: 10),
+                _buildSliderCard(
+                  title: 'Neural Denoise Strength',
+                  valueText: '${(_effects.neuralDenoiseStrength * 100).toInt()}% (-${(_effects.neuralDenoiseStrength * 30).toStringAsFixed(1)}dB)',
+                  color: const Color(0xFF00E5FF),
+                  value: _effects.neuralDenoiseStrength,
+                  min: 0.1,
+                  max: 1.0,
+                  onChanged: (v) {
+                    setState(() => _effects = _effects.copyWith(neuralDenoiseStrength: v));
+                    _applyChange();
+                  },
+                ),
+                const SizedBox(height: 8),
+                // A/B Comparison Toggle Button
+                GestureDetector(
+                  onTapDown: (_) {
+                    setState(() => _effects = _effects.copyWith(isNoiseComparisonBypass: true));
+                    _applyChange();
+                  },
+                  onTapUp: (_) {
+                    setState(() => _effects = _effects.copyWith(isNoiseComparisonBypass: false));
+                    _applyChange();
+                  },
+                  onTapCancel: () {
+                    setState(() => _effects = _effects.copyWith(isNoiseComparisonBypass: false));
+                    _applyChange();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: _effects.isNoiseComparisonBypass ? Colors.amber.withOpacity(0.25) : AppColors.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: _effects.isNoiseComparisonBypass ? Colors.amber : AppColors.border,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          _effects.isNoiseComparisonBypass ? Icons.volume_up : Icons.compare,
+                          size: 16,
+                          color: _effects.isNoiseComparisonBypass ? Colors.amber : const Color(0xFF00E5FF),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _effects.isNoiseComparisonBypass
+                              ? 'LISTENING TO ORIGINAL NOISY AUDIO'
+                              : 'HOLD TO HEAR ORIGINAL AUDIO (A/B COMPARE)',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: _effects.isNoiseComparisonBypass ? Colors.amber : const Color(0xFF00E5FF),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
 
         // Speech Presence & Clarity
         _buildSliderCard(

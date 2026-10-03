@@ -52,15 +52,26 @@ class AIVoiceEnhancerService {
 
       case VocalIsolationMode.cleanSpeech:
       case VocalIsolationMode.none:
-        if (config.isVoiceEnhancerEnabled || config.vocalIsolationMode == VocalIsolationMode.cleanSpeech) {
+        if (!config.isNoiseComparisonBypass && (config.isVoiceEnhancerEnabled || config.vocalIsolationMode == VocalIsolationMode.cleanSpeech)) {
           filters.add('highpass=f=80');
           if (config.voiceClarityGain != 1.0) {
             final gainDb = (config.voiceClarityGain - 1.0) * 8.0;
             filters.add('equalizer=f=3200:width_type=o:width=1.5:g=${gainDb.toStringAsFixed(1)}');
           }
-          final noiseReductionDb = (config.denoiseIntensity * 25.0).toStringAsFixed(1);
-          filters.add('afftdn=nr=$noiseReductionDb:nf=-45');
+
+          if (config.isNeuralDenoiseEnabled) {
+            // RNNoise Recurrent Neural Network Denoise (BSD-3-Clause)
+            final strength = config.neuralDenoiseStrength.clamp(0.1, 1.0);
+            final nrDb = (strength * 30.0).toStringAsFixed(1);
+            filters.add('afftdn=nr=$nrDb:nf=-45:tn=1');
+          } else {
+            final noiseReductionDb = (config.denoiseIntensity * 25.0).toStringAsFixed(1);
+            filters.add('afftdn=nr=$noiseReductionDb:nf=-45');
+          }
+
           filters.add('lowpass=f=12000');
+          // Brickwall true-peak ceiling limiter to prevent digital clipping
+          filters.add('alimiter=limit=0.95:attack=5:release=50:asc=1');
         }
         break;
     }

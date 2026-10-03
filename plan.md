@@ -2,7 +2,7 @@
 
 > **Last Updated:** 2026-10-03  
 > **Target:** High-Performance, 100% On-Device & Offline AI Video Editing Engine (Edito)  
-> **Status:** Phase 0 (AI Infra) & Phase 1 (F1: Auto Captions) **COMPLETED** | Phase 2 (F2: Subject Segmentation) **IN PROGRESS**
+> **Status:** Phase 0, 1, 2, 3, 4 **COMPLETED** | Phase 5 (F5: Smart Auto-Ducking & Beat Sync) **IN PROGRESS**
 
 ---
 
@@ -45,8 +45,8 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 | **1** | **F1** | Auto Captions (Whisper STT) | Whisper Tiny int8 / Sherpa-ONNX / Native VAD | MIT | ✅ **COMPLETED** (`af4d1cc`) |
 | **2** | **F2** | Real Subject Segmentation | MediaPipe Selfie Segmentation (TFLite) | Apache-2.0 | ✅ **COMPLETED** (`128a471`) |
 | **3** | **F3** | Auto Subject Tracking (Zoom) | MediaPipe Face / Centroid + Kalman/EMA | Apache-2.0 | ✅ **COMPLETED** |
-| **4** | **F4** | Neural Noise Removal | FFmpeg `arnndn` (RNNoise) | BSD-3 | 🔄 **IN PROGRESS** |
-| **5** | **F5** | Smart Auto-Ducking & Beat Sync | Silero VAD / Energy VAD + Onset Detection | MIT | ⏳ PENDING |
+| **4** | **F4** | Neural Noise Removal | FFmpeg `arnndn` (RNNoise) | BSD-3 | ✅ **COMPLETED** |
+| **5** | **F5** | Smart Auto-Ducking & Beat Sync | Silero VAD / Energy VAD + Onset Detection | MIT | 🔄 **IN PROGRESS** |
 | **6** | **F6** | AI Upscaler & Enhancer | Real-ESRGAN Compact (ncnn/ONNX, Tiled) | BSD-3 | ⏳ PENDING |
 
 ---
@@ -116,15 +116,20 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 
 ---
 
-### Phase 4: F4 - Neural Noise Removal 🔄 [IN PROGRESS]
+### Phase 4: F4 - Neural Noise Removal ✅ [COMPLETED]
 **Goal:** High-fidelity speech denoiser without cloud processing.
-- **Model:** RNNoise (`librnnoise`, BSD-3-Clause) / FFmpeg native `arnndn` filter.
+- **Model:** RNNoise (`librnnoise`, BSD-3-Clause) / FFmpeg native `arnndn` / enhanced recurrent filter.
 - **Pipeline:** Pre-pass audio through neural denoiser, clamp with brickwall limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
-- **UI:** Clean speech slider in `AudioMixerSheet`, A/B toggle.
+- **UI:** Clean speech slider in `AudioMixerSheet`, A/B comparison toggle (press-and-hold to audition raw noisy audio vs denoised).
+- [x] Extended `AudioEffectsConfig` with `isNeuralDenoiseEnabled`, `neuralDenoiseStrength`, and `isNoiseComparisonBypass`.
+- [x] Integrated neural denoiser into `AIVoiceEnhancerService.generateFFmpegFilter` with true-peak brickwall ceiling limiter.
+- [x] Added Vocal Studio RNNoise UI card, strength slider, and hold-to-compare A/B button in `AudioMixerSheet`.
+- [x] Added unit tests in `test/neural_noise_removal_test.dart`.
+- [x] Verified 100% clean with `python scripts/verify_codebase.py` (333 files).
 
 ---
 
-### Phase 5: F5 - Smart Auto-Ducking and Beat Sync ⏳ [PENDING]
+### Phase 5: F5 - Smart Auto-Ducking and Beat Sync 🔄 [IN PROGRESS]
 **Goal:** Intelligent background music attenuation during speech, plus music beat grid snapping.
 - **Ducking:** Silero VAD (MIT) / Energy VAD envelope detector to generate smooth sidechain ducking volume automation.
 - **Beat Sync:** FFT spectral flux onset detector to snap timeline cuts to music tempo beats.
@@ -148,6 +153,22 @@ If this environment restarts or your session closes abruptly, follow this 4-step
   - Replaced legacy cloud API settings with offline on-device flow.
   - Added unit test suites for AI infrastructure and Whisper.
   - Linter verification: 100% clean (329 files).
+
+- **2026-10-03 [Commit `128a471`]:**
+  - Added F2 Real Subject Segmentation (MediaPipe Selfie Segmenter).
+  - Offline cutouts in SmartCutoutSheet & adaptive neon aura in CharacterHighlightSheet.
+  - Linter verification: 100% clean (331 files).
+
+- **2026-10-03 [Commit `fd4c757`]:**
+  - Added F3 Auto Subject Tracking for Main Character Zoom.
+  - EMA focus smoothing, auto-tracking canvas preview, and manual override.
+  - Linter verification: 100% clean (332 files).
+
+- **2026-10-03 [F4 Neural Noise Removal]:**
+  - Added RNNoise BSD-3 recurrent neural noise removal.
+  - Integrated brickwall true-peak limiter (`alimiter=limit=0.95...`) and interactive hold-to-compare A/B auditioning.
+  - Added unit test suite `test/neural_noise_removal_test.dart`.
+  - Linter verification: 100% clean (333 files).
 
 ---
 

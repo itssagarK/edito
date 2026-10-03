@@ -311,10 +311,16 @@ class AudioEffectsConfig extends Equatable {
   final double pitchShiftSemitones;    // -12.0 to +12.0 semitones
   final double bassEnhance;            // 0.0 to 2.0 (vocal body)
   final double trebleCrisp;            // 0.0 to 2.0 (vocal air & brightness)
+  final bool isNeuralDenoiseEnabled;   // RNNoise on-device neural noise suppressor (default: true)
+  final double neuralDenoiseStrength;  // 0.0 to 1.0 (default 0.75)
+  final bool isNoiseComparisonBypass;  // Instantaneous A/B bypass toggle
 
   const AudioEffectsConfig({
     this.isVoiceEnhancerEnabled = false,
     this.denoiseIntensity = 0.70,
+    this.isNeuralDenoiseEnabled = true,
+    this.neuralDenoiseStrength = 0.75,
+    this.isNoiseComparisonBypass = false,
     this.voiceClarityGain = 1.20,
     this.fadeInMs = 0,
     this.fadeOutMs = 0,
@@ -500,10 +506,16 @@ class AudioEffectsConfig extends Equatable {
     double? pitchShiftSemitones,
     double? bassEnhance,
     double? trebleCrisp,
+    bool? isNeuralDenoiseEnabled,
+    double? neuralDenoiseStrength,
+    bool? isNoiseComparisonBypass,
   }) {
     return AudioEffectsConfig(
       isVoiceEnhancerEnabled: isVoiceEnhancerEnabled ?? this.isVoiceEnhancerEnabled,
       denoiseIntensity: denoiseIntensity ?? this.denoiseIntensity,
+      isNeuralDenoiseEnabled: isNeuralDenoiseEnabled ?? this.isNeuralDenoiseEnabled,
+      neuralDenoiseStrength: neuralDenoiseStrength ?? this.neuralDenoiseStrength,
+      isNoiseComparisonBypass: isNoiseComparisonBypass ?? this.isNoiseComparisonBypass,
       voiceClarityGain: voiceClarityGain ?? this.voiceClarityGain,
       fadeInMs: fadeInMs ?? this.fadeInMs,
       fadeOutMs: fadeOutMs ?? this.fadeOutMs,
@@ -596,6 +608,9 @@ class AudioEffectsConfig extends Equatable {
         'pitchShiftSemitones': pitchShiftSemitones,
         'bassEnhance': bassEnhance,
         'trebleCrisp': trebleCrisp,
+        'isNeuralDenoiseEnabled': isNeuralDenoiseEnabled,
+        'neuralDenoiseStrength': neuralDenoiseStrength,
+        'isNoiseComparisonBypass': isNoiseComparisonBypass,
       };
 
   factory AudioEffectsConfig.fromJson(Map<String, dynamic> json) {
@@ -618,6 +633,9 @@ class AudioEffectsConfig extends Equatable {
     return AudioEffectsConfig(
       isVoiceEnhancerEnabled: json['isVoiceEnhancerEnabled'] as bool? ?? false,
       denoiseIntensity: (json['denoiseIntensity'] as num?)?.toDouble() ?? 0.70,
+      isNeuralDenoiseEnabled: json['isNeuralDenoiseEnabled'] as bool? ?? true,
+      neuralDenoiseStrength: (json['neuralDenoiseStrength'] as num?)?.toDouble() ?? 0.75,
+      isNoiseComparisonBypass: json['isNoiseComparisonBypass'] as bool? ?? false,
       voiceClarityGain: (json['voiceClarityGain'] as num?)?.toDouble() ?? 1.20,
       fadeInMs: (json['fadeInMs'] as num?)?.toInt() ?? 0,
       fadeOutMs: (json['fadeOutMs'] as num?)?.toInt() ?? 0,
@@ -720,5 +738,8 @@ class AudioEffectsConfig extends Equatable {
         pitchShiftSemitones,
         bassEnhance,
         trebleCrisp,
+        isNeuralDenoiseEnabled,
+        neuralDenoiseStrength,
+        isNoiseComparisonBypass,
       ];
 }
