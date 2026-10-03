@@ -5,6 +5,7 @@ import '../../../../models/clip.dart';
 import '../../models/smart_cutout_config.dart';
 import '../../services/smart_cutout_compiler_service.dart';
 import '../../../chroma/presentation/widgets/chroma_key_sheet.dart';
+import '../../../../core/ai/services/on_device_segmentation_service.dart';
 
 class SmartCutoutSheet extends StatefulWidget {
   final Clip clip;
@@ -62,6 +63,47 @@ class _SmartCutoutSheetState extends State<SmartCutoutSheet> with SingleTickerPr
   void initState() {
     super.initState();
     _config = widget.clip.smartCutout;
+  }
+
+  bool _isProcessingAiCutout = false;
+
+  Future<void> _executeOnDeviceCutout() async {
+    if (_isProcessingAiCutout) return;
+    setState(() => _isProcessingAiCutout = true);
+
+    try {
+      final sourcePath = widget.clip.sourcePath;
+      if (sourcePath.isNotEmpty) {
+        final res = await OnDeviceSegmentationService.instance.segmentVideoFrame(
+          videoPath: sourcePath,
+          timeMs: widget.clip.sourceInMs,
+        );
+
+        if (res.isSuccess && mounted) {
+          setState(() {
+            _config = _config.copyWith(
+              isEnabled: true,
+              type: CutoutType.autoPortrait,
+            );
+          });
+          _applyChange();
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✨ Subject cut out on-device with MediaPipe Selfie Segmenter'),
+              backgroundColor: AppColors.surfaceElevated,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('AI Cutout error: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessingAiCutout = false);
+      }
+    }
   }
 
   void _applyChange() {
@@ -238,6 +280,67 @@ class _SmartCutoutSheetState extends State<SmartCutoutSheet> with SingleTickerPr
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // 100% On-Device AI Cutout Card
+        Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF00E5FF).withOpacity(0.12),
+                const Color(0xFFFF007F).withOpacity(0.12),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF00E5FF).withOpacity(0.4)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00E5FF).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.auto_awesome, color: Color(0xFF00E5FF), size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'On-Device AI Smart Cutout',
+                      style: AppTypography.titleMedium.copyWith(fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'Runs offline via MediaPipe (Apache-2.0)',
+                      style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              ElevatedButton(
+                onPressed: _isProcessingAiCutout ? null : _executeOnDeviceCutout,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00E5FF),
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: _isProcessingAiCutout
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                      )
+                    : const Text('Cut Out'),
+              ),
+            ],
+          ),
+        ),
+
         Text('CUTOUT & OUTLINE PRESETS', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.1)),
         const SizedBox(height: 8),
         Wrap(

@@ -66,15 +66,16 @@ class CharacterHighlightCompilerService {
   static String getHighlightBadge(CharacterHighlightConfig config) {
     if (!config.isEnabled) return '';
     final bgHex = config.backgroundColor.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase();
+    final aiTag = config.useAiSegmentation ? '🤖 AI ' : '';
     switch (config.mode) {
       case CharacterHighlightMode.spotlight:
-        return '🌟 CHARACTER SPOTLIGHT (BG: #$bgHex)';
+        return '${aiTag}🌟 CHARACTER SPOTLIGHT (BG: #$bgHex)';
       case CharacterHighlightMode.neonAura:
-        return '⚡ NEON AURA GLOW (BG: #$bgHex)';
+        return '${aiTag}⚡ NEON AURA GLOW (BG: #$bgHex)';
       case CharacterHighlightMode.bwBackground:
-        return '🎭 B&W BACKGROUND (POP)';
+        return '${aiTag}🎭 B&W BACKGROUND (POP)';
       case CharacterHighlightMode.solidBgWash:
-        return '🎨 BG COLOR (#$bgHex)';
+        return '${aiTag}🎨 BG COLOR (#$bgHex)';
     }
   }
 }

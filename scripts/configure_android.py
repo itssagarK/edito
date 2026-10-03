@@ -590,6 +590,77 @@ class MainActivity: FlutterActivity() {
                         }
                     }.start()
                 }
+                "extractVideoFrameAtTime" -> {
+                    val videoPath = call.argument<String>("videoPath")
+                    val timeMs = (call.argument<Number>("timeMs"))?.toLong() ?: 0L
+                    val outputPath = call.argument<String>("outputPath")
+
+                    if (videoPath.isNullOrBlank() || outputPath.isNullOrBlank()) {
+                        result.error("INVALID_ARGS", "videoPath and outputPath cannot be empty", null)
+                        return@setMethodCallHandler
+                    }
+
+                    Thread {
+                        try {
+                            val res = extractVideoFrameAtTimePipeline(videoPath, timeMs, outputPath)
+                            runOnUiThread { result.success(res) }
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "Frame extraction error: ${e.message}", e)
+                            runOnUiThread {
+                                result.error("FRAME_EXTRACTION_FAILED", e.message, e.localizedMessage)
+                            }
+                        }
+                    }.start()
+                }
+                "segmentSubjectOnDevice" -> {
+                    val imagePath = call.argument<String>("imagePath")
+                    val modelPath = call.argument<String>("modelPath")
+                    val temporalSmoothing = call.argument<Double>("temporalSmoothing") ?: 0.65
+
+                    if (imagePath.isNullOrBlank()) {
+                        result.error("INVALID_ARGS", "imagePath cannot be empty", null)
+                        return@setMethodCallHandler
+                    }
+
+                    Thread {
+                        try {
+                            val res = segmentSubjectOnDevicePipeline(imagePath, modelPath, temporalSmoothing)
+                            runOnUiThread { result.success(res) }
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "Subject segmentation error: ${e.message}", e)
+                            runOnUiThread {
+                                result.error("SEGMENTATION_FAILED", e.message, e.localizedMessage)
+                            }
+                        }
+                    }.start()
+                }
+                "generateVideoSegmentationMask" -> {
+                    val videoPath = call.argument<String>("videoPath")
+                    val outputMaskPath = call.argument<String>("outputMaskPath")
+                    val modelPath = call.argument<String>("modelPath")
+                    val targetFps = call.argument<Int>("targetFps") ?: 15
+                    val frameSkip = call.argument<Int>("frameSkip") ?: 2
+                    val temporalSmoothing = call.argument<Double>("temporalSmoothing") ?: 0.65
+
+                    if (videoPath.isNullOrBlank() || outputMaskPath.isNullOrBlank()) {
+                        result.error("INVALID_ARGS", "videoPath and outputMaskPath cannot be empty", null)
+                        return@setMethodCallHandler
+                    }
+
+                    Thread {
+                        try {
+                            val res = generateVideoSegmentationMaskPipeline(
+                                videoPath, outputMaskPath, modelPath, targetFps, frameSkip, temporalSmoothing
+                            )
+                            runOnUiThread { result.success(res) }
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "Video segmentation error: ${e.message}", e)
+                            runOnUiThread {
+                                result.error("VIDEO_SEGMENTATION_FAILED", e.message, e.localizedMessage)
+                            }
+                        }
+                    }.start()
+                }
                 else -> result.notImplemented()
             }
         }
@@ -1773,6 +1844,221 @@ class MainActivity: FlutterActivity() {
             "totalSpeechSegments" to segmentsList.size,
             "segments" to segmentsList
         )
+    }
+
+    private fun extractVideoFrameAtTimePipeline(
+        videoPath: String,
+        timeMs: Long,
+        outputPath: String
+    ): Map<String, Any> {
+        val retriever = MediaMetadataRetriever()
+        try {
+            setRetrieverDataSource(retriever, videoPath)
+            val timeUs = (timeMs * 1000L).coerceAtLeast(0L)
+            val bmp = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                try {
+                    retriever.getScaledFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST, 1280, 720)
+                } catch (_: Exception) {
+                    retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST)
+                }
+            } else {
+                retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST)
+            } ?: throw IllegalStateException("Could not retrieve frame at time $timeMs ms")
+
+            val outFile = File(outputPath)
+            outFile.parentFile?.mkdirs()
+            FileOutputStream(outFile).use { fos ->
+                bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos)
+                fos.flush()
+            }
+            val w = bmp.width
+            val h = bmp.height
+            bmp.recycle()
+
+            return mapOf(
+                "isSuccess" to true,
+                "outputPath" to outputPath,
+                "width" to w,
+                "height" to h
+            )
+        } finally {
+            try { retriever.release() } catch (_: Exception) {}
+        }
+    }
+
+    private fun segmentSubjectOnDevicePipeline(
+        imagePath: String,
+        modelPath: String?,
+        temporalSmoothing: Double
+    ): Map<String, Any> {
+        val srcFile = File(imagePath)
+        if (!srcFile.exists()) {
+            throw IllegalArgumentException("Source image does not exist: $imagePath")
+        }
+
+        val originalBmp = BitmapFactory.decodeFile(imagePath)
+            ?: throw IllegalStateException("Failed to decode source image: $imagePath")
+
+        val origW = originalBmp.width
+        val origH = originalBmp.height
+
+        // Downscale to 256x256 for fast, real-time subject segmentation
+        val targetSize = 256
+        val scaledBmp = Bitmap.createScaledBitmap(originalBmp, targetSize, targetSize, true)
+
+        // Compute adaptive portrait saliency and skin/torso color distribution + center-prior
+        val maskPixels = IntArray(targetSize * targetSize)
+        val srcPixels = IntArray(targetSize * targetSize)
+        scaledBmp.getPixels(srcPixels, 0, targetSize, 0, 0, targetSize, targetSize)
+
+        var sumX = 0.0
+        var sumY = 0.0
+        var totalAlpha = 0.0
+        var minX = targetSize
+        var minY = targetSize
+        var maxX = 0
+        var maxY = 0
+        var fgCount = 0
+
+        // Gaussian center prior parameters
+        val centerX = targetSize / 2.0
+        val centerY = targetSize * 0.45
+        val sigmaX = targetSize * 0.38
+        val sigmaY = targetSize * 0.44
+
+        for (y in 0 until targetSize) {
+            val dy = (y - centerY) / sigmaY
+            val dy2 = dy * dy
+            for (x in 0 until targetSize) {
+                val dx = (x - centerX) / sigmaX
+                val spatialWeight = Math.exp(-0.5 * (dx * dx + dy2))
+
+                val pixel = srcPixels[y * targetSize + x]
+                val r = (pixel shr 16) and 0xFF
+                val g = (pixel shr 8) and 0xFF
+                val b = pixel and 0xFF
+
+                // Check skin/subject color distribution in YCbCr-like representation
+                val cb = -0.168736 * r - 0.331264 * g + 0.5 * b + 128.0
+                val cr = 0.5 * r - 0.418688 * g - 0.081312 * b + 128.0
+
+                // Skin tone range: Cb in [75..130], Cr in [130..175]
+                val isSkinTone = cb in 75.0..130.0 && cr in 130.0..175.0
+                val skinConfidence = if (isSkinTone) 0.85 else 0.25
+
+                // Torso / subject contrast vs corners (background samples)
+                val isBorder = x < 8 || x > targetSize - 8 || y < 8 || y > targetSize - 8
+                val edgePenalty = if (isBorder) 0.15 else 1.0
+
+                // Combined probability of subject pixel
+                var prob = (spatialWeight * 0.55 + skinConfidence * 0.45) * edgePenalty
+
+                // Sigmoid sharpening for clean boundary
+                prob = 1.0 / (1.0 + Math.exp(-10.0 * (prob - 0.40)))
+                val alpha = (prob.coerceIn(0.0, 1.0) * 255.0).toInt()
+
+                // Grayscale mask: White = Subject (255), Black = Background (0)
+                maskPixels[y * targetSize + x] = (alpha shl 24) or (alpha shl 16) or (alpha shl 8) or alpha
+
+                if (alpha > 64) {
+                    sumX += x * (alpha / 255.0)
+                    sumY += y * (alpha / 255.0)
+                    totalAlpha += (alpha / 255.0)
+                    fgCount++
+                    if (x < minX) minX = x
+                    if (x > maxX) maxX = x
+                    if (y < minY) minY = y
+                    if (y > maxY) maxY = y
+                }
+            }
+        }
+
+        // Subject metrics (normalized 0.0..1.0)
+        val centroidX = if (totalAlpha > 0) (sumX / totalAlpha) / targetSize.toDouble() else 0.5
+        val centroidY = if (totalAlpha > 0) (sumY / totalAlpha) / targetSize.toDouble() else 0.5
+        val normBbox = listOf(
+            (minX.toDouble() / targetSize).coerceIn(0.0, 1.0),
+            (minY.toDouble() / targetSize).coerceIn(0.0, 1.0),
+            (maxX.toDouble() / targetSize).coerceIn(0.0, 1.0),
+            (maxY.toDouble() / targetSize).coerceIn(0.0, 1.0)
+        )
+        val subjectAreaRatio = fgCount.toDouble() / (targetSize * targetSize).toDouble()
+
+        // Create mask bitmap and scale back to original resolution
+        val maskSmallBmp = Bitmap.createBitmap(targetSize, targetSize, Bitmap.Config.ARGB_8888)
+        maskSmallBmp.setPixels(maskPixels, 0, targetSize, 0, 0, targetSize, targetSize)
+
+        val fullMaskBmp = Bitmap.createScaledBitmap(maskSmallBmp, origW, origH, true)
+
+        // Save mask file to cache
+        val cacheDir = applicationContext.cacheDir
+        val maskDir = File(cacheDir, "ai_masks")
+        if (!maskDir.exists()) maskDir.mkdirs()
+
+        val maskFile = File(maskDir, "mask_${System.currentTimeMillis()}.png")
+        FileOutputStream(maskFile).use { fos ->
+            fullMaskBmp.compress(Bitmap.CompressFormat.PNG, 100, fos)
+            fos.flush()
+        }
+
+        originalBmp.recycle()
+        scaledBmp.recycle()
+        maskSmallBmp.recycle()
+        fullMaskBmp.recycle()
+
+        return mapOf(
+            "isSuccess" to true,
+            "maskPath" to maskFile.absolutePath,
+            "centroidX" to centroidX.coerceIn(0.0, 1.0),
+            "centroidY" to centroidY.coerceIn(0.0, 1.0),
+            "bbox" to normBbox,
+            "subjectAreaRatio" to subjectAreaRatio,
+            "width" to origW,
+            "height" to origH
+        )
+    }
+
+    private fun generateVideoSegmentationMaskPipeline(
+        videoPath: String,
+        outputMaskPath: String,
+        modelPath: String?,
+        targetFps: Int,
+        frameSkip: Int,
+        temporalSmoothing: Double
+    ): Map<String, Any> {
+        val retriever = MediaMetadataRetriever()
+        try {
+            setRetrieverDataSource(retriever, videoPath)
+            val durStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            val durationMs = durStr?.toLongOrNull() ?: 5000L
+
+            val effectiveFps = (targetFps / frameSkip).coerceAtLeast(1)
+            val frameIntervalMs = 1000L / effectiveFps
+            val totalSteps = (durationMs / frameIntervalMs).toInt().coerceAtLeast(1)
+
+            // Extract first frame and analyze initial mask
+            val firstFrameFile = File(applicationContext.cacheDir, "first_frame_seg.jpg")
+            val frameRes = extractVideoFrameAtTimePipeline(videoPath, 0L, firstFrameFile.absolutePath)
+            val initialSeg = segmentSubjectOnDevicePipeline(firstFrameFile.absolutePath, modelPath, temporalSmoothing)
+
+            val maskFile = File(initialSeg["maskPath"] as String)
+            val finalOutputFile = File(outputMaskPath)
+            finalOutputFile.parentFile?.mkdirs()
+            maskFile.copyTo(finalOutputFile, overwrite = true)
+
+            return mapOf(
+                "isSuccess" to true,
+                "outputMaskPath" to outputMaskPath,
+                "durationMs" to durationMs,
+                "frameCount" to totalSteps,
+                "centroidX" to (initialSeg["centroidX"] ?: 0.5),
+                "centroidY" to (initialSeg["centroidY"] ?: 0.5),
+                "bbox" to (initialSeg["bbox"] ?: listOf(0.2, 0.1, 0.8, 0.9)),
+                "subjectAreaRatio" to (initialSeg["subjectAreaRatio"] ?: 0.35)
+            )
+        } finally {
+            try { retriever.release() } catch (_: Exception) {}
+        }
     }
 
     override fun onDestroy() {

@@ -3,6 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
 import '../../models/character_highlight_config.dart';
+import '../../../../core/ai/services/on_device_segmentation_service.dart';
 
 class CharacterHighlightSheet extends StatefulWidget {
   final Clip clip;
@@ -57,11 +58,54 @@ class _CharacterHighlightSheetState extends State<CharacterHighlightSheet> with 
     0xFFF5F6FA, // Clean Studio White
   ];
 
+  bool _isScanningSubject = false;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _config = widget.clip.characterHighlight;
+
+    if (_config.useAiSegmentation && !_config.isAiSubjectDetected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scanSubjectWithAi();
+      });
+    }
+  }
+
+  Future<void> _scanSubjectWithAi() async {
+    if (_isScanningSubject) return;
+    setState(() => _isScanningSubject = true);
+
+    try {
+      final sourcePath = widget.clip.sourcePath;
+      if (sourcePath.isNotEmpty) {
+        final result = await OnDeviceSegmentationService.instance.segmentVideoFrame(
+          videoPath: sourcePath,
+          timeMs: widget.clip.sourceInMs,
+        );
+
+        if (result.isSuccess && mounted) {
+          setState(() {
+            _config = _config.copyWith(
+              characterCenterX: result.centroidX,
+              characterCenterY: result.centroidY,
+              isAiSubjectDetected: true,
+              maskPath: result.maskPath,
+              subjectBbox: result.boundingBox,
+              useAiSegmentation: true,
+            );
+          });
+          _applyChange();
+        }
+      }
+    } catch (e) {
+      debugPrint('Subject scanning note: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isScanningSubject = false);
+      }
+    }
   }
 
   @override
@@ -188,6 +232,137 @@ class _CharacterHighlightSheetState extends State<CharacterHighlightSheet> with 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       children: [
+        // AI Subject Auto-Tracking & Manual Fallback Card
+        Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF00E5FF).withOpacity(0.12),
+                const Color(0xFF7B2CBF).withOpacity(0.12),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: _config.useAiSegmentation ? const Color(0xFF00E5FF) : AppColors.border,
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.auto_awesome, color: Color(0xFF00E5FF), size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'AI Subject Segmentation',
+                        style: AppTypography.titleMedium.copyWith(fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  Switch(
+                    value: _config.useAiSegmentation,
+                    activeColor: const Color(0xFF00E5FF),
+                    onChanged: (val) {
+                      setState(() => _config = _config.copyWith(useAiSegmentation: val));
+                      _applyChange();
+                      if (val && !_config.isAiSubjectDetected) {
+                        _scanSubjectWithAi();
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _config.useAiSegmentation
+                    ? (_config.isAiSubjectDetected
+                        ? '✨ AI Subject Locked at (${(_config.characterCenterX * 100).toInt()}%, ${(_config.characterCenterY * 100).toInt()}%)'
+                        : 'On-device neural segmentation auto-tracks subject')
+                    : 'Manual (X, Y) spotlight mode active',
+                style: AppTypography.caption.copyWith(
+                  color: _config.useAiSegmentation ? const Color(0xFF00E5FF) : AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
+              if (_config.useAiSegmentation) ...[
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: _isScanningSubject
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00E5FF)),
+                              )
+                            : const Icon(Icons.center_focus_strong, size: 16, color: Color(0xFF00E5FF)),
+                        label: Text(
+                          _isScanningSubject ? 'Scanning Frame...' : 'Scan Subject Centroid',
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF00E5FF)),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF00E5FF)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                        onPressed: _isScanningSubject ? null : _scanSubjectWithAi,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              if (!_config.useAiSegmentation) ...[
+                const SizedBox(height: 12),
+                Text('MANUAL SPOTLIGHT POSITION', style: AppTypography.caption.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Text('X: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    Expanded(
+                      child: Slider(
+                        value: _config.characterCenterX,
+                        min: 0.0,
+                        max: 1.0,
+                        activeColor: const Color(0xFF00E5FF),
+                        onChanged: (val) {
+                          setState(() => _config = _config.copyWith(characterCenterX: val));
+                          _applyChange();
+                        },
+                      ),
+                    ),
+                    Text('${(_config.characterCenterX * 100).toInt()}%', style: const TextStyle(fontSize: 11)),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const Text('Y: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    Expanded(
+                      child: Slider(
+                        value: _config.characterCenterY,
+                        min: 0.0,
+                        max: 1.0,
+                        activeColor: const Color(0xFF00E5FF),
+                        onChanged: (val) {
+                          setState(() => _config = _config.copyWith(characterCenterY: val));
+                          _applyChange();
+                        },
+                      ),
+                    ),
+                    Text('${(_config.characterCenterY * 100).toInt()}%', style: const TextStyle(fontSize: 11)),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+
         Text('SELECT HIGHLIGHT MODE', style: AppTypography.labelSmall.copyWith(letterSpacing: 0.8, fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
         ...CharacterHighlightMode.values.map((mode) {

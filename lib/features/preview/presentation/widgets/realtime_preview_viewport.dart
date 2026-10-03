@@ -1832,13 +1832,29 @@ class _CharacterHighlightPainter extends CustomPainter {
         ).createShader(rect);
       canvas.drawRect(rect, bgPaint);
 
-      // Neon aura ring around character
+      // Neon aura ring around character (adaptive to AI detected subject bounds)
       final auraPaint = Paint()
         ..color = hlColor.withOpacity((0.6 * config.highlightIntensity).clamp(0.0, 0.95))
         ..style = PaintingStyle.stroke
         ..strokeWidth = (6.0 * config.highlightIntensity).clamp(2.0, 16.0)
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, feather * 0.5);
-      canvas.drawCircle(center, radius * 0.5, auraPaint);
+
+      if (config.subjectBbox != null && config.subjectBbox!.length >= 4) {
+        final bbox = config.subjectBbox!;
+        final subjectRect = Rect.fromLTRB(
+          (bbox[0] * size.width).clamp(0.0, size.width),
+          (bbox[1] * size.height).clamp(0.0, size.height),
+          (bbox[2] * size.width).clamp(0.0, size.width),
+          (bbox[3] * size.height).clamp(0.0, size.height),
+        );
+        final subjectRRect = RRect.fromRectAndRadius(
+          subjectRect,
+          Radius.circular(subjectRect.width * 0.3),
+        );
+        canvas.drawRRect(subjectRRect, auraPaint);
+      } else {
+        canvas.drawCircle(center, radius * 0.5, auraPaint);
+      }
     } else if (config.mode == CharacterHighlightMode.bwBackground) {
       // Desaturated/darkened background with spotlight center
       final bgPaint = Paint()
