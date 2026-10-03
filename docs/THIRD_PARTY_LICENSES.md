@@ -144,5 +144,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 | **F4. Noise Removal** | RNNoise Neural Filter | **BSD-3-Clause** | ~1.8 MB | 100% On-Device | Approved |
 | **F5. Auto-Ducking** | Silero VAD | **MIT** | ~1.8 MB | 100% On-Device | Approved |
 | **F6. AI Upscaler** | Real-ESRGAN Compact | **BSD-3-Clause** | ~5.3 MB | 100% On-Device | Approved |
+| **F7. Silence Jump-Cut** | Silero/Energy VAD | **MIT** | ~1.8 MB | 100% On-Device | Approved |
+| **F8. Scene Cut Detection** | Hardware Frame Luminance Delta | **Android Platform** | Native | 100% On-Device | Approved |
+| **F9. Optical Tracking** | MediaPipe Selfie Seg + EMA | **Apache-2.0** | ~250 KB | 100% On-Device | Approved |
+| **F10. Auto-Reframe** | MediaPipe Selfie Seg Centroid | **Apache-2.0** | ~250 KB | 100% On-Device | Approved |
 
 *All items comply with the Edito strict permissive license policy.*

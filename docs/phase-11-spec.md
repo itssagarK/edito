@@ -54,11 +54,31 @@ Phase 11 introduces a self-reliant, zero-cloud on-device AI editing engine into 
 - **Memory Safety:** Tiled execution (128x128 on low-tier, 256x256 on medium/high-tier with 16px seam overlap) guarantees zero out-of-memory crashes on 3–4 GB RAM mobile devices.
 - **UI:** [VideoEnhancementSheet](file:///C:/Users/Mini-PC/Desktop/projects/Edito/lib/features/enhancement/presentation/widgets/video_enhancement_sheet.dart) and [ImageEditorSheet](file:///C:/Users/Mini-PC/Desktop/projects/Edito/lib/features/image_editor/presentation/widgets/image_editor_sheet.dart) with honest speed notices and one-tap 4x neural super-resolution export.
 
+### F7: AI Silence Remover & Smart Jump-Cut
+- **Engine:** On-Device Voice Activity Detection ([`AiSilenceRemoverService`](file:///C:/Users/Mini-PC/Desktop/projects/Edito/lib/features/audio/services/ai_silence_remover_service.dart)) to detect dead-air pauses and unvoiced segments (>350ms).
+- **Execution:** Slices the clip into contiguous speech segments, calculates frame-accurate `sourceInMs` and `sourceOutMs`, and ripples following timeline clips with zero empty gaps.
+- **UI:** [ClipWorkflowSheet](file:///C:/Users/Mini-PC/Desktop/projects/Edito/lib/features/timeline/presentation/widgets/clip_workflow_sheet.dart) and [AudioMixerSheet](file:///C:/Users/Mini-PC/Desktop/projects/Edito/lib/features/audio/presentation/widgets/audio_mixer_sheet.dart).
+
+### F8: AI Scene Cut Detector & Auto-Split
+- **Engine:** Hardware-accelerated frame differential luminance & color histogram analysis ([`AiSceneDetectorService`](file:///C:/Users/Mini-PC/Desktop/projects/Edito/lib/features/timeline/services/ai_scene_detector_service.dart)).
+- **Execution:** Slices long, multi-shot footage into independent scene sub-clips on the timeline with 1 tap, preserving all visual effects and speed timing.
+- **UI:** [ClipWorkflowSheet](file:///C:/Users/Mini-PC/Desktop/projects/Edito/lib/features/timeline/presentation/widgets/clip_workflow_sheet.dart).
+
+### F9: AI Real Optical & Centroid Motion Tracking
+- **Engine:** On-device MediaPipe selfie segmentation tracking ([`MotionTrackingService`](file:///C:/Users/Mini-PC/Desktop/projects/Edito/lib/features/tracking/services/motion_tracking_service.dart)) with Exponential Moving Average (EMA) mathematical trajectory smoothing.
+- **Execution:** Automatically pins text, titles, stickers, and PiP overlays to the moving subject with 1:1 preview and export parity.
+- **UI:** [MotionTrackingSheet](file:///C:/Users/Mini-PC/Desktop/projects/Edito/lib/features/tracking/presentation/widgets/motion_tracking_sheet.dart).
+
+### F10: AI Dynamic Auto-Reframe with Speaker Centering
+- **Engine:** Horizontal centroid center-of-mass analysis ([`AutoReframeService`](file:///C:/Users/Mini-PC/Desktop/projects/Edito/lib/features/image_editor/services/auto_reframe_service.dart)).
+- **Execution:** Automatically derives optimal `focalPointX` to center the active speaker for 9:16 vertical shorts and TikTok crops.
+- **UI:** [VideoLayoutSheet](file:///C:/Users/Mini-PC/Desktop/projects/Edito/lib/features/image_editor/presentation/widgets/video_layout_sheet.dart).
+
 ---
 
 ## 4. Verification & Testing
 
-- Automated architectural linter (`python scripts/verify_codebase.py`): 338 files verified 100% clean.
+- Automated architectural linter (`python scripts/verify_codebase.py`): 343 files verified 100% clean.
 - Comprehensive unit test suites covering models, services, serializers, and offline fallback handlers:
   - `test/on_device_ai_infrastructure_test.dart`
   - `test/on_device_whisper_test.dart`
@@ -68,3 +88,5 @@ Phase 11 introduces a self-reliant, zero-cloud on-device AI editing engine into 
   - `test/audio_vad_ducking_test.dart`
   - `test/beat_sync_onset_test.dart`
   - `test/on_device_upscaler_test.dart`
+  - `test/rendering_fidelity_test.dart`
+  - `test/built_in_ai_features_test.dart`

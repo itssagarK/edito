@@ -86,6 +86,7 @@ Edito/
 - **Phase 8:** FFmpeg Export Pipeline (Multi-format, 4K/1080p) 🟢 *(Done)*
 - **Phase 9:** Performance Optimization, Proxy Rendering & Undo/Redo 🟢 *(Done)*
 - **Phase 10:** Production Release & Distribution (`v1.0.0`) 🟢 *(Done)*
+- **Phase 11:** 100% On-Device & Offline AI Feature Suite & Full Rendering Parity (F1–F10) 🟢 *(Done)*
 
 ---
 
@@ -1374,9 +1375,43 @@ A self-reliant, zero-cloud on-device AI video editing suite replacing external A
    - Honest UI notices distinguishing Lanczos sinc interpolation from neural super-resolution.
    - One-tap 4x neural super-resolution in `VideoEnhancementSheet` and `ImageEditorSheet`.
 
-8. **Verification**:
-   - 338 Dart files scanned with 100% clean architecture conformance (`python scripts/verify_codebase.py`).
-   - Unit tests: `test/on_device_ai_infrastructure_test.dart`, `test/on_device_whisper_test.dart`, `test/subject_segmentation_test.dart`, `test/character_zoom_tracking_test.dart`, `test/neural_noise_removal_test.dart`, `test/audio_vad_ducking_test.dart`, `test/beat_sync_onset_test.dart`, `test/on_device_upscaler_test.dart`.
+8. **F7: AI Silence Remover & Smart Jump-Cut**:
+   - On-Device Voice Activity Detection (`AiSilenceRemoverService`) detecting dead-air intervals (>350ms).
+   - Slices speech sub-clips non-destructively, calculates precise `sourceInMs`/`sourceOutMs`, and ripples following timeline clips with zero empty gaps.
+   - Wired into `ClipWorkflowSheet` and `AudioMixerSheet`.
+
+9. **F8: AI Scene Cut Detector & Auto-Split**:
+   - Hardware-accelerated frame differential luminance & color histogram analysis (`AiSceneDetectorService`).
+   - Slices long footage into independent scene clips on the timeline with 1 tap in `ClipWorkflowSheet`.
+
+10. **F9: AI Real Optical & Centroid Motion Tracking**:
+    - On-device MediaPipe selfie segmentation tracking (`MotionTrackingService`) with Exponential Moving Average (EMA) mathematical trajectory smoothing.
+    - Pins text, titles, stickers, and PiP overlays to the moving subject with 1:1 preview and export parity.
+    - Wired into `MotionTrackingSheet`.
+
+11. **F10: AI Dynamic Auto-Reframe with Speaker Centering**:
+    - Horizontal centroid center-of-mass analysis (`AutoReframeService`).
+    - Automatically derives optimal `focalPointX` to center the active speaker for 9:16 vertical shorts and TikTok crops in `VideoLayoutSheet`.
+
+12. **Full Rendering & Export Parity Engine**:
+    - `VideoTransformCompilerService`: spatial rotation, horizontal/vertical flip, punch-zoom, scale-pad, and canvas translation compiled identically in preview and FFmpeg export.
+    - Track 0 gap padding (`vgap`) preserving audio/subtitle sync.
+    - Upper track layer compositing with clip-accurate time intervals and blend modes.
+    - Real-ESRGAN upscaled asset resolution across preview viewport, timeline compositor, and export renderers.
+
+13. **Verification**:
+    - 343 Dart files scanned with 100% clean architecture conformance (`python scripts/verify_codebase.py`).
+    - Comprehensive unit tests:
+      - `test/on_device_ai_infrastructure_test.dart`
+      - `test/on_device_whisper_test.dart`
+      - `test/subject_segmentation_test.dart`
+      - `test/character_zoom_tracking_test.dart`
+      - `test/neural_noise_removal_test.dart`
+      - `test/audio_vad_ducking_test.dart`
+      - `test/beat_sync_onset_test.dart`
+      - `test/on_device_upscaler_test.dart`
+      - `test/rendering_fidelity_test.dart`
+      - `test/built_in_ai_features_test.dart`
 
 
 

@@ -76,7 +76,7 @@ Download the official release APKs directly from this repository:
 
 ## 🌟 Latest Flagship Studios & Features
 
-### 🧠 100% On-Device & Offline AI Feature Suite (F1–F6)
+### 🧠 100% On-Device & Offline AI Feature Suite (F1–F10)
 - **Zero Cloud & Total Privacy:** Fully local on-device machine learning without cloud API keys, external servers, or data collection. Operates seamlessly in Airplane Mode.
 - **Permissive Open-Source Engines:** Audited MIT, Apache-2.0, and BSD licenses across all models and runtimes (Whisper, MediaPipe, RNNoise, Silero, Real-ESRGAN).
 - **F1: Auto Captions (Whisper STT):** Automatic speech-to-text with word-level timestamps and subtitle track creation via quantized int8 Whisper.
@@ -85,6 +85,10 @@ Download the official release APKs directly from this repository:
 - **F4: Neural Noise Removal:** RNNoise recurrent neural speech enhancement paired with true-peak brickwall limiting and interactive A/B comparison.
 - **F5: Smart Auto-Ducking & Beat Sync:** VAD-driven background music ducking during dialogue and spectral flux onset detection for magnetic cut snapping.
 - **F6: Real-ESRGAN Neural Upscaler:** Memory-safe tiled super-resolution (128x128 / 256x256 tiles) reconstructs crisp micro-textures for thumbnails and freeze-frames without OOM crashes.
+- **F7: AI Silence Remover & Smart Jump-Cut:** On-device VAD scans audio for dead-air pauses (>350ms) and automatically ripples speech contiguously for high-retention social media jump cuts.
+- **F8: AI Scene Cut Detector & Auto-Split:** Hardware-accelerated frame differential luminance analysis detects camera shot transitions and slices raw footage into independent scene clips with 1 tap.
+- **F9: AI Optical & Centroid Motion Tracking:** Real-time on-device selfie segmentation tracks moving subjects and centroids, locking text titles, stickers, and PiP overlays to the actor with EMA smoothing.
+- **F10: AI Dynamic Auto-Reframe:** Dynamic centroid analysis automatically centers the active speaker when reframing widescreen 16:9 footage into 9:16 vertical shorts, Reels, and TikToks.
 
 ### 🔄 Spatial Transform & Quick Clip Workflow Studio (v1.0.71)
 - **CapCut-Style Spatial Transform Studio:** 1-tap 90-degree step rotations (0°, 90°, 180°, 270°), horizontal mirroring (`hflip`), vertical flipping (`vflip`), and scale zoom sliders (0.5x to 3.0x with presets for Fit, Fill, Zoom, and Dramatic).
