@@ -43,9 +43,9 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 |---|---|---|---|---|---|
 | **0** | **INFRA** | Shared On-Device AI Infrastructure | OnDeviceInferenceRunner, Tiering, Download | Internal | ✅ **COMPLETED** (`af4d1cc`) |
 | **1** | **F1** | Auto Captions (Whisper STT) | Whisper Tiny int8 / Sherpa-ONNX / Native VAD | MIT | ✅ **COMPLETED** (`af4d1cc`) |
-| **2** | **F2** | Real Subject Segmentation | MediaPipe Selfie Segmentation (TFLite) | Apache-2.0 | ✅ **COMPLETED** |
-| **3** | **F3** | Auto Subject Tracking (Zoom) | MediaPipe Face / Centroid + Kalman/EMA | Apache-2.0 | 🔄 **IN PROGRESS** |
-| **4** | **F4** | Neural Noise Removal | FFmpeg `arnndn` (RNNoise) | BSD-3 | ⏳ PENDING |
+| **2** | **F2** | Real Subject Segmentation | MediaPipe Selfie Segmentation (TFLite) | Apache-2.0 | ✅ **COMPLETED** (`128a471`) |
+| **3** | **F3** | Auto Subject Tracking (Zoom) | MediaPipe Face / Centroid + Kalman/EMA | Apache-2.0 | ✅ **COMPLETED** |
+| **4** | **F4** | Neural Noise Removal | FFmpeg `arnndn` (RNNoise) | BSD-3 | 🔄 **IN PROGRESS** |
 | **5** | **F5** | Smart Auto-Ducking & Beat Sync | Silero VAD / Energy VAD + Onset Detection | MIT | ⏳ PENDING |
 | **6** | **F6** | AI Upscaler & Enhancer | Real-ESRGAN Compact (ncnn/ONNX, Tiled) | BSD-3 | ⏳ PENDING |
 
@@ -104,18 +104,21 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 
 ---
 
-### Phase 3: F3 - Auto Subject Tracking for Main Character Zoom ⏳ [PENDING]
+### Phase 3: F3 - Auto Subject Tracking for Main Character Zoom ✅ [COMPLETED]
 **Goal:** Automatically detect face/subject centroid and dynamically update zoom focal point with Kalman/EMA smoothing.
-- **Model:** MediaPipe BlazeFace / Face Detection (~200 KB, Apache-2.0) or segmentation centroid.
-- **Preview:** Computes smooth focal `(x, y)` coordinates per frame.
-- **Export:** Translates tracked coordinates into FFmpeg dynamic crop/zoom keyframe expressions.
-- **UI:** Toggle in `CharacterZoomSheet` ("Auto Face Track" vs "Manual Target").
+- [x] Added `isAutoTrackingEnabled`, `isSubjectTracked`, and `trackingSmoothing` to `CharacterZoomConfig`.
+- [x] Implemented `applyEmaSmoothing` helper method with mathematical exponential moving average filter.
+- [x] Added on-device AI Auto Subject Tracking card in `CharacterZoomSheet` with re-detect action, smoothness slider, and status indicator.
+- [x] Implemented seamless manual override: panning/tapping targeting canvas or selecting quick anchors turns off auto-tracking without losing focus.
+- [x] Updated `CharacterZoomCompilerService.getZoomBadge` with `🤖 AI TRACK` indicator.
+- [x] Added comprehensive unit tests in `test/character_zoom_tracking_test.dart`.
+- [x] Verified 100% clean with `python scripts/verify_codebase.py` (332 files).
 
 ---
 
-### Phase 4: F4 - Neural Noise Removal ⏳ [PENDING]
+### Phase 4: F4 - Neural Noise Removal 🔄 [IN PROGRESS]
 **Goal:** High-fidelity speech denoiser without cloud processing.
-- **Model:** RNNoise (`librnnoise`, BSD-3-Clause) or FFmpeg native `arnndn` filter.
+- **Model:** RNNoise (`librnnoise`, BSD-3-Clause) / FFmpeg native `arnndn` filter.
 - **Pipeline:** Pre-pass audio through neural denoiser, clamp with brickwall limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
 - **UI:** Clean speech slider in `AudioMixerSheet`, A/B toggle.
 

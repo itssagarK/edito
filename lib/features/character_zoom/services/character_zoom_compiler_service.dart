@@ -138,19 +138,20 @@ class CharacterZoomCompilerService {
   static String getZoomBadge(CharacterZoomConfig config) {
     if (!config.isEnabled) return '';
     final zoomStr = '${config.targetZoom.toStringAsFixed(1)}x';
+    final aiPrefix = config.isAutoTrackingEnabled ? '🤖 AI TRACK ' : '';
     switch (config.mode) {
       case CharacterZoomMode.cinematicPushIn:
-        return '🎯 CHARACTER ZOOM ($zoomStr Push)';
+        return '${aiPrefix}🎯 CHARACTER ZOOM ($zoomStr Push)';
       case CharacterZoomMode.punchIn:
-        return '⚡ PUNCH-IN ($zoomStr Jump)';
+        return '${aiPrefix}⚡ PUNCH-IN ($zoomStr Jump)';
       case CharacterZoomMode.dramaticCrash:
-        return '💥 DRAMATIC CRASH ($zoomStr Snap)';
+        return '${aiPrefix}💥 DRAMATIC CRASH ($zoomStr Snap)';
       case CharacterZoomMode.slowCreep:
-        return '🕵️ SLOW CREEP ($zoomStr)';
+        return '${aiPrefix}🕵️ SLOW CREEP ($zoomStr)';
       case CharacterZoomMode.closeUpLock:
-        return '🔍 CLOSE-UP LOCK ($zoomStr Crop)';
+        return '${aiPrefix}🔍 CLOSE-UP LOCK ($zoomStr Crop)';
       case CharacterZoomMode.pulse:
-        return '💓 PULSE ZOOM ($zoomStr)';
+        return '${aiPrefix}💓 PULSE ZOOM ($zoomStr)';
     }
   }
 }

@@ -4,6 +4,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
 import '../../models/character_zoom_config.dart';
 import '../../services/character_zoom_compiler_service.dart';
+import '../../../../core/ai/services/on_device_segmentation_service.dart';
 
 class CharacterZoomSheet extends StatefulWidget {
   final Clip clip;
@@ -37,6 +38,7 @@ class _CharacterZoomSheetState extends State<CharacterZoomSheet> with SingleTick
   late CharacterZoomConfig _config;
   late AnimationController _animController;
   bool _isPlayingPreview = false;
+  bool _isAutoTrackingRunning = false;
 
   @override
   void initState() {
@@ -54,6 +56,43 @@ class _CharacterZoomSheetState extends State<CharacterZoomSheet> with SingleTick
         setState(() => _isPlayingPreview = false);
       }
     });
+
+    if (_config.isAutoTrackingEnabled && !_config.isSubjectTracked) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _runAutoSubjectTrack();
+      });
+    }
+  }
+
+  Future<void> _runAutoSubjectTrack() async {
+    if (_isAutoTrackingRunning) return;
+    setState(() => _isAutoTrackingRunning = true);
+
+    try {
+      final sourcePath = widget.clip.sourcePath;
+      if (sourcePath.isNotEmpty) {
+        final result = await OnDeviceSegmentationService.instance.segmentVideoFrame(
+          videoPath: sourcePath,
+          timeMs: widget.clip.sourceInMs,
+        );
+
+        if (result.isSuccess && mounted) {
+          setState(() {
+            _config = _config.applyEmaSmoothing(
+              detectedX: result.centroidX,
+              detectedY: result.centroidY,
+            ).copyWith(isAutoTrackingEnabled: true);
+          });
+          _applyChange();
+        }
+      }
+    } catch (e) {
+      debugPrint('Auto subject tracking error: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isAutoTrackingRunning = false);
+      }
+    }
   }
 
   @override
@@ -375,6 +414,114 @@ class _CharacterZoomSheetState extends State<CharacterZoomSheet> with SingleTick
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // AI Auto Subject Tracking Control Card
+        Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.accent.withOpacity(0.12),
+                AppColors.primary.withOpacity(0.12),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _config.isAutoTrackingEnabled ? AppColors.accent : AppColors.border,
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.face_retouching_natural, color: AppColors.accent, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'AI Auto Subject Tracking',
+                        style: AppTypography.titleMedium.copyWith(fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  Switch(
+                    value: _config.isAutoTrackingEnabled,
+                    activeColor: AppColors.accent,
+                    onChanged: (val) {
+                      setState(() => _config = _config.copyWith(isAutoTrackingEnabled: val));
+                      _applyChange();
+                      if (val && !_config.isSubjectTracked) {
+                        _runAutoSubjectTrack();
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _config.isAutoTrackingEnabled
+                    ? (_config.isSubjectTracked
+                        ? '✨ Subject Locked at (${(cx * 100).toInt()}%, ${(cy * 100).toInt()}%)'
+                        : 'On-device neural face/subject tracking active')
+                    : 'Manual Override active (Tap/drag canvas to position)',
+                style: AppTypography.caption.copyWith(
+                  color: _config.isAutoTrackingEnabled ? AppColors.accent : AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
+              if (_config.isAutoTrackingEnabled) ...[
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: _isAutoTrackingRunning
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
+                              )
+                            : const Icon(Icons.center_focus_strong, size: 16, color: AppColors.accent),
+                        label: Text(
+                          _isAutoTrackingRunning ? 'Detecting Focus...' : 'Re-Detect Subject Focus',
+                          style: const TextStyle(fontSize: 12, color: AppColors.accent),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.accent),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                        onPressed: _isAutoTrackingRunning ? null : _runAutoSubjectTrack,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Pan Tracking Smoothness', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    Text('${(_config.trackingSmoothing * 100).toInt()}%', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.accent)),
+                  ],
+                ),
+                Slider(
+                  value: _config.trackingSmoothing,
+                  min: 0.1,
+                  max: 0.95,
+                  activeColor: AppColors.accent,
+                  onChanged: (val) {
+                    setState(() => _config = _config.copyWith(trackingSmoothing: val));
+                    _applyChange();
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
+
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -399,7 +546,11 @@ class _CharacterZoomSheetState extends State<CharacterZoomSheet> with SingleTick
                   final newX = (localPos.dx / canvasWidth).clamp(0.05, 0.95);
                   final newY = (localPos.dy / canvasHeight).clamp(0.05, 0.95);
                   setState(() {
-                    _config = _config.copyWith(characterCenterX: newX, characterCenterY: newY);
+                    _config = _config.copyWith(
+                      characterCenterX: newX,
+                      characterCenterY: newY,
+                      isAutoTrackingEnabled: false,
+                    );
                   });
                   _applyChange();
                 },
@@ -408,7 +559,11 @@ class _CharacterZoomSheetState extends State<CharacterZoomSheet> with SingleTick
                   final newX = (localPos.dx / canvasWidth).clamp(0.05, 0.95);
                   final newY = (localPos.dy / canvasHeight).clamp(0.05, 0.95);
                   setState(() {
-                    _config = _config.copyWith(characterCenterX: newX, characterCenterY: newY);
+                    _config = _config.copyWith(
+                      characterCenterX: newX,
+                      characterCenterY: newY,
+                      isAutoTrackingEnabled: false,
+                    );
                   });
                   _applyChange();
                 },
@@ -563,6 +718,7 @@ class _CharacterZoomSheetState extends State<CharacterZoomSheet> with SingleTick
                   _config = _config.copyWith(
                     characterCenterX: a['x'] as double,
                     characterCenterY: a['y'] as double,
+                    isAutoTrackingEnabled: false,
                   );
                 });
                 _applyChange();

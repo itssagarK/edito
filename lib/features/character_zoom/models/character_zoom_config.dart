@@ -92,6 +92,9 @@ class CharacterZoomConfig extends Equatable {
   final CharacterZoomEasing easing; // Easing curve
   final bool addFocusVignette;      // Edge darkening focused on subject
   final bool addSubjectAura;        // Subject vibrance/saturation pop
+  final bool isAutoTrackingEnabled; // Auto AI subject/face tracking (default: true)
+  final bool isSubjectTracked;      // Whether subject was auto-detected by AI
+  final double trackingSmoothing;   // EMA smoothing factor (0.0 = instant, 0.70 = cinematic smooth)
 
   const CharacterZoomConfig({
     this.isEnabled = false,
@@ -105,7 +108,25 @@ class CharacterZoomConfig extends Equatable {
     this.easing = CharacterZoomEasing.easeInOut,
     this.addFocusVignette = false,
     this.addSubjectAura = false,
+    this.isAutoTrackingEnabled = true,
+    this.isSubjectTracked = false,
+    this.trackingSmoothing = 0.70,
   });
+
+  /// Applies Exponential Moving Average (EMA) smoothing between current and detected coordinates
+  CharacterZoomConfig applyEmaSmoothing({
+    required double detectedX,
+    required double detectedY,
+  }) {
+    final alpha = (1.0 - trackingSmoothing).clamp(0.05, 1.0);
+    final smoothedX = (alpha * detectedX) + ((1.0 - alpha) * characterCenterX);
+    final smoothedY = (alpha * detectedY) + ((1.0 - alpha) * characterCenterY);
+    return copyWith(
+      characterCenterX: smoothedX.clamp(0.05, 0.95),
+      characterCenterY: smoothedY.clamp(0.05, 0.95),
+      isSubjectTracked: true,
+    );
+  }
 
   CharacterZoomConfig copyWith({
     bool? isEnabled,
@@ -119,6 +140,9 @@ class CharacterZoomConfig extends Equatable {
     CharacterZoomEasing? easing,
     bool? addFocusVignette,
     bool? addSubjectAura,
+    bool? isAutoTrackingEnabled,
+    bool? isSubjectTracked,
+    double? trackingSmoothing,
   }) {
     return CharacterZoomConfig(
       isEnabled: isEnabled ?? this.isEnabled,
@@ -132,6 +156,9 @@ class CharacterZoomConfig extends Equatable {
       easing: easing ?? this.easing,
       addFocusVignette: addFocusVignette ?? this.addFocusVignette,
       addSubjectAura: addSubjectAura ?? this.addSubjectAura,
+      isAutoTrackingEnabled: isAutoTrackingEnabled ?? this.isAutoTrackingEnabled,
+      isSubjectTracked: isSubjectTracked ?? this.isSubjectTracked,
+      trackingSmoothing: trackingSmoothing ?? this.trackingSmoothing,
     );
   }
 
@@ -147,6 +174,9 @@ class CharacterZoomConfig extends Equatable {
         'easing': easing.name,
         'addFocusVignette': addFocusVignette,
         'addSubjectAura': addSubjectAura,
+        'isAutoTrackingEnabled': isAutoTrackingEnabled,
+        'isSubjectTracked': isSubjectTracked,
+        'trackingSmoothing': trackingSmoothing,
       };
 
   factory CharacterZoomConfig.fromJson(Map<String, dynamic> json) {
@@ -168,6 +198,9 @@ class CharacterZoomConfig extends Equatable {
       ),
       addFocusVignette: json['addFocusVignette'] as bool? ?? false,
       addSubjectAura: json['addSubjectAura'] as bool? ?? false,
+      isAutoTrackingEnabled: json['isAutoTrackingEnabled'] as bool? ?? true,
+      isSubjectTracked: json['isSubjectTracked'] as bool? ?? false,
+      trackingSmoothing: (json['trackingSmoothing'] as num?)?.toDouble() ?? 0.70,
     );
   }
 
@@ -184,5 +217,8 @@ class CharacterZoomConfig extends Equatable {
         easing,
         addFocusVignette,
         addSubjectAura,
+        isAutoTrackingEnabled,
+        isSubjectTracked,
+        trackingSmoothing,
       ];
 }
