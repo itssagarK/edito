@@ -106,6 +106,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             // Top Bar
             EditorAppBar(
               title: project.title,
+              subtitle: '${(project.durationMs / 1000).toStringAsFixed(1)}s • ${project.tracks.length} tracks',
+              resolutionBadge: '${project.height >= 2160 ? "4K" : project.height >= 1080 ? "1080P" : "${project.height}P"} • ${project.fps}FPS',
+              onResolutionTap: () {
+                ExportSettingsModal.show(context, project: project);
+              },
               canUndo: editorState.canUndo,
               canRedo: editorState.canRedo,
               onBack: () {
@@ -290,19 +295,35 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                         ),
                       ],
                     ),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        minimumSize: const Size(0, 32),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.primary, Color(0xFF8854D0)],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.25),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
-                      onPressed: () {
-                        setState(() => _isPeekMode = false);
-                      },
-                      icon: const Icon(Icons.tune, size: 14),
-                      label: const Text('Restore Controls', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: Colors.white,
+                          shadowColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          minimumSize: const Size(0, 32),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: () {
+                          setState(() => _isPeekMode = false);
+                        },
+                        icon: const Icon(Icons.tune, size: 14),
+                        label: const Text('Restore Controls', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
                     ),
                   ],
                 ),

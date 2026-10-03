@@ -48,7 +48,8 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 | **5** | **F5** | Smart Auto-Ducking & Beat Sync | Silero VAD / Energy VAD + Onset Detection | MIT | ✅ **COMPLETED** (`a62ac48`) |
 | **6** | **F6** | AI Upscaler & Enhancer | Real-ESRGAN Compact (ncnn/ONNX, Tiled) | BSD-3 | ✅ **COMPLETED** |
 | **7** | **RENDER** | Unified Preview & Export Parity | Transforms, Gaps, Compositor, Real-ESRGAN | Internal | ✅ **COMPLETED** (`7fb2867`) |
-| **8** | **AI-SUITE** | Built-in AI Suite (Silence Cut, Scene Split, Optical Track, Auto-Reframe) | Silero/Energy VAD, Shot Boundary, MediaPipe | MIT / Apache-2.0 | ✅ **COMPLETED** |
+| **8** | **AI-SUITE** | Built-in AI Suite (Silence Cut, Scene Split, Optical Track, Auto-Reframe) | Silero/Energy VAD, Shot Boundary, MediaPipe | MIT / Apache-2.0 | ✅ **COMPLETED** (`b5830a5`) |
+| **9** | **UI-PRO** | Professional UI Hierarchy & Ergonomic Overhaul | CapCut Pro 2-tier dock, AI Suite, Live Header, Export Pill | Internal | ✅ **COMPLETED** |
 
 ---
 
@@ -207,6 +208,36 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 - [x] **Testing & Verification:**
   - Added comprehensive unit test suite `test/built_in_ai_features_test.dart`.
   - Scanned 343 Dart files with `python scripts/verify_codebase.py` (100% CLEAN).
+
+---
+
+### Phase 9: Professional UI Hierarchy & Ergonomic Experience Overhaul ✅ [COMPLETED]
+**Goal:** Elevate Edito to an industry-grade, CapCut Pro / DaVinci Resolve tier of design polish, logical hierarchy, and ergonomic workflow.
+
+#### Task Checklist:
+- [x] **Step 9.1: Dedicated AI Suite Dock & Micro-Badges**
+  - Upgraded `EditingToolbar` with dedicated "AI Suite" action card featuring gradient border and glowing AI badge.
+  - Added on-device AI micro-badges to all neural-powered tools (`isAi: true`) across both contextual clip dock and global dock.
+  - Elevated `AI Studio` (`EditorTool.clipWorkflow`) directly into the primary clip dock alongside Split, Speed, Volume, and Cutout.
+- [x] **Step 9.2: Categorized Professional Bottom Sheets**
+  - Built `_showGlobalAiSuiteSheet` with "100% OFFLINE" status indicator and cards for Whisper, VAD, Real-ESRGAN, MediaPipe, Demucs, RNNoise, and Face Sculpt.
+  - Reorganized `_showClipMoreToolsSheet` into 4 logical suites:
+    1. 🤖 *AI Intelligence & Smart Studio*
+    2. 🎬 *Cinematic Visuals & VFX*
+    3. 🎵 *Audio & Voice Studio*
+    4. 🎨 *Color & Finishing*
+  - Reorganized `_showGlobalMoreToolsSheet` into *AI Intelligence*, *Audio & Narration*, and *Canvas & Visual Design*.
+- [x] **Step 9.3: EditorAppBar CapCut Pro Header**
+  - Added interactive Resolution & Frame Rate badge (`1080P • 30FPS` or `4K • 60FPS`) with quick preset dropdown.
+  - Added duration and track count subtitle under project title.
+  - Upgraded Export CTA with electric purple gradient, subtle drop shadow, and 12.5px bold typography.
+- [x] **Step 9.4: Docked Tool Panel & Live Peek Ergonomics**
+  - Polished docked panel header with subtle icon container, pulsing live status badge, and gradient "Done" action button.
+  - Enhanced "Live Peek" floating action bar with electric purple restore controls button.
+- [x] **Step 9.5: Linter & Architectural Verification**
+  - Scanned 343 Dart files with `python scripts/verify_codebase.py`: **100% CLEAN**.
+
+---
 
 ## 4. Work Log & Recent Commit History
 

@@ -297,14 +297,22 @@ class DockedToolPanel extends StatelessWidget {
         children: [
           // Docked Header with Live Feedback Badge & Peek Mode Button
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: const BoxDecoration(
               color: AppColors.surfaceElevated,
               border: Border(bottom: BorderSide(color: AppColors.border)),
             ),
             child: Row(
               children: [
-                Icon(_toolIcon, color: AppColors.accent, size: 20),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.accent.withOpacity(0.25)),
+                  ),
+                  child: Icon(_toolIcon, color: AppColors.accent, size: 16),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Row(
@@ -312,7 +320,10 @@ class DockedToolPanel extends StatelessWidget {
                       Flexible(
                         child: Text(
                           _toolTitle,
-                          style: AppTypography.titleMedium.copyWith(fontSize: 14),
+                          style: AppTypography.titleMedium.copyWith(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -353,7 +364,7 @@ class DockedToolPanel extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                     onTap: onTogglePeek,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                       decoration: BoxDecoration(
                         color: AppColors.surfaceHighlight,
                         borderRadius: BorderRadius.circular(6),
@@ -364,7 +375,7 @@ class DockedToolPanel extends StatelessWidget {
                         children: [
                           Icon(Icons.visibility_outlined, size: 14, color: AppColors.accent),
                           SizedBox(width: 4),
-                          Text('Peek', style: TextStyle(fontSize: 11, color: AppColors.textPrimary)),
+                          Text('Peek', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                         ],
                       ),
                     ),
@@ -375,31 +386,47 @@ class DockedToolPanel extends StatelessWidget {
 
                 // Revert Button
                 Tooltip(
-                  message: 'Revert changes',
+                  message: 'Revert changes to initial state',
                   child: IconButton(
                     style: IconButton.styleFrom(
-                      padding: const EdgeInsets.all(4),
-                      minimumSize: const Size(28, 28),
+                      padding: const EdgeInsets.all(5),
+                      minimumSize: const Size(30, 30),
                     ),
                     icon: const Icon(Icons.refresh, size: 18, color: AppColors.textMuted),
                     onPressed: onRevert,
                   ),
                 ),
 
-                const SizedBox(width: 4),
+                const SizedBox(width: 6),
 
-                // Done Button
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    minimumSize: const Size(0, 30),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                // Done Button with Electric Gradient
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primary, Color(0xFF8854D0)],
+                    ),
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.25),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
                   ),
-                  onPressed: onClose,
-                  icon: const Icon(Icons.check, size: 14),
-                  label: const Text('Done', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      shadowColor: Colors.transparent,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      minimumSize: const Size(0, 30),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    ),
+                    onPressed: onClose,
+                    icon: const Icon(Icons.check, size: 14),
+                    label: const Text('Done', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
                 ),
               ],
             ),
