@@ -2,7 +2,7 @@
 
 > **Last Updated:** 2026-10-03  
 > **Target:** High-Performance, 100% On-Device & Offline AI Video Editing Engine (Edito)  
-> **Status:** Phase 0, 1, 2, 3, 4, 5 **COMPLETED** | Phase 6 (F6: AI Upscaler & Enhancer) **IN PROGRESS**
+> **Status:** Phase 0, 1, 2, 3, 4, 5, 6 **ALL COMPLETED** | 100% On-Device & Offline AI Feature Suite Complete
 
 ---
 
@@ -20,9 +20,8 @@ If this environment restarts or your session closes abruptly, follow this 4-step
    ```
    *(Must return 100% CLEAN. Never commit or proceed if this fails.)*
 3. **Locate Current Feature in Section 3 Below:**
-   - Look at the **[IN PROGRESS]** tag.
-   - Read the **Immediate Next Steps** in that section.
-4. **Resume Coding Directly** without needing to re-prompt from scratch.
+   - All features F1–F6 are complete.
+4. **Resume Direct Commands / Tests / Release**.
 
 ---
 
@@ -44,10 +43,10 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 | **0** | **INFRA** | Shared On-Device AI Infrastructure | OnDeviceInferenceRunner, Tiering, Download | Internal | ✅ **COMPLETED** (`af4d1cc`) |
 | **1** | **F1** | Auto Captions (Whisper STT) | Whisper Tiny int8 / Sherpa-ONNX / Native VAD | MIT | ✅ **COMPLETED** (`af4d1cc`) |
 | **2** | **F2** | Real Subject Segmentation | MediaPipe Selfie Segmentation (TFLite) | Apache-2.0 | ✅ **COMPLETED** (`128a471`) |
-| **3** | **F3** | Auto Subject Tracking (Zoom) | MediaPipe Face / Centroid + Kalman/EMA | Apache-2.0 | ✅ **COMPLETED** |
+| **3** | **F3** | Auto Subject Tracking (Zoom) | MediaPipe Face / Centroid + Kalman/EMA | Apache-2.0 | ✅ **COMPLETED** (`fd4c757`) |
 | **4** | **F4** | Neural Noise Removal | FFmpeg `arnndn` (RNNoise) | BSD-3 | ✅ **COMPLETED** (`397f2e1`) |
-| **5** | **F5** | Smart Auto-Ducking & Beat Sync | Silero VAD / Energy VAD + Onset Detection | MIT | ✅ **COMPLETED** |
-| **6** | **F6** | AI Upscaler & Enhancer | Real-ESRGAN Compact (ncnn/ONNX, Tiled) | BSD-3 | 🔄 **IN PROGRESS** |
+| **5** | **F5** | Smart Auto-Ducking & Beat Sync | Silero VAD / Energy VAD + Onset Detection | MIT | ✅ **COMPLETED** (`a62ac48`) |
+| **6** | **F6** | AI Upscaler & Enhancer | Real-ESRGAN Compact (ncnn/ONNX, Tiled) | BSD-3 | ✅ **COMPLETED** |
 
 ---
 
@@ -146,11 +145,19 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 
 ---
 
-### Phase 6: F6 - AI Upscaler & Image Enhancer 🔄 [IN PROGRESS]
+### Phase 6: F6 - AI Upscaler & Image Enhancer ✅ [COMPLETED]
 **Goal:** Super-resolution for thumbnails, cover images, and short clip frames.
 - **Model:** Real-ESRGAN Compact (BSD-3-Clause) via ncnn/ONNX.
-- **Safety:** Tiled execution (256x256 tiles with 16px overlap) to prevent Android out-of-memory.
-- **UI:** Honest progress indicator in `VideoEnhancementSheet` / `HdConverterSheet`.
+- **Safety:** Tiled execution (128x128 on low tier, 256x256 on medium/high tier with 16px overlap) to prevent Android out-of-memory.
+- **UI:** Honest speed notice and duration disclaimer in `VideoEnhancementSheet` and `ImageEditorSheet`.
+- [x] Implemented twin platform channel handlers `"upscaleImageRealEsrgan"` and memory-safe tiled implementation `upscaleImageRealEsrganPipeline` in `MainActivity.kt` and `scripts/configure_android.py`.
+- [x] Created `OnDeviceUpscalerService` (`lib/core/ai/services/on_device_upscaler_service.dart`) with hardware tier detection, duration estimation, and cancellation tokens.
+- [x] Extended `VideoEnhancementConfig` with `useNeuralRealEsrgan`, `tiledResolutionScale`, and `upscaledAssetPath` (backward-compatible defaults).
+- [x] Updated `AIVideoEnhancerService.getResolutionLabel` with technically honest distinctions between `4x REAL-ESRGAN (NEURAL)` and `8K UHD Lanczos (7680x4320)`.
+- [x] Added Neural Real-ESRGAN card with live progress bar and execution button to `VideoEnhancementSheet`.
+- [x] Added 4x Real-ESRGAN Super-Resolution export button to `ImageEditorSheet` (`lib/features/image_editor/presentation/widgets/image_editor_sheet.dart`).
+- [x] Created unit test suite `test/on_device_upscaler_test.dart`.
+- [x] Verified 100% clean with `python scripts/verify_codebase.py` (338 files).
 
 ---
 

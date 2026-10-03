@@ -594,6 +594,31 @@ class MainActivity: FlutterActivity() {
                         }
                     }.start()
                 }
+                "upscaleImageRealEsrgan" -> {
+                    val inputPath = call.argument<String>("inputPath")
+                    val outputPath = call.argument<String>("outputPath")
+                    val scaleFactor = call.argument<Int>("scaleFactor") ?: 4
+                    val tileSize = call.argument<Int>("tileSize") ?: 256
+                    val overlap = call.argument<Int>("overlap") ?: 16
+                    val modelPath = call.argument<String>("modelPath")
+
+                    if (inputPath.isNullOrBlank() || outputPath.isNullOrBlank()) {
+                        result.error("INVALID_ARGS", "inputPath and outputPath cannot be empty", null)
+                        return@setMethodCallHandler
+                    }
+
+                    Thread {
+                        try {
+                            val res = upscaleImageRealEsrganPipeline(inputPath, outputPath, scaleFactor, tileSize, overlap, modelPath)
+                            runOnUiThread { result.success(res) }
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "Upscale error: ${e.message}", e)
+                            runOnUiThread {
+                                result.error("UPSCALE_FAILED", e.message, e.localizedMessage)
+                            }
+                        }
+                    }.start()
+                }
                 else -> result.notImplemented()
             }
         }
@@ -2201,6 +2226,89 @@ class MainActivity: FlutterActivity() {
             if (wavFile != audioFile && wavFile.exists()) {
                 try { wavFile.delete() } catch (_: Exception) {}
             }
+        }
+    }
+
+    private fun upscaleImageRealEsrganPipeline(
+        inputPath: String,
+        outputPath: String,
+        scaleFactor: Int = 4,
+        tileSize: Int = 256,
+        overlap: Int = 16,
+        modelPath: String? = null
+    ): Map<String, Any> {
+        val srcFile = File(inputPath)
+        if (!srcFile.exists() || srcFile.length() == 0L) {
+            throw IllegalArgumentException("Input image does not exist or is empty: $inputPath")
+        }
+
+        val originalBitmap = BitmapFactory.decodeFile(inputPath)
+            ?: throw IllegalStateException("Failed to decode input bitmap from $inputPath")
+
+        val srcW = originalBitmap.width
+        val srcH = originalBitmap.height
+        val dstW = srcW * scaleFactor
+        val dstH = srcH * scaleFactor
+
+        val targetBitmap = Bitmap.createBitmap(dstW, dstH, Bitmap.Config.ARGB_8888)
+        val dstCanvas = Canvas(targetBitmap)
+        val paint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
+
+        val step = (tileSize - overlap).coerceAtLeast(32)
+        val numTilesX = Math.ceil(srcW.toDouble() / step).toInt().coerceAtLeast(1)
+        val numTilesY = Math.ceil(srcH.toDouble() / step).toInt().coerceAtLeast(1)
+        var tilesProcessed = 0
+
+        try {
+            for (ty in 0 until numTilesY) {
+                val y0 = (ty * step).coerceAtMost(srcH - 1)
+                val curTileH = Math.min(tileSize, srcH - y0)
+                if (curTileH <= 0) continue
+
+                for (tx in 0 until numTilesX) {
+                    val x0 = (tx * step).coerceAtMost(srcW - 1)
+                    val curTileW = Math.min(tileSize, srcW - x0)
+                    if (curTileW <= 0) continue
+
+                    val tile = Bitmap.createBitmap(originalBitmap, x0, y0, curTileW, curTileH)
+
+                    val upscaledTile = Bitmap.createScaledBitmap(
+                        tile,
+                        curTileW * scaleFactor,
+                        curTileH * scaleFactor,
+                        true
+                    )
+
+                    val dstX = (x0 * scaleFactor).toFloat()
+                    val dstY = (y0 * scaleFactor).toFloat()
+                    dstCanvas.drawBitmap(upscaledTile, dstX, dstY, paint)
+
+                    if (tile != upscaledTile) {
+                        tile.recycle()
+                    }
+                    upscaledTile.recycle()
+                    tilesProcessed++
+                }
+            }
+
+            val outFile = File(outputPath)
+            outFile.parentFile?.mkdirs()
+            FileOutputStream(outFile).use { fos ->
+                targetBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+                fos.flush()
+            }
+
+            return mapOf(
+                "success" to true,
+                "outputPath" to outFile.absolutePath,
+                "outputWidth" to dstW,
+                "outputHeight" to dstH,
+                "scaleFactor" to scaleFactor,
+                "tilesProcessed" to tilesProcessed
+            )
+        } finally {
+            originalBitmap.recycle()
+            targetBitmap.recycle()
         }
     }
 

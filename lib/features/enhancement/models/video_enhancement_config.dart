@@ -49,6 +49,9 @@ class VideoEnhancementConfig extends Equatable {
   final double clarity;            // 0.0 to 2.0 (1.0 = normal)
   final bool isColorPop;           // High vibrancy color pop
   final EnhanceModelPreset modelPreset;
+  final bool useNeuralRealEsrgan;   // On-device Real-ESRGAN (BSD-3) super-resolution
+  final int tiledResolutionScale;  // 2 or 4 (default 4x)
+  final String? upscaledAssetPath;  // Local path of upscaled still/thumbnail
 
   const VideoEnhancementConfig({
     this.is8kUpscaleEnabled = false,
@@ -59,11 +62,16 @@ class VideoEnhancementConfig extends Equatable {
     this.clarity = 1.0,
     this.isColorPop = false,
     this.modelPreset = EnhanceModelPreset.standard,
+    this.useNeuralRealEsrgan = false,
+    this.tiledResolutionScale = 4,
+    this.upscaledAssetPath,
   });
 
   bool get hasActiveEnhancements =>
       is8kUpscaleEnabled ||
       isAiSuperResolutionEnabled ||
+      useNeuralRealEsrgan ||
+      upscaledAssetPath != null ||
       sharpness != 1.0 ||
       deNoise > 0.0 ||
       isHdrToneMapping ||
@@ -79,6 +87,9 @@ class VideoEnhancementConfig extends Equatable {
     double? clarity,
     bool? isColorPop,
     EnhanceModelPreset? modelPreset,
+    bool? useNeuralRealEsrgan,
+    int? tiledResolutionScale,
+    String? upscaledAssetPath,
   }) {
     return VideoEnhancementConfig(
       is8kUpscaleEnabled: is8kUpscaleEnabled ?? this.is8kUpscaleEnabled,
@@ -89,6 +100,9 @@ class VideoEnhancementConfig extends Equatable {
       clarity: clarity ?? this.clarity,
       isColorPop: isColorPop ?? this.isColorPop,
       modelPreset: modelPreset ?? this.modelPreset,
+      useNeuralRealEsrgan: useNeuralRealEsrgan ?? this.useNeuralRealEsrgan,
+      tiledResolutionScale: tiledResolutionScale ?? this.tiledResolutionScale,
+      upscaledAssetPath: upscaledAssetPath ?? this.upscaledAssetPath,
     );
   }
 
@@ -101,6 +115,9 @@ class VideoEnhancementConfig extends Equatable {
         'clarity': clarity,
         'isColorPop': isColorPop,
         'modelPreset': modelPreset.name,
+        'useNeuralRealEsrgan': useNeuralRealEsrgan,
+        'tiledResolutionScale': tiledResolutionScale,
+        'upscaledAssetPath': upscaledAssetPath,
       };
 
   factory VideoEnhancementConfig.fromJson(Map<String, dynamic> json) => VideoEnhancementConfig(
@@ -115,6 +132,9 @@ class VideoEnhancementConfig extends Equatable {
           (p) => p.name == json['modelPreset'],
           orElse: () => EnhanceModelPreset.standard,
         ),
+        useNeuralRealEsrgan: json['useNeuralRealEsrgan'] as bool? ?? false,
+        tiledResolutionScale: (json['tiledResolutionScale'] as num?)?.toInt() ?? 4,
+        upscaledAssetPath: json['upscaledAssetPath'] as String?,
       );
 
   @override
@@ -127,5 +147,8 @@ class VideoEnhancementConfig extends Equatable {
         clarity,
         isColorPop,
         modelPreset,
+        useNeuralRealEsrgan,
+        tiledResolutionScale,
+        upscaledAssetPath,
       ];
 }

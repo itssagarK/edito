@@ -1,10 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart' hide Clip;
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as p;
+import '../../../../core/ai/device_tier_service.dart';
+import '../../../../core/ai/services/on_device_upscaler_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/project.dart';
 import '../../../../models/track.dart';
+import '../../../export/services/gallery_saver_service.dart';
 import '../../models/image_editor_config.dart';
 import '../../services/image_export_service.dart';
 
@@ -44,6 +48,7 @@ class _ImageEditorSheetState extends State<ImageEditorSheet> with SingleTickerPr
   late ImageEditorConfig _config;
   late TextEditingController _textController;
   bool _isSaving = false;
+  bool _isUpscaling = false;
 
   @override
   void initState() {
@@ -165,6 +170,78 @@ class _ImageEditorSheetState extends State<ImageEditorSheet> with SingleTickerPr
           duration: const Duration(seconds: 3),
         ),
       );
+    }
+  }
+
+  Future<void> _exportWithNeuralRealEsrgan() async {
+    setState(() => _isUpscaling = true);
+    try {
+      final savedPath = await ImageExportService.captureBoundaryToFile(_canvasKey, prefix: 'Thumbnail_Base');
+      if (savedPath == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('⚠️ Could not capture preview frame.')),
+          );
+        }
+        return;
+      }
+
+      final outPath = '${p.withoutExtension(savedPath)}_4x_RealESRGAN.png';
+      final tier = await DeviceTierService.getCurrentDeviceTier();
+      final estSec = OnDeviceUpscalerService.estimateProcessingTimeSeconds(
+        width: 1920,
+        height: 1080,
+        tier: tier,
+      ).round();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🤖 Running 4x Real-ESRGAN super-resolution (~${estSec}s). Tiled processing...'),
+            backgroundColor: const Color(0xFF10B981),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+
+      final result = await OnDeviceUpscalerService().upscaleImageTiled(
+        inputPath: savedPath,
+        outputPath: outPath,
+        scale: 4,
+      );
+
+      if (result.isSuccess && mounted) {
+        await GallerySaverService.saveImageToGallery(
+          result.outputPath,
+          title: 'Thumbnail_4x_RealESRGAN',
+          album: 'Edito',
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✨ 4x Neural Upscaling Complete!\nSaved ${result.outputWidth}x${result.outputHeight} image to gallery.'),
+            backgroundColor: const Color(0xFF10B981),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Upscaling notice: ${result.errorMessage ?? "Completed with baseline output"}'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upscaling error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUpscaling = false);
+      }
     }
   }
 
@@ -356,7 +433,24 @@ class _ImageEditorSheetState extends State<ImageEditorSheet> with SingleTickerPr
                   ),
                   icon: const Icon(Icons.download, color: Colors.white, size: 20),
                   tooltip: 'Save HD to Gallery',
-                  onPressed: _isSaving ? null : _exportToGallery,
+                  onPressed: (_isSaving || _isUpscaling) ? null : _exportToGallery,
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981).withOpacity(0.15),
+                    foregroundColor: const Color(0xFF10B981),
+                    side: const BorderSide(color: Color(0xFF10B981)),
+                  ),
+                  icon: _isUpscaling
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF10B981)),
+                        )
+                      : const Icon(Icons.auto_awesome, color: Color(0xFF10B981), size: 20),
+                  tooltip: 'AI 4x Real-ESRGAN Super-Resolution',
+                  onPressed: (_isSaving || _isUpscaling) ? null : _exportWithNeuralRealEsrgan,
                 ),
               ],
             ),

@@ -45,6 +45,7 @@ class Clip extends Equatable {
   final String id;
   final String assetId;
   final String trackId;
+  final String sourcePath;
   final int startTimeMs;    // Position in timeline
   final int durationMs;     // Active duration in timeline
   final int sourceInMs;     // Trim start in source media
@@ -102,6 +103,7 @@ class Clip extends Equatable {
     required this.id,
     required this.assetId,
     required this.trackId,
+    this.sourcePath = '',
     required this.startTimeMs,
     required this.durationMs,
     required this.sourceInMs,
@@ -160,6 +162,7 @@ class Clip extends Equatable {
     String? id,
     String? assetId,
     String? trackId,
+    String? sourcePath,
     int? startTimeMs,
     int? durationMs,
     int? sourceInMs,
@@ -217,6 +220,7 @@ class Clip extends Equatable {
       id: id ?? this.id,
       assetId: assetId ?? this.assetId,
       trackId: trackId ?? this.trackId,
+      sourcePath: sourcePath ?? this.sourcePath,
       startTimeMs: startTimeMs ?? this.startTimeMs,
       durationMs: durationMs ?? this.durationMs,
       sourceInMs: sourceInMs ?? this.sourceInMs,
@@ -276,6 +280,7 @@ class Clip extends Equatable {
         'id': id,
         'assetId': assetId,
         'trackId': trackId,
+        if (sourcePath.isNotEmpty) 'sourcePath': sourcePath,
         'startTimeMs': startTimeMs,
         'durationMs': durationMs,
         'sourceInMs': sourceInMs,
@@ -334,6 +339,7 @@ class Clip extends Equatable {
         id: json['id'] as String,
         assetId: json['assetId'] as String,
         trackId: json['trackId'] as String,
+        sourcePath: json['sourcePath'] as String? ?? '',
         startTimeMs: json['startTimeMs'] as int,
         durationMs: json['durationMs'] as int,
         sourceInMs: json['sourceInMs'] as int,
@@ -480,6 +486,7 @@ class Clip extends Equatable {
         id,
         assetId,
         trackId,
+        sourcePath,
         startTimeMs,
         durationMs,
         sourceInMs,

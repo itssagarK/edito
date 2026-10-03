@@ -1334,4 +1334,49 @@ Directly reverse-engineered and benchmarked against CapCut Pro's iconic 3D Zoom 
    - Integrated into two-tier contextual dock (`EditorTool.parallax3D`) and docked panel with universal Flutter compatibility.
    - Verified by comprehensive test suite in `test/parallax_3d_test.dart`.
 
+---
+
+## 35. 100% On-Device & Offline AI Feature Suite (F1 to F6 Release)
+
+A self-reliant, zero-cloud on-device AI video editing suite replacing external APIs with local machine learning models:
+
+1. **Shared AI Infrastructure & Device Tiering**:
+   - **`AiModelCatalog` & `AiModelDescriptor`** (`lib/core/ai/models/ai_model_descriptor.dart`): Quantized int8 models (15MB–45MB) with SHA-256 validation and permissive licenses (MIT, Apache-2.0, BSD-3).
+   - **`DeviceTierService`** (`lib/core/ai/device_tier_service.dart`): Profiles hardware RAM and CPU cores to adapt tile sizes and frame-skip rates (Low, Medium, High).
+   - **`OnDeviceInferenceRunner`** (`lib/core/ai/on_device_inference_runner.dart`): Runs background inference with mutex concurrency, `CancellationToken`, 30s idle memory release, and `AiException` error handling.
+   - **`AiModelManager` & `ModelDownloadDialog`**: Resumable one-time downloads with storage check and airplane-mode offline capability.
+
+2. **F1: Auto Captions (Whisper STT)**:
+   - Whisper Tiny int8 via native MediaCodec / Whisper pipeline.
+   - 16 kHz mono WAV extraction -> background VAD & transcription -> word-level timestamps -> overlay track clips with full SRT export.
+
+3. **F2: Real Subject Segmentation**:
+   - MediaPipe Selfie Segmenter (Apache-2.0, 256x256 portrait model).
+   - Real-time smoothed neon aura and portrait bokeh preview; FFmpeg `alphamerge`/`overlay` export compositing.
+   - Integrated into `SmartCutoutSheet` and `CharacterHighlightSheet` with manual fallback.
+
+4. **F3: Auto Subject Tracking (Character Zoom)**:
+   - MediaPipe Face/Centroid detection with Exponential Moving Average (EMA) focal smoothing.
+   - Dynamic zoom centering with seamless manual drag override; `🤖 AI TRACK` timeline badge.
+
+5. **F4: Neural Noise Removal**:
+   - RNNoise (BSD-3-Clause) / FFmpeg native `arnndn` recurrent neural network.
+   - True-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`) eliminating clipping.
+   - Interactive press-and-hold A/B comparison button (`HOLD TO HEAR ORIGINAL AUDIO`).
+
+6. **F5: Smart Auto-Ducking & Beat Sync**:
+   - Voice-Activity Detection (energy/Silero VAD) to duck background audio only during dialogue.
+   - Half-wave rectified spectral flux onset detection and median BPM calculation for magnetic timeline cut snapping.
+
+7. **F6: AI Upscaler & Image Enhancer**:
+   - Real-ESRGAN Compact (BSD-3-Clause) via tiled on-device inference (128x128 on low tier, 256x256 on medium/high tier with 16px overlap).
+   - Memory-safe execution preventing Android OOM crashes on 3–4 GB RAM devices.
+   - Honest UI notices distinguishing Lanczos sinc interpolation from neural super-resolution.
+   - One-tap 4x neural super-resolution in `VideoEnhancementSheet` and `ImageEditorSheet`.
+
+8. **Verification**:
+   - 338 Dart files scanned with 100% clean architecture conformance (`python scripts/verify_codebase.py`).
+   - Unit tests: `test/on_device_ai_infrastructure_test.dart`, `test/on_device_whisper_test.dart`, `test/subject_segmentation_test.dart`, `test/character_zoom_tracking_test.dart`, `test/neural_noise_removal_test.dart`, `test/audio_vad_ducking_test.dart`, `test/beat_sync_onset_test.dart`, `test/on_device_upscaler_test.dart`.
+
+
 

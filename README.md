@@ -76,6 +76,16 @@ Download the official release APKs directly from this repository:
 
 ## 🌟 Latest Flagship Studios & Features
 
+### 🧠 100% On-Device & Offline AI Feature Suite (F1–F6)
+- **Zero Cloud & Total Privacy:** Fully local on-device machine learning without cloud API keys, external servers, or data collection. Operates seamlessly in Airplane Mode.
+- **Permissive Open-Source Engines:** Audited MIT, Apache-2.0, and BSD licenses across all models and runtimes (Whisper, MediaPipe, RNNoise, Silero, Real-ESRGAN).
+- **F1: Auto Captions (Whisper STT):** Automatic speech-to-text with word-level timestamps and subtitle track creation via quantized int8 Whisper.
+- **F2: Real Subject Segmentation:** On-device MediaPipe Selfie Segmenter powering instant Smart Cutouts and Character Highlight neon auras without manual masking.
+- **F3: Auto Subject Tracking:** Dynamic face and body centroid tracking with Exponential Moving Average (EMA) focal smoothing for Character Zoom.
+- **F4: Neural Noise Removal:** RNNoise recurrent neural speech enhancement paired with true-peak brickwall limiting and interactive A/B comparison.
+- **F5: Smart Auto-Ducking & Beat Sync:** VAD-driven background music ducking during dialogue and spectral flux onset detection for magnetic cut snapping.
+- **F6: Real-ESRGAN Neural Upscaler:** Memory-safe tiled super-resolution (128x128 / 256x256 tiles) reconstructs crisp micro-textures for thumbnails and freeze-frames without OOM crashes.
+
 ### 🔄 Spatial Transform & Quick Clip Workflow Studio (v1.0.71)
 - **CapCut-Style Spatial Transform Studio:** 1-tap 90-degree step rotations (0°, 90°, 180°, 270°), horizontal mirroring (`hflip`), vertical flipping (`vflip`), and scale zoom sliders (0.5x to 3.0x with presets for Fit, Fill, Zoom, and Dramatic).
 - **GPU Skia & 4K FFmpeg Pipeline:** Instant real-time 60 FPS viewport rendering with affine Matrix4 transforms and hardware-accelerated FFmpeg export filter compilation (`transpose=1`, `transpose=2`, `hflip`, `vflip`).

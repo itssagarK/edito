@@ -1,4 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import '../../../../core/ai/ai_model_manager.dart';
+import '../../../../core/ai/models/ai_model_descriptor.dart';
+import '../../../../core/ai/services/on_device_upscaler_service.dart';
+import '../../../../core/ai/widgets/model_download_dialog.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
@@ -47,6 +53,69 @@ class _VideoEnhancementSheetState extends State<VideoEnhancementSheet> {
       enhancement: _config,
     );
     widget.onSave(updated);
+  }
+
+  bool _isUpscaling = false;
+  double _upscaleProgress = 0.0;
+  String _upscaleStatus = '';
+
+  Future<void> _runNeuralRealEsrganUpscale() async {
+    final isDownloaded = await AiModelManager.isModelDownloaded(AiModelCatalog.realEsrgan.id);
+    if (!isDownloaded && mounted) {
+      final downloaded = await ModelDownloadDialog.show(context, model: AiModelCatalog.realEsrgan);
+      if (!downloaded) return;
+    }
+
+    setState(() {
+      _isUpscaling = true;
+      _upscaleProgress = 0.05;
+      _upscaleStatus = 'Preparing neural upscaler...';
+    });
+
+    try {
+      final docDir = await getApplicationDocumentsDirectory();
+      final outPath = '${docDir.path}/upscaled_${widget.clip.id}_${DateTime.now().millisecondsSinceEpoch}.png';
+
+      final service = OnDeviceUpscalerService();
+      final res = await service.upscaleImageTiled(
+        inputPath: widget.clip.sourcePath.isNotEmpty ? widget.clip.sourcePath : widget.clip.assetId,
+        outputPath: outPath,
+        scale: _config.tiledResolutionScale,
+        onProgress: (p, s) {
+          if (mounted) {
+            setState(() {
+              _upscaleProgress = p;
+              _upscaleStatus = s;
+            });
+          }
+        },
+      );
+
+      if (res.isSuccess) {
+        setState(() {
+          _config = _config.copyWith(
+            useNeuralRealEsrgan: true,
+            upscaledAssetPath: res.outputPath,
+          );
+        });
+        _applyChange();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✨ 4x Real-ESRGAN super-resolution complete! (${res.tilesProcessed} tiles processed)'),
+              backgroundColor: AppColors.accent,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Real-ESRGAN error: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isUpscaling = false);
+      }
+    }
   }
 
   void _applyPreset(EnhanceModelPreset preset) {
@@ -177,7 +246,121 @@ class _VideoEnhancementSheetState extends State<VideoEnhancementSheet> {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               children: [
-                // 1. 8K Ultra HD Upscaling Banner Card
+                // 0. On-Device Real-ESRGAN Neural Super-Resolution Card
+                Container(
+                  margin: const EdgeInsets.only(bottom: 14),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFF00E5FF).withOpacity(0.12),
+                        const Color(0xFF7928CA).withOpacity(0.12),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: _config.useNeuralRealEsrgan ? const Color(0xFF00E5FF) : AppColors.border,
+                      width: _config.useNeuralRealEsrgan ? 1.5 : 1.0,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.psychology, color: Color(0xFF00E5FF), size: 22),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Neural Real-ESRGAN (BSD-3)',
+                                style: AppTypography.titleMedium.copyWith(fontSize: 14, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          Switch(
+                            value: _config.useNeuralRealEsrgan,
+                            activeColor: const Color(0xFF00E5FF),
+                            onChanged: (val) {
+                              setState(() => _config = _config.copyWith(useNeuralRealEsrgan: val));
+                              _applyChange();
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'On-device tiled neural super-resolution for photorealistic micro-texture reconstruction. Limited to images, thumbnails & freeze-frames.',
+                        style: AppTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 11),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.info_outline, size: 14, color: AppColors.textMuted),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                OnDeviceUpscalerService.getSpeedNotice(),
+                                style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      if (_isUpscaling) ...[
+                        LinearProgressIndicator(
+                          value: _upscaleProgress,
+                          backgroundColor: AppColors.surfaceElevated,
+                          valueColor: const AlwaysStoppedAnimation(Color(0xFF00E5FF)),
+                        ),
+                        const SizedBox(height: 6),
+                        Center(
+                          child: Text(
+                            '${(_upscaleProgress * 100).toInt()}% • $_upscaleStatus',
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF00E5FF), fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ] else ...[
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF00E5FF),
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            icon: const Icon(Icons.auto_awesome, size: 16),
+                            label: Text(
+                              _config.upscaledAssetPath != null ? 'RE-RUN 4x NEURAL UPSCALER' : 'RUN 4x NEURAL UPSCALER',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
+                            onPressed: _runNeuralRealEsrganUpscale,
+                          ),
+                        ),
+                      ],
+                      if (_config.upscaledAssetPath != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          '✅ 4x Super-resolved image loaded into preview pipeline',
+                          style: TextStyle(fontSize: 10, color: Colors.greenAccent[400], fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+
+                // 1. 8K Ultra HD Upscaling Banner Card (Algorithmic Lanczos Sinc)
                 _buildCard(
                   title: '🚀 8K Lanczos Upscaler',
                   subtitle: 'High-order Lanczos interpolation up to 7680x4320 resolution',

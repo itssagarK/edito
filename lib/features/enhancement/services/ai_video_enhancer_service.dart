@@ -35,10 +35,13 @@ class AIVideoEnhancerService {
     return filters;
   }
 
-  /// Returns resolution badge label
+  /// Returns resolution badge label with technically honest naming
   static String getResolutionLabel(VideoEnhancementConfig config) {
+    if (config.useNeuralRealEsrgan) {
+      return '4x REAL-ESRGAN (NEURAL)';
+    }
     if (config.is8kUpscaleEnabled) {
-      return '8K UHD (7680x4320)';
+      return '8K UHD Lanczos (7680x4320)';
     }
     if (config.isAiSuperResolutionEnabled) {
       return 'DETAIL ENHANCED';
