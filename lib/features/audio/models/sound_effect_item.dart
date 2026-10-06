@@ -29,9 +29,20 @@ class SoundEffectItem extends Equatable {
   @override
   List<Object?> get props => [id, name, category, durationMs, assetPath, ffmpegAudioGenerator];
 
-  /// Curated CapCut-Style Sound Effects Library
+  /// Curated CapCut-Style Sound Effects Library including native assets
   static const List<SoundEffectItem> library = [
     // --- 1. TRANSITIONS & WHOOSHES ---
+    SoundEffectItem(
+      id: 'motion_whoosh',
+      name: 'Motion Swell & Swoosh',
+      category: 'Transitions',
+      durationMs: 2200,
+      icon: Icons.blur_linear,
+      color: Color(0xFF8E44AD),
+      assetPath: 'assets/audio/motion_whoosh.mp3',
+      ffmpegAudioGenerator: 'afade=t=in:ss=0:d=0.4,afade=t=out:st=1.8:d=0.4',
+      pcmPeaks: [0.05, 0.15, 0.35, 0.65, 0.95, 0.85, 0.5, 0.25, 0.1, 0.03],
+    ),
     SoundEffectItem(
       id: 'whoosh_fast',
       name: 'Fast Air Whoosh',
@@ -39,7 +50,7 @@ class SoundEffectItem extends Equatable {
       durationMs: 800,
       icon: Icons.air,
       color: Color(0xFF00E5FF),
-      assetPath: 'assets/audio/ui_click.wav',
+      assetPath: 'assets/audio/motion_whoosh.mp3',
       ffmpegAudioGenerator: 'anoisesrc=d=0.8:c=pink:r=48000:a=0.5,bandpass=f=1200:w=800,afade=t=in:ss=0:d=0.3,afade=t=out:st=0.4:d=0.4',
       pcmPeaks: [0.1, 0.2, 0.4, 0.85, 0.95, 0.7, 0.35, 0.15, 0.05],
     ),
@@ -50,7 +61,7 @@ class SoundEffectItem extends Equatable {
       durationMs: 1400,
       icon: Icons.waves,
       color: Color(0xFF6C5CE7),
-      assetPath: 'assets/audio/ui_click.wav',
+      assetPath: 'assets/audio/motion_whoosh.mp3',
       ffmpegAudioGenerator: 'anoisesrc=d=1.4:c=brown:r=48000:a=0.6,lowpass=f=2000,afade=t=in:ss=0:d=0.6,afade=t=out:st=0.7:d=0.7',
       pcmPeaks: [0.08, 0.18, 0.35, 0.65, 0.92, 0.88, 0.55, 0.3, 0.12, 0.04],
     ),
@@ -61,7 +72,7 @@ class SoundEffectItem extends Equatable {
       durationMs: 600,
       icon: Icons.swipe,
       color: Color(0xFFFF7675),
-      assetPath: 'assets/audio/ui_click.wav',
+      assetPath: 'assets/audio/tactile_click.wav',
       ffmpegAudioGenerator: 'anoisesrc=d=0.6:c=white:r=48000:a=0.7,bandpass=f=2500:w=1200,afade=t=in:ss=0:d=0.15,afade=t=out:st=0.25:d=0.35',
       pcmPeaks: [0.15, 0.45, 0.98, 0.75, 0.35, 0.1],
     ),
@@ -85,7 +96,7 @@ class SoundEffectItem extends Equatable {
       durationMs: 1200,
       icon: Icons.front_hand,
       color: Color(0xFFFFB300),
-      assetPath: 'assets/audio/ui_click.wav',
+      assetPath: 'assets/audio/tactile_click.wav',
       ffmpegAudioGenerator: 'sine=f=110:d=1.2,afade=t=out:st=0.1:d=1.1,flanger=delay=5:depth=2',
       pcmPeaks: [0.95, 0.8, 0.55, 0.35, 0.22, 0.12, 0.05],
     ),
@@ -116,13 +127,24 @@ class SoundEffectItem extends Equatable {
 
     // --- 4. TACTILE & UI ---
     SoundEffectItem(
+      id: 'tactile_snap',
+      name: 'Tactile Shutter & Snap',
+      category: 'Tactile & UI',
+      durationMs: 500,
+      icon: Icons.camera_alt,
+      color: Color(0xFF00CEC9),
+      assetPath: 'assets/audio/tactile_click.wav',
+      ffmpegAudioGenerator: 'afade=t=out:st=0.1:d=0.4',
+      pcmPeaks: [0.85, 0.98, 0.6, 0.25, 0.08],
+    ),
+    SoundEffectItem(
       id: 'smooth_pop',
       name: 'Smooth Bubble Pop',
       category: 'Tactile & UI',
       durationMs: 400,
       icon: Icons.touch_app,
       color: Color(0xFF00CEC9),
-      assetPath: 'assets/audio/ui_click.wav',
+      assetPath: 'assets/audio/tactile_click.wav',
       ffmpegAudioGenerator: 'sine=f=440:d=0.4,afade=t=out:st=0.05:d=0.35',
       pcmPeaks: [0.2, 0.95, 0.45, 0.15, 0.05],
     ),
@@ -133,7 +155,7 @@ class SoundEffectItem extends Equatable {
       durationMs: 500,
       icon: Icons.camera_alt,
       color: Color(0xFFFDCB6E),
-      assetPath: 'assets/audio/ui_click.wav',
+      assetPath: 'assets/audio/tactile_click.wav',
       ffmpegAudioGenerator: 'anoisesrc=d=0.5:c=white:r=48000:a=0.8,bandpass=f=3500:w=1000,afade=t=out:st=0.1:d=0.4',
       pcmPeaks: [0.85, 0.95, 0.6, 0.25, 0.08],
     ),
@@ -171,6 +193,52 @@ class SoundEffectItem extends Equatable {
       assetPath: 'assets/audio/ambient_tone.mp3',
       ffmpegAudioGenerator: 'sine=f=120:d=4.0,volume=0.35,chorus=0.5:0.7:45:0.3:0.2:2',
       pcmPeaks: [0.3, 0.32, 0.31, 0.33, 0.3, 0.32, 0.31, 0.33, 0.3],
+    ),
+
+    // --- 6. SILENCE SPACERS (SSML TIMELINE ALIGNMENT) ---
+    SoundEffectItem(
+      id: 'silence_100ms',
+      name: '100ms Micro Gap',
+      category: 'Silence Spacers',
+      durationMs: 100,
+      icon: Icons.pause_circle_outline,
+      color: Color(0xFF747D8C),
+      assetPath: 'assets/audio/silence_100ms.mp3',
+      ffmpegAudioGenerator: 'anullsrc=d=0.1',
+      pcmPeaks: [0.0, 0.0, 0.0],
+    ),
+    SoundEffectItem(
+      id: 'silence_200ms',
+      name: '200ms Breath Pause',
+      category: 'Silence Spacers',
+      durationMs: 200,
+      icon: Icons.pause_circle_outline,
+      color: Color(0xFF747D8C),
+      assetPath: 'assets/audio/silence_200ms.mp3',
+      ffmpegAudioGenerator: 'anullsrc=d=0.2',
+      pcmPeaks: [0.0, 0.0, 0.0, 0.0],
+    ),
+    SoundEffectItem(
+      id: 'silence_400ms',
+      name: '400ms Sentence Gap',
+      category: 'Silence Spacers',
+      durationMs: 400,
+      icon: Icons.pause_circle_filled,
+      color: Color(0xFF747D8C),
+      assetPath: 'assets/audio/silence_400ms.mp3',
+      ffmpegAudioGenerator: 'anullsrc=d=0.4',
+      pcmPeaks: [0.0, 0.0, 0.0, 0.0, 0.0],
+    ),
+    SoundEffectItem(
+      id: 'silence_800ms',
+      name: '800ms Paragraph Gap',
+      category: 'Silence Spacers',
+      durationMs: 800,
+      icon: Icons.pause_circle_filled,
+      color: Color(0xFF747D8C),
+      assetPath: 'assets/audio/silence_800ms.mp3',
+      ffmpegAudioGenerator: 'anullsrc=d=0.8',
+      pcmPeaks: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
     ),
   ];
 }

@@ -54,7 +54,7 @@ class _SoundEffectsSheetState extends State<SoundEffectsSheet> {
   String _selectedCategory = 'All';
   String? _previewingId;
 
-  List<String> get _categories => ['All', 'Transitions', 'Impacts', 'Risers', 'Tactile & UI', 'Ambience'];
+  List<String> get _categories => ['All', 'Transitions', 'Impacts', 'Risers', 'Tactile & UI', 'Ambience', 'Silence Spacers'];
 
   List<SoundEffectItem> get _filteredItems {
     if (_selectedCategory == 'All') {

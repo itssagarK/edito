@@ -48,8 +48,10 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 | **5** | **F5** | Smart Auto-Ducking & Beat Sync | Silero VAD / Energy VAD + Onset Detection | MIT | ✅ **COMPLETED** (`a62ac48`) |
 | **6** | **F6** | AI Upscaler & Enhancer | Real-ESRGAN Compact (ncnn/ONNX, Tiled) | BSD-3 | ✅ **COMPLETED** |
 | **7** | **RENDER** | Unified Preview & Export Parity | Transforms, Gaps, Compositor, Real-ESRGAN | Internal | ✅ **COMPLETED** (`7fb2867`) |
+| **8** | **AI-SUITE** | Built-in AI Suite (Silence Cut, Scene Split, Optical Track, Auto-Reframe) | Silero/Energy VAD, Shot Boundary, MediaPipe | MIT / Apache-2.0 | ✅ **COMPLETED** (`b5830a5`) |
 | **9** | **UI-PRO** | Professional UI Hierarchy & Ergonomic Overhaul | CapCut Pro 2-tier dock, AI Suite, Live Header, Export Pill | Internal | ✅ **COMPLETED** (`04689a6`) |
-| **10** | **APK-UI** | Full APK Home Shell & 4-Tab Navigation Overhaul | CapCut Pro 4-tab shell, AI Studio tab, Studio tab, System tab | Internal | ✅ **COMPLETED** |
+| **10** | **APK-UI** | Full APK Home Shell & 4-Tab Navigation Overhaul | CapCut Pro 4-tab shell, AI Studio tab, Studio tab, System tab | Internal | ✅ **COMPLETED** (`c12e7c4`) |
+| **11** | **SFX** | Native Sound Effects & Silence Spacers | Motion Whoosh, Tactile Snap, SSML Precision Silence | Internal | ✅ **COMPLETED** |
 
 ---
 
@@ -259,6 +261,25 @@ If this environment restarts or your session closes abruptly, follow this 4-step
   - Updated `pubspec.yaml` to `1.0.72+73`.
   - Updated `scripts/configure_android.py` to `versionCode = 73` and `versionName = "1.0.72"`.
 - [x] **Step 10.5: Architectural Verification**
+  - Scanned 346 Dart files with `python scripts/verify_codebase.py`: **100% CLEAN**.
+
+---
+
+### Phase 11: EditorCopy Native Sound Effects & Silence Spacers Integration ✅ [COMPLETED]
+**Goal:** Extract, bundle, and integrate sound effects from `EditorCopy` resource into Edito's cinematic audio studio.
+
+#### Task Checklist:
+- [x] **Step 11.1: Audio Extraction & Asset Bundling**
+  - Copied dynamic motion transition audio (`motion_whoosh.mp3`) from `EditorCopy/res/kx/a.mp3`.
+  - Copied tactile shutter / UI snap audio (`tactile_click.wav`) from `EditorCopy/res/kx/kh.wav`.
+  - Extracted 4 SSML precision silence spacers (`silence_100ms.mp3`, `silence_200ms.mp3`, `silence_400ms.mp3`, `silence_800ms.mp3`) from `EditorCopy/assets/ssml_silence_audio.zip`.
+- [x] **Step 11.2: Sound Effect Item Library Enhancement**
+  - Added `motion_whoosh` (Motion Swell & Swoosh) to `Transitions` in `SoundEffectItem.library`.
+  - Added `tactile_snap` (Tactile Shutter & Snap) to `Tactile & UI`.
+  - Added dedicated `Silence Spacers` category with 100ms, 200ms, 400ms, 800ms precision audio gap items.
+- [x] **Step 11.3: Sound Effects Sheet Category Filter**
+  - Added `'Silence Spacers'` category filter to `SoundEffectsSheet`.
+- [x] **Step 11.4: Linter & Architectural Verification**
   - Scanned 346 Dart files with `python scripts/verify_codebase.py`: **100% CLEAN**.
 
 ---
