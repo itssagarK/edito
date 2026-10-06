@@ -40,6 +40,7 @@ import '../features/curves/models/curves_config.dart';
 import '../features/film_grain/models/film_grain_config.dart';
 import '../features/vignette/models/vignette_config.dart';
 import '../features/transform/models/video_transform_config.dart';
+import '../features/image_editor/models/ken_burns_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -98,6 +99,7 @@ class Clip extends Equatable {
   final FilmGrainConfig filmGrain;
   final VignetteConfig vignette;
   final VideoTransformConfig transform;
+  final KenBurnsConfig kenBurns;
 
   const Clip({
     required this.id,
@@ -156,6 +158,7 @@ class Clip extends Equatable {
     this.filmGrain = const FilmGrainConfig(),
     this.vignette = const VignetteConfig(),
     this.transform = const VideoTransformConfig(),
+    this.kenBurns = const KenBurnsConfig(),
   });
 
   Clip copyWith({
@@ -215,6 +218,7 @@ class Clip extends Equatable {
     FilmGrainConfig? filmGrain,
     VignetteConfig? vignette,
     VideoTransformConfig? transform,
+    KenBurnsConfig? kenBurns,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -273,6 +277,7 @@ class Clip extends Equatable {
       filmGrain: filmGrain ?? this.filmGrain,
       vignette: vignette ?? this.vignette,
       transform: transform ?? this.transform,
+      kenBurns: kenBurns ?? this.kenBurns,
     );
   }
 
@@ -333,6 +338,7 @@ class Clip extends Equatable {
         'filmGrain': filmGrain.toJson(),
         'vignette': vignette.toJson(),
         'transform': transform.toJson(),
+        'kenBurns': kenBurns.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -479,6 +485,9 @@ class Clip extends Equatable {
         transform: json['transform'] != null
             ? VideoTransformConfig.fromJson(json['transform'] as Map<String, dynamic>)
             : const VideoTransformConfig(),
+        kenBurns: json['kenBurns'] != null
+            ? KenBurnsConfig.fromJson(json['kenBurns'] as Map<String, dynamic>)
+            : const KenBurnsConfig(),
       );
 
   @override
@@ -539,5 +548,6 @@ class Clip extends Equatable {
         filmGrain,
         vignette,
         transform,
+        kenBurns,
       ];
 }

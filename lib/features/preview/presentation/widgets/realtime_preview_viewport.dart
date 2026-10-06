@@ -42,6 +42,7 @@ import '../../../vfx/presentation/widgets/vfx_preview_wrapper.dart';
 import '../../../../models/clip.dart';
 import '../../../../models/media_asset.dart';
 import '../../../overlays/models/text_overlay_config.dart';
+import '../../../overlays/models/progress_bar_config.dart';
 import '../../../overlays/presentation/widgets/curved_text_painter.dart';
 import '../../../overlays/services/overlay_compiler_service.dart';
 import '../../../captions/models/caption_line.dart';
@@ -88,6 +89,7 @@ import '../../services/timeline_compositor_service.dart';
 import '../../services/video_playback_bridge_service.dart';
 import '../../../editor/providers/editor_provider.dart';
 import '../../../image_editor/models/image_overlay_config.dart';
+import '../../../image_editor/models/ken_burns_config.dart';
 import '../../../image_editor/models/video_layout_config.dart';
 import '../../../image_editor/services/auto_reframe_service.dart';
 import '../../../image_editor/services/pip_compiler_service.dart';
@@ -418,6 +420,10 @@ class RealtimePreviewViewport extends ConsumerWidget {
                                   painter: _SafeGuidesPainter(),
                                 ),
                               ),
+
+                            // Social Retention Progress Bar Overlay
+                            if (project?.progressBar.isEnabled == true)
+                              _buildProgressBarOverlay(project!.progressBar, currentPositionMs, totalDurationMs),
 
                             // Overlay Timecode Badge (Tap to Jump)
                             Positioned(
@@ -1281,6 +1287,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
       );
     }
 
+    if (clip.kenBurns.isEnabled && clip.durationMs > 0) {
+      final normalizedProgress = (clipOffsetMs / clip.durationMs).clamp(0.0, 1.0);
+      final kbTransform = clip.kenBurns.evaluateTransform(normalizedProgress);
+      final kbScale = kbTransform['scale'] ?? 1.0;
+      final kbTx = kbTransform['translateX'] ?? 0.0;
+      final kbTy = kbTransform['translateY'] ?? 0.0;
+
+      videoContent = FractionalTranslation(
+        translation: Offset(kbTx, kbTy),
+        child: Transform.scale(
+          scale: kbScale,
+          alignment: Alignment.center,
+          child: videoContent,
+        ),
+      );
+    }
+
     if (clip.vfx.isActive) {
       videoContent = VfxPreviewWrapper(
         config: clip.vfx,
@@ -2004,6 +2027,47 @@ class RealtimePreviewViewport extends ConsumerWidget {
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgressBarOverlay(ProgressBarConfig config, int currentMs, int totalMs) {
+    if (totalMs <= 0) return const SizedBox.shrink();
+    final progress = (currentMs / totalMs).clamp(0.0, 1.0);
+
+    return Positioned(
+      top: config.isTopPosition ? 0 : null,
+      bottom: config.isTopPosition ? null : 0,
+      left: 0,
+      right: 0,
+      child: IgnorePointer(
+        child: Container(
+          height: config.height,
+          color: config.trackColor,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: progress,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [config.primaryColor, config.secondaryColor],
+                  ),
+                  borderRadius: BorderRadius.circular(config.borderRadius),
+                  boxShadow: config.showGlow
+                      ? [
+                          BoxShadow(
+                            color: config.primaryColor.withOpacity(0.65),
+                            blurRadius: 6,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                      : null,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

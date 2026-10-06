@@ -434,6 +434,30 @@ class _ToolSearchModalState extends State<ToolSearchModal> {
       icon: Icons.aspect_ratio,
       keywords: ['ratio', 'canvas', 'aspect', 'reframe', 'tiktok', 'reels', 'shorts', 'youtube'],
     ),
+    _SearchableTool(
+      tool: EditorTool.progressBar,
+      title: 'Retention Progress Bar',
+      category: 'Visuals',
+      description: 'Real-time social video progress bar with glow and gradient styles',
+      icon: Icons.linear_scale,
+      keywords: ['progress', 'retention', 'bar', 'indicator', 'time', 'glow', 'gradient', 'reels', 'tiktok', 'social'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.kenBurns,
+      title: 'Ken Burns Motion & Pan/Zoom',
+      category: 'Visuals',
+      description: 'Cinematic 2D photo motion, pan, and dynamic zoom animations',
+      icon: Icons.slow_motion_video,
+      keywords: ['ken burns', 'pan', 'zoom', 'motion', 'photo', 'drift', 'animation', 'camera'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.gapCloser,
+      title: 'Timeline Gap Closer',
+      category: 'Edit',
+      description: 'Detect & ripple-close accidental black gaps and blank flashes',
+      icon: Icons.space_bar,
+      keywords: ['gap', 'closer', 'black frame', 'flash', 'blank', 'ripple', 'compact', 'timeline'],
+    ),
   ];
 
   @override

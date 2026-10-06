@@ -60,6 +60,8 @@ import '../../film_grain/services/film_grain_compiler_service.dart';
 import '../../vignette/models/vignette_config.dart';
 import '../../vignette/services/vignette_compiler_service.dart';
 import '../../transform/services/video_transform_compiler_service.dart';
+import '../../image_editor/services/ken_burns_compiler_service.dart';
+import '../../overlays/services/progress_bar_compiler_service.dart';
 import '../models/export_preset.dart';
 
 class _UpperClipLayer {
@@ -252,6 +254,19 @@ class FFmpegCommandBuilder {
         );
         if (transformFilters.isNotEmpty) {
           vFilters.addAll(transformFilters);
+        }
+
+        // Ken Burns Dynamic 2D Pan/Zoom Motion Animation
+        if (clip.kenBurns.isActive) {
+          final kenBurnsFilters = KenBurnsCompilerService.generateFFmpegFilters(
+            clip.kenBurns,
+            clipDurationMs: clip.durationMs,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (kenBurnsFilters.isNotEmpty) {
+            vFilters.addAll(kenBurnsFilters);
+          }
         }
 
         // Chroma Key / Green Screen Removal (applied BEFORE scale/pad so native resolution pixels are keyed without Lanczos interpolation fringing)
@@ -767,8 +782,8 @@ class FFmpegCommandBuilder {
             c.textOverlay.text.trim().isNotEmpty ||
             (c.imageOverlay.isEnabled && c.imageOverlay.assetLabel.trim().isNotEmpty)));
 
+    final overlayFilters = <String>[];
     if (hasOverlaysOrText) {
-      final overlayFilters = <String>[];
       for (final track in project.tracks) {
         if (track.isHidden) continue;
         if (track.type == TrackType.text || track.type == TrackType.overlay) {
@@ -846,11 +861,21 @@ class FFmpegCommandBuilder {
           }
         }
       }
-      if (overlayFilters.isNotEmpty) {
-        filterComplexSegments.add('$currentVideoStream ${overlayFilters.join(',')},format=yuv420p [vout]');
-      } else {
-        filterComplexSegments.add('$currentVideoStream format=yuv420p [vout]');
-      }
+    }
+
+    // Social Video Retention Progress Bar Studio
+    if (project.progressBar.enabled) {
+      final pbFilters = ProgressBarCompilerService.generateFFmpegFilters(
+        project.progressBar,
+        totalDurationMs: project.durationMs,
+        targetWidth: targetW,
+        targetHeight: targetH,
+      );
+      overlayFilters.addAll(pbFilters);
+    }
+
+    if (overlayFilters.isNotEmpty) {
+      filterComplexSegments.add('$currentVideoStream ${overlayFilters.join(',')},format=yuv420p [vout]');
     } else {
       filterComplexSegments.add('$currentVideoStream format=yuv420p [vout]');
     }

@@ -62,6 +62,9 @@ enum EditorTool {
   aiColorEnhance,
   aiSilenceRemover,
   aiSceneSplit,
+  progressBar,
+  kenBurns,
+  gapCloser,
 }
 
 class EditorState {

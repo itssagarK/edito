@@ -22,6 +22,9 @@ import '../../../keyframes/presentation/widgets/keyframe_studio_sheet.dart';
 import '../../../timeline/presentation/widgets/clip_workflow_sheet.dart';
 import '../../../image_editor/presentation/widgets/image_overlay_sheet.dart';
 import '../../../image_editor/presentation/widgets/video_layout_sheet.dart';
+import '../../../image_editor/presentation/widgets/ken_burns_sheet.dart';
+import '../../../overlays/presentation/widgets/progress_bar_sheet.dart';
+import '../../../timeline/presentation/widgets/gap_closer_sheet.dart';
 import '../../../overlays/presentation/widgets/text_editor_sheet.dart';
 import '../../../smoothing/presentation/widgets/video_smoother_sheet.dart';
 import '../../../speed/presentation/widgets/speed_ramping_sheet.dart';
@@ -187,6 +190,12 @@ class DockedToolPanel extends StatelessWidget {
         return 'AI Silence Jump-Cut';
       case EditorTool.aiSceneSplit:
         return 'AI Scene Cut Detector';
+      case EditorTool.progressBar:
+        return 'Retention Progress Bar';
+      case EditorTool.kenBurns:
+        return 'Ken Burns Motion';
+      case EditorTool.gapCloser:
+        return 'Timeline Gap Closer';
       default:
         return tool.name.toUpperCase();
     }
@@ -296,6 +305,12 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.content_cut;
       case EditorTool.aiSceneSplit:
         return Icons.movie_filter;
+      case EditorTool.progressBar:
+        return Icons.linear_scale;
+      case EditorTool.kenBurns:
+        return Icons.slow_motion_video;
+      case EditorTool.gapCloser:
+        return Icons.space_bar;
       default:
         return Icons.edit;
     }
@@ -997,6 +1012,31 @@ class DockedToolPanel extends StatelessWidget {
       case EditorTool.aiSceneSplit:
         return AiSceneDetectorSheet(
           clip: clip,
+          project: project,
+          onProjectUpdated: onSaveProject,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.progressBar:
+        return ProgressBarSheet(
+          project: project,
+          playheadPositionMs: playheadPositionMs,
+          onSaveProject: onSaveProject,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.kenBurns:
+        return KenBurnsSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.gapCloser:
+        return GapCloserSheet(
           project: project,
           onProjectUpdated: onSaveProject,
           isDocked: true,

@@ -36,6 +36,9 @@ import '../../timeline/presentation/widgets/interactive_timeline.dart';
 import '../../timeline/services/timeline_editing_service.dart';
 import '../../transitions/presentation/widgets/transition_selector_sheet.dart';
 import '../../tts/presentation/widgets/tts_voiceover_sheet.dart';
+import '../../overlays/presentation/widgets/progress_bar_sheet.dart';
+import '../../image_editor/presentation/widgets/ken_burns_sheet.dart';
+import '../../timeline/presentation/widgets/gap_closer_sheet.dart';
 import 'widgets/editor_app_bar.dart';
 import 'widgets/editing_toolbar.dart';
 import 'widgets/docked_tool_panel.dart';
@@ -609,6 +612,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openAiSceneSplitModal();
         break;
 
+      case EditorTool.progressBar:
+        _openProgressBarModal();
+        break;
+
+      case EditorTool.kenBurns:
+        _openKenBurnsModal();
+        break;
+
+      case EditorTool.gapCloser:
+        _openGapCloserModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -854,6 +869,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openAiSceneSplitModal() {
     _openDockedTool(EditorTool.aiSceneSplit, trackType: TrackType.video, purpose: 'AI Scene Cut Detector');
+  }
+
+  void _openProgressBarModal() {
+    _openDockedTool(EditorTool.progressBar, trackType: TrackType.video, purpose: 'Retention Progress Bar');
+  }
+
+  void _openKenBurnsModal() {
+    _openDockedTool(EditorTool.kenBurns, trackType: TrackType.video, purpose: 'Ken Burns Motion');
+  }
+
+  void _openGapCloserModal() {
+    _openDockedTool(EditorTool.gapCloser, trackType: TrackType.video, purpose: 'Timeline Gap Closer');
   }
 
   void _openAudioToolsModal() {

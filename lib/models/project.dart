@@ -5,6 +5,7 @@ import 'media_asset.dart';
 import '../features/image_editor/models/video_layout_config.dart';
 import '../features/teleprompter/models/teleprompter_config.dart';
 import '../features/split_screen/models/split_screen_config.dart';
+import '../features/overlays/models/progress_bar_config.dart';
 
 class Project extends Equatable {
   final String id;
@@ -19,6 +20,7 @@ class Project extends Equatable {
   final VideoLayoutConfig layoutConfig;
   final TeleprompterConfig teleprompter;
   final SplitScreenConfig splitScreen;
+  final ProgressBarConfig progressBar;
   final List<Track> tracks;
   final List<MediaAsset> assets;
 
@@ -36,6 +38,7 @@ class Project extends Equatable {
     this.layoutConfig = const VideoLayoutConfig(),
     this.teleprompter = const TeleprompterConfig(),
     this.splitScreen = const SplitScreenConfig(),
+    this.progressBar = const ProgressBarConfig(),
     this.tracks = const [],
     this.assets = const [],
   })  : title = title ?? name ?? 'Untitled Project',
@@ -149,6 +152,7 @@ class Project extends Equatable {
     VideoLayoutConfig? layoutConfig,
     TeleprompterConfig? teleprompter,
     SplitScreenConfig? splitScreen,
+    ProgressBarConfig? progressBar,
     List<Track>? tracks,
     List<MediaAsset>? assets,
   }) {
@@ -165,6 +169,7 @@ class Project extends Equatable {
       layoutConfig: layoutConfig ?? this.layoutConfig,
       teleprompter: teleprompter ?? this.teleprompter,
       splitScreen: splitScreen ?? this.splitScreen,
+      progressBar: progressBar ?? this.progressBar,
       tracks: tracks ?? this.tracks,
       assets: assets ?? this.assets,
     );
@@ -183,6 +188,7 @@ class Project extends Equatable {
         'layoutConfig': layoutConfig.toJson(),
         'teleprompter': teleprompter.toJson(),
         'splitScreen': splitScreen.toJson(),
+        'progressBar': progressBar.toJson(),
         'tracks': tracks.map((t) => t.toJson()).toList(),
         'assets': assets.map((a) => a.toJson()).toList(),
       };
@@ -206,6 +212,9 @@ class Project extends Equatable {
         splitScreen: json['splitScreen'] != null
             ? SplitScreenConfig.fromJson(json['splitScreen'] as Map<String, dynamic>)
             : const SplitScreenConfig(),
+        progressBar: json['progressBar'] != null
+            ? ProgressBarConfig.fromJson(json['progressBar'] as Map<String, dynamic>)
+            : const ProgressBarConfig(),
         tracks: (json['tracks'] as List<dynamic>?)
                 ?.map((t) => Track.fromJson(t as Map<String, dynamic>))
                 .toList() ??
@@ -230,6 +239,7 @@ class Project extends Equatable {
         layoutConfig,
         teleprompter,
         splitScreen,
+        progressBar,
         tracks,
         assets,
       ];
