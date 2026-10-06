@@ -7,11 +7,13 @@ import '../../models/image_overlay_config.dart';
 class PipPreviewOverlay extends StatelessWidget {
   final ImageOverlayConfig config;
   final VoidCallback? onTap;
+  final bool applyTransform;
 
   const PipPreviewOverlay({
     super.key,
     required this.config,
     this.onTap,
+    this.applyTransform = true,
   });
 
   @override
@@ -26,73 +28,82 @@ class PipPreviewOverlay extends StatelessWidget {
     final borderColor = Color(config.borderColor);
     final shadowColor = Color(config.shadowColor);
 
+    final pipCard = AspectRatio(
+      aspectRatio: config.shape == PipShape.circle ? 1.0 : 16 / 9,
+      child: Opacity(
+        opacity: config.opacity.clamp(0.0, 1.0),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: config.shape == PipShape.circle ? BoxShape.circle : BoxShape.rectangle,
+            borderRadius: config.shape == PipShape.circle
+                ? null
+                : BorderRadius.circular(config.cornerRadius),
+            boxShadow: config.hasShadow
+                ? [
+                    BoxShadow(
+                      color: shadowColor,
+                      blurRadius: config.shadowBlur,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
+          ),
+          child: ClipPath(
+            clipper: _resolveClipper(config.shape, config.cornerRadius),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.85),
+                border: config.borderWidth > 0
+                    ? Border.all(color: borderColor, width: config.borderWidth)
+                    : null,
+                shape: config.shape == PipShape.circle ? BoxShape.circle : BoxShape.rectangle,
+                borderRadius: config.shape == PipShape.circle
+                    ? null
+                    : BorderRadius.circular(config.cornerRadius),
+              ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _buildContent(context),
+                  if (config.assetLabel.trim().isNotEmpty)
+                    Positioned(
+                      left: 8,
+                      bottom: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          config.assetLabel,
+                          style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (!applyTransform) {
+      return SizedBox(
+        width: 140,
+        child: pipCard,
+      );
+    }
+
     return Align(
       alignment: Alignment(alignX, alignY),
       child: FractionallySizedBox(
         widthFactor: widthFactor,
-        child: AspectRatio(
-          aspectRatio: config.shape == PipShape.circle ? 1.0 : 16 / 9,
-          child: Transform.rotate(
-            angle: config.rotation * (math.pi / 180.0),
-            child: Opacity(
-              opacity: config.opacity.clamp(0.0, 1.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: config.shape == PipShape.circle ? BoxShape.circle : BoxShape.rectangle,
-                  borderRadius: config.shape == PipShape.circle
-                      ? null
-                      : BorderRadius.circular(config.cornerRadius),
-                  boxShadow: config.hasShadow
-                      ? [
-                          BoxShadow(
-                            color: shadowColor,
-                            blurRadius: config.shadowBlur,
-                            spreadRadius: 2,
-                            offset: const Offset(0, 4),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: ClipPath(
-                  clipper: _resolveClipper(config.shape, config.cornerRadius),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.85),
-                      border: config.borderWidth > 0
-                          ? Border.all(color: borderColor, width: config.borderWidth)
-                          : null,
-                      shape: config.shape == PipShape.circle ? BoxShape.circle : BoxShape.rectangle,
-                      borderRadius: config.shape == PipShape.circle
-                          ? null
-                          : BorderRadius.circular(config.cornerRadius),
-                    ),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        _buildContent(context),
-                        if (config.assetLabel.trim().isNotEmpty)
-                          Positioned(
-                            left: 8,
-                            bottom: 6,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.7),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                config.assetLabel,
-                                style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+        child: Transform.rotate(
+          angle: config.rotation * (math.pi / 180.0),
+          child: pipCard,
         ),
       ),
     );

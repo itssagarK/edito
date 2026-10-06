@@ -132,17 +132,17 @@ class _InteractiveTransformBoxState extends State<InteractiveTransformBox> {
                         final dxNorm = details.focalPointDelta.dx / canvasWidth;
                         final dyNorm = details.focalPointDelta.dy / canvasHeight;
 
-                        double newX = (_currentX + dxNorm).clamp(0.05, 0.95);
-                        double newY = (_currentY + dyNorm).clamp(0.05, 0.95);
+                        double newX = (_currentX + dxNorm).clamp(-0.5, 1.5);
+                        double newY = (_currentY + dyNorm).clamp(-0.5, 1.5);
 
                         // Snap to center
-                        if ((newX - 0.5).abs() < 0.025) newX = 0.5;
-                        if ((newY - 0.5).abs() < 0.025) newY = 0.5;
+                        if ((newX - 0.5).abs() < 0.02) newX = 0.5;
+                        if ((newY - 0.5).abs() < 0.02) newY = 0.5;
 
                         // 2. Scale
                         double newScale = _currentScale;
                         if (details.scale != 1.0 && _initialScaleOnDrag != null) {
-                          newScale = (_initialScaleOnDrag! * details.scale).clamp(0.2, 5.0);
+                          newScale = (_initialScaleOnDrag! * details.scale).clamp(0.1, 5.0);
                         }
 
                         // 3. Rotation
@@ -168,6 +168,12 @@ class _InteractiveTransformBoxState extends State<InteractiveTransformBox> {
 
                         widget.onPositionChanged?.call(newX, newY);
                         widget.onTransformChanged?.call(newScale, newRot);
+                      }
+                    : null,
+                onScaleEnd: widget.isSelected
+                    ? (_) {
+                        _initialScaleOnDrag = null;
+                        _initialRotationOnDrag = null;
                       }
                     : null,
                 child: Transform.rotate(
@@ -196,71 +202,85 @@ class _InteractiveTransformBoxState extends State<InteractiveTransformBox> {
                           // CapCut-style 4 corner interactive control handles
                           if (widget.isSelected) ...[
                             // Top-Left: Delete Handle (X)
-                            Positioned(
-                              top: -12,
-                              left: -12,
-                              child: _buildHandleButton(
-                                icon: Icons.close,
-                                color: const Color(0xFFFF4757),
-                                onTap: widget.onDelete,
-                              ),
-                            ),
-
-                            // Top-Right: Duplicate Handle (+)
-                            Positioned(
-                              top: -12,
-                              right: -12,
-                              child: _buildHandleButton(
-                                icon: Icons.control_point_duplicate,
-                                color: AppColors.primary,
-                                onTap: widget.onDuplicate,
-                              ),
-                            ),
-
-                            // Bottom-Left: Quick Edit Handle (✏️)
-                            Positioned(
-                              bottom: -12,
-                              left: -12,
-                              child: _buildHandleButton(
-                                icon: Icons.edit,
-                                color: const Color(0xFF2ED573),
-                                onTap: widget.onEdit ?? widget.onDoubleTap,
-                              ),
-                            ),
-
-                            // Bottom-Right: Rotate & Scale Handle (🔄)
-                            Positioned(
-                              bottom: -12,
-                              right: -12,
-                              child: GestureDetector(
-                                onPanStart: (details) {
-                                  _rotateHandleStartOffset = details.globalPosition;
-                                  _initialScaleOnDrag = _currentScale;
-                                  _initialRotationOnDrag = _currentRotation;
-                                },
-                                onPanUpdate: (details) {
-                                  if (_rotateHandleStartOffset == null) return;
-                                  final delta = details.globalPosition - _rotateHandleStartOffset!;
-                                  final distanceDelta = (delta.dx + delta.dy) / 120.0;
-                                  final newScale = ((_initialScaleOnDrag ?? 1.0) + distanceDelta).clamp(0.2, 5.0);
-
-                                  // Angular drag rotation
-                                  final angleDelta = (delta.dx - delta.dy) * 0.4;
-                                  final newRot = (_initialRotationOnDrag ?? 0.0) + angleDelta;
-
-                                  setState(() {
-                                    _currentScale = newScale;
-                                    _currentRotation = newRot;
-                                  });
-
-                                  widget.onTransformChanged?.call(newScale, newRot);
-                                },
+                            if (widget.onDelete != null)
+                              Positioned(
+                                top: -12,
+                                left: -12,
                                 child: _buildHandleButton(
-                                  icon: Icons.sync,
-                                  color: AppColors.accent,
+                                  icon: Icons.close,
+                                  color: const Color(0xFFFF4757),
+                                  onTap: widget.onDelete,
                                 ),
                               ),
-                            ),
+
+                            // Top-Right: Duplicate Handle (+)
+                            if (widget.onDuplicate != null)
+                              Positioned(
+                                top: -12,
+                                right: -12,
+                                child: _buildHandleButton(
+                                  icon: Icons.control_point_duplicate,
+                                  color: AppColors.primary,
+                                  onTap: widget.onDuplicate,
+                                ),
+                              ),
+
+                            // Bottom-Left: Quick Edit Handle (✏️)
+                            if (widget.onEdit != null || widget.onDoubleTap != null)
+                              Positioned(
+                                bottom: -12,
+                                left: -12,
+                                child: _buildHandleButton(
+                                  icon: Icons.edit,
+                                  color: const Color(0xFF2ED573),
+                                  onTap: widget.onEdit ?? widget.onDoubleTap,
+                                ),
+                              ),
+
+                            // Bottom-Right: Rotate & Scale Handle (🔄)
+                            if (widget.onTransformChanged != null)
+                              Positioned(
+                                bottom: -12,
+                                right: -12,
+                                child: GestureDetector(
+                                  onPanStart: (details) {
+                                    _rotateHandleStartOffset = details.globalPosition;
+                                    _initialScaleOnDrag = _currentScale;
+                                    _initialRotationOnDrag = _currentRotation;
+                                  },
+                                  onPanUpdate: (details) {
+                                    if (_rotateHandleStartOffset == null) return;
+                                    final delta = details.globalPosition - _rotateHandleStartOffset!;
+                                    final distanceDelta = (delta.dx + delta.dy) / 120.0;
+                                    final newScale = ((_initialScaleOnDrag ?? 1.0) + distanceDelta).clamp(0.1, 5.0);
+
+                                    // Angular drag rotation
+                                    final angleDelta = (delta.dx - delta.dy) * 0.4;
+                                    final newRot = (_initialRotationOnDrag ?? 0.0) + angleDelta;
+
+                                    setState(() {
+                                      _currentScale = newScale;
+                                      _currentRotation = newRot;
+                                    });
+
+                                    widget.onTransformChanged?.call(newScale, newRot);
+                                  },
+                                  onPanEnd: (_) {
+                                    _rotateHandleStartOffset = null;
+                                    _initialScaleOnDrag = null;
+                                    _initialRotationOnDrag = null;
+                                  },
+                                  onPanCancel: () {
+                                    _rotateHandleStartOffset = null;
+                                    _initialScaleOnDrag = null;
+                                    _initialRotationOnDrag = null;
+                                  },
+                                  child: _buildHandleButton(
+                                    icon: Icons.sync,
+                                    color: AppColors.accent,
+                                  ),
+                                ),
+                              ),
                           ],
                         ],
                       ),

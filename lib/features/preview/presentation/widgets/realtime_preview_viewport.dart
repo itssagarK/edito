@@ -243,272 +243,225 @@ class RealtimePreviewViewport extends ConsumerWidget {
                     },
                     child: Container(
                       decoration: _buildCanvasDecoration(layoutConfig),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                        // 0. Cloned Blurred Video Background (TikTok/Shorts/Reels Signature Look)
-                        if (layoutConfig.isBlurFill && currentFrame != null && currentFrame.hasVisualContent)
-                          Positioned.fill(
-                            child: ClipRect(
-                              child: ImageFiltered(
-                                imageFilter: ui.ImageFilter.blur(
-                                  sigmaX: layoutConfig.blurIntensity * 0.75,
-                                  sigmaY: layoutConfig.blurIntensity * 0.75,
-                                  tileMode: TileMode.mirror,
-                                ),
-                                child: Transform.scale(
-                                  scale: 1.45,
-                                  child: Opacity(
-                                    opacity: 0.65,
-                                    child: _buildVisualContent(
-                                      context,
-                                      ref,
-                                      currentFrame,
-                                      layoutConfig: layoutConfig,
-                                      isBackdropClone: true,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final canvasWidth = constraints.maxWidth;
+                          final canvasHeight = constraints.maxHeight;
+
+                          return Stack(
+                            fit: StackFit.expand,
+                            children: [
+                            // 0. Cloned Blurred Video Background (TikTok/Shorts/Reels Signature Look)
+                            if (layoutConfig.isBlurFill && currentFrame != null && currentFrame.hasVisualContent)
+                              Positioned.fill(
+                                child: ClipRect(
+                                  child: ImageFiltered(
+                                    imageFilter: ui.ImageFilter.blur(
+                                      sigmaX: layoutConfig.blurIntensity * 0.75,
+                                      sigmaY: layoutConfig.blurIntensity * 0.75,
+                                      tileMode: TileMode.mirror,
+                                    ),
+                                    child: Transform.scale(
+                                      scale: 1.45,
+                                      child: Opacity(
+                                        opacity: 0.65,
+                                        child: _buildVisualContent(
+                                          context,
+                                          ref,
+                                          currentFrame,
+                                          layoutConfig: layoutConfig,
+                                          isBackdropClone: true,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
+
+                            // 1. Primary Visual Content with direct on-canvas spatial manipulation
+                            _buildPrimaryVisualLayer(
+                              context,
+                              ref,
+                              currentFrame,
+                              layoutConfig: layoutConfig,
+                              canvasWidth: canvasWidth,
+                              canvasHeight: canvasHeight,
+                              activeRatio: activeRatio.ratio,
                             ),
-                          ),
 
-                        // 1. Primary Visual Content framed with layout padding & corner radius
-                        Padding(
-                          padding: EdgeInsets.all(layoutConfig.framePadding),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(layoutConfig.cornerRadius),
-                            child: _buildVisualContent(context, ref, currentFrame, layoutConfig: layoutConfig),
-                          ),
-                        ),
+                            // 2. Picture-in-Picture & Creative Asset Badges / Image Overlays on Primary Clip
+                            if (currentFrame?.primaryVideoClip != null && currentFrame!.primaryVideoClip!.imageOverlay.isEnabled)
+                              _buildImageOverlayWidget(context, ref, currentFrame.primaryVideoClip!, currentFrame.primaryVideoClip!.imageOverlay),
 
-                        // 2. Picture-in-Picture & Creative Asset Badges / Image Overlays on Primary Clip
-                        if (currentFrame?.primaryVideoClip != null && currentFrame!.primaryVideoClip!.imageOverlay.isEnabled)
-                          _buildImageOverlayWidget(context, ref, currentFrame.primaryVideoClip!, currentFrame.primaryVideoClip!.imageOverlay),
+                            // 3. Live Video Transition In Animation Overlay
+                            if (currentFrame?.primaryVideoClip != null)
+                              _buildTransitionOverlay(currentFrame!.primaryVideoClip!, currentPositionMs),
 
-                        // 3. Live Video Transition In Animation Overlay
-                        if (currentFrame?.primaryVideoClip != null)
-                          _buildTransitionOverlay(currentFrame!.primaryVideoClip!, currentPositionMs),
+                            // 4. Multi-Track Overlays (Text Titles, Captions, PiP, Badges, Stickers)
+                            if (currentFrame != null && currentFrame.activeOverlays.isNotEmpty)
+                              ...currentFrame.activeOverlays.expand((overlayClip) {
+                                final widgets = <Widget>[];
 
-                        // 4. Multi-Track Overlays (Text Titles, Captions, PiP, Badges, Stickers)
-                        if (currentFrame != null && currentFrame.activeOverlays.isNotEmpty)
-                          ...currentFrame.activeOverlays.expand((overlayClip) {
-                            final widgets = <Widget>[];
+                                // Check if this overlay is pinned to a tracking source or has its own tracking
+                                Clip? trackingSource;
+                                if (overlayClip.motionTracking.isEnabled) {
+                                  trackingSource = overlayClip;
+                                } else if (currentFrame.primaryVideoClip != null &&
+                                    currentFrame.primaryVideoClip!.motionTracking.isEnabled &&
+                                    currentFrame.primaryVideoClip!.motionTracking.pinnedOverlayId == overlayClip.id) {
+                                  trackingSource = currentFrame.primaryVideoClip;
+                                }
 
-                            // Check if this overlay is pinned to a tracking source or has its own tracking
-                            Clip? trackingSource;
-                            if (overlayClip.motionTracking.isEnabled) {
-                              trackingSource = overlayClip;
-                            } else if (currentFrame.primaryVideoClip != null &&
-                                currentFrame.primaryVideoClip!.motionTracking.isEnabled &&
-                                currentFrame.primaryVideoClip!.motionTracking.pinnedOverlayId == overlayClip.id) {
-                              trackingSource = currentFrame.primaryVideoClip;
-                            }
+                                final trackingOffsetMs = trackingSource != null
+                                    ? (currentPositionMs - trackingSource.startTimeMs)
+                                    : 0;
 
-                            final trackingOffsetMs = trackingSource != null
-                                ? (currentPositionMs - trackingSource.startTimeMs)
-                                : 0;
+                                if (overlayClip.imageOverlay.isEnabled) {
+                                  final effectiveImage = (trackingSource != null && trackingSource.motionTracking.trajectory.isNotEmpty)
+                                      ? MotionTrackingService.applyTrackingToImageOverlay(
+                                          overlayClip.imageOverlay,
+                                          trackingSource.motionTracking,
+                                          trackingOffsetMs,
+                                        )
+                                      : overlayClip.imageOverlay;
+                                  widgets.add(_buildImageOverlayWidget(context, ref, overlayClip, effectiveImage));
+                                }
+                                if (overlayClip.textOverlay.text.trim().isNotEmpty) {
+                                  final offsetMs = currentPositionMs - overlayClip.startTimeMs;
+                                  var evaluatedText = OverlayCompilerService.evaluateOverlayAt(overlayClip, offsetMs);
 
-                            if (overlayClip.imageOverlay.isEnabled) {
-                              final effectiveImage = (trackingSource != null && trackingSource.motionTracking.trajectory.isNotEmpty)
-                                  ? MotionTrackingService.applyTrackingToImageOverlay(
-                                      overlayClip.imageOverlay,
+                                  if (trackingSource != null && trackingSource.motionTracking.trajectory.isNotEmpty) {
+                                    evaluatedText = MotionTrackingService.applyTrackingToText(
+                                      evaluatedText,
                                       trackingSource.motionTracking,
                                       trackingOffsetMs,
-                                    )
-                                  : overlayClip.imageOverlay;
-                              widgets.add(_buildImageOverlayWidget(context, ref, overlayClip, effectiveImage));
-                            }
-                            if (overlayClip.textOverlay.text.trim().isNotEmpty) {
-                              final offsetMs = currentPositionMs - overlayClip.startTimeMs;
-                              var evaluatedText = OverlayCompilerService.evaluateOverlayAt(overlayClip, offsetMs);
+                                    );
+                                  }
 
-                              if (trackingSource != null && trackingSource.motionTracking.trajectory.isNotEmpty) {
-                                evaluatedText = MotionTrackingService.applyTrackingToText(
-                                  evaluatedText,
-                                  trackingSource.motionTracking,
-                                  trackingOffsetMs,
-                                );
-                              }
-
-                              if (evaluatedText.animationType == TextAnimationType.karaoke ||
-                                  overlayClip.kineticCaptions.isEnabled ||
-                                  overlayClip.trackId.toLowerCase().contains('caption') ||
-                                  overlayClip.id.toLowerCase().contains('caption')) {
-                                final captionLine = CaptionLine.fromClip(
-                                  overlayClip.copyWith(textOverlay: evaluatedText),
-                                );
-                                widgets.add(KineticCaptionOverlay(
-                                  caption: captionLine,
-                                  offsetMs: offsetMs,
-                                ));
-                              } else {
-                                widgets.add(_buildTextOverlayWidget(
-                                  context,
-                                  ref,
-                                  overlayClip,
-                                  evaluatedText,
-                                  clipOffsetMs: offsetMs,
-                                  clipDurationMs: overlayClip.durationMs,
-                                ));
-                              }
-                            }
-                            return widgets;
-                          }),
-
-                        // Interactive AI Object Removal & Magic Eraser Pen Canvas Overlay
-                        if (editorState.activeTool == EditorTool.objectRemoval && currentFrame?.primaryVideoClip != null)
-                          Positioned.fill(
-                            child: ObjectRemovalBrushOverlay(
-                              config: currentFrame!.primaryVideoClip!.objectRemoval,
-                              onConfigChanged: (newConfig) {
-                                final targetClip = currentFrame.primaryVideoClip!;
-                                final updatedClip = targetClip.copyWith(objectRemoval: newConfig);
-                                if (project != null) {
-                                  final updatedProject = project.updateClip(updatedClip);
-                                  ref.read(editorProvider.notifier).updateProject(updatedProject);
+                                  if (evaluatedText.animationType == TextAnimationType.karaoke ||
+                                      overlayClip.kineticCaptions.isEnabled ||
+                                      overlayClip.trackId.toLowerCase().contains('caption') ||
+                                      overlayClip.id.toLowerCase().contains('caption')) {
+                                    widgets.add(_buildCaptionOverlayWidget(
+                                      context,
+                                      ref,
+                                      overlayClip,
+                                      evaluatedText,
+                                      offsetMs,
+                                    ));
+                                  } else {
+                                    widgets.add(_buildTextOverlayWidget(
+                                      context,
+                                      ref,
+                                      overlayClip,
+                                      evaluatedText,
+                                      clipOffsetMs: offsetMs,
+                                      clipDurationMs: overlayClip.durationMs,
+                                    ));
+                                  }
                                 }
-                              },
-                            ),
-                          ),
+                                return widgets;
+                              }),
 
-                        // Interactive AI Face Reshape & 3D Feature Sculpting Mesh Overlay
-                        if (editorState.activeTool == EditorTool.faceReshape && currentFrame?.primaryVideoClip != null)
-                          Positioned.fill(
-                            child: FaceReshapeLandmarksOverlay(
-                              config: currentFrame!.primaryVideoClip!.faceReshape,
-                              onConfigChanged: (newConfig) {
-                                final targetClip = currentFrame.primaryVideoClip!;
-                                final updatedClip = targetClip.copyWith(faceReshape: newConfig);
-                                if (project != null) {
-                                  final updatedProject = project.updateClip(updatedClip);
-                                  ref.read(editorProvider.notifier).updateProject(updatedProject);
-                                }
-                              },
-                            ),
-                          ),
-
-                        // Interactive Creative Brush & Doodle Drawing Canvas Overlay
-                        if (editorState.activeTool == EditorTool.doodle && currentFrame?.primaryVideoClip != null)
-                          Positioned.fill(
-                            child: DoodleCanvasOverlay(
-                              config: currentFrame!.primaryVideoClip!.doodle,
-                              onConfigChanged: (newConfig) {
-                                final targetClip = currentFrame.primaryVideoClip!;
-                                final updatedClip = targetClip.copyWith(doodle: newConfig);
-                                if (project != null) {
-                                  final updatedProject = project.updateClip(updatedClip);
-                                  ref.read(editorProvider.notifier).updateProject(updatedProject);
-                                }
-                              },
-                            ),
-                          ),
-
-                        // Interactive On-Canvas Video Transform & Spatial Gestures Overlay
-                        if (editorState.activeTool == EditorTool.transform && currentFrame?.primaryVideoClip != null)
-                          Positioned.fill(
-                            child: InteractiveTransformBox(
-                              isSelected: true,
-                              positionX: currentFrame!.primaryVideoClip!.transform.positionX,
-                              positionY: currentFrame!.primaryVideoClip!.transform.positionY,
-                              scale: currentFrame!.primaryVideoClip!.transform.scale,
-                              rotation: currentFrame!.primaryVideoClip!.transform.rotationDegrees.toDouble(),
-                              onPositionChanged: (newX, newY) {
-                                final targetClip = currentFrame.primaryVideoClip!;
-                                final updatedTransform = targetClip.transform.copyWith(
-                                  positionX: newX,
-                                  positionY: newY,
-                                );
-                                final updatedClip = targetClip.copyWith(transform: updatedTransform);
-                                if (project != null) {
-                                  final updatedProject = project.updateClip(updatedClip);
-                                  ref.read(editorProvider.notifier).updateProject(updatedProject);
-                                }
-                              },
-                              onTransformChanged: (newScale, newRot) {
-                                final targetClip = currentFrame.primaryVideoClip!;
-                                final updatedTransform = targetClip.transform.copyWith(
-                                  scale: newScale.clamp(0.2, 4.0),
-                                  rotationDegrees: (newRot.round() % 360 + 360) % 360,
-                                );
-                                final updatedClip = targetClip.copyWith(transform: updatedTransform);
-                                if (project != null) {
-                                  final updatedProject = project.updateClip(updatedClip);
-                                  ref.read(editorProvider.notifier).updateProject(updatedProject);
-                                }
-                              },
-                              onDelete: () {
-                                final targetClip = currentFrame.primaryVideoClip!;
-                                ref.read(editorProvider.notifier).deleteClip(targetClip.id);
-                              },
-                              onDuplicate: () {
-                                final targetClip = currentFrame.primaryVideoClip!;
-                                ref.read(editorProvider.notifier).duplicateClip(targetClip.id);
-                              },
-                              child: Container(
-                                width: 140,
-                                height: 90,
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: AppColors.accent.withOpacity(0.5), width: 1.5),
-                                  borderRadius: BorderRadius.circular(8),
-                                  color: AppColors.accent.withOpacity(0.08),
-                                ),
-                                child: const Center(
-                                  child: Icon(Icons.crop_rotate, color: AppColors.accent, size: 28),
+                            // Interactive AI Object Removal & Magic Eraser Pen Canvas Overlay
+                            if (editorState.activeTool == EditorTool.objectRemoval && currentFrame?.primaryVideoClip != null)
+                              Positioned.fill(
+                                child: ObjectRemovalBrushOverlay(
+                                  config: currentFrame!.primaryVideoClip!.objectRemoval,
+                                  onConfigChanged: (newConfig) {
+                                    final targetClip = currentFrame.primaryVideoClip!;
+                                    final updatedClip = targetClip.copyWith(objectRemoval: newConfig);
+                                    if (project != null) {
+                                      final updatedProject = project.updateClip(updatedClip);
+                                      ref.read(editorProvider.notifier).updateProject(updatedProject);
+                                    }
+                                  },
                                 ),
                               ),
-                            ),
-                          ),
 
-                        // Safe-Zone Grid Overlays (90% action safe, 80% title safe)
-                        if (previewState.showSafeGuides)
-                          const IgnorePointer(
-                            child: CustomPaint(
-                              painter: _SafeGuidesPainter(),
-                            ),
-                          ),
+                            // Interactive AI Face Reshape & 3D Feature Sculpting Mesh Overlay
+                            if (editorState.activeTool == EditorTool.faceReshape && currentFrame?.primaryVideoClip != null)
+                              Positioned.fill(
+                                child: FaceReshapeLandmarksOverlay(
+                                  config: currentFrame!.primaryVideoClip!.faceReshape,
+                                  onConfigChanged: (newConfig) {
+                                    final targetClip = currentFrame.primaryVideoClip!;
+                                    final updatedClip = targetClip.copyWith(faceReshape: newConfig);
+                                    if (project != null) {
+                                      final updatedProject = project.updateClip(updatedClip);
+                                      ref.read(editorProvider.notifier).updateProject(updatedProject);
+                                    }
+                                  },
+                                ),
+                              ),
 
-                        // Overlay Timecode Badge (Tap to Jump)
-                        Positioned(
-                          top: 10,
-                          right: 10,
-                          child: InkWell(
-                            onTap: () {
-                              if (project != null) {
-                                TimestampJumpDialog.show(
-                                  context,
-                                  project: project,
-                                  currentPositionMs: currentPositionMs,
-                                  onSeek: (ms) => ref.read(previewPlaybackProvider.notifier).seek(ms),
-                                );
-                              }
-                            },
-                            borderRadius: BorderRadius.circular(6),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.75),
+                            // Interactive Creative Brush & Doodle Drawing Canvas Overlay
+                            if (editorState.activeTool == EditorTool.doodle && currentFrame?.primaryVideoClip != null)
+                              Positioned.fill(
+                                child: DoodleCanvasOverlay(
+                                  config: currentFrame!.primaryVideoClip!.doodle,
+                                  onConfigChanged: (newConfig) {
+                                    final targetClip = currentFrame.primaryVideoClip!;
+                                    final updatedClip = targetClip.copyWith(doodle: newConfig);
+                                    if (project != null) {
+                                      final updatedProject = project.updateClip(updatedClip);
+                                      ref.read(editorProvider.notifier).updateProject(updatedProject);
+                                    }
+                                  },
+                                ),
+                              ),
+
+                            // Safe-Zone Grid Overlays (90% action safe, 80% title safe)
+                            if (previewState.showSafeGuides)
+                              const IgnorePointer(
+                                child: CustomPaint(
+                                  painter: _SafeGuidesPainter(),
+                                ),
+                              ),
+
+                            // Overlay Timecode Badge (Tap to Jump)
+                            Positioned(
+                              top: 10,
+                              right: 10,
+                              child: InkWell(
+                                onTap: () {
+                                  if (project != null) {
+                                    TimestampJumpDialog.show(
+                                      context,
+                                      project: project,
+                                      currentPositionMs: currentPositionMs,
+                                      onSeek: (ms) => ref.read(previewPlaybackProvider.notifier).seek(ms),
+                                    );
+                                  }
+                                },
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: AppColors.accent.withOpacity(0.6)),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.av_timer, size: 12, color: AppColors.accent),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    TimecodeFormatter.formatSmpte(
-                                      currentPositionMs,
-                                      fps: project?.fps.round() ?? 30,
-                                    ),
-                                    style: AppTypography.timecode.copyWith(fontSize: 11, color: AppColors.accent),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.75),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: AppColors.accent.withOpacity(0.6)),
                                   ),
-                                ],
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.av_timer, size: 12, color: AppColors.accent),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        TimecodeFormatter.formatSmpte(
+                                          currentPositionMs,
+                                          fps: project?.fps.round() ?? 30,
+                                        ),
+                                        style: AppTypography.timecode.copyWith(fontSize: 11, color: AppColors.accent),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      ],
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -677,12 +630,133 @@ class RealtimePreviewViewport extends ConsumerWidget {
     );
   }
 
+  Widget _buildPrimaryVisualLayer(
+    BuildContext context,
+    WidgetRef ref,
+    CompositorFrame? frame, {
+    required VideoLayoutConfig layoutConfig,
+    required double canvasWidth,
+    required double canvasHeight,
+    required double activeRatio,
+  }) {
+    if (frame == null || !frame.hasVisualContent || frame.primaryVideoClip == null) {
+      return Padding(
+        padding: EdgeInsets.all(layoutConfig.framePadding),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(layoutConfig.cornerRadius),
+          child: _buildVisualContent(
+            context,
+            ref,
+            frame,
+            layoutConfig: layoutConfig,
+            applySpatialTransform: true,
+          ),
+        ),
+      );
+    }
+
+    final clip = frame.primaryVideoClip!;
+    final selectedClipId = ref.watch(editorProvider.select((s) => s.selectedClipId));
+    final editorState = ref.watch(editorProvider);
+    final isSelected = selectedClipId == clip.id || editorState.activeTool == EditorTool.transform;
+
+    final availableWidth = math.max(0.0, canvasWidth - (layoutConfig.framePadding * 2));
+    final availableHeight = math.max(0.0, canvasHeight - (layoutConfig.framePadding * 2));
+
+    double videoRatio = activeRatio;
+    final primaryAsset = frame.primaryAsset;
+    final bridge = ref.watch(videoPlaybackBridgeServiceProvider);
+    final controller = bridge.activeVideoController.value;
+
+    if (controller != null && controller.value.isInitialized && controller.value.aspectRatio > 0) {
+      videoRatio = controller.value.aspectRatio;
+    } else if (primaryAsset != null && primaryAsset.width > 0 && primaryAsset.height > 0) {
+      videoRatio = primaryAsset.width / primaryAsset.height;
+    }
+
+    double fittedWidth;
+    double fittedHeight;
+
+    if (layoutConfig.isSmartCrop || layoutConfig.fit == BoxFit.cover) {
+      fittedWidth = availableWidth;
+      fittedHeight = availableHeight;
+    } else {
+      if (videoRatio >= activeRatio) {
+        fittedWidth = availableWidth;
+        fittedHeight = availableWidth / (videoRatio > 0 ? videoRatio : 1.0);
+      } else {
+        fittedHeight = availableHeight;
+        fittedWidth = availableHeight * videoRatio;
+      }
+    }
+
+    return InteractiveTransformBox(
+      isSelected: isSelected,
+      positionX: clip.transform.positionX,
+      positionY: clip.transform.positionY,
+      scale: clip.transform.scale,
+      rotation: clip.transform.rotationDegrees.toDouble(),
+      onTap: () {
+        ref.read(editorProvider.notifier).selectClip(clip.id);
+      },
+      onDoubleTap: () {
+        ref.read(editorProvider.notifier).selectClip(clip.id);
+        ref.read(editorProvider.notifier).setActiveTool(EditorTool.transform);
+      },
+      onEdit: () {
+        ref.read(editorProvider.notifier).selectClip(clip.id);
+        ref.read(editorProvider.notifier).setActiveTool(EditorTool.transform);
+      },
+      onDelete: () {
+        ref.read(editorProvider.notifier).deleteClip(clip.id);
+      },
+      onDuplicate: () {
+        ref.read(editorProvider.notifier).duplicateClip(clip.id);
+      },
+      onPositionChanged: (newX, newY) {
+        final project = ref.read(editorProvider).project;
+        if (project == null) return;
+        final updatedTransform = clip.transform.copyWith(
+          positionX: newX,
+          positionY: newY,
+        );
+        final updatedClip = clip.copyWith(transform: updatedTransform);
+        ref.read(editorProvider.notifier).updateProject(project.updateClip(updatedClip));
+      },
+      onTransformChanged: (newScale, newRot) {
+        final project = ref.read(editorProvider).project;
+        if (project == null) return;
+        final updatedTransform = clip.transform.copyWith(
+          scale: newScale.clamp(0.1, 5.0),
+          rotationDegrees: (newRot.round() % 360 + 360) % 360,
+        );
+        final updatedClip = clip.copyWith(transform: updatedTransform);
+        ref.read(editorProvider.notifier).updateProject(project.updateClip(updatedClip));
+      },
+      child: SizedBox(
+        width: fittedWidth,
+        height: fittedHeight,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(layoutConfig.cornerRadius),
+          child: _buildVisualContent(
+            context,
+            ref,
+            frame,
+            layoutConfig: layoutConfig,
+            applySpatialTransform: false,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildVisualContent(
     BuildContext context,
     WidgetRef ref,
     CompositorFrame? frame, {
     VideoLayoutConfig? layoutConfig,
     bool isBackdropClone = false,
+    bool applySpatialTransform = true,
   }) {
     if (frame == null || !frame.hasVisualContent) {
       return Center(
@@ -1179,7 +1253,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
       );
     }
 
-    if (clip.transform.isActive) {
+    if (applySpatialTransform && clip.transform.isActive) {
       final rad = clip.transform.rotationDegrees * math.pi / 180.0;
       final scaleX = (clip.transform.isFlippedHorizontal ? -1.0 : 1.0) * clip.transform.scale;
       final scaleY = (clip.transform.isFlippedVertical ? -1.0 : 1.0) * clip.transform.scale;
@@ -1193,6 +1267,17 @@ class RealtimePreviewViewport extends ConsumerWidget {
             ..scale(scaleX, scaleY, 1.0),
           child: videoContent,
         ),
+      );
+    } else if (!applySpatialTransform && (clip.transform.isFlippedHorizontal || clip.transform.isFlippedVertical)) {
+      videoContent = Transform(
+        alignment: Alignment.center,
+        transform: Matrix4.identity()
+          ..scale(
+            clip.transform.isFlippedHorizontal ? -1.0 : 1.0,
+            clip.transform.isFlippedVertical ? -1.0 : 1.0,
+            1.0,
+          ),
+        child: videoContent,
       );
     }
 
@@ -1478,6 +1563,65 @@ class RealtimePreviewViewport extends ConsumerWidget {
     );
   }
 
+  Widget _buildCaptionOverlayWidget(
+    BuildContext context,
+    WidgetRef ref,
+    Clip overlayClip,
+    TextOverlayConfig config,
+    int offsetMs,
+  ) {
+    final selectedClipId = ref.watch(editorProvider.select((s) => s.selectedClipId));
+    final isSelected = selectedClipId == overlayClip.id;
+
+    final captionLine = CaptionLine.fromClip(
+      overlayClip.copyWith(textOverlay: config),
+    );
+
+    return InteractiveTransformBox(
+      isSelected: isSelected,
+      positionX: config.positionX,
+      positionY: config.positionY,
+      scale: config.scale,
+      rotation: config.rotation,
+      onTap: () {
+        ref.read(editorProvider.notifier).selectClip(overlayClip.id);
+      },
+      onDoubleTap: () {
+        ref.read(editorProvider.notifier).selectClip(overlayClip.id);
+        ref.read(editorProvider.notifier).setActiveTool(EditorTool.captions);
+      },
+      onEdit: () {
+        ref.read(editorProvider.notifier).selectClip(overlayClip.id);
+        ref.read(editorProvider.notifier).setActiveTool(EditorTool.captions);
+      },
+      onDelete: () {
+        ref.read(editorProvider.notifier).deleteClip(overlayClip.id);
+      },
+      onDuplicate: () {
+        ref.read(editorProvider.notifier).duplicateClip(overlayClip.id);
+      },
+      onPositionChanged: (newX, newY) {
+        final project = ref.read(editorProvider).project;
+        if (project == null) return;
+        final updatedConfig = config.copyWith(positionX: newX, positionY: newY);
+        final updatedClip = overlayClip.copyWith(textOverlay: updatedConfig);
+        ref.read(editorProvider.notifier).updateProject(project.updateClip(updatedClip));
+      },
+      onTransformChanged: (newScale, newRot) {
+        final project = ref.read(editorProvider).project;
+        if (project == null) return;
+        final updatedConfig = config.copyWith(scale: newScale, rotation: newRot);
+        final updatedClip = overlayClip.copyWith(textOverlay: updatedConfig);
+        ref.read(editorProvider.notifier).updateProject(project.updateClip(updatedClip));
+      },
+      child: KineticCaptionOverlay(
+        caption: captionLine,
+        offsetMs: offsetMs,
+        applyAlignment: false,
+      ),
+    );
+  }
+
   Widget _buildImageOverlayWidget(
     BuildContext context,
     WidgetRef ref,
@@ -1497,6 +1641,14 @@ class RealtimePreviewViewport extends ConsumerWidget {
       rotation: config.rotation,
       onTap: () {
         ref.read(editorProvider.notifier).selectClip(overlayClip.id);
+      },
+      onDoubleTap: () {
+        ref.read(editorProvider.notifier).selectClip(overlayClip.id);
+        ref.read(editorProvider.notifier).setActiveTool(EditorTool.imageOverlay);
+      },
+      onEdit: () {
+        ref.read(editorProvider.notifier).selectClip(overlayClip.id);
+        ref.read(editorProvider.notifier).setActiveTool(EditorTool.imageOverlay);
       },
       onDelete: () {
         ref.read(editorProvider.notifier).deleteClip(overlayClip.id);
@@ -1518,7 +1670,7 @@ class RealtimePreviewViewport extends ConsumerWidget {
         final updatedClip = overlayClip.copyWith(imageOverlay: updatedConfig);
         ref.read(editorProvider.notifier).updateProject(project.updateClip(updatedClip));
       },
-      child: PipPreviewOverlay(config: config),
+      child: PipPreviewOverlay(config: config, applyTransform: false),
     );
   }
 

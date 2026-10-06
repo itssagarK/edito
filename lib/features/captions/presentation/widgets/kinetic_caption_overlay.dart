@@ -7,11 +7,13 @@ import '../../services/word_level_aligner_service.dart';
 class KineticCaptionOverlay extends StatelessWidget {
   final CaptionLine caption;
   final int offsetMs; // current playhead - caption.startTimeMs
+  final bool applyAlignment;
 
   const KineticCaptionOverlay({
     super.key,
     required this.caption,
     required this.offsetMs,
+    this.applyAlignment = true,
   });
 
   @override
@@ -46,56 +48,62 @@ class KineticCaptionOverlay extends StatelessWidget {
       );
     }
 
+    final captionContent = Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: style.boxPadding > 0 ? style.boxPadding : 12.0,
+        vertical: style.boxPadding > 0 ? style.boxPadding * 0.6 : 6.0,
+      ),
+      decoration: style.backgroundColor != null
+          ? BoxDecoration(
+              color: Color(style.backgroundColor!),
+              borderRadius: BorderRadius.circular(style.boxCornerRadius),
+            )
+          : null,
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: style.fontSize * 0.28,
+        runSpacing: 4.0,
+        children: List.generate(words.length, (idx) {
+          final w = words[idx];
+          final wordText = style.isUppercase ? w.word.toUpperCase() : w.word;
+          final isActive = hasHighlight && idx == activeIdx;
+
+          // Typewriter reveal: future words remain invisible
+          if (hasHighlight &&
+              caption.highlightStyle == KaraokeHighlightStyle.typewriterReveal &&
+              activeIdx != -1 &&
+              idx > activeIdx) {
+            return const SizedBox.shrink();
+          }
+
+          return _buildWordWidget(
+            word: wordText,
+            wordTimestamp: w,
+            isActive: isActive,
+            style: style,
+            baseStyle: baseTextStyle,
+            baseTextColor: baseTextColor,
+            inactiveColor: inactiveTextColor,
+            highlightColor: highlightColor,
+            highlightStyle: caption.highlightStyle,
+            highlightScale: caption.highlightScale,
+            inactiveOpacity: caption.inactiveOpacity,
+            glowRadius: caption.glowRadius,
+            hasHighlight: hasHighlight,
+          );
+        }),
+      ),
+    );
+
+    if (!applyAlignment) {
+      return RepaintBoundary(child: captionContent);
+    }
+
     return RepaintBoundary(
       child: Align(
         alignment: Alignment(alignX, alignY),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: style.boxPadding > 0 ? style.boxPadding : 12.0,
-            vertical: style.boxPadding > 0 ? style.boxPadding * 0.6 : 6.0,
-          ),
-          decoration: style.backgroundColor != null
-              ? BoxDecoration(
-                  color: Color(style.backgroundColor!),
-                  borderRadius: BorderRadius.circular(style.boxCornerRadius),
-                )
-              : null,
-          child: Wrap(
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: style.fontSize * 0.28,
-            runSpacing: 4.0,
-            children: List.generate(words.length, (idx) {
-              final w = words[idx];
-              final wordText = style.isUppercase ? w.word.toUpperCase() : w.word;
-              final isActive = hasHighlight && idx == activeIdx;
-
-              // Typewriter reveal: future words remain invisible
-              if (hasHighlight &&
-                  caption.highlightStyle == KaraokeHighlightStyle.typewriterReveal &&
-                  activeIdx != -1 &&
-                  idx > activeIdx) {
-                return const SizedBox.shrink();
-              }
-
-              return _buildWordWidget(
-                word: wordText,
-                wordTimestamp: w,
-                isActive: isActive,
-                style: style,
-                baseStyle: baseTextStyle,
-                baseTextColor: baseTextColor,
-                inactiveColor: inactiveTextColor,
-                highlightColor: highlightColor,
-                highlightStyle: caption.highlightStyle,
-                highlightScale: caption.highlightScale,
-                inactiveOpacity: caption.inactiveOpacity,
-                glowRadius: caption.glowRadius,
-                hasHighlight: hasHighlight,
-              );
-            }),
-          ),
-        ),
+        child: captionContent,
       ),
     );
   }
