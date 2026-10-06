@@ -302,6 +302,9 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
                                     final rawMs = ((details.localPosition.dx / pps) * 1000).toInt();
                                     final snappedMs = TimelineEditingService.calculateSnapTime(widget.project, rawMs);
                                     widget.onSeek(snappedMs);
+                                    if (widget.selectedClipId != null) {
+                                      widget.onSelectClip(null);
+                                    }
                                   },
                                   child: Stack(
                                     alignment: Alignment.centerLeft,
@@ -447,11 +450,17 @@ class _InteractiveTimelineState extends State<InteractiveTimeline> {
       rawMs,
       playheadMs: widget.playheadPositionMs,
     );
+    if (snap.isSnapped) {
+      HapticFeedback.selectionClick();
+    }
     setState(() {
       _activeSnapGuideMs = snap.isSnapped ? snap.snappedTimeMs : null;
       _activeSnapTarget = snap.snapTarget;
     });
     widget.onSeek(snap.snappedTimeMs);
+    if (widget.selectedClipId != null) {
+      widget.onSelectClip(null);
+    }
   }
 
   void _handleRulerDrag(double localX, double pps) {

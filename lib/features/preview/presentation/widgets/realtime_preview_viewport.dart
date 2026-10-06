@@ -98,6 +98,7 @@ import '../../../smoothing/services/ai_video_smoother_service.dart';
 import '../../../smoothing/presentation/widgets/motion_blur_preview_wrapper.dart';
 import '../../../transitions/models/transition_type.dart';
 import '../../../transitions/presentation/widgets/transition_shader_painter.dart';
+import '../../../editor/presentation/widgets/timestamp_jump_dialog.dart';
 import 'interactive_transform_box.dart';
 
 class RealtimePreviewViewport extends ConsumerWidget {
@@ -467,20 +468,43 @@ class RealtimePreviewViewport extends ConsumerWidget {
                             ),
                           ),
 
-                        // Overlay Timecode Badge
+                        // Overlay Timecode Badge (Tap to Jump)
                         Positioned(
                           top: 10,
                           right: 10,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.75),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Text(
-                              TimecodeFormatter.formatSmpte(currentPositionMs),
-                              style: AppTypography.timecode.copyWith(fontSize: 11),
+                          child: InkWell(
+                            onTap: () {
+                              if (project != null) {
+                                TimestampJumpDialog.show(
+                                  context,
+                                  project: project,
+                                  currentPositionMs: currentPositionMs,
+                                  onSeek: (ms) => ref.read(previewPlaybackProvider.notifier).seek(ms),
+                                );
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(6),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.75),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: AppColors.accent.withOpacity(0.6)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.av_timer, size: 12, color: AppColors.accent),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    TimecodeFormatter.formatSmpte(
+                                      currentPositionMs,
+                                      fps: project?.fps.round() ?? 30,
+                                    ),
+                                    style: AppTypography.timecode.copyWith(fontSize: 11, color: AppColors.accent),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -494,49 +518,157 @@ class RealtimePreviewViewport extends ConsumerWidget {
           ),
         ),
 
-        // Transport Playback Bar
+        // Transport Playback Bar with Precision Stepping & Interactive Timecode
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                TimecodeFormatter.formatMilliseconds(currentPositionMs),
-                style: AppTypography.timecode,
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.replay_5, size: 22),
-                    onPressed: onStepBackward,
-                    tooltip: '-5s',
+              // Current Timecode Chip (Tap to Jump)
+              InkWell(
+                onTap: () {
+                  if (project != null) {
+                    TimestampJumpDialog.show(
+                      context,
+                      project: project,
+                      currentPositionMs: currentPositionMs,
+                      onSeek: (ms) => ref.read(previewPlaybackProvider.notifier).seek(ms),
+                    );
+                  }
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.border),
                   ),
-                  const SizedBox(width: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.av_timer, size: 13, color: AppColors.accent),
+                      const SizedBox(width: 4),
+                      Text(
+                        TimecodeFormatter.formatMilliseconds(currentPositionMs),
+                        style: AppTypography.timecode.copyWith(fontSize: 11.5, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Center Transport Steppers & Play/Pause
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // -1s Nudge
+                  IconButton(
+                    icon: const Icon(Icons.replay_10, size: 19),
+                    style: IconButton.styleFrom(
+                      padding: const EdgeInsets.all(4),
+                      minimumSize: const Size(30, 30),
+                    ),
+                    onPressed: () {
+                      ref.read(previewPlaybackProvider.notifier).seek(currentPositionMs - 1000);
+                    },
+                    tooltip: '-1s',
+                  ),
+                  const SizedBox(width: 2),
+                  // -1 Frame Nudge (< 1f)
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left, size: 20),
+                    style: IconButton.styleFrom(
+                      padding: const EdgeInsets.all(4),
+                      minimumSize: const Size(28, 28),
+                    ),
+                    onPressed: () {
+                      final fps = project != null && project.fps > 0 ? project.fps.round() : 30;
+                      final frameMs = (1000 / fps).round();
+                      ref.read(previewPlaybackProvider.notifier).seek(currentPositionMs - frameMs);
+                    },
+                    tooltip: '-1 frame',
+                  ),
+                  const SizedBox(width: 4),
+                  // Main Play/Pause Button
                   Container(
+                    width: 40,
+                    height: 40,
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                       color: AppColors.primary,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary,
+                          blurRadius: 6,
+                          spreadRadius: -1,
+                        ),
+                      ],
                     ),
                     child: IconButton(
                       icon: Icon(
                         isPlaying ? Icons.pause : Icons.play_arrow,
                         color: Colors.white,
-                        size: 26,
+                        size: 22,
+                      ),
+                      style: IconButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(40, 40),
                       ),
                       onPressed: onTogglePlay,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 4),
+                  // +1 Frame Nudge (1f >)
                   IconButton(
-                    icon: const Icon(Icons.forward_5, size: 22),
-                    onPressed: onStepForward,
-                    tooltip: '+5s',
+                    icon: const Icon(Icons.chevron_right, size: 20),
+                    style: IconButton.styleFrom(
+                      padding: const EdgeInsets.all(4),
+                      minimumSize: const Size(28, 28),
+                    ),
+                    onPressed: () {
+                      final fps = project != null && project.fps > 0 ? project.fps.round() : 30;
+                      final frameMs = (1000 / fps).round();
+                      ref.read(previewPlaybackProvider.notifier).seek(currentPositionMs + frameMs);
+                    },
+                    tooltip: '+1 frame',
+                  ),
+                  const SizedBox(width: 2),
+                  // +1s Nudge
+                  IconButton(
+                    icon: const Icon(Icons.forward_10, size: 19),
+                    style: IconButton.styleFrom(
+                      padding: const EdgeInsets.all(4),
+                      minimumSize: const Size(30, 30),
+                    ),
+                    onPressed: () {
+                      ref.read(previewPlaybackProvider.notifier).seek(currentPositionMs + 1000);
+                    },
+                    tooltip: '+1s',
                   ),
                 ],
               ),
-              Text(
-                TimecodeFormatter.formatMilliseconds(totalDurationMs),
-                style: AppTypography.timecode.copyWith(color: AppColors.textMuted),
+
+              // Total Duration Chip
+              InkWell(
+                onTap: () {
+                  if (project != null) {
+                    ref.read(previewPlaybackProvider.notifier).seek(project.durationMs);
+                  }
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Text(
+                    TimecodeFormatter.formatMilliseconds(totalDurationMs),
+                    style: AppTypography.timecode.copyWith(fontSize: 11.5, color: AppColors.textMuted),
+                  ),
+                ),
               ),
             ],
           ),

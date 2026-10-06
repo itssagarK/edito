@@ -52,6 +52,7 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 | **9** | **UI-PRO** | Professional UI Hierarchy & Ergonomic Overhaul | CapCut Pro 2-tier dock, AI Suite, Live Header, Export Pill | Internal | ✅ **COMPLETED** (`04689a6`) |
 | **10** | **APK-UI** | Full APK Home Shell & 4-Tab Navigation Overhaul | CapCut Pro 4-tab shell, AI Studio tab, Studio tab, System tab | Internal | ✅ **COMPLETED** (`c12e7c4`) |
 | **11** | **SFX** | Native Sound Effects & Silence Spacers | Motion Whoosh, Tactile Snap, SSML Precision Silence | Internal | ✅ **COMPLETED** |
+| **12** | **CLARITY** | Editing Screen Clarity & Precision Navigation | Instant Tool Search, Categorized Dock, Boundary Jumps | Internal | ✅ **COMPLETED** |
 
 ---
 
@@ -281,6 +282,35 @@ If this environment restarts or your session closes abruptly, follow this 4-step
   - Added `'Silence Spacers'` category filter to `SoundEffectsSheet`.
 - [x] **Step 11.4: Linter & Architectural Verification**
   - Scanned 346 Dart files with `python scripts/verify_codebase.py`: **100% CLEAN**.
+
+---
+
+### Phase 12: Editing Screen Clarity, Intuitive Precision Navigation & Ergonomics Overhaul ✅ [COMPLETED]
+**Goal:** Optimize editing screen clarity, eliminate tedious tool hunting, deliver precision frame-by-frame and cut-to-cut timestamp navigation, and prevent accidental mis-edits.
+
+#### Task Checklist:
+- [x] **Step 12.1: Precision Timestamp Jump & Scrub Dialog (`TimestampJumpDialog`)**
+  - Created interactive modal with live timeline scrub slider.
+  - 1-tap boundary navigation: `|◀ Start`, `◀ Prev Cut`, `Next Cut ▶`, `End ▶|` powered by `TimelineEditingService`.
+  - Frame-by-frame precision stepping: `-1 Frame` (~33ms at 30fps), `+1 Frame`, `-1s`, `+1s` with haptic feedback.
+  - Percentage presets (`0%`, `25%`, `50%`, `75%`, `100%`) and SMPTE timecode readout.
+- [x] **Step 12.2: Realtime Preview Viewport HUD & Transport Bar Upgrade**
+  - Converted static text timecode badge to interactive chip opening `TimestampJumpDialog`.
+  - Replaced coarse `±5s` jumps with precision `-1 Frame`, `+1 Frame`, `-1s`, and `+1s` nudges.
+  - Interactive SMPTE overlay badge on video canvas header.
+- [x] **Step 12.3: Selected Clip Context & Safety HUD (`SelectedClipContextBar`)**
+  - Sticky context bar between preview viewport and timeline showing active track type, clip duration, in/out points.
+  - Quick action pills: `Split at playhead`, `Duplicate`, `Delete`, and prominent `Done / Deselect` button to prevent accidental mis-edits.
+  - Idle timeline status showing track count and 1-tap jump timecode chip.
+- [x] **Step 12.4: Instant Tool Search & Categorized Filter Dock (`EditingToolbar` & `ToolSearchModal`)**
+  - Added categorized filter pills above contextual clip dock (`All`, `Edit`, `AI Studio`, `Audio`, `Visuals`, `Color`).
+  - Created `ToolSearchModal` indexing all 58 tools with keyword matching (e.g., "split", "cutout", "lut", "mask", "voice", "denoise").
+  - Added quick `Search 🔍` button in both contextual and global docks.
+- [x] **Step 12.5: Timeline Interaction & Deselection Safety**
+  - Tapping empty track lanes or timeline ruler automatically deselects clips safely.
+  - Added haptic feedback when playhead snaps to cuts or markers.
+  - Unit test suite added in `test/editing_screen_clarity_and_navigation_test.dart`.
+  - Scanned 350 Dart files with `python scripts/verify_codebase.py`: **100% CLEAN**.
 
 ---
 

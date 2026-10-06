@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../providers/editor_provider.dart';
+import 'tool_search_modal.dart';
 
 /// CapCut-Style Two-Tier Contextual Dock with Dedicated AI Intelligence Suite.
 /// Switches smoothly between:
-/// 1. Global Navigation Dock (when no clip is selected) - 10 core categories + AI Suite + More sheet
-/// 2. Contextual Clip Action Dock (when a clip is selected) - 16 primary tools + More sheet
-class EditingToolbar extends StatelessWidget {
+/// 1. Global Navigation Dock (when no clip is selected) - 10 core categories + AI Suite + Search + More sheet
+/// 2. Contextual Clip Action Dock (when a clip is selected) - Categorized filters + 16 primary tools + More sheet
+class EditingToolbar extends StatefulWidget {
   final EditorTool activeTool;
   final bool hasSelectedClip;
   final Function(EditorTool) onSelectTool;
@@ -24,9 +25,18 @@ class EditingToolbar extends StatelessWidget {
   });
 
   @override
+  State<EditingToolbar> createState() => _EditingToolbarState();
+}
+
+class _EditingToolbarState extends State<EditingToolbar> {
+  String _selectedCategory = 'All';
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 70,
+    final isClipSelected = widget.hasSelectedClip;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      height: isClipSelected ? 92 : 68,
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.border, width: 1.2)),
@@ -44,7 +54,7 @@ class EditingToolbar extends StatelessWidget {
               child: FadeTransition(opacity: animation, child: child),
             );
           },
-          child: hasSelectedClip
+          child: isClipSelected
               ? _buildContextualClipDock(context)
               : _buildGlobalCategoryDock(context),
         ),
@@ -54,78 +64,158 @@ class EditingToolbar extends StatelessWidget {
 
   // --- 1. CONTEXTUAL CLIP DOCK (CLIP SELECTED) ---
   Widget _buildContextualClipDock(BuildContext context) {
-    final primaryClipTools = [
-      const _ToolItem(EditorTool.split, 'Split', Icons.content_cut),
-      const _ToolItem(EditorTool.speed, 'Speed', Icons.speed),
-      const _ToolItem(EditorTool.audio, 'Volume', Icons.volume_up_outlined),
-      const _ToolItem(EditorTool.clipWorkflow, 'AI Studio', Icons.auto_awesome, isAi: true),
-      const _ToolItem(EditorTool.chromaKey, 'Cutout', Icons.blur_linear, isAi: true),
-      const _ToolItem(EditorTool.keyframes, 'Animation', Icons.animation),
-      const _ToolItem(EditorTool.tracking, 'Tracking', Icons.my_location, isAi: true),
-      const _ToolItem(EditorTool.transform, 'Transform', Icons.crop_rotate),
-      const _ToolItem(EditorTool.mask, 'Mask', Icons.masks),
-      const _ToolItem(EditorTool.color, 'Filters', Icons.palette_outlined),
-      const _ToolItem(EditorTool.curves, 'Adjust', Icons.show_chart),
-      const _ToolItem(EditorTool.extractAudio, 'Extract Audio', Icons.music_note),
-      const _ToolItem(EditorTool.reverseClip, 'Reverse', Icons.replay),
-      const _ToolItem(EditorTool.freezeFrame, 'Freeze', Icons.ac_unit),
-      const _ToolItem(EditorTool.duplicateClip, 'Duplicate', Icons.control_point_duplicate),
-      const _ToolItem(EditorTool.deleteClip, 'Delete', Icons.delete_outline),
+    final allClipTools = [
+      const _ToolItem(EditorTool.split, 'Split', Icons.content_cut, category: 'Edit'),
+      const _ToolItem(EditorTool.speed, 'Speed', Icons.speed, category: 'Edit'),
+      const _ToolItem(EditorTool.audio, 'Volume', Icons.volume_up_outlined, category: 'Audio'),
+      const _ToolItem(EditorTool.clipWorkflow, 'AI Actions', Icons.auto_awesome, isAi: true, category: 'AI Studio'),
+      const _ToolItem(EditorTool.chromaKey, 'Cutout', Icons.blur_linear, isAi: true, category: 'AI Studio'),
+      const _ToolItem(EditorTool.keyframes, 'Animation', Icons.animation, category: 'Visuals'),
+      const _ToolItem(EditorTool.tracking, 'Tracking', Icons.my_location, isAi: true, category: 'AI Studio'),
+      const _ToolItem(EditorTool.transform, 'Transform', Icons.crop_rotate, category: 'Visuals'),
+      const _ToolItem(EditorTool.mask, 'Mask', Icons.masks, category: 'Visuals'),
+      const _ToolItem(EditorTool.color, 'Filters', Icons.palette_outlined, category: 'Color'),
+      const _ToolItem(EditorTool.curves, 'Adjust', Icons.show_chart, category: 'Color'),
+      const _ToolItem(EditorTool.extractAudio, 'Extract Audio', Icons.music_note, category: 'Audio'),
+      const _ToolItem(EditorTool.reverseClip, 'Reverse', Icons.replay, category: 'Edit'),
+      const _ToolItem(EditorTool.freezeFrame, 'Freeze', Icons.ac_unit, category: 'Edit'),
+      const _ToolItem(EditorTool.duplicateClip, 'Duplicate', Icons.control_point_duplicate, category: 'Edit'),
+      const _ToolItem(EditorTool.deleteClip, 'Delete', Icons.delete_outline, category: 'Edit'),
     ];
+
+    final filteredTools = _selectedCategory == 'All'
+        ? allClipTools
+        : allClipTools.where((t) => t.category == _selectedCategory).toList();
 
     return KeyedSubtree(
       key: const ValueKey('contextual_clip_dock'),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // CapCut-Style Back Button
-          Padding(
-            padding: const EdgeInsets.only(left: 10, right: 4, top: 8, bottom: 8),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(10),
-              onTap: onDeselectClip,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceElevated,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.border),
+          // Quick Filter Category Bar on Top
+          Container(
+            height: 28,
+            padding: const EdgeInsets.only(left: 8, right: 8, top: 4),
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                // Quick Search Chip
+                InkWell(
+                  onTap: () => ToolSearchModal.show(context, onSelectTool: widget.onSelectTool),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.accent.withOpacity(0.5)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.search, size: 12, color: AppColors.accent),
+                        SizedBox(width: 3),
+                        Text(
+                          'Find',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.accent,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.arrow_back_ios_new, size: 16, color: AppColors.accent),
-                    const SizedBox(height: 3),
-                    Text(
-                      'Back',
-                      style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 10,
+                const SizedBox(width: 6),
+                ...['All', 'Edit', 'AI Studio', 'Audio', 'Visuals', 'Color'].map((cat) {
+                  final isSel = _selectedCategory == cat;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: InkWell(
+                      onTap: () => setState(() => _selectedCategory = cat),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isSel ? AppColors.primary : AppColors.surfaceElevated,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSel ? AppColors.primary : AppColors.border,
+                          ),
+                        ),
+                        child: Text(
+                          cat,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
+                            color: isSel ? Colors.white : AppColors.textSecondary,
+                          ),
+                        ),
                       ),
                     ),
-                  ],
-                ),
-              ),
+                  );
+                }),
+              ],
             ),
           ),
-          Container(width: 1, height: 32, color: AppColors.border),
 
-          // Scrollable Primary Clip Action Items
+          // Tools Action Bar on Bottom
           Expanded(
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              itemCount: primaryClipTools.length + 1,
-              separatorBuilder: (context, index) => const SizedBox(width: 6),
-              itemBuilder: (context, index) {
-                if (index == primaryClipTools.length) {
-                  return _buildMoreClipToolsButton(context);
-                }
-                final item = primaryClipTools[index];
-                final isSelected = activeTool == item.tool;
-                return _buildToolTile(item, isSelected);
-              },
+            child: Row(
+              children: [
+                // CapCut-Style Back Button
+                Padding(
+                  padding: const EdgeInsets.only(left: 8, right: 4, top: 2, bottom: 4),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: widget.onDeselectClip,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceElevated,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: const Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.arrow_back_ios_new, size: 14, color: AppColors.accent),
+                          SizedBox(height: 2),
+                          Text(
+                            'Back',
+                            style: TextStyle(
+                              color: AppColors.accent,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 9.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Container(width: 1, height: 28, color: AppColors.border),
+
+                // Scrollable Tools matching active category
+                Expanded(
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    itemCount: filteredTools.length + 1,
+                    separatorBuilder: (context, index) => const SizedBox(width: 4),
+                    itemBuilder: (context, index) {
+                      if (index == filteredTools.length) {
+                        return _buildMoreClipToolsButton(context);
+                      }
+                      final item = filteredTools[index];
+                      final isSelected = widget.activeTool == item.tool;
+                      return _buildToolTile(item, isSelected);
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -152,14 +242,18 @@ class EditingToolbar extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        itemCount: globalTools.length + 3,
+        itemCount: globalTools.length + 4,
         separatorBuilder: (context, index) => const SizedBox(width: 6),
         itemBuilder: (context, index) {
+          // Dedicated Instant Tool Search Button
+          if (index == 0) {
+            return _buildSearchGlobalButton(context);
+          }
           // Dedicated AI Suite button positioned after Text
-          if (index == 3) {
+          if (index == 4) {
             return _buildAiSuiteGlobalButton(context);
           }
-          final adjustedIndex = index > 3 ? index - 1 : index;
+          final adjustedIndex = index > 4 ? index - 2 : index - 1;
 
           if (adjustedIndex == globalTools.length) {
             return _buildMoreGlobalToolsButton(context);
@@ -169,9 +263,40 @@ class EditingToolbar extends StatelessWidget {
           }
 
           final item = globalTools[adjustedIndex];
-          final isSelected = activeTool == item.tool;
+          final isSelected = widget.activeTool == item.tool;
           return _buildToolTile(item, isSelected);
         },
+      ),
+    );
+  }
+
+  Widget _buildSearchGlobalButton(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () => ToolSearchModal.show(context, onSelectTool: widget.onSelectTool),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.search, size: 20, color: AppColors.accent),
+            const SizedBox(height: 3),
+            Text(
+              'Search',
+              style: AppTypography.labelSmall.copyWith(
+                color: AppColors.accent,
+                fontWeight: FontWeight.bold,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -251,7 +376,7 @@ class EditingToolbar extends StatelessWidget {
   Widget _buildToolTile(_ToolItem item, bool isSelected) {
     return InkWell(
       borderRadius: BorderRadius.circular(10),
-      onTap: () => onSelectTool(item.tool),
+      onTap: () => widget.onSelectTool(item.tool),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
@@ -377,7 +502,7 @@ class EditingToolbar extends StatelessWidget {
   Widget _buildAddTrackButton() {
     return InkWell(
       borderRadius: BorderRadius.circular(10),
-      onTap: onAddTrack,
+      onTap: widget.onAddTrack,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         child: Column(
@@ -843,7 +968,7 @@ class EditingToolbar extends StatelessWidget {
       borderRadius: BorderRadius.circular(10),
       onTap: () {
         Navigator.pop(sheetContext);
-        onSelectTool(tool);
+        widget.onSelectTool(tool);
       },
       child: Container(
         width: 104,
@@ -940,6 +1065,7 @@ class _ToolItem {
   final String label;
   final IconData icon;
   final bool isAi;
+  final String category;
 
-  const _ToolItem(this.tool, this.label, this.icon, {this.isAi = false});
+  const _ToolItem(this.tool, this.label, this.icon, {this.isAi = false, this.category = 'Edit'});
 }

@@ -39,6 +39,9 @@ import '../../tts/presentation/widgets/tts_voiceover_sheet.dart';
 import 'widgets/editor_app_bar.dart';
 import 'widgets/editing_toolbar.dart';
 import 'widgets/docked_tool_panel.dart';
+import 'widgets/selected_clip_context_bar.dart';
+import 'widgets/timestamp_jump_dialog.dart';
+import 'widgets/tool_search_modal.dart';
 
 
 class EditorScreen extends ConsumerStatefulWidget {
@@ -163,13 +166,35 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   ref.read(previewPlaybackProvider.notifier).togglePlay();
                 },
                 onStepBackward: () {
-                  ref.read(previewPlaybackProvider.notifier).seek(editorState.playheadPositionMs - 5000);
+                  ref.read(previewPlaybackProvider.notifier).seek(editorState.playheadPositionMs - 1000);
                 },
                 onStepForward: () {
-                  ref.read(previewPlaybackProvider.notifier).seek(editorState.playheadPositionMs + 5000);
+                  ref.read(previewPlaybackProvider.notifier).seek(editorState.playheadPositionMs + 1000);
                 },
               ),
             ),
+
+            // Selected Clip Context HUD & Safety Bar
+            if (!isPeeking && !isDocked)
+              SelectedClipContextBar(
+                project: project,
+                selectedClipId: editorState.selectedClipId,
+                playheadPositionMs: editorState.playheadPositionMs,
+                onDeselect: () {
+                  ref.read(editorProvider.notifier).selectClip(null);
+                },
+                onSplit: _handleSplitAction,
+                onDuplicate: _handleDuplicateAction,
+                onDelete: _handleDeleteAction,
+                onOpenTimestampJump: () {
+                  TimestampJumpDialog.show(
+                    context,
+                    project: project,
+                    currentPositionMs: editorState.playheadPositionMs,
+                    onSeek: (ms) => ref.read(previewPlaybackProvider.notifier).seek(ms),
+                  );
+                },
+              ),
 
             // Multi-Track Interactive Timeline or Docked Tool Panel
             if (!isPeeking)

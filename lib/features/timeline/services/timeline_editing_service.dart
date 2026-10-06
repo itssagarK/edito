@@ -582,4 +582,37 @@ class TimelineEditingService {
 
     return updatedProject.addClipToTrack(targetAudioTrack.id, extractedClip).recalculateDuration();
   }
+
+  /// Retrieves a sorted, deduplicated list of all cut points and clip boundaries in the project
+  static List<int> getAllCutPoints(Project project) {
+    final points = <int>{0, project.durationMs};
+    for (final track in project.tracks) {
+      for (final clip in track.clips) {
+        points.add(clip.startTimeMs);
+        points.add(clip.startTimeMs + clip.durationMs);
+      }
+    }
+    final sorted = points.toList()..sort();
+    return sorted;
+  }
+
+  /// Finds the closest cut point strictly before currentPositionMs
+  static int? findPreviousCutPoint(Project project, int currentPositionMs) {
+    final cuts = getAllCutPoints(project);
+    final before = cuts.where((t) => t < currentPositionMs - 20).toList();
+    if (before.isNotEmpty) {
+      return before.last;
+    }
+    return currentPositionMs > 0 ? 0 : null;
+  }
+
+  /// Finds the closest cut point strictly after currentPositionMs
+  static int? findNextCutPoint(Project project, int currentPositionMs) {
+    final cuts = getAllCutPoints(project);
+    final after = cuts.where((t) => t > currentPositionMs + 20).toList();
+    if (after.isNotEmpty) {
+      return after.first;
+    }
+    return currentPositionMs < project.durationMs ? project.durationMs : null;
+  }
 }

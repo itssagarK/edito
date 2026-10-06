@@ -198,6 +198,10 @@ class EditorNotifier extends StateNotifier<EditorState> {
     }
   }
 
+  void clearSelection() {
+    selectClip(null);
+  }
+
   void setActiveTool(EditorTool tool) {
     state = state.copyWith(activeTool: tool);
   }
