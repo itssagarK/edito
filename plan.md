@@ -48,8 +48,8 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 | **5** | **F5** | Smart Auto-Ducking & Beat Sync | Silero VAD / Energy VAD + Onset Detection | MIT | ✅ **COMPLETED** (`a62ac48`) |
 | **6** | **F6** | AI Upscaler & Enhancer | Real-ESRGAN Compact (ncnn/ONNX, Tiled) | BSD-3 | ✅ **COMPLETED** |
 | **7** | **RENDER** | Unified Preview & Export Parity | Transforms, Gaps, Compositor, Real-ESRGAN | Internal | ✅ **COMPLETED** (`7fb2867`) |
-| **8** | **AI-SUITE** | Built-in AI Suite (Silence Cut, Scene Split, Optical Track, Auto-Reframe) | Silero/Energy VAD, Shot Boundary, MediaPipe | MIT / Apache-2.0 | ✅ **COMPLETED** (`b5830a5`) |
-| **9** | **UI-PRO** | Professional UI Hierarchy & Ergonomic Overhaul | CapCut Pro 2-tier dock, AI Suite, Live Header, Export Pill | Internal | ✅ **COMPLETED** |
+| **9** | **UI-PRO** | Professional UI Hierarchy & Ergonomic Overhaul | CapCut Pro 2-tier dock, AI Suite, Live Header, Export Pill | Internal | ✅ **COMPLETED** (`04689a6`) |
+| **10** | **APK-UI** | Full APK Home Shell & 4-Tab Navigation Overhaul | CapCut Pro 4-tab shell, AI Studio tab, Studio tab, System tab | Internal | ✅ **COMPLETED** |
 
 ---
 
@@ -236,6 +236,30 @@ If this environment restarts or your session closes abruptly, follow this 4-step
   - Enhanced "Live Peek" floating action bar with electric purple restore controls button.
 - [x] **Step 9.5: Linter & Architectural Verification**
   - Scanned 343 Dart files with `python scripts/verify_codebase.py`: **100% CLEAN**.
+
+---
+
+### Phase 10: Full APK Home Shell & 4-Tab Navigation Overhaul ✅ [COMPLETED]
+**Goal:** Transform the entry-level APK experience into a flagship commercial video editor with a 4-tab bottom navigation shell, dedicated AI Studio showcase, creative studio tools, hardware telemetry diagnostics, and polished project cards.
+
+#### Task Checklist:
+- [x] **Step 10.1: CapCut Pro 4-Tab Navigation Architecture**
+  - Added bottom `NavigationBar` on `HomeScreen` with 4 dedicated tabs:
+    1. 🎬 **Edit**: Hero New Project banner, instant aspect ratio chips, quick creator shortcuts, search & filtered recent projects.
+    2. 🤖 **AI Studio**: Complete on-device neural engine showcase (Speech AI, Motion AI, Vision AI, Real-ESRGAN Upscaler).
+    3. 🎨 **Studio**: Creative visual tools (Cover maker, Split screen multi-grid, 3D Parallax, Doodle brush, Pro Color Wheels, Sound FX).
+    4. ⚙️ **System**: Real-time hardware telemetry (RAM, cores, tier, storage), offline privacy guarantee, open-source licenses dialog.
+- [x] **Step 10.2: Dedicated Modular Tab Widgets**
+  - Created `AiStudioTab` (`lib/features/home/presentation/widgets/ai_studio_tab.dart`).
+  - Created `CreativeStudioTab` (`lib/features/home/presentation/widgets/creative_studio_tab.dart`).
+  - Created `SystemSpecsTab` (`lib/features/home/presentation/widgets/system_specs_tab.dart`).
+- [x] **Step 10.3: Modernized Project Card with Aspect Frames & Delete Guard**
+  - Upgraded `ProjectCard` with aspect-ratio-accurate preview container (`9:16`, `16:9`, `1:1`), monospace duration badge, 1080P/4K resolution tag, and safety delete confirmation dialog.
+- [x] **Step 10.4: Version Bump for Automated CI/CD Release**
+  - Updated `pubspec.yaml` to `1.0.72+73`.
+  - Updated `scripts/configure_android.py` to `versionCode = 73` and `versionName = "1.0.72"`.
+- [x] **Step 10.5: Architectural Verification**
+  - Scanned 346 Dart files with `python scripts/verify_codebase.py`: **100% CLEAN**.
 
 ---
 
