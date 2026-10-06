@@ -597,6 +597,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openAudioRecorderModal();
         break;
 
+      case EditorTool.aiColorEnhance:
+        _openAiColorEnhanceModal();
+        break;
+
+      case EditorTool.aiSilenceRemover:
+        _openAiSilenceRemoverModal();
+        break;
+
+      case EditorTool.aiSceneSplit:
+        _openAiSceneSplitModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -830,6 +842,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openColorGradingModal() {
     _openDockedTool(EditorTool.color, trackType: TrackType.video, purpose: 'Color');
+  }
+
+  void _openAiColorEnhanceModal() {
+    _openDockedTool(EditorTool.aiColorEnhance, trackType: TrackType.video, purpose: 'AI Color & Tone');
+  }
+
+  void _openAiSilenceRemoverModal() {
+    _openDockedTool(EditorTool.aiSilenceRemover, trackType: TrackType.video, purpose: 'AI Silence Remover');
+  }
+
+  void _openAiSceneSplitModal() {
+    _openDockedTool(EditorTool.aiSceneSplit, trackType: TrackType.video, purpose: 'AI Scene Cut Detector');
   }
 
   void _openAudioToolsModal() {

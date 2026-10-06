@@ -59,6 +59,9 @@ enum EditorTool {
   reverseClip,
   extractAudio,
   audioRecord,
+  aiColorEnhance,
+  aiSilenceRemover,
+  aiSceneSplit,
 }
 
 class EditorState {

@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../models/clip.dart';
 import '../../models/color_grading_config.dart';
+import '../../services/ai_color_enhancer_service.dart';
 import 'color_scopes_widget.dart';
 import 'color_wheel_widget.dart';
 import 'tone_curve_editor.dart';
@@ -77,6 +78,25 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
     _applyChange();
   }
 
+  void _applyAiAutoBalance([AiColorMode mode = AiColorMode.smartAuto]) {
+    final enhanced = AiColorEnhancerService.computeEnhancement(
+      baseConfig: _config,
+      mode: mode,
+      intensity: 1.0,
+    );
+    setState(() {
+      _config = enhanced;
+    });
+    _applyChange();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${mode.label} Applied: dynamic range, contrast & balance optimized!'),
+        duration: const Duration(milliseconds: 1200),
+        backgroundColor: AppColors.primary,
+      ),
+    );
+  }
+
   void _resetAll() {
     setState(() {
       _config = const ColorGradingConfig();
@@ -125,6 +145,31 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
                       ),
                       Row(
                         children: [
+                          InkWell(
+                            borderRadius: BorderRadius.circular(6),
+                            onTap: () => _applyAiAutoBalance(),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [AppColors.primary, AppColors.accent],
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.auto_awesome, size: 12, color: Colors.white),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'AI Auto',
+                                    style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
                           if (_config.isGraded)
                             TextButton(
                               onPressed: _resetAll,
@@ -242,6 +287,61 @@ class _ColorGradingSheetState extends State<ColorGradingSheet> with SingleTicker
   Widget _buildLooksTab() {
     return Column(
       children: [
+        // AI Auto Tone Quick Presets
+        Container(
+          margin: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.primary.withOpacity(0.18), AppColors.accent.withOpacity(0.12)],
+            ),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.accent.withOpacity(0.35)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.auto_awesome, color: AppColors.accent, size: 14),
+                  SizedBox(width: 6),
+                  Text(
+                    '1-TAP AI COLOR INTELLIGENCE (OFFLINE)',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.accent, letterSpacing: 0.5),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 32,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: AiColorMode.values.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 6),
+                  itemBuilder: (context, i) {
+                    final mode = AiColorMode.values[i];
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: () => _applyAiAutoBalance(mode),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceElevated,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Text(
+                          mode.label,
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
         if (_config.activeLut != LutPreset.none)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),

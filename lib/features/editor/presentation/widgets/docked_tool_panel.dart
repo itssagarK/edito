@@ -10,6 +10,9 @@ import '../../../character_zoom/presentation/widgets/character_zoom_sheet.dart';
 import '../../../chroma/presentation/widgets/chroma_key_sheet.dart';
 import '../../../cutout/presentation/widgets/smart_cutout_sheet.dart';
 import '../../../color_grading/presentation/widgets/color_grading_sheet.dart';
+import '../../../color_grading/presentation/widgets/ai_auto_color_sheet.dart';
+import '../../../audio/presentation/widgets/ai_silence_remover_sheet.dart';
+import '../../../timeline/presentation/widgets/ai_scene_detector_sheet.dart';
 import '../../../enhancement/presentation/widgets/video_enhancement_sheet.dart';
 import '../../../hd_converter/presentation/widgets/hd_converter_sheet.dart';
 import '../../../highlight/presentation/widgets/character_highlight_sheet.dart';
@@ -178,6 +181,12 @@ class DockedToolPanel extends StatelessWidget {
         return 'Extract Audio Track';
       case EditorTool.audioRecord:
         return 'Voiceover Studio';
+      case EditorTool.aiColorEnhance:
+        return 'AI Auto-Color & Tone';
+      case EditorTool.aiSilenceRemover:
+        return 'AI Silence Jump-Cut';
+      case EditorTool.aiSceneSplit:
+        return 'AI Scene Cut Detector';
       default:
         return tool.name.toUpperCase();
     }
@@ -281,6 +290,12 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.music_note;
       case EditorTool.audioRecord:
         return Icons.mic;
+      case EditorTool.aiColorEnhance:
+        return Icons.auto_awesome;
+      case EditorTool.aiSilenceRemover:
+        return Icons.content_cut;
+      case EditorTool.aiSceneSplit:
+        return Icons.movie_filter;
       default:
         return Icons.edit;
     }
@@ -945,6 +960,45 @@ class DockedToolPanel extends StatelessWidget {
         return TransformStudioSheet(
           clip: clip,
           onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.aiColorEnhance:
+        return AiAutoColorSheet(
+          clip: clip,
+          project: project,
+          onSave: (updatedClip, {bool applyToAll = false}) {
+            if (applyToAll) {
+              final updatedTracks = project.tracks.map((track) {
+                final updatedClips = track.clips.map((c) {
+                  return c.copyWith(colorGrading: updatedClip.colorGrading);
+                }).toList();
+                return track.copyWith(clips: updatedClips);
+              }).toList();
+              onSaveProject(project.copyWith(tracks: updatedTracks));
+            } else {
+              onSaveClip(updatedClip);
+            }
+          },
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.aiSilenceRemover:
+        return AiSilenceRemoverSheet(
+          clip: clip,
+          project: project,
+          onProjectUpdated: onSaveProject,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.aiSceneSplit:
+        return AiSceneDetectorSheet(
+          clip: clip,
+          project: project,
+          onProjectUpdated: onSaveProject,
           isDocked: true,
           onDone: onClose,
         );
