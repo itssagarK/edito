@@ -57,6 +57,8 @@ import '../../../vfx/models/luma_key_config.dart';
 import '../../../vfx/models/matrix_rain_config.dart';
 import '../../../vfx/models/echo_motion_config.dart';
 import '../../../vfx/models/ascii_art_config.dart';
+import '../../../vfx/models/radial_zoom_blur_config.dart';
+import '../../../vfx/models/cyber_hud_config.dart';
 import '../../../vfx/services/vfx_compiler_service.dart';
 import '../../../vfx/presentation/widgets/vfx_preview_wrapper.dart';
 import '../../../../models/clip.dart';
@@ -1395,6 +1397,10 @@ class RealtimePreviewViewport extends ConsumerWidget {
           _buildEchoMotionOverlay(clip.echoMotion, currentPositionMs - clip.timelineInMs),
         if (clip.asciiArt.isActive)
           _buildAsciiArtOverlay(clip.asciiArt, currentPositionMs - clip.timelineInMs),
+        if (clip.radialZoomBlur.isActive)
+          _buildRadialZoomBlurOverlay(clip.radialZoomBlur, currentPositionMs - clip.timelineInMs),
+        if (clip.cyberHud.isActive)
+          _buildCyberHudOverlay(clip.cyberHud, currentPositionMs - clip.timelineInMs),
       ],
     );
   }
@@ -2429,6 +2435,38 @@ class RealtimePreviewViewport extends ConsumerWidget {
       child: IgnorePointer(
         child: CustomPaint(
           painter: _ViewportAsciiArtPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRadialZoomBlurOverlay(RadialZoomBlurConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 2000.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportRadialZoomBlurPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCyberHudOverlay(CyberHudConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 3000.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportCyberHudPainter(
             config: config,
             phase: phase,
           ),
@@ -4120,6 +4158,164 @@ class _ViewportAsciiArtPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ViewportAsciiArtPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
+class _ViewportRadialZoomBlurPainter extends CustomPainter {
+  final RadialZoomBlurConfig config;
+  final double phase;
+
+  _ViewportRadialZoomBlurPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0 || !config.isActive) return;
+
+    final center = Offset(size.width * config.centerX, size.height * config.centerY);
+    final pulse = config.isPulsing ? (1.0 + 0.25 * math.sin(phase * 2 * math.pi)) : 1.0;
+    final blurScale = config.blurAmount * pulse;
+    final rayCount = (config.sampleQuality * 3).clamp(12, 36);
+    final spinRad = config.rotationSpin * math.pi / 180.0;
+
+    Color accentColor;
+    switch (config.mode) {
+      case RadialZoomBlurMode.hyperspaceWarp:
+        accentColor = const Color(0xFF00E5FF);
+        break;
+      case RadialZoomBlurMode.actionImpactZoom:
+        accentColor = const Color(0xFFFF5252);
+        break;
+      case RadialZoomBlurMode.anamorphicVortex:
+        accentColor = const Color(0xFFE040FB);
+        break;
+      case RadialZoomBlurMode.subtleFocusPunch:
+        accentColor = const Color(0xFFFFD700);
+        break;
+      case RadialZoomBlurMode.dizzySpin:
+        accentColor = const Color(0xFF69F0AE);
+        break;
+    }
+
+    // Radiating speed lines
+    for (int i = 0; i < rayCount; i++) {
+      final angle = (i * 2 * math.pi / rayCount) + (phase * spinRad * 0.3);
+      final rayDist = math.max(size.width, size.height) * 0.8;
+      final rayAlpha = (0.15 + 0.35 * math.sin(i * 1.7).abs()) * blurScale;
+
+      final start = Offset(
+        center.dx + math.cos(angle) * 16.0,
+        center.dy + math.sin(angle) * 16.0,
+      );
+
+      final end = Offset(
+        center.dx + math.cos(angle + spinRad * 0.1) * rayDist,
+        center.dy + math.sin(angle + spinRad * 0.1) * rayDist,
+      );
+
+      final rayPaint = Paint()
+        ..shader = LinearGradient(
+          colors: [
+            accentColor.withOpacity(rayAlpha.clamp(0.0, 0.7)),
+            accentColor.withOpacity(0.0),
+          ],
+        ).createShader(Rect.fromPoints(start, end))
+        ..strokeWidth = 1.5 + blurScale * 1.5
+        ..strokeCap = StrokeCap.round;
+
+      canvas.drawLine(start, end, rayPaint);
+    }
+
+    // Concentric focus ring
+    final ringRadius = (phase * 80.0 * blurScale) + 12.0;
+    final ringPaint = Paint()
+      ..color = accentColor.withOpacity((1.0 - phase) * 0.4 * blurScale)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    canvas.drawCircle(center, ringRadius, ringPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportRadialZoomBlurPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
+class _ViewportCyberHudPainter extends CustomPainter {
+  final CyberHudConfig config;
+  final double phase;
+
+  _ViewportCyberHudPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0 || !config.isActive) return;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final hudColor = config.color.color;
+    final op = config.opacity;
+    final scale = config.scale;
+
+    // Scanlines
+    if (config.scanlines) {
+      final scanPaint = Paint()
+        ..color = hudColor.withOpacity(0.07 * op)
+        ..strokeWidth = 1.0;
+      for (double y = 0; y < size.height; y += 4) {
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), scanPaint);
+      }
+    }
+
+    // Corner brackets
+    final bracketPaint = Paint()
+      ..color = hudColor.withOpacity(0.75 * op)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    const bLen = 20.0;
+    const bPad = 10.0;
+
+    canvas.drawLine(const Offset(bPad, bPad), const Offset(bPad + bLen, bPad), bracketPaint);
+    canvas.drawLine(const Offset(bPad, bPad), const Offset(bPad, bPad + bLen), bracketPaint);
+    canvas.drawLine(Offset(size.width - bPad, bPad), Offset(size.width - bPad - bLen, bPad), bracketPaint);
+    canvas.drawLine(Offset(size.width - bPad, bPad), Offset(size.width - bPad, bPad + bLen), bracketPaint);
+    canvas.drawLine(Offset(bPad, size.height - bPad), Offset(bPad + bLen, size.height - bPad), bracketPaint);
+    canvas.drawLine(Offset(bPad, size.height - bPad), Offset(bPad, size.height - bPad - bLen), bracketPaint);
+    canvas.drawLine(Offset(size.width - bPad, size.height - bPad), Offset(size.width - bPad - bLen, size.height - bPad), bracketPaint);
+    canvas.drawLine(Offset(size.width - bPad, size.height - bPad), Offset(size.width - bPad, size.height - bPad - bLen), bracketPaint);
+
+    // Center reticle
+    final ringRadius = 45.0 * scale;
+    final ringPaint = Paint()
+      ..color = hudColor.withOpacity(0.35 * op)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    canvas.drawCircle(center, ringRadius, ringPaint);
+
+    // Sweep arm
+    final sweepAngle = (phase * 2 * math.pi * config.sweepSpeed) % (2 * math.pi);
+    final sweepArm = Offset(
+      center.dx + math.cos(sweepAngle) * ringRadius,
+      center.dy + math.sin(sweepAngle) * ringRadius,
+    );
+    canvas.drawLine(center, sweepArm, Paint()..color = hudColor.withOpacity(0.8 * op)..strokeWidth = 1.5);
+
+    // Center crosshair
+    final chPaint = Paint()..color = hudColor.withOpacity(0.9 * op)..strokeWidth = 1.5;
+    canvas.drawLine(center.translate(-12, 0), center.translate(-4, 0), chPaint);
+    canvas.drawLine(center.translate(4, 0), center.translate(12, 0), chPaint);
+    canvas.drawLine(center.translate(0, -12), center.translate(0, -4), chPaint);
+    canvas.drawLine(center.translate(0, 4), center.translate(0, 12), chPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportCyberHudPainter oldDelegate) {
     return oldDelegate.config != config || oldDelegate.phase != phase;
   }
 }

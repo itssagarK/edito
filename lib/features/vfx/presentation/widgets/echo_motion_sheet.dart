@@ -60,8 +60,6 @@ class _EchoMotionSheetState extends State<EchoMotionSheet>
     )..repeat();
   }
 
-  @override
-  void dispose巨() {}
 
   @override
   void dispose() {

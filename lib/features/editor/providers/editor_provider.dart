@@ -101,6 +101,9 @@ enum EditorTool {
   echoMotion,
   asciiArt,
   subBassExciter,
+  radialZoomBlur,
+  cyberHud,
+  binauralAutoPan,
 }
 
 class EditorState {

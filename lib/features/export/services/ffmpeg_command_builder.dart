@@ -57,6 +57,9 @@ import '../../audio/services/ring_modulator_compiler_service.dart';
 import '../../vfx/services/echo_motion_compiler_service.dart';
 import '../../vfx/services/ascii_art_compiler_service.dart';
 import '../../audio/services/sub_bass_exciter_compiler_service.dart';
+import '../../vfx/services/radial_zoom_blur_compiler_service.dart';
+import '../../vfx/services/cyber_hud_compiler_service.dart';
+import '../../audio/services/binaural_auto_pan_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
 import '../../image_editor/services/pip_compiler_service.dart';
 import '../../cutout/services/smart_cutout_compiler_service.dart';
@@ -769,6 +772,30 @@ class FFmpegCommandBuilder {
           }
         }
 
+        // Anamorphic Optics: Radial Zoom Blur & Rotational Vortex
+        if (clip.radialZoomBlur.isActive) {
+          final radialFilter = RadialZoomBlurCompilerService.compileFilter(
+            clip.radialZoomBlur,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (radialFilter.isNotEmpty) {
+            vFilters.add(radialFilter);
+          }
+        }
+
+        // Sci-Fi VFX: Cyber HUD Hologram Grid & Tactical Reticle
+        if (clip.cyberHud.isActive) {
+          final hudFilter = CyberHudCompilerService.compileFilter(
+            clip.cyberHud,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (hudFilter.isNotEmpty) {
+            vFilters.add(hudFilter);
+          }
+        }
+
         // Smart AI Cutout Studio & Glowing Neon Outlines
         if (clip.smartCutout.isEnabled) {
           final cutoutFilters = SmartCutoutCompilerService.generateFFmpegFilters(
@@ -1084,6 +1111,14 @@ class FFmpegCommandBuilder {
           final subFilter = SubBassExciterCompilerService.compileFilter(clip.subBassExciter);
           if (subFilter.isNotEmpty) {
             aFilters.add(subFilter);
+          }
+        }
+
+        // Spatial Audio Dynamics: 3D Binaural Auto-Pan & Doppler Swell
+        if (clip.binauralAutoPan.isActive) {
+          final panFilter = BinauralAutoPanCompilerService.compileFilter(clip.binauralAutoPan);
+          if (panFilter.isNotEmpty) {
+            aFilters.add(panFilter);
           }
         }
 

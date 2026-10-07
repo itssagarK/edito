@@ -768,6 +768,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openSubBassExciterModal();
         break;
 
+      case EditorTool.radialZoomBlur:
+        _openRadialZoomBlurModal();
+        break;
+
+      case EditorTool.cyberHud:
+        _openCyberHudModal();
+        break;
+
+      case EditorTool.binauralAutoPan:
+        _openBinauralAutoPanModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1169,6 +1181,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openSubBassExciterModal() {
     _openDockedTool(EditorTool.subBassExciter, trackType: TrackType.audio, purpose: 'Sub-Bass 808 Saturator & Harmonic Exciter');
+  }
+
+  void _openRadialZoomBlurModal() {
+    _openDockedTool(EditorTool.radialZoomBlur, trackType: TrackType.video, purpose: 'Radial Zoom Blur & Rotational Vortex');
+  }
+
+  void _openCyberHudModal() {
+    _openDockedTool(EditorTool.cyberHud, trackType: TrackType.video, purpose: 'Cyber HUD Hologram Grid & Tactical Reticle');
+  }
+
+  void _openBinauralAutoPanModal() {
+    _openDockedTool(EditorTool.binauralAutoPan, trackType: TrackType.audio, purpose: '3D Binaural Auto-Pan & Doppler Swell');
   }
 
   void _openAudioToolsModal() {

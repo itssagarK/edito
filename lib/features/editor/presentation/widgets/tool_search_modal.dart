@@ -747,6 +747,30 @@ class _ToolSearchModalState extends State<ToolSearchModal> {
       icon: Icons.speaker_group_rounded,
       keywords: ['sub bass', '808', 'bass', 'sub', 'low end', 'exciter', 'maxxbass', 'harmonics', 'saturation', 'punch', 'rumble', 'audio', 'sound', 'dsp'],
     ),
+    _SearchableTool(
+      tool: EditorTool.radialZoomBlur,
+      title: 'Radial Zoom Blur & Rotational Vortex',
+      category: 'Visuals',
+      description: 'High-velocity radial zoom shockwave impulse, angular rotational swirl blur, starburst bloom, and interactive focal center reticle',
+      icon: Icons.blur_circular_rounded,
+      keywords: ['radial blur', 'zoom blur', 'vortex', 'spin', 'hyperspace', 'warp', 'shockwave', 'impact', 'speed lines', 'anamorphic', 'blur', 'vfx'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.cyberHud,
+      title: 'Cyber HUD Hologram Grid & Tactical Reticle',
+      category: 'Visuals',
+      description: 'Sci-fi holographic target lock brackets, 360° rotating radar sweep arm, flight avionics telemetry, and CRT phosphor scanlines',
+      icon: Icons.gps_fixed_rounded,
+      keywords: ['cyber hud', 'hud', 'reticle', 'target', 'lock', 'radar', 'sonar', 'telemetry', 'hologram', 'sci-fi', 'futuristic', 'avionics', 'tactical', 'vfx'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.binauralAutoPan,
+      title: '3D Binaural Auto-Pan & Doppler Swell',
+      category: 'Audio',
+      description: 'Continuous 360° binaural soundstage orbit around listener head, pendulum swing, physical Doppler pitch shift, and brickwall ceiling limiter',
+      icon: Icons.surround_sound_rounded,
+      keywords: ['binaural', 'auto pan', 'pan', 'doppler', '3d audio', 'spatial', 'orbit', 'pendulum', 'stereo', 'headphones', 'soundstage', 'audio', 'sound', 'dsp'],
+    ),
   ];
 
   @override

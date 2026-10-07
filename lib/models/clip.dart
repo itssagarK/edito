@@ -75,6 +75,9 @@ import '../features/audio/models/ring_modulator_config.dart';
 import '../features/vfx/models/echo_motion_config.dart';
 import '../features/vfx/models/ascii_art_config.dart';
 import '../features/audio/models/sub_bass_exciter_config.dart';
+import '../features/vfx/models/radial_zoom_blur_config.dart';
+import '../features/vfx/models/cyber_hud_config.dart';
+import '../features/audio/models/binaural_auto_pan_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -168,6 +171,9 @@ class Clip extends Equatable {
   final EchoMotionConfig echoMotion;
   final AsciiArtConfig asciiArt;
   final SubBassExciterConfig subBassExciter;
+  final RadialZoomBlurConfig radialZoomBlur;
+  final CyberHudConfig cyberHud;
+  final BinauralAutoPanConfig binauralAutoPan;
 
   const Clip({
     required this.id,
@@ -261,6 +267,9 @@ class Clip extends Equatable {
     this.echoMotion = const EchoMotionConfig(),
     this.asciiArt = const AsciiArtConfig(),
     this.subBassExciter = const SubBassExciterConfig(),
+    this.radialZoomBlur = const RadialZoomBlurConfig(),
+    this.cyberHud = const CyberHudConfig(),
+    this.binauralAutoPan = const BinauralAutoPanConfig(),
   });
 
   Clip copyWith({
@@ -355,6 +364,9 @@ class Clip extends Equatable {
     EchoMotionConfig? echoMotion,
     AsciiArtConfig? asciiArt,
     SubBassExciterConfig? subBassExciter,
+    RadialZoomBlurConfig? radialZoomBlur,
+    CyberHudConfig? cyberHud,
+    BinauralAutoPanConfig? binauralAutoPan,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -448,6 +460,9 @@ class Clip extends Equatable {
       echoMotion: echoMotion ?? this.echoMotion,
       asciiArt: asciiArt ?? this.asciiArt,
       subBassExciter: subBassExciter ?? this.subBassExciter,
+      radialZoomBlur: radialZoomBlur ?? this.radialZoomBlur,
+      cyberHud: cyberHud ?? this.cyberHud,
+      binauralAutoPan: binauralAutoPan ?? this.binauralAutoPan,
     );
   }
 
@@ -543,6 +558,9 @@ class Clip extends Equatable {
         'echoMotion': echoMotion.toJson(),
         'asciiArt': asciiArt.toJson(),
         'subBassExciter': subBassExciter.toJson(),
+        'radialZoomBlur': radialZoomBlur.toJson(),
+        'cyberHud': cyberHud.toJson(),
+        'binauralAutoPan': binauralAutoPan.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -794,6 +812,15 @@ class Clip extends Equatable {
         subBassExciter: json['subBassExciter'] != null
             ? SubBassExciterConfig.fromJson(json['subBassExciter'] as Map<String, dynamic>)
             : const SubBassExciterConfig(),
+        radialZoomBlur: json['radialZoomBlur'] != null
+            ? RadialZoomBlurConfig.fromJson(json['radialZoomBlur'] as Map<String, dynamic>)
+            : const RadialZoomBlurConfig(),
+        cyberHud: json['cyberHud'] != null
+            ? CyberHudConfig.fromJson(json['cyberHud'] as Map<String, dynamic>)
+            : const CyberHudConfig(),
+        binauralAutoPan: json['binauralAutoPan'] != null
+            ? BinauralAutoPanConfig.fromJson(json['binauralAutoPan'] as Map<String, dynamic>)
+            : const BinauralAutoPanConfig(),
       );
 
   @override
@@ -889,5 +916,8 @@ class Clip extends Equatable {
         echoMotion,
         asciiArt,
         subBassExciter,
+        radialZoomBlur,
+        cyberHud,
+        binauralAutoPan,
       ];
 }

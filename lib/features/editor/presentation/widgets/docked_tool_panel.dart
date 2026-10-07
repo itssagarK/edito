@@ -91,6 +91,9 @@ import '../../../audio/presentation/widgets/ring_modulator_sheet.dart';
 import '../../../vfx/presentation/widgets/echo_motion_sheet.dart';
 import '../../../vfx/presentation/widgets/ascii_art_sheet.dart';
 import '../../../audio/presentation/widgets/sub_bass_exciter_sheet.dart';
+import '../../../vfx/presentation/widgets/radial_zoom_blur_sheet.dart';
+import '../../../vfx/presentation/widgets/cyber_hud_sheet.dart';
+import '../../../audio/presentation/widgets/binaural_auto_pan_sheet.dart';
 import '../../../overlays/presentation/widgets/typewriter_title_sheet.dart';
 import '../../../transform/presentation/widgets/transform_studio_sheet.dart';
 
@@ -304,6 +307,12 @@ class DockedToolPanel extends StatelessWidget {
         return 'ASCII Terminal Matrix';
       case EditorTool.subBassExciter:
         return 'Sub-Bass 808 Exciter';
+      case EditorTool.radialZoomBlur:
+        return 'Radial Zoom Blur';
+      case EditorTool.cyberHud:
+        return 'Cyber HUD Reticle';
+      case EditorTool.binauralAutoPan:
+        return '3D Binaural Auto-Pan';
       default:
         return tool.name.toUpperCase();
     }
@@ -491,6 +500,12 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.terminal_rounded;
       case EditorTool.subBassExciter:
         return Icons.speaker_group_rounded;
+      case EditorTool.radialZoomBlur:
+        return Icons.blur_circular_rounded;
+      case EditorTool.cyberHud:
+        return Icons.gps_fixed_rounded;
+      case EditorTool.binauralAutoPan:
+        return Icons.surround_sound_rounded;
       default:
         return Icons.edit;
     }
@@ -1507,6 +1522,30 @@ class DockedToolPanel extends StatelessWidget {
 
       case EditorTool.subBassExciter:
         return SubBassExciterSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.radialZoomBlur:
+        return RadialZoomBlurSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.cyberHud:
+        return CyberHudSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.binauralAutoPan:
+        return BinauralAutoPanSheet(
           clip: clip,
           onSave: onSaveClip,
           isDocked: true,
