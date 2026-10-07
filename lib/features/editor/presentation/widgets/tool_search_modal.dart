@@ -675,6 +675,30 @@ class _ToolSearchModalState extends State<ToolSearchModal> {
       icon: Icons.graphic_eq_rounded,
       keywords: ['stutter', 'repeater', 'buffer', 'glitch', 'drill', 'beat', 'rhythm', 'tape stop', 'pitch drop', 'accelerando', 'gate', 'chop', 'audio', 'sound'],
     ),
+    _SearchableTool(
+      tool: EditorTool.pixelSort,
+      title: 'Pixel Sort & Digital Streak Glitch',
+      category: 'Visuals',
+      description: 'Luminance threshold pixel sorting, directional digital data streaks, horizontal tearing, radiant bursts, and Skia Canvas monitor',
+      icon: Icons.waterfall_chart_rounded,
+      keywords: ['pixel sort', 'pixelsort', 'glitch', 'streak', 'data', 'tear', 'cyberpunk', 'displacement', 'luminance', 'threshold', 'vfx', 'digital'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.posterizePop,
+      title: 'Posterize & Warhol Pop Art',
+      category: 'Visuals',
+      description: 'Discrete color quantization (2 to 16 levels), Andy Warhol silk-screen pop art, comic book inked shading, and duotone posterization',
+      icon: Icons.palette,
+      keywords: ['posterize', 'pop art', 'warhol', 'quantize', 'comic', 'ink', 'duotone', '8-bit', 'retro', 'noir', 'silk screen', 'tonal', 'color levels'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.jetFlanger,
+      title: 'Jet Flanger & Barberpole Frequency Phaser',
+      category: 'Audio',
+      description: 'Resonant comb-filter sweeping simulating jet aircraft flybys, infinite barberpole phasing, metallic robotic ringing, and brickwall limiter',
+      icon: Icons.air,
+      keywords: ['flanger', 'phaser', 'jet', 'comb filter', 'barberpole', 'metallic', 'resonance', 'feedback', 'shepard', 'stereo', 'audio', 'sound', 'dsp'],
+    ),
   ];
 
   @override

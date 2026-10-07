@@ -51,6 +51,8 @@ import '../../../vfx/models/tilt_shift_config.dart';
 import '../../../vfx/models/neon_glow_config.dart';
 import '../../../vfx/models/chromatic_aberration_config.dart';
 import '../../../vfx/models/solarize_invert_config.dart';
+import '../../../vfx/models/pixel_sort_config.dart';
+import '../../../vfx/models/posterize_pop_config.dart';
 import '../../../vfx/services/vfx_compiler_service.dart';
 import '../../../vfx/presentation/widgets/vfx_preview_wrapper.dart';
 import '../../../../models/clip.dart';
@@ -1377,6 +1379,10 @@ class RealtimePreviewViewport extends ConsumerWidget {
           _buildChromaticAberrationOverlay(clip.chromaticAberration, currentPositionMs - clip.timelineInMs),
         if (clip.solarizeInvert.isActive)
           _buildSolarizeInvertOverlay(clip.solarizeInvert, currentPositionMs - clip.timelineInMs),
+        if (clip.pixelSort.isActive)
+          _buildPixelSortOverlay(clip.pixelSort, currentPositionMs - clip.timelineInMs),
+        if (clip.posterizePop.isActive)
+          _buildPosterizePopOverlay(clip.posterizePop, currentPositionMs - clip.timelineInMs),
       ],
     );
   }
@@ -2315,6 +2321,38 @@ class RealtimePreviewViewport extends ConsumerWidget {
       child: IgnorePointer(
         child: CustomPaint(
           painter: _ViewportSolarizeInvertPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPixelSortOverlay(PixelSortConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 2000.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportPixelSortPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPosterizePopOverlay(PosterizePopConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 3000.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportPosterizePopPainter(
             config: config,
             phase: phase,
           ),
@@ -3636,6 +3674,159 @@ class _ViewportSolarizeInvertPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ViewportSolarizeInvertPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
+class _ViewportPixelSortPainter extends CustomPainter {
+  final PixelSortConfig config;
+  final double phase;
+
+  _ViewportPixelSortPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0 || !config.isActive) return;
+
+    final streakPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..blendMode = BlendMode.screen;
+
+    final streakCount = (24 * config.streakLength).round().clamp(8, 48);
+    final random = math.Random((config.threshold * 100).round() + 42);
+
+    for (int i = 0; i < streakCount; i++) {
+      final xPct = (random.nextDouble() + phase * 0.15) % 1.0;
+      final yPct = (random.nextDouble() + phase * 0.25) % 1.0;
+      final width = 2.0 + random.nextDouble() * 6.0;
+      final len = (30.0 + random.nextDouble() * 120.0) * config.streakLength;
+
+      Color streakColor;
+      switch (config.mode) {
+        case PixelSortMode.verticalDown:
+          streakColor = Color.lerp(Colors.cyanAccent, Colors.white, random.nextDouble())!;
+          streakPaint.color = streakColor.withOpacity((0.35 * config.streakLength).clamp(0.05, 0.7));
+          canvas.drawRect(
+            Rect.fromLTWH(xPct * size.width, yPct * size.height, width, len),
+            streakPaint,
+          );
+          break;
+
+        case PixelSortMode.horizontalTear:
+          streakColor = Color.lerp(Colors.redAccent, Colors.white, random.nextDouble())!;
+          streakPaint.color = streakColor.withOpacity((0.35 * config.streakLength).clamp(0.05, 0.7));
+          canvas.drawRect(
+            Rect.fromLTWH(xPct * size.width, yPct * size.height, len, width),
+            streakPaint,
+          );
+          break;
+
+        case PixelSortMode.diagonalSlant:
+          streakColor = Color.lerp(Colors.purpleAccent, Colors.cyanAccent, random.nextDouble())!;
+          streakPaint.color = streakColor.withOpacity((0.35 * config.streakLength).clamp(0.05, 0.7));
+          canvas.save();
+          canvas.translate(xPct * size.width, yPct * size.height);
+          canvas.rotate(config.angleDeg * math.pi / 180.0);
+          canvas.drawRect(Rect.fromLTWH(0, 0, width, len), streakPaint);
+          canvas.restore();
+          break;
+
+        case PixelSortMode.radiantBurst:
+          streakColor = Color.lerp(Colors.amberAccent, Colors.yellow, random.nextDouble())!;
+          streakPaint.color = streakColor.withOpacity((0.30 * config.streakLength).clamp(0.05, 0.6));
+          final angle = (i / streakCount) * 2 * math.pi + (phase * math.pi * 0.5);
+          canvas.save();
+          canvas.translate(size.width * 0.5, size.height * 0.5);
+          canvas.rotate(angle);
+          canvas.drawRect(Rect.fromLTWH(0, 0, width, len), streakPaint);
+          canvas.restore();
+          break;
+
+        case PixelSortMode.thresholdBand:
+          streakColor = Color.lerp(Colors.lightGreenAccent, Colors.white, random.nextDouble())!;
+          streakPaint.color = streakColor.withOpacity((0.35 * config.streakLength).clamp(0.05, 0.7));
+          canvas.drawRect(
+            Rect.fromLTWH(0, yPct * size.height, size.width, width * 1.5),
+            streakPaint,
+          );
+          break;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportPixelSortPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
+class _ViewportPosterizePopPainter extends CustomPainter {
+  final PosterizePopConfig config;
+  final double phase;
+
+  _ViewportPosterizePopPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0 || !config.isActive) return;
+
+    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+
+    switch (config.mode) {
+      case PosterizePopMode.warholPopArt:
+        final hue = (45.0 + phase * 40.0) % 360.0;
+        final popColor = HSVColor.fromAHSV(1.0, hue, 0.75, 0.95).toColor();
+        final warholPaint = Paint()
+          ..color = popColor.withOpacity((0.25 * (config.saturationBoost - 0.8)).clamp(0.1, 0.5))
+          ..blendMode = BlendMode.color;
+        canvas.drawRect(rect, warholPaint);
+        break;
+
+      case PosterizePopMode.comicBookInk:
+        final comicPaint = Paint()
+          ..color = Colors.amber.withOpacity(0.18)
+          ..blendMode = BlendMode.colorBurn;
+        canvas.drawRect(rect, comicPaint);
+        break;
+
+      case PosterizePopMode.cyberpunkDuotone:
+        final duoPaint = Paint()
+          ..shader = const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0x3300E5FF),
+              Color(0x33FF4081),
+            ],
+          ).createShader(rect)
+          ..blendMode = BlendMode.overlay;
+        canvas.drawRect(rect, duoPaint);
+        break;
+
+      case PosterizePopMode.retro8BitPoster:
+        final retroPaint = Paint()
+          ..color = const Color(0x2800FF66)
+          ..blendMode = BlendMode.hardLight;
+        canvas.drawRect(rect, retroPaint);
+        break;
+
+      case PosterizePopMode.monochromeNoir:
+        final noirPaint = Paint()
+          ..color = Colors.black.withOpacity(0.40)
+          ..blendMode = BlendMode.saturation;
+        canvas.drawRect(rect, noirPaint);
+        break;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportPosterizePopPainter oldDelegate) {
     return oldDelegate.config != config || oldDelegate.phase != phase;
   }
 }

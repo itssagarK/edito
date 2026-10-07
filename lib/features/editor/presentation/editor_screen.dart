@@ -732,6 +732,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openAudioStutterModal();
         break;
 
+      case EditorTool.pixelSort:
+        _openPixelSortModal();
+        break;
+
+      case EditorTool.posterizePop:
+        _openPosterizePopModal();
+        break;
+
+      case EditorTool.jetFlanger:
+        _openJetFlangerModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1097,6 +1109,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openAudioStutterModal() {
     _openDockedTool(EditorTool.audioStutter, trackType: TrackType.audio, purpose: 'Rhythmic Audio Stutter & Beat Repeater');
+  }
+
+  void _openPixelSortModal() {
+    _openDockedTool(EditorTool.pixelSort, trackType: TrackType.video, purpose: 'Pixel Sort & Digital Streak Glitch');
+  }
+
+  void _openPosterizePopModal() {
+    _openDockedTool(EditorTool.posterizePop, trackType: TrackType.video, purpose: 'Posterize & Warhol Pop Art');
+  }
+
+  void _openJetFlangerModal() {
+    _openDockedTool(EditorTool.jetFlanger, trackType: TrackType.audio, purpose: 'Jet Flanger & Barberpole Frequency Phaser');
   }
 
   void _openAudioToolsModal() {

@@ -82,6 +82,9 @@ import '../../../audio/presentation/widgets/pitch_harmonizer_sheet.dart';
 import '../../../vfx/presentation/widgets/chromatic_aberration_sheet.dart';
 import '../../../vfx/presentation/widgets/solarize_invert_sheet.dart';
 import '../../../audio/presentation/widgets/audio_stutter_sheet.dart';
+import '../../../vfx/presentation/widgets/pixel_sort_sheet.dart';
+import '../../../vfx/presentation/widgets/posterize_pop_sheet.dart';
+import '../../../audio/presentation/widgets/jet_flanger_sheet.dart';
 import '../../../overlays/presentation/widgets/typewriter_title_sheet.dart';
 import '../../../transform/presentation/widgets/transform_studio_sheet.dart';
 
@@ -277,6 +280,12 @@ class DockedToolPanel extends StatelessWidget {
         return 'Thermal Solarize & Invert';
       case EditorTool.audioStutter:
         return 'Rhythmic Audio Stutter';
+      case EditorTool.pixelSort:
+        return 'Pixel Sort & Glitch';
+      case EditorTool.posterizePop:
+        return 'Posterize & Pop Art';
+      case EditorTool.jetFlanger:
+        return 'Jet Flanger & Phaser';
       default:
         return tool.name.toUpperCase();
     }
@@ -446,6 +455,12 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.wb_sunny_outlined;
       case EditorTool.audioStutter:
         return Icons.graphic_eq_rounded;
+      case EditorTool.pixelSort:
+        return Icons.waterfall_chart_rounded;
+      case EditorTool.posterizePop:
+        return Icons.palette;
+      case EditorTool.jetFlanger:
+        return Icons.air;
       default:
         return Icons.edit;
     }
@@ -1390,6 +1405,30 @@ class DockedToolPanel extends StatelessWidget {
 
       case EditorTool.audioStutter:
         return AudioStutterSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.pixelSort:
+        return PixelSortSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.posterizePop:
+        return PosterizePopSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.jetFlanger:
+        return JetFlangerSheet(
           clip: clip,
           onSave: onSaveClip,
           isDocked: true,

@@ -66,6 +66,9 @@ import '../features/audio/models/pitch_harmonizer_config.dart';
 import '../features/vfx/models/chromatic_aberration_config.dart';
 import '../features/vfx/models/solarize_invert_config.dart';
 import '../features/audio/models/audio_stutter_config.dart';
+import '../features/vfx/models/pixel_sort_config.dart';
+import '../features/vfx/models/posterize_pop_config.dart';
+import '../features/audio/models/jet_flanger_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -150,6 +153,9 @@ class Clip extends Equatable {
   final ChromaticAberrationConfig chromaticAberration;
   final SolarizeInvertConfig solarizeInvert;
   final AudioStutterConfig audioStutter;
+  final PixelSortConfig pixelSort;
+  final PosterizePopConfig posterizePop;
+  final JetFlangerConfig jetFlanger;
 
   const Clip({
     required this.id,
@@ -234,6 +240,9 @@ class Clip extends Equatable {
     this.chromaticAberration = const ChromaticAberrationConfig(),
     this.solarizeInvert = const SolarizeInvertConfig(),
     this.audioStutter = const AudioStutterConfig(),
+    this.pixelSort = const PixelSortConfig(),
+    this.posterizePop = const PosterizePopConfig(),
+    this.jetFlanger = const JetFlangerConfig(),
   });
 
   Clip copyWith({
@@ -319,6 +328,9 @@ class Clip extends Equatable {
     ChromaticAberrationConfig? chromaticAberration,
     SolarizeInvertConfig? solarizeInvert,
     AudioStutterConfig? audioStutter,
+    PixelSortConfig? pixelSort,
+    PosterizePopConfig? posterizePop,
+    JetFlangerConfig? jetFlanger,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -403,6 +415,9 @@ class Clip extends Equatable {
       chromaticAberration: chromaticAberration ?? this.chromaticAberration,
       solarizeInvert: solarizeInvert ?? this.solarizeInvert,
       audioStutter: audioStutter ?? this.audioStutter,
+      pixelSort: pixelSort ?? this.pixelSort,
+      posterizePop: posterizePop ?? this.posterizePop,
+      jetFlanger: jetFlanger ?? this.jetFlanger,
     );
   }
 
@@ -489,6 +504,9 @@ class Clip extends Equatable {
         'chromaticAberration': chromaticAberration.toJson(),
         'solarizeInvert': solarizeInvert.toJson(),
         'audioStutter': audioStutter.toJson(),
+        'pixelSort': pixelSort.toJson(),
+        'posterizePop': posterizePop.toJson(),
+        'jetFlanger': jetFlanger.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -713,6 +731,15 @@ class Clip extends Equatable {
         audioStutter: json['audioStutter'] != null
             ? AudioStutterConfig.fromJson(json['audioStutter'] as Map<String, dynamic>)
             : const AudioStutterConfig(),
+        pixelSort: json['pixelSort'] != null
+            ? PixelSortConfig.fromJson(json['pixelSort'] as Map<String, dynamic>)
+            : const PixelSortConfig(),
+        posterizePop: json['posterizePop'] != null
+            ? PosterizePopConfig.fromJson(json['posterizePop'] as Map<String, dynamic>)
+            : const PosterizePopConfig(),
+        jetFlanger: json['jetFlanger'] != null
+            ? JetFlangerConfig.fromJson(json['jetFlanger'] as Map<String, dynamic>)
+            : const JetFlangerConfig(),
       );
 
   @override
@@ -799,5 +826,8 @@ class Clip extends Equatable {
         chromaticAberration,
         solarizeInvert,
         audioStutter,
+        pixelSort,
+        posterizePop,
+        jetFlanger,
       ];
 }

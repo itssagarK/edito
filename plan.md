@@ -1,8 +1,8 @@
 # Edito - On-Device AI Features Master Plan & Task Tracker
 
-> **Last Updated:** 2026-10-07  
+> **Last Updated:** 2026-10-08  
 > **Target:** High-Performance, 100% On-Device & Offline AI Video Editing Engine (Edito)  
-> **Status:** Phase 0–22 **ALL COMPLETED** | Dynamic Optics & Audio Stutter Suite Live (v1.0.85+86)  
+> **Status:** Phase 0–23 **ALL COMPLETED** | Glitch Mosaic & Stereo Flanger Dynamic Suite Live (v1.0.86+87)  
 
 ---
 
@@ -63,7 +63,8 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 | **20** | **KALEIDO-GLITCH-TREMOLO**| Prismatic Geometry & Audio Modulation Suite (Kaleidoscope Radial Mirror, Datamosh Glitch, Stereo Tremolo & Auto-Wah) | Skia Reflection / Delta Artifacts / LFO DSP | Internal | ✅ **COMPLETED** (`v1.0.83`) |
 | **21** | **SPATIAL-OPTICS-BINAURAL**| Spatial Optics & Binaural Dynamics Suite (Tilt-Shift Miniature, Edge Glow Neon Hologram, Vocal Pitch Harmonizer) | Skia Canvas / Edge Detect / DSP Pitch Shifter | Internal | ✅ **COMPLETED** (`v1.0.84`) |
 | **22** | **DYNAMIC-OPTICS-STUTTER**| Dynamic Optics & Audio Stutter Suite (RGB Chromatic Glitch, Thermal Solarization Invert, Rhythmic Beat Stutter) | Skia Canvas / Tone Curves / Micro-Buffer DSP | Internal | ✅ **COMPLETED** (`v1.0.85`) |
-| **23** | **PIXEL-SORT-POP-FLANGER**| Glitch Mosaic & Stereo Flanger Dynamic Suite (Pixel Sort Glitch, Posterize Pop Art, Jet Flanger Frequency Phaser) | Skia Canvas / Luminance Sort / Comb DSP | Internal | 🚀 **PLANNED** |
+| **23** | **PIXEL-SORT-POP-FLANGER**| Glitch Mosaic & Stereo Flanger Dynamic Suite (Pixel Sort Glitch, Posterize Pop Art, Jet Flanger Frequency Phaser) | Skia Canvas / Luminance Sort / Comb DSP | Internal | ✅ **COMPLETED** (`v1.0.86`) |
+| **24** | **LUMA-KEY-RING-MOD** | Luma Keying & Metallic Ring Modulator Suite (Luma Silhouette Keyer, Matrix Digital Rain, Metallic Ring Modulator & Robotic Vocoder) | Skia Canvas / Matrix Rain / Carrier Oscillator DSP | Internal | 🚀 **PLANNED** |
 
 ---
 
@@ -563,14 +564,30 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 
 ---
 
-### Phase 23: Glitch Mosaic & Stereo Flanger Dynamic Suite (Pixel Sort Glitch, Posterize Pop Art, Jet Flanger Frequency Phaser) 🚀 [PLANNED] (v1.0.86)
+### Phase 23: Glitch Mosaic & Stereo Flanger Dynamic Suite (Pixel Sort Glitch, Posterize Pop Art, Jet Flanger Frequency Phaser) ✅ [COMPLETED] (v1.0.86)
 **Goal:** Deliver 3 high-impact, 100% self-dependent creator tools powered by algorithmic luminance pixel sorting, threshold color posterization, and comb-filter jet flanger DSP:
-- **23.1 Pixel Sort & Glitch Streak Studio (`PixelSortConfig`, `PixelSortCompilerService`, `PixelSortSheet`)**:
+- [x] **23.1 Pixel Sort & Glitch Streak Studio (`PixelSortConfig`, `PixelSortCompilerService`, `PixelSortSheet`)**:
   - Threshold-based luminance pixel sorting, horizontal/vertical digital data streaks, directional sorting angle, animated Skia streak flow monitor, and FFmpeg displacement glitch filtergraph.
-- **23.2 Threshold Posterization & Pop Art Chromatic Studio (`PosterizePopConfig`, `PosterizePopCompilerService`, `PosterizePopSheet`)**:
+- [x] **23.2 Threshold Posterization & Pop Art Chromatic Studio (`PosterizePopConfig`, `PosterizePopCompilerService`, `PosterizePopSheet`)**:
   - Quantized tonal banding reduction (2 to 16 color levels per channel), Andy Warhol Pop Art vibrant tint mapping, edge outline thresholding, and FFmpeg `lutrgb` / `curves` posterize filter pipeline.
-- **23.3 Jet Flanger & Barberpole Frequency Phaser Studio (`JetFlangerConfig`, `JetFlangerCompilerService`, `JetFlangerSheet`)**:
+- [x] **23.3 Jet Flanger & Barberpole Frequency Phaser Studio (`JetFlangerConfig`, `JetFlangerCompilerService`, `JetFlangerSheet`)**:
   - Short modulated delay comb-filtering simulating jet-engine whoosh sweeps, barberpole infinite rising/falling phasing, stereo width expansion, and strict true-peak brickwall ceiling limiter per Rule 4.
+- [x] **Full System Integration & Verification**:
+  - Wired into `Clip`, `FFmpegCommandBuilder`, `RealtimePreviewViewport`, `EditorTool`, `DockedToolPanel`, `EditorScreen`, `EditingToolbar`, and `ToolSearchModal` (76 tools indexed).
+  - Created comprehensive test suite `test/glitch_mosaic_stereo_flanger_test.dart`.
+  - Bumped version to `1.0.86+87` in `pubspec.yaml` and `scripts/configure_android.py`.
+  - Verified 100% clean with `python scripts/verify_codebase.py` (464 Dart files scanned).
+
+---
+
+### Phase 24: Luma Keying & Metallic Ring Modulator Suite (Luma Silhouette Keyer, Matrix Digital Rain, Metallic Ring Modulator & Robotic Vocoder) 🚀 [PLANNED] (v1.0.87)
+**Goal:** Deliver 3 high-impact, 100% self-dependent creator tools powered by luminance silhouette transparency extraction, cascading digital character rain, and carrier frequency ring modulation DSP:
+- **24.1 Luma Key & Silhouette Transparency Studio (`LumaKeyConfig`, `LumaKeyCompilerService`, `LumaKeySheet`)**:
+  - Luminance threshold masking (isolating dark silhouettes or bright highlights), soft edge falloff tolerance, invert keying, Skia luminance histogram monitor, and FFmpeg `lumakey` / `colorkey` filter pipeline.
+- **24.2 Matrix Digital Code Rain & Cyber Stream Studio (`MatrixRainConfig`, `MatrixRainCompilerService`, `MatrixRainSheet`)**:
+  - Cascading green phosphor and cyber glyph rain streaks, variable density and speed, glow persistence, animated Skia digital rain canvas preview, and FFmpeg overlay stream generator.
+- **24.3 Metallic Ring Modulator & Robotic Vocoder Studio (`RingModulatorConfig`, `RingModulatorCompilerService`, `RingModulatorSheet`)**:
+  - Carrier oscillator multiplication (20 Hz to 4,000 Hz sine/triangle carrier waves), Dalek robotic metallic ringing, sci-fi alien vocoder textures, animated Skia dual-carrier spectrum monitor, and strict AGENTS.md Rule 4 true-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
 
 ---
 
@@ -670,6 +687,15 @@ If this environment restarts or your session closes abruptly, follow this 4-step
   - Added Rhythmic Audio Stutter & Glitch Buffer Beat Repeater Studio (`AudioStutterConfig`, `AudioStutterCompilerService`, `AudioStutterSheet`) with 1/4 to 1/32 beat divisions, accelerating drill build-ups, tape stop pitch drops, animated buffer slice sequencer, and strict true-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
   - Added comprehensive test suite `test/dynamic_optics_audio_stutter_test.dart`.
   - Linter verification: 100% clean (454 files).
+
+- **2026-10-08 [Glitch Mosaic & Stereo Flanger Dynamic Suite (Phase 23 - v1.0.86)]:**
+  - Added Pixel Sort & Glitch Streak Studio (`PixelSortConfig`, `PixelSortCompilerService`, `PixelSortSheet`) with threshold-based luminance pixel sorting, directional digital streaks, horizontal tearing, radiant bursts, animated Skia streak flow monitor, and FFmpeg displacement glitch filtergraph.
+  - Added Threshold Posterization & Pop Art Chromatic Studio (`PosterizePopConfig`, `PosterizePopCompilerService`, `PosterizePopSheet`) with discrete color quantization (2 to 16 levels), Andy Warhol silk-screen pop art color mapping, comic book inked shading, and FFmpeg `lutrgb` channel quantization stepping.
+  - Added Jet Flanger & Barberpole Frequency Phaser Studio (`JetFlangerConfig`, `JetFlangerCompilerService`, `JetFlangerSheet`) with comb-filter resonant sweeping simulating jet flybys, barberpole infinite phasing, metallic ringing, animated frequency notch visualizer, and strict Rule 4 true-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
+  - Integrated into `Clip`, `FFmpegCommandBuilder`, `RealtimePreviewViewport`, `EditorTool`, `DockedToolPanel`, `EditorScreen`, `EditingToolbar`, and `ToolSearchModal` (76 tools indexed).
+  - Added comprehensive unit test suite `test/glitch_mosaic_stereo_flanger_test.dart`.
+  - Bumped version to `1.0.86+87` in `pubspec.yaml` and `scripts/configure_android.py`.
+  - Linter verification: 100% clean (464 files).
 
 ---
 

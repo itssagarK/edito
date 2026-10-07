@@ -48,6 +48,9 @@ import '../../audio/services/pitch_harmonizer_compiler_service.dart';
 import '../../vfx/services/chromatic_aberration_compiler_service.dart';
 import '../../vfx/services/solarize_invert_compiler_service.dart';
 import '../../audio/services/audio_stutter_compiler_service.dart';
+import '../../vfx/services/pixel_sort_compiler_service.dart';
+import '../../vfx/services/posterize_pop_compiler_service.dart';
+import '../../audio/services/jet_flanger_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
 import '../../image_editor/services/pip_compiler_service.dart';
 import '../../cutout/services/smart_cutout_compiler_service.dart';
@@ -688,6 +691,30 @@ class FFmpegCommandBuilder {
           }
         }
 
+        // Glitch FX: Pixel Sort & Glitch Data Streaks
+        if (clip.pixelSort.isActive) {
+          final sortFilter = PixelSortCompilerService.compileFilter(
+            clip.pixelSort,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (sortFilter.isNotEmpty) {
+            vFilters.add(sortFilter);
+          }
+        }
+
+        // Color & Pop Art: Threshold Posterization & Warhol Pop Art
+        if (clip.posterizePop.isActive) {
+          final posterFilter = PosterizePopCompilerService.compileFilter(
+            clip.posterizePop,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (posterFilter.isNotEmpty) {
+            vFilters.add(posterFilter);
+          }
+        }
+
         // Smart AI Cutout Studio & Glowing Neon Outlines
         if (clip.smartCutout.isEnabled) {
           final cutoutFilters = SmartCutoutCompilerService.generateFFmpegFilters(
@@ -979,6 +1006,14 @@ class FFmpegCommandBuilder {
           final stutterFilter = AudioStutterCompilerService.compileFilter(clip.audioStutter);
           if (stutterFilter.isNotEmpty) {
             aFilters.add(stutterFilter);
+          }
+        }
+
+        // Audio Modulation: Jet Flanger & Barberpole Frequency Phaser
+        if (clip.jetFlanger.isActive) {
+          final flangerFilter = JetFlangerCompilerService.compileFilter(clip.jetFlanger);
+          if (flangerFilter.isNotEmpty) {
+            aFilters.add(flangerFilter);
           }
         }
 

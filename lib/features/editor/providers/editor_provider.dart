@@ -92,6 +92,9 @@ enum EditorTool {
   chromaticAberration,
   solarizeInvert,
   audioStutter,
+  pixelSort,
+  posterizePop,
+  jetFlanger,
 }
 
 class EditorState {
