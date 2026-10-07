@@ -85,6 +85,9 @@ import '../../../audio/presentation/widgets/audio_stutter_sheet.dart';
 import '../../../vfx/presentation/widgets/pixel_sort_sheet.dart';
 import '../../../vfx/presentation/widgets/posterize_pop_sheet.dart';
 import '../../../audio/presentation/widgets/jet_flanger_sheet.dart';
+import '../../../vfx/presentation/widgets/luma_key_sheet.dart';
+import '../../../vfx/presentation/widgets/matrix_rain_sheet.dart';
+import '../../../audio/presentation/widgets/ring_modulator_sheet.dart';
 import '../../../overlays/presentation/widgets/typewriter_title_sheet.dart';
 import '../../../transform/presentation/widgets/transform_studio_sheet.dart';
 
@@ -286,6 +289,12 @@ class DockedToolPanel extends StatelessWidget {
         return 'Posterize & Pop Art';
       case EditorTool.jetFlanger:
         return 'Jet Flanger & Phaser';
+      case EditorTool.lumaKey:
+        return 'Luma Key & Silhouette';
+      case EditorTool.matrixRain:
+        return 'Matrix Digital Code Rain';
+      case EditorTool.ringModulator:
+        return 'Metallic Ring Modulator';
       default:
         return tool.name.toUpperCase();
     }
@@ -461,6 +470,12 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.palette;
       case EditorTool.jetFlanger:
         return Icons.air;
+      case EditorTool.lumaKey:
+        return Icons.content_cut_rounded;
+      case EditorTool.matrixRain:
+        return Icons.terminal_rounded;
+      case EditorTool.ringModulator:
+        return Icons.notifications_active_rounded;
       default:
         return Icons.edit;
     }
@@ -1429,6 +1444,30 @@ class DockedToolPanel extends StatelessWidget {
 
       case EditorTool.jetFlanger:
         return JetFlangerSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.lumaKey:
+        return LumaKeySheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.matrixRain:
+        return MatrixRainSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.ringModulator:
+        return RingModulatorSheet(
           clip: clip,
           onSave: onSaveClip,
           isDocked: true,

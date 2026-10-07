@@ -2,7 +2,7 @@
 
 > **Last Updated:** 2026-10-08  
 > **Target:** High-Performance, 100% On-Device & Offline AI Video Editing Engine (Edito)  
-> **Status:** Phase 0–23 **ALL COMPLETED** | Glitch Mosaic & Stereo Flanger Dynamic Suite Live (v1.0.86+87)  
+> **Status:** Phase 0–24 **ALL COMPLETED** | Luma Keying & Metallic Ring Modulator Suite Live (v1.0.87+88)  
 
 ---
 
@@ -20,7 +20,7 @@ If this environment restarts or your session closes abruptly, follow this 4-step
    ```
    *(Must return 100% CLEAN. Never commit or proceed if this fails.)*
 3. **Locate Current Feature in Section 3 Below:**
-   - All features F1–F6 and Phase 13–22 are complete.
+   - All features F1–F6 and Phase 13–24 are complete.
 4. **Resume Direct Commands / Tests / Release**.
 
 ---
@@ -64,7 +64,8 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 | **21** | **SPATIAL-OPTICS-BINAURAL**| Spatial Optics & Binaural Dynamics Suite (Tilt-Shift Miniature, Edge Glow Neon Hologram, Vocal Pitch Harmonizer) | Skia Canvas / Edge Detect / DSP Pitch Shifter | Internal | ✅ **COMPLETED** (`v1.0.84`) |
 | **22** | **DYNAMIC-OPTICS-STUTTER**| Dynamic Optics & Audio Stutter Suite (RGB Chromatic Glitch, Thermal Solarization Invert, Rhythmic Beat Stutter) | Skia Canvas / Tone Curves / Micro-Buffer DSP | Internal | ✅ **COMPLETED** (`v1.0.85`) |
 | **23** | **PIXEL-SORT-POP-FLANGER**| Glitch Mosaic & Stereo Flanger Dynamic Suite (Pixel Sort Glitch, Posterize Pop Art, Jet Flanger Frequency Phaser) | Skia Canvas / Luminance Sort / Comb DSP | Internal | ✅ **COMPLETED** (`v1.0.86`) |
-| **24** | **LUMA-KEY-RING-MOD** | Luma Keying & Metallic Ring Modulator Suite (Luma Silhouette Keyer, Matrix Digital Rain, Metallic Ring Modulator & Robotic Vocoder) | Skia Canvas / Matrix Rain / Carrier Oscillator DSP | Internal | 🚀 **PLANNED** |
+| **24** | **LUMA-KEY-RING-MOD** | Luma Keying & Metallic Ring Modulator Suite (Luma Silhouette Keyer, Matrix Digital Rain, Metallic Ring Modulator & Robotic Vocoder) | Skia Canvas / Matrix Rain / Carrier Oscillator DSP | Internal | ✅ **COMPLETED** (`v1.0.87`) |
+| **25** | **ECHO-ASCII-SUB-BASS** | Motion Echo Trails & Sub-Bass Exciter Suite (Motion Blur & Echo Decay Trails, ASCII Terminal Matrix Texturizer, Sub-Bass 808 Saturator & Harmonic Exciter) | Skia Canvas / Temporal Blend / Harmonic Bass DSP | Internal | 🚀 **PLANNED** |
 
 ---
 
@@ -580,14 +581,30 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 
 ---
 
-### Phase 24: Luma Keying & Metallic Ring Modulator Suite (Luma Silhouette Keyer, Matrix Digital Rain, Metallic Ring Modulator & Robotic Vocoder) 🚀 [PLANNED] (v1.0.87)
+### Phase 24: Luma Keying & Metallic Ring Modulator Suite (Luma Silhouette Keyer, Matrix Digital Rain, Metallic Ring Modulator & Robotic Vocoder) ✅ [COMPLETED] (v1.0.87)
 **Goal:** Deliver 3 high-impact, 100% self-dependent creator tools powered by luminance silhouette transparency extraction, cascading digital character rain, and carrier frequency ring modulation DSP:
-- **24.1 Luma Key & Silhouette Transparency Studio (`LumaKeyConfig`, `LumaKeyCompilerService`, `LumaKeySheet`)**:
+- [x] **24.1 Luma Key & Silhouette Transparency Studio (`LumaKeyConfig`, `LumaKeyCompilerService`, `LumaKeySheet`)**:
   - Luminance threshold masking (isolating dark silhouettes or bright highlights), soft edge falloff tolerance, invert keying, Skia luminance histogram monitor, and FFmpeg `lumakey` / `colorkey` filter pipeline.
-- **24.2 Matrix Digital Code Rain & Cyber Stream Studio (`MatrixRainConfig`, `MatrixRainCompilerService`, `MatrixRainSheet`)**:
+- [x] **24.2 Matrix Digital Code Rain & Cyber Stream Studio (`MatrixRainConfig`, `MatrixRainCompilerService`, `MatrixRainSheet`)**:
   - Cascading green phosphor and cyber glyph rain streaks, variable density and speed, glow persistence, animated Skia digital rain canvas preview, and FFmpeg overlay stream generator.
-- **24.3 Metallic Ring Modulator & Robotic Vocoder Studio (`RingModulatorConfig`, `RingModulatorCompilerService`, `RingModulatorSheet`)**:
+- [x] **24.3 Metallic Ring Modulator & Robotic Vocoder Studio (`RingModulatorConfig`, `RingModulatorCompilerService`, `RingModulatorSheet`)**:
   - Carrier oscillator multiplication (20 Hz to 4,000 Hz sine/triangle carrier waves), Dalek robotic metallic ringing, sci-fi alien vocoder textures, animated Skia dual-carrier spectrum monitor, and strict AGENTS.md Rule 4 true-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
+- [x] **Full System Integration & Verification**:
+  - Wired into `Clip`, `FFmpegCommandBuilder`, `RealtimePreviewViewport`, `EditorTool`, `DockedToolPanel`, `EditorScreen`, `EditingToolbar`, and `ToolSearchModal` (79 tools indexed).
+  - Created comprehensive test suite `test/luma_key_ring_modulator_test.dart`.
+  - Bumped version to `1.0.87+88` in `pubspec.yaml` and `scripts/configure_android.py`.
+  - Verified 100% clean with `python scripts/verify_codebase.py` (474 Dart files scanned).
+
+---
+
+### Phase 25: Motion Echo Trails & Sub-Bass Exciter Suite (Motion Blur & Echo Decay Trails, ASCII Terminal Matrix Texturizer, Sub-Bass 808 Saturator & Harmonic Exciter) 🚀 [PLANNED] (v1.0.88)
+**Goal:** Deliver 3 high-impact, 100% self-dependent creator tools powered by temporal motion decay smearing, retro computing ASCII glyph quantization, and sub-bass psychoacoustic harmonic synthesis:
+- **25.1 Motion Blur & Temporal Echo Decay Studio (`EchoMotionConfig`, `EchoMotionCompilerService`, `EchoMotionSheet`)**:
+  - Long-exposure motion ghosting and trailing shutter decay (`tblend` / `lagfun` / Skia trailing alpha decay buffer), variable decay persistence, trailing frame count, dreamy slow shutter speed simulation, and optical motion smear.
+- **25.2 ASCII Terminal & Retro Matrix Texturizer Studio (`AsciiArtConfig`, `AsciiArtCompilerService`, `AsciiArtSheet`)**:
+  - Retro computing ASCII/ANSI character rasterization, monochrome green phosphor or 8-bit colored glyph mapping, font cell resolution scaling, luminance character ramp quantization, animated Skia terminal matrix canvas preview, and FFmpeg filter pipeline.
+- **25.3 Sub-Bass 808 Saturator & Harmonic Low-End Exciter Studio (`SubBassExciterConfig`, `SubBassExciterCompilerService`, `SubBassExciterSheet`)**:
+  - Deep sub-bass harmonic overtone synthesis (40 Hz to 90 Hz sub-oscillator generation), psychoacoustic low-end warmth exciter, punchy tube saturation drive, animated Skia low-end seismic spectrum analyzer, and strict AGENTS.md Rule 4 true-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
 
 ---
 
@@ -696,6 +713,15 @@ If this environment restarts or your session closes abruptly, follow this 4-step
   - Added comprehensive unit test suite `test/glitch_mosaic_stereo_flanger_test.dart`.
   - Bumped version to `1.0.86+87` in `pubspec.yaml` and `scripts/configure_android.py`.
   - Linter verification: 100% clean (464 files).
+
+- **2026-10-08 [Luma Keying & Metallic Ring Modulator Suite (Phase 24 - v1.0.87)]:**
+  - Added Luma Key & Silhouette Transparency Studio (`LumaKeyConfig`, `LumaKeyCompilerService`, `LumaKeySheet`) with luminance threshold keying (dark silhouette, bright specular, midtones, high contrast, soft threshold gradient), soft falloff tolerance, invert keying, Skia luminance checkerboard monitor, and FFmpeg `format=yuva420p`, `lumakey` / `negate` filter pipeline.
+  - Added Matrix Digital Code Rain & Cyber Stream Studio (`MatrixRainConfig`, `MatrixRainCompilerService`, `MatrixRainSheet`) with 5 color modes (classic phosphor green, cyberpunk neon pink, quantum cyan, golden ascii, ghost monochrome), variable fall speed, glyph density, glow radius, animated Skia cascading digital rain stream monitor, and FFmpeg drawgrid / scanlines / color tint overlay filter pipeline.
+  - Added Metallic Ring Modulator & Robotic Vocoder Studio (`RingModulatorConfig`, `RingModulatorCompilerService`, `RingModulatorSheet`) with 5 presets (Dalek robotic, alien vocoder, sub-harmonic tremor, cyber bell bells, dual-carrier sci-fi), carrier frequencies 20 Hz to 4,000 Hz, AM modulation depth, overtone harmonic saturation, animated Skia carrier oscillator envelope monitor, and strict AGENTS.md Rule 4 true-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
+  - Integrated into `Clip`, `FFmpegCommandBuilder`, `RealtimePreviewViewport`, `EditorTool`, `DockedToolPanel`, `EditorScreen`, `EditingToolbar`, and `ToolSearchModal` (79 tools indexed).
+  - Added comprehensive unit test suite `test/luma_key_ring_modulator_test.dart`.
+  - Bumped version to `1.0.87+88` in `pubspec.yaml` and `scripts/configure_android.py`.
+  - Linter verification: 100% clean (474 files scanned).
 
 ---
 

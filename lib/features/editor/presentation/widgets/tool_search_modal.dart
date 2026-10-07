@@ -699,6 +699,30 @@ class _ToolSearchModalState extends State<ToolSearchModal> {
       icon: Icons.air,
       keywords: ['flanger', 'phaser', 'jet', 'comb filter', 'barberpole', 'metallic', 'resonance', 'feedback', 'shepard', 'stereo', 'audio', 'sound', 'dsp'],
     ),
+    _SearchableTool(
+      tool: EditorTool.lumaKey,
+      title: 'Luma Key & Silhouette Transparency',
+      category: 'Visuals',
+      description: 'Luminance threshold cutout, dark shadow silhouette keying, bright sky transparency, soft feathered edge falloff, and Skia alpha monitor',
+      icon: Icons.content_cut_rounded,
+      keywords: ['luma key', 'lumakey', 'silhouette', 'alpha', 'transparency', 'mask', 'cutout', 'chroma', 'backdrop', 'sky replacement', 'contrast', 'vfx'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.matrixRain,
+      title: 'Matrix Digital Code Rain & Stream',
+      category: 'Visuals',
+      description: 'Cascading terminal cyber code streams, phosphor green trails, white leading glyph heads, density control, and animated Skia digital rain',
+      icon: Icons.terminal_rounded,
+      keywords: ['matrix', 'code rain', 'cyber', 'terminal', 'hacker', 'phosphor', 'green', 'binary', 'stream', 'ascii', 'glitch', 'vfx', 'digital'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.ringModulator,
+      title: 'Metallic Ring Modulator & Vocoder',
+      category: 'Audio',
+      description: 'Carrier wave frequency multiplication, Dalek robotic sci-fi voice synthesis, alien inharmonic speech, chimes, and brickwall limiter',
+      icon: Icons.notifications_active_rounded,
+      keywords: ['ring mod', 'ringmod', 'ring modulator', 'vocoder', 'robot', 'dalek', 'carrier', 'oscillator', 'metallic', 'alien', 'tremolo', 'audio', 'sound', 'dsp'],
+    ),
   ];
 
   @override

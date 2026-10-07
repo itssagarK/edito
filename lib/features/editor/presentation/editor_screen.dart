@@ -744,6 +744,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openJetFlangerModal();
         break;
 
+      case EditorTool.lumaKey:
+        _openLumaKeyModal();
+        break;
+
+      case EditorTool.matrixRain:
+        _openMatrixRainModal();
+        break;
+
+      case EditorTool.ringModulator:
+        _openRingModulatorModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1121,6 +1133,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openJetFlangerModal() {
     _openDockedTool(EditorTool.jetFlanger, trackType: TrackType.audio, purpose: 'Jet Flanger & Barberpole Frequency Phaser');
+  }
+
+  void _openLumaKeyModal() {
+    _openDockedTool(EditorTool.lumaKey, trackType: TrackType.video, purpose: 'Luma Key & Silhouette Transparency');
+  }
+
+  void _openMatrixRainModal() {
+    _openDockedTool(EditorTool.matrixRain, trackType: TrackType.video, purpose: 'Matrix Digital Code Rain');
+  }
+
+  void _openRingModulatorModal() {
+    _openDockedTool(EditorTool.ringModulator, trackType: TrackType.audio, purpose: 'Metallic Ring Modulator & Vocoder');
   }
 
   void _openAudioToolsModal() {

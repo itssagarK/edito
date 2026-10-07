@@ -95,6 +95,9 @@ enum EditorTool {
   pixelSort,
   posterizePop,
   jetFlanger,
+  lumaKey,
+  matrixRain,
+  ringModulator,
 }
 
 class EditorState {

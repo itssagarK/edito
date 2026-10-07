@@ -51,6 +51,9 @@ import '../../audio/services/audio_stutter_compiler_service.dart';
 import '../../vfx/services/pixel_sort_compiler_service.dart';
 import '../../vfx/services/posterize_pop_compiler_service.dart';
 import '../../audio/services/jet_flanger_compiler_service.dart';
+import '../../vfx/services/luma_key_compiler_service.dart';
+import '../../vfx/services/matrix_rain_compiler_service.dart';
+import '../../audio/services/ring_modulator_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
 import '../../image_editor/services/pip_compiler_service.dart';
 import '../../cutout/services/smart_cutout_compiler_service.dart';
@@ -715,6 +718,30 @@ class FFmpegCommandBuilder {
           }
         }
 
+        // Luma Keying: Silhouette Transparency & Luma Cutout
+        if (clip.lumaKey.isActive) {
+          final lumaFilter = LumaKeyCompilerService.compileFilter(
+            clip.lumaKey,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (lumaFilter.isNotEmpty) {
+            vFilters.add(lumaFilter);
+          }
+        }
+
+        // Cyberpunk Code: Matrix Digital Code Rain & Stream
+        if (clip.matrixRain.isActive) {
+          final matrixFilter = MatrixRainCompilerService.compileFilter(
+            clip.matrixRain,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (matrixFilter.isNotEmpty) {
+            vFilters.add(matrixFilter);
+          }
+        }
+
         // Smart AI Cutout Studio & Glowing Neon Outlines
         if (clip.smartCutout.isEnabled) {
           final cutoutFilters = SmartCutoutCompilerService.generateFFmpegFilters(
@@ -1014,6 +1041,14 @@ class FFmpegCommandBuilder {
           final flangerFilter = JetFlangerCompilerService.compileFilter(clip.jetFlanger);
           if (flangerFilter.isNotEmpty) {
             aFilters.add(flangerFilter);
+          }
+        }
+
+        // Audio Modulation: Metallic Ring Modulator & Robotic Vocoder
+        if (clip.ringModulator.isActive) {
+          final ringFilter = RingModulatorCompilerService.compileFilter(clip.ringModulator);
+          if (ringFilter.isNotEmpty) {
+            aFilters.add(ringFilter);
           }
         }
 

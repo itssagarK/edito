@@ -69,6 +69,9 @@ import '../features/audio/models/audio_stutter_config.dart';
 import '../features/vfx/models/pixel_sort_config.dart';
 import '../features/vfx/models/posterize_pop_config.dart';
 import '../features/audio/models/jet_flanger_config.dart';
+import '../features/vfx/models/luma_key_config.dart';
+import '../features/vfx/models/matrix_rain_config.dart';
+import '../features/audio/models/ring_modulator_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -156,6 +159,9 @@ class Clip extends Equatable {
   final PixelSortConfig pixelSort;
   final PosterizePopConfig posterizePop;
   final JetFlangerConfig jetFlanger;
+  final LumaKeyConfig lumaKey;
+  final MatrixRainConfig matrixRain;
+  final RingModulatorConfig ringModulator;
 
   const Clip({
     required this.id,
@@ -243,6 +249,9 @@ class Clip extends Equatable {
     this.pixelSort = const PixelSortConfig(),
     this.posterizePop = const PosterizePopConfig(),
     this.jetFlanger = const JetFlangerConfig(),
+    this.lumaKey = const LumaKeyConfig(),
+    this.matrixRain = const MatrixRainConfig(),
+    this.ringModulator = const RingModulatorConfig(),
   });
 
   Clip copyWith({
@@ -331,6 +340,9 @@ class Clip extends Equatable {
     PixelSortConfig? pixelSort,
     PosterizePopConfig? posterizePop,
     JetFlangerConfig? jetFlanger,
+    LumaKeyConfig? lumaKey,
+    MatrixRainConfig? matrixRain,
+    RingModulatorConfig? ringModulator,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -418,6 +430,9 @@ class Clip extends Equatable {
       pixelSort: pixelSort ?? this.pixelSort,
       posterizePop: posterizePop ?? this.posterizePop,
       jetFlanger: jetFlanger ?? this.jetFlanger,
+      lumaKey: lumaKey ?? this.lumaKey,
+      matrixRain: matrixRain ?? this.matrixRain,
+      ringModulator: ringModulator ?? this.ringModulator,
     );
   }
 
@@ -507,6 +522,9 @@ class Clip extends Equatable {
         'pixelSort': pixelSort.toJson(),
         'posterizePop': posterizePop.toJson(),
         'jetFlanger': jetFlanger.toJson(),
+        'lumaKey': lumaKey.toJson(),
+        'matrixRain': matrixRain.toJson(),
+        'ringModulator': ringModulator.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -740,6 +758,15 @@ class Clip extends Equatable {
         jetFlanger: json['jetFlanger'] != null
             ? JetFlangerConfig.fromJson(json['jetFlanger'] as Map<String, dynamic>)
             : const JetFlangerConfig(),
+        lumaKey: json['lumaKey'] != null
+            ? LumaKeyConfig.fromJson(json['lumaKey'] as Map<String, dynamic>)
+            : const LumaKeyConfig(),
+        matrixRain: json['matrixRain'] != null
+            ? MatrixRainConfig.fromJson(json['matrixRain'] as Map<String, dynamic>)
+            : const MatrixRainConfig(),
+        ringModulator: json['ringModulator'] != null
+            ? RingModulatorConfig.fromJson(json['ringModulator'] as Map<String, dynamic>)
+            : const RingModulatorConfig(),
       );
 
   @override
@@ -829,5 +856,8 @@ class Clip extends Equatable {
         pixelSort,
         posterizePop,
         jetFlanger,
+        lumaKey,
+        matrixRain,
+        ringModulator,
       ];
 }

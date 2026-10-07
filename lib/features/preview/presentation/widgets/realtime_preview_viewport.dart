@@ -53,6 +53,8 @@ import '../../../vfx/models/chromatic_aberration_config.dart';
 import '../../../vfx/models/solarize_invert_config.dart';
 import '../../../vfx/models/pixel_sort_config.dart';
 import '../../../vfx/models/posterize_pop_config.dart';
+import '../../../vfx/models/luma_key_config.dart';
+import '../../../vfx/models/matrix_rain_config.dart';
 import '../../../vfx/services/vfx_compiler_service.dart';
 import '../../../vfx/presentation/widgets/vfx_preview_wrapper.dart';
 import '../../../../models/clip.dart';
@@ -1383,6 +1385,10 @@ class RealtimePreviewViewport extends ConsumerWidget {
           _buildPixelSortOverlay(clip.pixelSort, currentPositionMs - clip.timelineInMs),
         if (clip.posterizePop.isActive)
           _buildPosterizePopOverlay(clip.posterizePop, currentPositionMs - clip.timelineInMs),
+        if (clip.lumaKey.isActive)
+          _buildLumaKeyOverlay(clip.lumaKey, currentPositionMs - clip.timelineInMs),
+        if (clip.matrixRain.isActive)
+          _buildMatrixRainOverlay(clip.matrixRain, currentPositionMs - clip.timelineInMs),
       ],
     );
   }
@@ -2353,6 +2359,38 @@ class RealtimePreviewViewport extends ConsumerWidget {
       child: IgnorePointer(
         child: CustomPaint(
           painter: _ViewportPosterizePopPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLumaKeyOverlay(LumaKeyConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 3000.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportLumaKeyPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMatrixRainOverlay(MatrixRainConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 2500.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportMatrixRainPainter(
             config: config,
             phase: phase,
           ),
@@ -3827,6 +3865,108 @@ class _ViewportPosterizePopPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ViewportPosterizePopPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
+class _ViewportLumaKeyPainter extends CustomPainter {
+  final LumaKeyConfig config;
+  final double phase;
+
+  _ViewportLumaKeyPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0 || !config.isActive) return;
+
+    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+    final maskColor = config.invert
+        ? const Color(0x3300E5FF)
+        : const Color(0x33000000);
+
+    final maskPaint = Paint()
+      ..color = maskColor.withOpacity((0.25 * config.opacity).clamp(0.05, 0.4))
+      ..blendMode = config.invert ? BlendMode.screen : BlendMode.darken;
+
+    canvas.drawRect(rect, maskPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportLumaKeyPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
+class _ViewportMatrixRainPainter extends CustomPainter {
+  final MatrixRainConfig config;
+  final double phase;
+
+  _ViewportMatrixRainPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0 || !config.isActive) return;
+
+    Color streamColor;
+    switch (config.mode) {
+      case MatrixRainMode.classicPhosphorGreen:
+        streamColor = const Color(0xFF00FF66);
+        break;
+      case MatrixRainMode.cyberpunkNeonPink:
+        streamColor = const Color(0xFFFF007F);
+        break;
+      case MatrixRainMode.quantumCyanData:
+        streamColor = const Color(0xFF00E5FF);
+        break;
+      case MatrixRainMode.goldenAsciiGold:
+        streamColor = const Color(0xFFFFD600);
+        break;
+      case MatrixRainMode.ghostMonochrome:
+        streamColor = const Color(0xFFECEFF1);
+        break;
+    }
+
+    final colWidth = 16.0;
+    final totalCols = (size.width / colWidth).ceil();
+    final activeCols = (totalCols * config.density).round().clamp(4, totalCols);
+
+    final headPaint = Paint()..color = Colors.white.withOpacity(config.opacity);
+    final trailPaint = Paint()..style = PaintingStyle.fill;
+
+    for (int col = 0; col < totalCols; col += (totalCols / activeCols).ceil().clamp(1, 4)) {
+      final x = col * colWidth;
+      final colSeed = (col * 31) % 100 / 100.0;
+      final speedMult = 0.8 + colSeed * 0.5;
+      final streamProgress = (phase * config.fallSpeed * speedMult + colSeed) % 1.0;
+      final headY = streamProgress * (size.height + 60.0) - 20.0;
+
+      if (headY >= 0 && headY <= size.height) {
+        canvas.drawCircle(Offset(x + 5.0, headY), 2.5, headPaint);
+      }
+
+      final tailLength = 6;
+      for (int t = 1; t <= tailLength; t++) {
+        final nodeY = headY - (t * 8.0);
+        if (nodeY >= 0 && nodeY <= size.height) {
+          final alpha = ((1.0 - (t / tailLength)) * config.opacity * config.glyphGlow * 0.7).clamp(0.05, 1.0);
+          trailPaint.color = streamColor.withOpacity(alpha);
+          canvas.drawRect(
+            Rect.fromLTWH(x + 4.0, nodeY, 2.5, 5.0),
+            trailPaint,
+          );
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportMatrixRainPainter oldDelegate) {
     return oldDelegate.config != config || oldDelegate.phase != phase;
   }
 }
