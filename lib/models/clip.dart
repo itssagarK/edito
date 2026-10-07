@@ -48,6 +48,9 @@ import '../features/audio/models/spatial_audio_pan_config.dart';
 import '../features/overlays/models/typewriter_title_config.dart';
 import '../features/vfx/models/crt_scanline_config.dart';
 import '../features/audio/models/reverb_chamber_config.dart';
+import '../features/vfx/models/anamorphic_flare_config.dart';
+import '../features/vfx/models/film_halation_config.dart';
+import '../features/audio/models/tape_cassette_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -114,6 +117,9 @@ class Clip extends Equatable {
   final TypewriterTitleConfig typewriterTitle;
   final CrtScanlineConfig crtScanline;
   final ReverbChamberConfig reverb;
+  final AnamorphicFlareConfig anamorphicFlare;
+  final FilmHalationConfig filmHalation;
+  final TapeCassetteConfig tapeCassette;
 
   const Clip({
     required this.id,
@@ -180,6 +186,9 @@ class Clip extends Equatable {
     this.typewriterTitle = const TypewriterTitleConfig(),
     this.crtScanline = const CrtScanlineConfig(),
     this.reverb = const ReverbChamberConfig(),
+    this.anamorphicFlare = const AnamorphicFlareConfig(),
+    this.filmHalation = const FilmHalationConfig(),
+    this.tapeCassette = const TapeCassetteConfig(),
   });
 
   Clip copyWith({
@@ -247,6 +256,9 @@ class Clip extends Equatable {
     TypewriterTitleConfig? typewriterTitle,
     CrtScanlineConfig? crtScanline,
     ReverbChamberConfig? reverb,
+    AnamorphicFlareConfig? anamorphicFlare,
+    FilmHalationConfig? filmHalation,
+    TapeCassetteConfig? tapeCassette,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -313,6 +325,9 @@ class Clip extends Equatable {
       typewriterTitle: typewriterTitle ?? this.typewriterTitle,
       crtScanline: crtScanline ?? this.crtScanline,
       reverb: reverb ?? this.reverb,
+      anamorphicFlare: anamorphicFlare ?? this.anamorphicFlare,
+      filmHalation: filmHalation ?? this.filmHalation,
+      tapeCassette: tapeCassette ?? this.tapeCassette,
     );
   }
 
@@ -381,6 +396,9 @@ class Clip extends Equatable {
         'typewriterTitle': typewriterTitle.toJson(),
         'crtScanline': crtScanline.toJson(),
         'reverb': reverb.toJson(),
+        'anamorphicFlare': anamorphicFlare.toJson(),
+        'filmHalation': filmHalation.toJson(),
+        'tapeCassette': tapeCassette.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -551,6 +569,15 @@ class Clip extends Equatable {
         reverb: json['reverb'] != null
             ? ReverbChamberConfig.fromJson(json['reverb'] as Map<String, dynamic>)
             : const ReverbChamberConfig(),
+        anamorphicFlare: json['anamorphicFlare'] != null
+            ? AnamorphicFlareConfig.fromJson(json['anamorphicFlare'] as Map<String, dynamic>)
+            : const AnamorphicFlareConfig(),
+        filmHalation: json['filmHalation'] != null
+            ? FilmHalationConfig.fromJson(json['filmHalation'] as Map<String, dynamic>)
+            : const FilmHalationConfig(),
+        tapeCassette: json['tapeCassette'] != null
+            ? TapeCassetteConfig.fromJson(json['tapeCassette'] as Map<String, dynamic>)
+            : const TapeCassetteConfig(),
       );
 
   @override
@@ -619,5 +646,8 @@ class Clip extends Equatable {
         typewriterTitle,
         crtScanline,
         reverb,
+        anamorphicFlare,
+        filmHalation,
+        tapeCassette,
       ];
 }

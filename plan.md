@@ -1,8 +1,8 @@
 # Edito - On-Device AI Features Master Plan & Task Tracker
 
-> **Last Updated:** 2026-10-03  
+> **Last Updated:** 2026-10-07  
 > **Target:** High-Performance, 100% On-Device & Offline AI Video Editing Engine (Edito)  
-> **Status:** Phase 0, 1, 2, 3, 4, 5, 6, 7 **ALL COMPLETED** | 100% On-Device & Offline AI Feature Suite & Unified Rendering Engine Complete
+> **Status:** Phase 0–17 **ALL COMPLETED** | Optical Glow & Retro Tone Suite Live (v1.0.80+81)  
 
 ---
 
@@ -20,7 +20,7 @@ If this environment restarts or your session closes abruptly, follow this 4-step
    ```
    *(Must return 100% CLEAN. Never commit or proceed if this fails.)*
 3. **Locate Current Feature in Section 3 Below:**
-   - All features F1–F6 are complete.
+   - All features F1–F6 and Phase 13–17 are complete.
 4. **Resume Direct Commands / Tests / Release**.
 
 ---
@@ -57,7 +57,8 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 | **14** | **CREATOR-POWER** | Creator Power Suite (Auto Beat Cut & Rhythm Snapper, Audio Fade Envelopes, Cinematic Impact Flash) | Deterministic Math / Skia / DSP | Internal | ✅ **COMPLETED** (`v1.0.77`) |
 | **15** | **PRO-MOTION-AUDIO** | Pro Motion & Audio Dynamics Suite (Action Freeze Climax, Bezier Curve Speed Ease, 8D Spatial Audio Pan) | Deterministic Timeline Surgery / Bezier / LFO DSP | Internal | ✅ **COMPLETED** (`v1.0.78`) |
 | **16** | **TYPOGRAPHY-VFX** | Creative Stylist & Typography Dynamics Suite (Typewriter Kinetic Titles, CRT Cyber Scanlines, Spatial Reverb Chamber) | Skia Canvas / DSP Convolver | Internal | ✅ **COMPLETED** (`v1.0.79`) |
-| **17** | **OPTICAL-GLOW-AUDIO** | Optical Glow & Retro Tone Suite (Anamorphic Streak Flare, Halation Film Bleed, Tape Cassette Audio Warble) | Skia Canvas / Optical Convolution / DSP Wow & Flutter | Internal | 🚀 **PLANNED** |
+| **17** | **OPTICAL-GLOW-AUDIO** | Optical Glow & Retro Tone Suite (Anamorphic Streak Flare, Halation Film Bleed, Tape Cassette Audio Warble) | Skia Canvas / Optical Convolution / DSP Wow & Flutter | Internal | ✅ **COMPLETED** (`v1.0.80`) |
+| **18** | **CAMERA-LENS-AUDIO** | Cinematic Camera & Sound FX Suite (Organic Camera Shake, Lens Distortion & Fisheye, Vinyl Turntable Dust) | Skia Canvas / Optical Matrix / DSP Filter | Internal | 🚀 **PLANNED** |
 
 ---
 
@@ -434,14 +435,36 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 
 ---
 
-### Phase 17: Optical Glow & Retro Tone Suite (Anamorphic Streak Flare, Halation Film Bleed, Tape Cassette Audio Warble) 🚀 [PLANNED]
+### Phase 17: Optical Glow & Retro Tone Suite (Anamorphic Streak Flare, Halation Film Bleed, Tape Cassette Audio Warble) ✅ [COMPLETED] (v1.0.80)
 **Goal:** Deliver 3 high-impact, 100% self-dependent creator tools powered by anamorphic optical flares, film stock emulsion halation, and analog tape wow & flutter DSP:
-- **17.1 Anamorphic Streak Flare & Starburst Studio (`AnamorphicFlareConfig`, `AnamorphicFlareCompilerService`, `AnamorphicFlareSheet`)**:
-  - Horizontal blue/gold cinema lens flare streak, luminance threshold extraction, anamorphic aspect stretch, and Skia real-time canvas preview.
-- **17.2 35mm Film Halation & Emulsion Red Bleed Studio (`FilmHalationConfig`, `FilmHalationCompilerService`, `FilmHalationSheet`)**:
-  - Red photochem layer backscatter glow along high-contrast highlights and silhouette edges.
-- **17.3 Vintage Tape Cassette & Wow/Flutter Warble Studio (`TapeCassetteConfig`, `TapeCassetteCompilerService`, `TapeCassetteSheet`)**:
-  - Low-frequency tape speed drift (wow ~0.5Hz–2Hz), rapid capstan flutter (~6Hz–15Hz), head azimuth tape warmth, and brickwall limiter ceiling.
+- [x] **17.1 Anamorphic Streak Flare & Starburst Studio (`AnamorphicFlareConfig`, `AnamorphicFlareCompilerService`, `AnamorphicFlareSheet`)**:
+  - Horizontal blue/gold/neon cinema lens streak bloom, luminance threshold extraction ($0.60$–$0.98$), anamorphic aspect stretch ($1.0\text{x}$–$10.0\text{x}$), specular starburst spikes ($0, 4, 6, 8$), 5 optical tints, and live interactive Skia Canvas viewport simulation.
+  - FFmpeg filter compiler (`colorchannelmixer`, `gblur` horizontal stretch, `curves`).
+- [x] **17.2 35mm Film Halation & Emulsion Red Bleed Studio (`FilmHalationConfig`, `FilmHalationCompilerService`, `FilmHalationSheet`)**:
+  - Red photochem layer backscatter glow halo along high-contrast specular highlights and silhouette edges, diffusion radius ($2\text{px}$–$30\text{px}$), warmth scatter, 4 emulsion hues (CineStill Red, Vision3 Orange, Eterna Magenta, Kodachrome Amber), and live Skia simulation.
+  - FFmpeg filter compiler (`colorchannelmixer`, `curves`, `gblur`).
+- [x] **17.3 Vintage Tape Cassette & Wow/Flutter Warble Studio (`TapeCassetteConfig`, `TapeCassetteCompilerService`, `TapeCassetteSheet`)**:
+  - Low-frequency tape speed drift (wow ~0.2Hz–2Hz), rapid capstan flutter (~5Hz–20Hz), head azimuth tape warmth ($85\text{Hz}$ low bump + $6\text{kHz}$–$14.5\text{kHz}$ roll-off), analog hiss floor, and animated rotating tape reels card.
+  - FFmpeg DSP compiler (`vibrato`, `equalizer`, `lowpass`) with strict true-peak brickwall ceiling limiter per `AGENTS.md` Rule 4 (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
+- [x] **Integration & Polish**:
+  - Wired into `Clip` domain model (`copyWith`, `toJson`, `fromJson`, `props`).
+  - Integrated into `FFmpegCommandBuilder` video and audio export filtergraphs.
+  - Implemented live Skia Canvas compositing overlays in `RealtimePreviewViewport`.
+  - Registered in `EditorTool` enum, docked in `DockedToolPanel`, surfaced in `EditingToolbar` dock and modal grid, and indexed in `ToolSearchModal`.
+  - Created comprehensive test suite `test/optical_glow_retro_tone_test.dart`.
+  - Bumped version to `1.0.80+81` in `pubspec.yaml` and `scripts/configure_android.py`.
+  - Verified 100% clean with `python scripts/verify_codebase.py` (404 Dart files scanned).
+
+---
+
+### Phase 18: Cinematic Camera & Sound FX Suite (Organic Camera Shake, Lens Distortion & Fisheye, Vinyl Turntable Dust) 🚀 [PLANNED]
+**Goal:** Deliver 3 high-impact, 100% self-dependent creator tools powered by deterministic mathematical motion drift, optical geometric lens deformation, and vinyl needle acoustic textures:
+- **18.1 Organic Handheld Camera Shake & Impact Tremor Studio (`CameraShakeConfig`, `CameraShakeCompilerService`, `CameraShakeSheet`)**:
+  - Natural handheld micro-drift, rapid impact earthquake shockwaves, vehicle motor rumble, frequency and amplitude LFOs, Skia viewport simulation, and FFmpeg `crop` + trigonometric/pseudo-random offset coordinate jitter.
+- **18.2 Lens Distortion & Action-Cam Fisheye Studio (`LensDistortionConfig`, `LensDistortionCompilerService`, `LensDistortionSheet`)**:
+  - Barrel curvature, pincushion distortion, ultra-wide action cam fisheye wrap, chromatic aberration RGB edge fringe, Skia warp preview, and FFmpeg `lenscorrection` / `vignette` pipeline.
+- **18.3 Vintage Vinyl Turntable & Dusty Needle Studio (`VinylRecordConfig`, `VinylRecordCompilerService`, `VinylRecordSheet`)**:
+  - Analog needle surface crackle, dust pops, 33⅓ vs 45 RPM speed warm tone EQ curves, authentic mechanical needle drop, and true-peak brickwall limiter ceiling.
 
 ---
 
@@ -502,6 +525,13 @@ If this environment restarts or your session closes abruptly, follow this 4-step
   - Added Audio Reverb Chamber Studio (`ReverbChamberConfig`, `ReverbCompilerService`, `ReverbChamberSheet`) with 7 acoustic room types, multi-tap delay reflections, and true-peak brickwall ceiling limiter.
   - Added unit test suite `test/creative_stylist_typography_dynamics_test.dart`.
   - Linter verification: 100% clean (394 files).
+
+- **2026-10-07 [Optical Glow & Retro Tone Suite (Phase 17 - v1.0.80)]:**
+  - Added Anamorphic Streak Flare & Starburst Studio (`AnamorphicFlareConfig`, `AnamorphicFlareCompilerService`, `AnamorphicFlareSheet`) with horizontal bloom stretch, threshold extraction, specular spikes, and Skia Canvas simulation.
+  - Added 35mm Film Halation & Emulsion Red Bleed Studio (`FilmHalationConfig`, `FilmHalationCompilerService`, `FilmHalationSheet`) with photochemical backscatter halo, edge bleed, diffusion radius, and film stock presets.
+  - Added Vintage Tape Cassette & Wow/Flutter Warble Studio (`TapeCassetteConfig`, `TapeCassetteCompilerService`, `TapeCassetteSheet`) with analog pitch drift, flutter vibration, tape warmth bump, rotating reels preview, and true-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
+  - Added unit test suite `test/optical_glow_retro_tone_test.dart`.
+  - Linter verification: 100% clean (404 files).
 
 ---
 

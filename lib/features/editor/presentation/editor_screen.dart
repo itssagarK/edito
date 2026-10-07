@@ -660,6 +660,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openReverbChamberModal();
         break;
 
+      case EditorTool.anamorphicFlare:
+        _openAnamorphicFlareModal();
+        break;
+
+      case EditorTool.filmHalation:
+        _openFilmHalationModal();
+        break;
+
+      case EditorTool.tapeCassette:
+        _openTapeCassetteModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -953,6 +965,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openReverbChamberModal() {
     _openDockedTool(EditorTool.reverbChamber, purpose: 'Reverb Chamber Studio');
+  }
+
+  void _openAnamorphicFlareModal() {
+    _openDockedTool(EditorTool.anamorphicFlare, trackType: TrackType.video, purpose: 'Anamorphic Streak Flare Studio');
+  }
+
+  void _openFilmHalationModal() {
+    _openDockedTool(EditorTool.filmHalation, trackType: TrackType.video, purpose: '35mm Film Halation Studio');
+  }
+
+  void _openTapeCassetteModal() {
+    _openDockedTool(EditorTool.tapeCassette, trackType: TrackType.audio, purpose: 'Vintage Tape Cassette Studio');
   }
 
   void _openAudioToolsModal() {

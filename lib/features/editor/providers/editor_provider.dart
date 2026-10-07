@@ -74,6 +74,9 @@ enum EditorTool {
   typewriterTitle,
   crtScanline,
   reverbChamber,
+  anamorphicFlare,
+  filmHalation,
+  tapeCassette,
 }
 
 class EditorState {

@@ -39,6 +39,8 @@ import '../../../keyframes/presentation/widgets/keyframe_transform_wrapper.dart'
 import '../../../vfx/models/vfx_config.dart';
 import '../../../vfx/models/impact_flash_config.dart';
 import '../../../vfx/models/crt_scanline_config.dart';
+import '../../../vfx/models/anamorphic_flare_config.dart';
+import '../../../vfx/models/film_halation_config.dart';
 import '../../../vfx/services/vfx_compiler_service.dart';
 import '../../../vfx/presentation/widgets/vfx_preview_wrapper.dart';
 import '../../../../models/clip.dart';
@@ -1341,6 +1343,10 @@ class RealtimePreviewViewport extends ConsumerWidget {
           _buildImpactFlashOverlay(clip.impactFlash, currentPositionMs - clip.timelineInMs),
         if (clip.crtScanline.isActive)
           _buildCrtScanlineOverlay(clip.crtScanline, currentPositionMs - clip.timelineInMs),
+        if (clip.anamorphicFlare.isActive)
+          _buildAnamorphicFlareOverlay(clip.anamorphicFlare, currentPositionMs - clip.timelineInMs),
+        if (clip.filmHalation.isActive)
+          _buildFilmHalationOverlay(clip.filmHalation, currentPositionMs - clip.timelineInMs),
       ],
     );
   }
@@ -2099,6 +2105,38 @@ class RealtimePreviewViewport extends ConsumerWidget {
     );
   }
 
+  Widget _buildAnamorphicFlareOverlay(AnamorphicFlareConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 2500.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportAnamorphicFlarePainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilmHalationOverlay(FilmHalationConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 2800.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportFilmHalationPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildProgressBarOverlay(ProgressBarConfig config, int currentMs, int totalMs) {
     if (totalMs <= 0) return const SizedBox.shrink();
     final progress = (currentMs / totalMs).clamp(0.0, 1.0);
@@ -2555,6 +2593,118 @@ class _ViewportCrtPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ViewportCrtPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
+class _ViewportAnamorphicFlarePainter extends CustomPainter {
+  final AnamorphicFlareConfig config;
+  final double phase;
+
+  _ViewportAnamorphicFlarePainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (!config.isActive || size.width <= 0 || size.height <= 0) return;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final tintColor = Color(config.tint.colorHex);
+
+    // Specular center core
+    final coreRadius = (3.5 * config.intensity).clamp(1.5, 8.0);
+    final corePaint = Paint()
+      ..color = Colors.white.withOpacity(config.intensity.clamp(0.2, 1.0))
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+    canvas.drawCircle(center, coreRadius, corePaint);
+
+    // Horizontal cylindrical anamorphic streak
+    final streakHalfWidth = (size.width * 0.45 * (config.streakLength / 5.0)).clamp(20.0, size.width * 0.48);
+    final streakHeight = (config.flareThickness * 1.5).clamp(1.0, 10.0);
+
+    final streakRect = Rect.fromCenter(
+      center: center,
+      width: streakHalfWidth * 2,
+      height: streakHeight,
+    );
+
+    final streakPaint = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          Colors.transparent,
+          tintColor.withOpacity((config.intensity * 0.75).clamp(0.1, 0.95)),
+          Colors.white,
+          tintColor.withOpacity((config.intensity * 0.75).clamp(0.1, 0.95)),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.35, 0.5, 0.65, 1.0],
+      ).createShader(streakRect)
+      ..blendMode = BlendMode.screen;
+
+    canvas.drawRect(streakRect, streakPaint);
+
+    // Optional starburst spikes
+    if (config.starburstSpikes > 0) {
+      final spikeLength = (size.height * 0.30 * config.intensity).clamp(8.0, 50.0);
+      final spikePaint = Paint()
+        ..color = tintColor.withOpacity((config.intensity * 0.5).clamp(0.1, 0.75))
+        ..strokeWidth = 1.0
+        ..blendMode = BlendMode.screen;
+
+      final count = config.starburstSpikes;
+      final angleStep = math.pi / count;
+      for (int i = 0; i < count; i++) {
+        final angle = i * angleStep;
+        final dx = math.cos(angle) * spikeLength;
+        final dy = math.sin(angle) * spikeLength;
+        canvas.drawLine(Offset(center.dx - dx, center.dy - dy), Offset(center.dx + dx, center.dy + dy), spikePaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportAnamorphicFlarePainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
+class _ViewportFilmHalationPainter extends CustomPainter {
+  final FilmHalationConfig config;
+  final double phase;
+
+  _ViewportFilmHalationPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (!config.isActive || size.width <= 0 || size.height <= 0) return;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final hueColor = Color(config.hue.colorHex);
+
+    // Warm photochemical halation halo bloom around center highlight
+    final haloRadius = (16.0 + config.spreadRadius * 1.5).clamp(18.0, size.width * 0.45);
+    final haloPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          Colors.white.withOpacity((config.intensity * 0.8).clamp(0.1, 0.9)),
+          hueColor.withOpacity((config.intensity * 0.75).clamp(0.1, 0.9)),
+          Color(config.hue.colorHex).withOpacity((config.warmthBleed * 0.5).clamp(0.05, 0.5)),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.30, 0.65, 1.0],
+      ).createShader(Rect.fromCircle(center: center, radius: haloRadius))
+      ..blendMode = BlendMode.screen;
+
+    canvas.drawCircle(center, haloRadius, haloPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportFilmHalationPainter oldDelegate) {
     return oldDelegate.config != config || oldDelegate.phase != phase;
   }
 }

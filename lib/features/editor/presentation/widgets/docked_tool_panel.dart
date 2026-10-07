@@ -64,6 +64,9 @@ import '../../../speed/presentation/widgets/speed_ease_sheet.dart';
 import '../../../timeline/presentation/widgets/freeze_climax_sheet.dart';
 import '../../../vfx/presentation/widgets/impact_flash_sheet.dart';
 import '../../../vfx/presentation/widgets/crt_scanline_sheet.dart';
+import '../../../vfx/presentation/widgets/anamorphic_flare_sheet.dart';
+import '../../../vfx/presentation/widgets/film_halation_sheet.dart';
+import '../../../audio/presentation/widgets/tape_cassette_sheet.dart';
 import '../../../overlays/presentation/widgets/typewriter_title_sheet.dart';
 import '../../../transform/presentation/widgets/transform_studio_sheet.dart';
 
@@ -223,6 +226,12 @@ class DockedToolPanel extends StatelessWidget {
         return 'Retro CRT Scanlines Studio';
       case EditorTool.reverbChamber:
         return 'Reverb Chamber Studio';
+      case EditorTool.anamorphicFlare:
+        return 'Anamorphic Flare Studio';
+      case EditorTool.filmHalation:
+        return '35mm Film Halation Studio';
+      case EditorTool.tapeCassette:
+        return 'Vintage Tape Cassette Studio';
       default:
         return tool.name.toUpperCase();
     }
@@ -356,6 +365,12 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.tv;
       case EditorTool.reverbChamber:
         return Icons.surround_sound;
+      case EditorTool.anamorphicFlare:
+        return Icons.lens_blur;
+      case EditorTool.filmHalation:
+        return Icons.blur_on;
+      case EditorTool.tapeCassette:
+        return Icons.album;
       default:
         return Icons.edit;
     }
@@ -1156,6 +1171,30 @@ class DockedToolPanel extends StatelessWidget {
 
       case EditorTool.reverbChamber:
         return ReverbChamberSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.anamorphicFlare:
+        return AnamorphicFlareSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.filmHalation:
+        return FilmHalationSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.tapeCassette:
+        return TapeCassetteSheet(
           clip: clip,
           onSave: onSaveClip,
           isDocked: true,

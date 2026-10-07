@@ -24,7 +24,7 @@ class _SearchableTool {
 }
 
 /// Instant tool search and quick launcher palette.
-/// Allows creators to find any of the 58 editing tools in milliseconds
+/// Allows creators to find any of the 61 editing tools in milliseconds
 /// without endless scrolling.
 class ToolSearchModal extends StatefulWidget {
   final Function(EditorTool) onSelectTool;
@@ -530,6 +530,30 @@ class _ToolSearchModalState extends State<ToolSearchModal> {
       description: 'Acoustic room simulation, concert halls, cathedral echoes, EMT plates, and stereo depth',
       icon: Icons.surround_sound,
       keywords: ['reverb', 'echo', 'chamber', 'hall', 'cathedral', 'acoustic', 'dsp', 'spatial', 'room', 'plate'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.anamorphicFlare,
+      title: 'Anamorphic Streak Flare Studio',
+      category: 'Visuals',
+      description: 'Horizontal cinema lens streak bloom, luminance threshold extraction, specular starburst spikes, and optical tints',
+      icon: Icons.lens_blur,
+      keywords: ['flare', 'anamorphic', 'streak', 'bloom', 'starburst', 'cinema', 'lens', 'glow', 'spikes', 'light'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.filmHalation,
+      title: '35mm Film Halation Studio',
+      category: 'Visuals',
+      description: 'Photochemical red layer backscatter halo, specular edge bleed, diffusion radius, and authentic film stock presets',
+      icon: Icons.blur_on,
+      keywords: ['halation', 'film', '35mm', 'emulsion', 'red bleed', 'bloom', 'glow', 'analog', 'cinestill', 'kodak'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.tapeCassette,
+      title: 'Vintage Tape Cassette Studio',
+      category: 'Audio',
+      description: 'Analog magnetic tape wow pitch drift, flutter vibration, head warmth bump, and high-frequency tape roll-off',
+      icon: Icons.album,
+      keywords: ['tape', 'cassette', 'wow', 'flutter', 'warble', 'lofi', 'vintage', 'analog', 'walkman', 'vhs'],
     ),
   ];
 

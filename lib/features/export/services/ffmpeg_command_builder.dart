@@ -29,7 +29,10 @@ import '../../speed/services/speed_ease_compiler_service.dart';
 import '../../vfx/services/impact_flash_compiler_service.dart';
 import '../../vfx/services/vfx_compiler_service.dart';
 import '../../vfx/services/crt_scanline_compiler_service.dart';
+import '../../vfx/services/anamorphic_flare_compiler_service.dart';
+import '../../vfx/services/film_halation_compiler_service.dart';
 import '../../audio/services/reverb_compiler_service.dart';
+import '../../audio/services/tape_cassette_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
 import '../../image_editor/services/pip_compiler_service.dart';
 import '../../cutout/services/smart_cutout_compiler_service.dart';
@@ -550,6 +553,22 @@ class FFmpegCommandBuilder {
           }
         }
 
+        // Optical Glow: Anamorphic Streak Flare & Starburst
+        if (clip.anamorphicFlare.isActive) {
+          final flareFilters = AnamorphicFlareCompilerService.generateFFmpegFilters(clip.anamorphicFlare);
+          if (flareFilters.isNotEmpty) {
+            vFilters.addAll(flareFilters);
+          }
+        }
+
+        // Optical Glow: 35mm Film Halation & Emulsion Red Bleed
+        if (clip.filmHalation.isActive) {
+          final halationFilters = FilmHalationCompilerService.generateFFmpegFilters(clip.filmHalation);
+          if (halationFilters.isNotEmpty) {
+            vFilters.addAll(halationFilters);
+          }
+        }
+
         // Smart AI Cutout Studio & Glowing Neon Outlines
         if (clip.smartCutout.isEnabled) {
           final cutoutFilters = SmartCutoutCompilerService.generateFFmpegFilters(
@@ -798,6 +817,12 @@ class FFmpegCommandBuilder {
         if (clip.reverb.isActive) {
           final reverbFilters = ReverbCompilerService.generateFFmpegFilters(clip.reverb);
           aFilters.addAll(reverbFilters);
+        }
+
+        // Retro Tone: Vintage Tape Cassette & Wow/Flutter Warble
+        if (clip.tapeCassette.isActive) {
+          final tapeFilters = TapeCassetteCompilerService.generateFFmpegFilters(clip.tapeCassette);
+          aFilters.addAll(tapeFilters);
         }
 
         // Format harmonization (48kHz sample rate, fltp, stereo)
