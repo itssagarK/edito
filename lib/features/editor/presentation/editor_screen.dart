@@ -636,6 +636,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openImpactFlashModal();
         break;
 
+      case EditorTool.freezeClimax:
+        _openFreezeClimaxModal();
+        break;
+
+      case EditorTool.speedEase:
+        _openSpeedEaseModal();
+        break;
+
+      case EditorTool.spatialPan:
+        _openSpatialPanModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -905,6 +917,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openImpactFlashModal() {
     _openDockedTool(EditorTool.impactFlash, trackType: TrackType.video, purpose: 'Impact Flash & Strobe');
+  }
+
+  void _openFreezeClimaxModal() {
+    _openDockedTool(EditorTool.freezeClimax, trackType: TrackType.video, purpose: 'Action Freeze Frame Climax');
+  }
+
+  void _openSpeedEaseModal() {
+    _openDockedTool(EditorTool.speedEase, trackType: TrackType.video, purpose: 'Bezier Speed Ease & Curve');
+  }
+
+  void _openSpatialPanModal() {
+    _openDockedTool(EditorTool.spatialPan, purpose: '8D Spatial Audio & Pan');
   }
 
   void _openAudioToolsModal() {

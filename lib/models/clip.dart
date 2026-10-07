@@ -43,6 +43,8 @@ import '../features/transform/models/video_transform_config.dart';
 import '../features/image_editor/models/ken_burns_config.dart';
 import '../features/audio/models/audio_fade_config.dart';
 import '../features/vfx/models/impact_flash_config.dart';
+import '../features/speed/models/speed_ease_config.dart';
+import '../features/audio/models/spatial_audio_pan_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -104,6 +106,8 @@ class Clip extends Equatable {
   final KenBurnsConfig kenBurns;
   final AudioFadeConfig audioFade;
   final ImpactFlashConfig impactFlash;
+  final SpeedEaseConfig speedEase;
+  final SpatialAudioPanConfig spatialPan;
 
   const Clip({
     required this.id,
@@ -165,6 +169,8 @@ class Clip extends Equatable {
     this.kenBurns = const KenBurnsConfig(),
     this.audioFade = const AudioFadeConfig(),
     this.impactFlash = const ImpactFlashConfig(),
+    this.speedEase = const SpeedEaseConfig(),
+    this.spatialPan = const SpatialAudioPanConfig(),
   });
 
   Clip copyWith({
@@ -227,6 +233,8 @@ class Clip extends Equatable {
     KenBurnsConfig? kenBurns,
     AudioFadeConfig? audioFade,
     ImpactFlashConfig? impactFlash,
+    SpeedEaseConfig? speedEase,
+    SpatialAudioPanConfig? spatialPan,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -288,6 +296,8 @@ class Clip extends Equatable {
       kenBurns: kenBurns ?? this.kenBurns,
       audioFade: audioFade ?? this.audioFade,
       impactFlash: impactFlash ?? this.impactFlash,
+      speedEase: speedEase ?? this.speedEase,
+      spatialPan: spatialPan ?? this.spatialPan,
     );
   }
 
@@ -351,6 +361,8 @@ class Clip extends Equatable {
         'kenBurns': kenBurns.toJson(),
         'audioFade': audioFade.toJson(),
         'impactFlash': impactFlash.toJson(),
+        'speedEase': speedEase.toJson(),
+        'spatialPan': spatialPan.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -506,6 +518,12 @@ class Clip extends Equatable {
         impactFlash: json['impactFlash'] != null
             ? ImpactFlashConfig.fromJson(json['impactFlash'] as Map<String, dynamic>)
             : const ImpactFlashConfig(),
+        speedEase: json['speedEase'] != null
+            ? SpeedEaseConfig.fromJson(json['speedEase'] as Map<String, dynamic>)
+            : const SpeedEaseConfig(),
+        spatialPan: json['spatialPan'] != null
+            ? SpatialAudioPanConfig.fromJson(json['spatialPan'] as Map<String, dynamic>)
+            : const SpatialAudioPanConfig(),
       );
 
   @override
@@ -569,5 +587,7 @@ class Clip extends Equatable {
         kenBurns,
         audioFade,
         impactFlash,
+        speedEase,
+        spatialPan,
       ];
 }

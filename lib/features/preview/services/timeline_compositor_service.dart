@@ -68,7 +68,9 @@ class TimelineCompositorService {
       if (activeClip == null) continue;
 
       final clipOffset = (timestampMs - activeClip.startTimeMs).clamp(0, activeClip.durationMs);
-      final computedSourceMs = activeClip.sourceInMs + (clipOffset * activeClip.speed).round();
+      final computedSourceMs = activeClip.isFreezeFrame
+          ? (activeClip.freezeSourceMs ?? activeClip.sourceInMs)
+          : activeClip.sourceInMs + (clipOffset * activeClip.speed).round();
 
       // Find corresponding MediaAsset
       MediaAsset? asset;
@@ -110,6 +112,7 @@ class TimelineCompositorService {
             filePath: asset?.path,
             sourceOffsetMs: computedSourceMs,
             effectiveVolume: activeClip.volume,
+            effectivePan: activeClip.spatialPan.calculateInstantaneousPan(timestampMs / 1000.0),
             isMuted: false,
             isPrimaryVideoAudio: true,
           ));
@@ -128,6 +131,7 @@ class TimelineCompositorService {
             filePath: asset?.path,
             sourceOffsetMs: computedSourceMs,
             effectiveVolume: activeClip.volume,
+            effectivePan: activeClip.spatialPan.calculateInstantaneousPan(timestampMs / 1000.0),
             isMuted: false,
             isPrimaryVideoAudio: false,
           ));

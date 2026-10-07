@@ -483,6 +483,30 @@ class _ToolSearchModalState extends State<ToolSearchModal> {
       icon: Icons.flash_on,
       keywords: ['flash', 'impact', 'strobe', 'white burst', 'glow', 'cut accent', 'transition'],
     ),
+    _SearchableTool(
+      tool: EditorTool.freezeClimax,
+      title: 'Action Freeze Frame Climax',
+      category: 'Visuals',
+      description: 'Cinematic action freeze hold with camera punch zoom, monochrome accent, and impact flash',
+      icon: Icons.ac_unit,
+      keywords: ['freeze', 'climax', 'hold', 'action', 'punch', 'still', 'pause', 'dramatic'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.speedEase,
+      title: 'Bezier Speed Ramping & Optical Ease',
+      category: 'Edit',
+      description: 'Sculpt continuous velocity curves with cubic bezier handles and optical speed easing',
+      icon: Icons.tune,
+      keywords: ['bezier', 'speed', 'ease', 'velocity', 'curve', 'hero', 'bullet time', 'ramp', 'smooth'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.spatialPan,
+      title: '8D Spatial Audio & Stereo Matrix Pan',
+      category: 'Audio',
+      description: 'Equal-power stereo balance and viral 8D binaural rotating audio orbits for headphones',
+      icon: Icons.headphones,
+      keywords: ['spatial', 'pan', '8d', 'audio', 'binaural', 'orbit', 'stereo', 'headphone', 'surround'],
+    ),
   ];
 
   @override

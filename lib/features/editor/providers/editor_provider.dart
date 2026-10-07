@@ -68,6 +68,9 @@ enum EditorTool {
   beatCut,
   audioFade,
   impactFlash,
+  freezeClimax,
+  speedEase,
+  spatialPan,
 }
 
 class EditorState {

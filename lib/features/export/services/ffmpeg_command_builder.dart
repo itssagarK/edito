@@ -24,6 +24,8 @@ import '../../speed/services/auto_velocity_service.dart';
 import '../../transitions/models/transition_type.dart';
 import '../../transitions/services/transition_compiler_service.dart';
 import '../../audio/services/audio_fade_compiler_service.dart';
+import '../../audio/services/spatial_pan_compiler_service.dart';
+import '../../speed/services/speed_ease_compiler_service.dart';
 import '../../vfx/services/impact_flash_compiler_service.dart';
 import '../../vfx/services/vfx_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
@@ -245,6 +247,18 @@ class FFmpegCommandBuilder {
           );
           if (speedFilters.isNotEmpty) {
             vFilters.addAll(speedFilters);
+          }
+        }
+
+        // Pro Motion & Audio Dynamics Suite: Bezier Curve Speed Ramping & Optical Ease
+        if (clip.speedEase.isActive) {
+          final speedEaseFilters = SpeedEaseCompilerService.generateFFmpegFilters(
+            clip.speedEase,
+            clipDurationMs: clip.durationMs,
+            targetFps: config.framerate.fpsValue,
+          );
+          if (speedEaseFilters.isNotEmpty) {
+            vFilters.addAll(speedEaseFilters);
           }
         }
 
@@ -762,6 +776,12 @@ class FFmpegCommandBuilder {
             clipDurationMs: clip.durationMs,
           );
           aFilters.addAll(fadeFilters);
+        }
+
+        // Pro Motion & Audio Dynamics Suite: 8D Spatial Audio & Stereo Matrix Pan
+        if (clip.spatialPan.isActive) {
+          final panFilters = SpatialPanCompilerService.generateFFmpegFilters(clip.spatialPan);
+          aFilters.addAll(panFilters);
         }
 
         // Format harmonization (48kHz sample rate, fltp, stereo)

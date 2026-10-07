@@ -57,7 +57,10 @@ import '../../../transitions/models/transition_type.dart';
 import '../../../audio/presentation/widgets/sound_effects_sheet.dart';
 import '../../../audio/presentation/widgets/audio_recorder_sheet.dart';
 import '../../../audio/presentation/widgets/audio_fade_sheet.dart';
+import '../../../audio/presentation/widgets/spatial_pan_sheet.dart';
 import '../../../beats/presentation/widgets/beat_cutter_sheet.dart';
+import '../../../speed/presentation/widgets/speed_ease_sheet.dart';
+import '../../../timeline/presentation/widgets/freeze_climax_sheet.dart';
 import '../../../vfx/presentation/widgets/impact_flash_sheet.dart';
 import '../../../transform/presentation/widgets/transform_studio_sheet.dart';
 
@@ -205,6 +208,12 @@ class DockedToolPanel extends StatelessWidget {
         return 'Audio Fade & Anti-Pop';
       case EditorTool.impactFlash:
         return 'Impact Flash & Strobe';
+      case EditorTool.freezeClimax:
+        return 'Action Freeze Frame Climax';
+      case EditorTool.speedEase:
+        return 'Bezier Speed Ease & Curve';
+      case EditorTool.spatialPan:
+        return '8D Spatial Audio & Pan';
       default:
         return tool.name.toUpperCase();
     }
@@ -326,6 +335,12 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.graphic_eq;
       case EditorTool.impactFlash:
         return Icons.flash_on;
+      case EditorTool.freezeClimax:
+        return Icons.ac_unit;
+      case EditorTool.speedEase:
+        return Icons.tune;
+      case EditorTool.spatialPan:
+        return Icons.headphones;
       default:
         return Icons.edit;
     }
@@ -1076,6 +1091,32 @@ class DockedToolPanel extends StatelessWidget {
 
       case EditorTool.impactFlash:
         return ImpactFlashSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.freezeClimax:
+        return FreezeClimaxSheet(
+          project: project,
+          clip: clip,
+          playheadPositionMs: playheadPositionMs,
+          onProjectUpdated: onSaveProject,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.speedEase:
+        return SpeedEaseSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.spatialPan:
+        return SpatialPanSheet(
           clip: clip,
           onSave: onSaveClip,
           isDocked: true,
