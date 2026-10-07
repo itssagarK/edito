@@ -45,6 +45,9 @@ import '../features/audio/models/audio_fade_config.dart';
 import '../features/vfx/models/impact_flash_config.dart';
 import '../features/speed/models/speed_ease_config.dart';
 import '../features/audio/models/spatial_audio_pan_config.dart';
+import '../features/overlays/models/typewriter_title_config.dart';
+import '../features/vfx/models/crt_scanline_config.dart';
+import '../features/audio/models/reverb_chamber_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -108,6 +111,9 @@ class Clip extends Equatable {
   final ImpactFlashConfig impactFlash;
   final SpeedEaseConfig speedEase;
   final SpatialAudioPanConfig spatialPan;
+  final TypewriterTitleConfig typewriterTitle;
+  final CrtScanlineConfig crtScanline;
+  final ReverbChamberConfig reverb;
 
   const Clip({
     required this.id,
@@ -171,6 +177,9 @@ class Clip extends Equatable {
     this.impactFlash = const ImpactFlashConfig(),
     this.speedEase = const SpeedEaseConfig(),
     this.spatialPan = const SpatialAudioPanConfig(),
+    this.typewriterTitle = const TypewriterTitleConfig(),
+    this.crtScanline = const CrtScanlineConfig(),
+    this.reverb = const ReverbChamberConfig(),
   });
 
   Clip copyWith({
@@ -235,6 +244,9 @@ class Clip extends Equatable {
     ImpactFlashConfig? impactFlash,
     SpeedEaseConfig? speedEase,
     SpatialAudioPanConfig? spatialPan,
+    TypewriterTitleConfig? typewriterTitle,
+    CrtScanlineConfig? crtScanline,
+    ReverbChamberConfig? reverb,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -298,6 +310,9 @@ class Clip extends Equatable {
       impactFlash: impactFlash ?? this.impactFlash,
       speedEase: speedEase ?? this.speedEase,
       spatialPan: spatialPan ?? this.spatialPan,
+      typewriterTitle: typewriterTitle ?? this.typewriterTitle,
+      crtScanline: crtScanline ?? this.crtScanline,
+      reverb: reverb ?? this.reverb,
     );
   }
 
@@ -363,6 +378,9 @@ class Clip extends Equatable {
         'impactFlash': impactFlash.toJson(),
         'speedEase': speedEase.toJson(),
         'spatialPan': spatialPan.toJson(),
+        'typewriterTitle': typewriterTitle.toJson(),
+        'crtScanline': crtScanline.toJson(),
+        'reverb': reverb.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -524,6 +542,15 @@ class Clip extends Equatable {
         spatialPan: json['spatialPan'] != null
             ? SpatialAudioPanConfig.fromJson(json['spatialPan'] as Map<String, dynamic>)
             : const SpatialAudioPanConfig(),
+        typewriterTitle: json['typewriterTitle'] != null
+            ? TypewriterTitleConfig.fromJson(json['typewriterTitle'] as Map<String, dynamic>)
+            : const TypewriterTitleConfig(),
+        crtScanline: json['crtScanline'] != null
+            ? CrtScanlineConfig.fromJson(json['crtScanline'] as Map<String, dynamic>)
+            : const CrtScanlineConfig(),
+        reverb: json['reverb'] != null
+            ? ReverbChamberConfig.fromJson(json['reverb'] as Map<String, dynamic>)
+            : const ReverbChamberConfig(),
       );
 
   @override
@@ -589,5 +616,8 @@ class Clip extends Equatable {
         impactFlash,
         speedEase,
         spatialPan,
+        typewriterTitle,
+        crtScanline,
+        reverb,
       ];
 }

@@ -648,6 +648,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openSpatialPanModal();
         break;
 
+      case EditorTool.typewriterTitle:
+        _openTypewriterTitleModal();
+        break;
+
+      case EditorTool.crtScanline:
+        _openCrtScanlineModal();
+        break;
+
+      case EditorTool.reverbChamber:
+        _openReverbChamberModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -929,6 +941,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openSpatialPanModal() {
     _openDockedTool(EditorTool.spatialPan, purpose: '8D Spatial Audio & Pan');
+  }
+
+  void _openTypewriterTitleModal() {
+    _openDockedTool(EditorTool.typewriterTitle, purpose: 'Kinetic Typewriter Studio');
+  }
+
+  void _openCrtScanlineModal() {
+    _openDockedTool(EditorTool.crtScanline, trackType: TrackType.video, purpose: 'Retro CRT Scanlines Studio');
+  }
+
+  void _openReverbChamberModal() {
+    _openDockedTool(EditorTool.reverbChamber, purpose: 'Reverb Chamber Studio');
   }
 
   void _openAudioToolsModal() {

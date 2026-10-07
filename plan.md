@@ -56,7 +56,8 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 | **13** | **OFFLINE-SUITE** | 100% Self-Dependent Feature Suite (Social Progress Bar, Ken Burns Motion, Timeline Gap Closer) | Deterministic Math / Skia / DSP | Internal | ✅ **COMPLETED** |
 | **14** | **CREATOR-POWER** | Creator Power Suite (Auto Beat Cut & Rhythm Snapper, Audio Fade Envelopes, Cinematic Impact Flash) | Deterministic Math / Skia / DSP | Internal | ✅ **COMPLETED** (`v1.0.77`) |
 | **15** | **PRO-MOTION-AUDIO** | Pro Motion & Audio Dynamics Suite (Action Freeze Climax, Bezier Curve Speed Ease, 8D Spatial Audio Pan) | Deterministic Timeline Surgery / Bezier / LFO DSP | Internal | ✅ **COMPLETED** (`v1.0.78`) |
-| **16** | **TYPOGRAPHY-VFX** | Creative Stylist & Typography Dynamics Suite (Typewriter Kinetic Titles, CRT Cyber Scanlines, Spatial Reverb Chamber) | Skia Canvas / DSP Convolver | Internal | 🚀 **PLANNED** |
+| **16** | **TYPOGRAPHY-VFX** | Creative Stylist & Typography Dynamics Suite (Typewriter Kinetic Titles, CRT Cyber Scanlines, Spatial Reverb Chamber) | Skia Canvas / DSP Convolver | Internal | ✅ **COMPLETED** (`v1.0.79`) |
+| **17** | **OPTICAL-GLOW-AUDIO** | Optical Glow & Retro Tone Suite (Anamorphic Streak Flare, Halation Film Bleed, Tape Cassette Audio Warble) | Skia Canvas / Optical Convolution / DSP Wow & Flutter | Internal | 🚀 **PLANNED** |
 
 ---
 
@@ -406,14 +407,41 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 
 ---
 
-### Phase 16: Creative Stylist & Typography Dynamics Suite (Typewriter Kinetic Titles, CRT Cyber Scanlines, Spatial Reverb Chamber) 🚀 [PLANNED]
+### Phase 16: Creative Stylist & Typography Dynamics Suite (Typewriter Kinetic Titles, CRT Cyber Scanlines, Spatial Reverb Chamber) ✅ [COMPLETED]
 **Goal:** Deliver 3 high-impact, 100% self-dependent creator tools powered by Skia Canvas typography animation, analog scanline raster filters, and acoustic DSP delays:
-- **16.1 Animated Text Typewriter & Kinetic Word Flow (`TypewriterTitleService`, `TypewriterTitleSheet`)**:
-  - Char-by-char typewriter reveal, cursor blink, word-by-word punch with Skia real-time canvas preview and FFmpeg `drawtext` export parity.
-- **16.2 Retro CRT Scanlines & Cyber Phosphor Glow Studio (`CrtScanlineConfig`, `CrtScanlineCompilerService`, `CrtScanlineSheet`)**:
-  - Phosphor cathode-ray scanlines, CRT curvature, RGB chromatic shadow offset, and analog noise grain.
-- **16.3 Audio Reverb Chamber & Spatial Acoustic Convolver (`ReverbChamberConfig`, `ReverbCompilerService`, `ReverbChamberSheet`)**:
-  - Delay time, decay feedback, stereo spread with native FFmpeg `aecho` / `apad` DSP filter graphs.
+- [x] **Step 16.1: Animated Text Typewriter & Kinetic Word Flow (`TypewriterTitleConfig`, `TypewriterTitleService`, `TypewriterTitleSheet`)**
+  - Modeled `TypewriterTitleConfig` with `charByChar`, `wordByWord`, `fadeWord`, and `terminalGlitch` modes.
+  - Interactive cursor customization: `line`, `block`, `underscore`, `caret`, `none` with customizable blink period and haptic sync.
+  - Progressive alpha / keyframe export filters in `TypewriterTitleService` and real-time preview viewport parity.
+  - Interactive UI sheet: `TypewriterTitleSheet` with live typing simulation card, speed slider, and presets (*Tech Terminal*, *Noir Title*, *TikTok Punch*, *Hacker Matrix*, *Minimal Clean*).
+- [x] **Step 16.2: Retro CRT Scanlines & Cyber Phosphor Glow Studio (`CrtScanlineConfig`, `CrtScanlineCompilerService`, `CrtScanlineSheet`)**
+  - Modeled `CrtScanlineConfig` with scanline pitch, opacity, rolling hum bar speed, CRT barrel curvature, RGB shadow offset, and TV noise.
+  - 6 cathode phosphor tints: `Natural`, `Amber Classic (1981)`, `P1 Green (IBM 5151)`, `Trinitron Cyber Cyan`, `CCTV B&W Monochrome`, `Vaporwave Neon Pink`.
+  - Deterministic FFmpeg filter pipeline (`drawgrid`, `colorchannelmixer`, `rgbashift`, `vignette`, `noise`) via `CrtScanlineCompilerService`.
+  - Skia custom painter `_ViewportCrtPainter` in viewport preview stack and interactive `CrtScanlineSheet`.
+- [x] **Step 16.3: Audio Reverb Chamber & Spatial Acoustic Convolver (`ReverbChamberConfig`, `ReverbCompilerService`, `ReverbChamberSheet`)**
+  - Modeled `ReverbChamberConfig` with 7 room acoustic types (`studioBooth`, `smallRoom`, `vocalHall`, `cathedral`, `cyberCavern`, `plateReverb`, `stadium`).
+  - Wet/dry mix, decay tail duration (100ms–5000ms), high-frequency damping, stereo width, and pre-delay reflections.
+  - Deterministic FFmpeg `aecho`, `stereotools`, `equalizer` audio pipeline with **true-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`)** per AGENTS.md Rule 4.
+  - Interactive UI sheet: `ReverbChamberSheet` with 3D acoustic room visualizer canvas (`_AcousticChamberPainter`).
+- [x] **Step 16.4: Tool Registration & Navigation Wiring**
+  - Added `typewriterTitle`, `crtScanline`, `reverbChamber` to `EditorTool` enum in `editor_provider.dart`.
+  - Wired into `EditorScreen`, `DockedToolPanel`, `EditingToolbar`, and `ToolSearchModal`.
+- [x] **Step 16.5: Comprehensive Unit Tests & Codebase Verification**
+  - Created `test/creative_stylist_typography_dynamics_test.dart` testing models, typography math, CRT raster filters, reverb DSP, and schema backwards compatibility.
+  - Bumped version to `1.0.79+80` in `pubspec.yaml` and `scripts/configure_android.py`.
+  - Verified 100% clean with `python scripts/verify_codebase.py` (394 Dart files scanned).
+
+---
+
+### Phase 17: Optical Glow & Retro Tone Suite (Anamorphic Streak Flare, Halation Film Bleed, Tape Cassette Audio Warble) 🚀 [PLANNED]
+**Goal:** Deliver 3 high-impact, 100% self-dependent creator tools powered by anamorphic optical flares, film stock emulsion halation, and analog tape wow & flutter DSP:
+- **17.1 Anamorphic Streak Flare & Starburst Studio (`AnamorphicFlareConfig`, `AnamorphicFlareCompilerService`, `AnamorphicFlareSheet`)**:
+  - Horizontal blue/gold cinema lens flare streak, luminance threshold extraction, anamorphic aspect stretch, and Skia real-time canvas preview.
+- **17.2 35mm Film Halation & Emulsion Red Bleed Studio (`FilmHalationConfig`, `FilmHalationCompilerService`, `FilmHalationSheet`)**:
+  - Red photochem layer backscatter glow along high-contrast highlights and silhouette edges.
+- **17.3 Vintage Tape Cassette & Wow/Flutter Warble Studio (`TapeCassetteConfig`, `TapeCassetteCompilerService`, `TapeCassetteSheet`)**:
+  - Low-frequency tape speed drift (wow ~0.5Hz–2Hz), rapid capstan flutter (~6Hz–15Hz), head azimuth tape warmth, and brickwall limiter ceiling.
 
 ---
 
@@ -460,6 +488,20 @@ If this environment restarts or your session closes abruptly, follow this 4-step
   - Added Cinematic Impact Flash & Strobe Accent Studio (`ImpactFlashConfig`, `ImpactFlashSheet`, `ImpactFlashCompilerService`) with Skia preview simulation and FFmpeg `drawbox` cutpoint strobe.
   - Added unit test suite `test/creator_power_suite_test.dart`.
   - Linter verification: 100% clean (374 files).
+
+- **2026-10-07 [Pro Motion & Audio Dynamics Suite (Phase 15 - v1.0.78)]:**
+  - Added Action Freeze Frame Climax Studio (`FreezeClimaxService`, `FreezeClimaxSheet`) with camera punch zoom, impact flash, and multi-track ripple sync.
+  - Added Bezier Curve Speed Ramping & Optical Ease Studio (`SpeedEaseConfig`, `SpeedEaseCompilerService`, `SpeedEaseSheet`) with Newton-Raphson easing and interactive Skia curve handles.
+  - Added 8D Spatial Audio & Stereo Matrix Pan Studio (`SpatialAudioPanConfig`, `SpatialPanCompilerService`, `SpatialPanSheet`) with equal-power panning and binaural headphone radar.
+  - Added unit test suite `test/pro_motion_audio_dynamics_test.dart`.
+  - Linter verification: 100% clean (384 files).
+
+- **2026-10-07 [Creative Stylist & Typography Dynamics Suite (Phase 16 - v1.0.79)]:**
+  - Added Kinetic Typewriter Studio (`TypewriterTitleConfig`, `TypewriterTitleService`, `TypewriterTitleSheet`) with char-by-char, word-by-word, and terminal glitch modes, blinking cursors, and live typing simulation.
+  - Added Retro CRT Scanlines & Cyber Phosphor Glow Studio (`CrtScanlineConfig`, `CrtScanlineCompilerService`, `CrtScanlineSheet`) with cathode-ray raster lines, rolling hum bars, 6 phosphor tints, and barrel curvature.
+  - Added Audio Reverb Chamber Studio (`ReverbChamberConfig`, `ReverbCompilerService`, `ReverbChamberSheet`) with 7 acoustic room types, multi-tap delay reflections, and true-peak brickwall ceiling limiter.
+  - Added unit test suite `test/creative_stylist_typography_dynamics_test.dart`.
+  - Linter verification: 100% clean (394 files).
 
 ---
 

@@ -71,6 +71,9 @@ enum EditorTool {
   freezeClimax,
   speedEase,
   spatialPan,
+  typewriterTitle,
+  crtScanline,
+  reverbChamber,
 }
 
 class EditorState {

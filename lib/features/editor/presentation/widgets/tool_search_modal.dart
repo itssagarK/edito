@@ -507,6 +507,30 @@ class _ToolSearchModalState extends State<ToolSearchModal> {
       icon: Icons.headphones,
       keywords: ['spatial', 'pan', '8d', 'audio', 'binaural', 'orbit', 'stereo', 'headphone', 'surround'],
     ),
+    _SearchableTool(
+      tool: EditorTool.typewriterTitle,
+      title: 'Kinetic Typewriter Studio',
+      category: 'Visuals',
+      description: 'Char-by-char or word-by-word kinetic text reveals with blinking terminal cursors and glitch resolves',
+      icon: Icons.keyboard,
+      keywords: ['typewriter', 'kinetic', 'title', 'text', 'cursor', 'terminal', 'matrix', 'subtitle', 'quote'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.crtScanline,
+      title: 'Retro CRT Scanlines Studio',
+      category: 'Visuals',
+      description: 'Cathode-ray raster scanlines, rolling hum bar, phosphor glow tints, barrel curvature, and TV noise',
+      icon: Icons.tv,
+      keywords: ['crt', 'scanline', 'retro', 'vhs', 'phosphor', 'arcade', 'terminal', 'cyberpunk', 'tube', 'pvm'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.reverbChamber,
+      title: 'Reverb Chamber Studio',
+      category: 'Audio',
+      description: 'Acoustic room simulation, concert halls, cathedral echoes, EMT plates, and stereo depth',
+      icon: Icons.surround_sound,
+      keywords: ['reverb', 'echo', 'chamber', 'hall', 'cathedral', 'acoustic', 'dsp', 'spatial', 'room', 'plate'],
+    ),
   ];
 
   @override

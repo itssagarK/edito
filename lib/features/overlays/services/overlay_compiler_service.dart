@@ -148,6 +148,12 @@ class OverlayCompilerService {
         sizeExpr = "'$size*(1+0.07*sin(mod($tExpr,0.5)/0.5*3.14159))'";
         break;
       case TextAnimationType.typewriter:
+        final typingSpeed = clip.typewriterTitle.isActive ? clip.typewriterTitle.typingSpeedMs : 45;
+        final startDelay = clip.typewriterTitle.isActive ? clip.typewriterTitle.startDelayMs : 150;
+        final startDelaySec = (startDelay / 1000.0).toStringAsFixed(2);
+        final typingDurSec = ((typingSpeed * sanitizedText.length) / 1000.0).toStringAsFixed(2);
+        alphaExpr = "'if(lt($tExpr,$startDelaySec),0.0,if(lt($tExpr,$startDelaySec+$typingDurSec),min(1.0,($tExpr-$startDelaySec)/$typingDurSec),1.0))'";
+        break;
       case TextAnimationType.none:
         break;
     }

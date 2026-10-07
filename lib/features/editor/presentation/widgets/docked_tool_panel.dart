@@ -58,10 +58,13 @@ import '../../../audio/presentation/widgets/sound_effects_sheet.dart';
 import '../../../audio/presentation/widgets/audio_recorder_sheet.dart';
 import '../../../audio/presentation/widgets/audio_fade_sheet.dart';
 import '../../../audio/presentation/widgets/spatial_pan_sheet.dart';
+import '../../../audio/presentation/widgets/reverb_chamber_sheet.dart';
 import '../../../beats/presentation/widgets/beat_cutter_sheet.dart';
 import '../../../speed/presentation/widgets/speed_ease_sheet.dart';
 import '../../../timeline/presentation/widgets/freeze_climax_sheet.dart';
 import '../../../vfx/presentation/widgets/impact_flash_sheet.dart';
+import '../../../vfx/presentation/widgets/crt_scanline_sheet.dart';
+import '../../../overlays/presentation/widgets/typewriter_title_sheet.dart';
 import '../../../transform/presentation/widgets/transform_studio_sheet.dart';
 
 class DockedToolPanel extends StatelessWidget {
@@ -214,6 +217,12 @@ class DockedToolPanel extends StatelessWidget {
         return 'Bezier Speed Ease & Curve';
       case EditorTool.spatialPan:
         return '8D Spatial Audio & Pan';
+      case EditorTool.typewriterTitle:
+        return 'Kinetic Typewriter Studio';
+      case EditorTool.crtScanline:
+        return 'Retro CRT Scanlines Studio';
+      case EditorTool.reverbChamber:
+        return 'Reverb Chamber Studio';
       default:
         return tool.name.toUpperCase();
     }
@@ -341,6 +350,12 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.tune;
       case EditorTool.spatialPan:
         return Icons.headphones;
+      case EditorTool.typewriterTitle:
+        return Icons.keyboard;
+      case EditorTool.crtScanline:
+        return Icons.tv;
+      case EditorTool.reverbChamber:
+        return Icons.surround_sound;
       default:
         return Icons.edit;
     }
@@ -1117,6 +1132,30 @@ class DockedToolPanel extends StatelessWidget {
 
       case EditorTool.spatialPan:
         return SpatialPanSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.typewriterTitle:
+        return TypewriterTitleSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.crtScanline:
+        return CrtScanlineSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.reverbChamber:
+        return ReverbChamberSheet(
           clip: clip,
           onSave: onSaveClip,
           isDocked: true,

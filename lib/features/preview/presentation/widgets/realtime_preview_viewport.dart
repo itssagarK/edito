@@ -38,6 +38,7 @@ import '../../../blending/presentation/widgets/blend_mode_wrapper.dart';
 import '../../../keyframes/presentation/widgets/keyframe_transform_wrapper.dart';
 import '../../../vfx/models/vfx_config.dart';
 import '../../../vfx/models/impact_flash_config.dart';
+import '../../../vfx/models/crt_scanline_config.dart';
 import '../../../vfx/services/vfx_compiler_service.dart';
 import '../../../vfx/presentation/widgets/vfx_preview_wrapper.dart';
 import '../../../../models/clip.dart';
@@ -1338,6 +1339,8 @@ class RealtimePreviewViewport extends ConsumerWidget {
           _buildHeaderFooterOverlay(clip.headerFooter),
         if (clip.impactFlash.isActive)
           _buildImpactFlashOverlay(clip.impactFlash, currentPositionMs - clip.timelineInMs),
+        if (clip.crtScanline.isActive)
+          _buildCrtScanlineOverlay(clip.crtScanline, currentPositionMs - clip.timelineInMs),
       ],
     );
   }
@@ -1510,10 +1513,24 @@ class RealtimePreviewViewport extends ConsumerWidget {
         break;
 
       case TextAnimationType.typewriter:
-        final typeDur = (clipDurationMs * 0.70).clamp(500, 3000).toDouble();
-        final t = (clipOffsetMs / typeDur).clamp(0.0, 1.0);
-        final visibleCount = (t * fullText.length).ceil().clamp(0, fullText.length);
-        displayText = fullText.substring(0, visibleCount);
+        if (overlayClip.typewriterTitle.isActive) {
+          final typedText = overlayClip.typewriterTitle.getDisplayText(
+            fullText,
+            clipOffsetMs,
+            totalDurationMs: clipDurationMs,
+          );
+          final cursor = overlayClip.typewriterTitle.getActiveCursor(
+            clipOffsetMs,
+            clipDurationMs,
+            textLength: fullText.length,
+          );
+          displayText = '$typedText$cursor';
+        } else {
+          final typeDur = (clipDurationMs * 0.70).clamp(500, 3000).toDouble();
+          final t = (clipOffsetMs / typeDur).clamp(0.0, 1.0);
+          final visibleCount = (t * fullText.length).ceil().clamp(0, fullText.length);
+          displayText = fullText.substring(0, visibleCount);
+        }
         break;
     }
 
@@ -2065,6 +2082,23 @@ class RealtimePreviewViewport extends ConsumerWidget {
     );
   }
 
+  Widget _buildCrtScanlineOverlay(CrtScanlineConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+
+    final phase = (offsetMs / 2000.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportCrtPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildProgressBarOverlay(ProgressBarConfig config, int currentMs, int totalMs) {
     if (totalMs <= 0) return const SizedBox.shrink();
     final progress = (currentMs / totalMs).clamp(0.0, 1.0);
@@ -2452,6 +2486,76 @@ class _StaticDoodlePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _StaticDoodlePainter oldDelegate) {
     return oldDelegate.config != config;
+  }
+}
+
+class _ViewportCrtPainter extends CustomPainter {
+  final CrtScanlineConfig config;
+  final double phase;
+
+  _ViewportCrtPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (!config.isActive || size.width <= 0 || size.height <= 0) return;
+
+    // 1. Phosphor background glow
+    if (config.phosphorTint.colorHex != null) {
+      final tintPaint = Paint()
+        ..color = Color(config.phosphorTint.colorHex!).withOpacity(config.phosphorGlow * 0.12)
+        ..blendMode = BlendMode.screen;
+      canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), tintPaint);
+    }
+
+    // 2. Horizontal cathode scanlines
+    final scanlinePaint = Paint()
+      ..color = Colors.black.withOpacity(config.scanlineOpacity.clamp(0.0, 0.95))
+      ..strokeWidth = 1.0;
+
+    final pitch = config.scanlinePitch.clamp(2.0, 20.0);
+    for (double y = 0; y < size.height; y += pitch) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), scanlinePaint);
+    }
+
+    // 3. Rolling hum bar
+    if (config.rollingBarOpacity > 0.02 && config.rollingBarSpeed > 0.0) {
+      final barY = (phase * size.height * config.rollingBarSpeed) % size.height;
+      final humBarPaint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent,
+            Colors.white.withOpacity(config.rollingBarOpacity),
+            Colors.transparent,
+          ],
+        ).createShader(Rect.fromLTWH(0, barY - 20, size.width, 40));
+
+      canvas.drawRect(Rect.fromLTWH(0, barY - 20, size.width, 40), humBarPaint);
+    }
+
+    // 4. CRT Corner vignette / barrel falloff
+    if (config.screenCurvature > 0.05) {
+      final vignettePaint = Paint()
+        ..shader = RadialGradient(
+          center: Alignment.center,
+          radius: 0.9 - (config.screenCurvature * 0.3),
+          colors: [
+            Colors.transparent,
+            Colors.black.withOpacity((config.screenCurvature * 0.85).clamp(0.0, 0.95)),
+          ],
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+      canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), vignettePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportCrtPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
   }
 }
 

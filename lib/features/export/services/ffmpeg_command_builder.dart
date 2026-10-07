@@ -28,6 +28,8 @@ import '../../audio/services/spatial_pan_compiler_service.dart';
 import '../../speed/services/speed_ease_compiler_service.dart';
 import '../../vfx/services/impact_flash_compiler_service.dart';
 import '../../vfx/services/vfx_compiler_service.dart';
+import '../../vfx/services/crt_scanline_compiler_service.dart';
+import '../../audio/services/reverb_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
 import '../../image_editor/services/pip_compiler_service.dart';
 import '../../cutout/services/smart_cutout_compiler_service.dart';
@@ -540,6 +542,14 @@ class FFmpegCommandBuilder {
           }
         }
 
+        // Creative Stylist: Retro CRT Scanlines & Cyber Phosphor Glow
+        if (clip.crtScanline.isActive) {
+          final crtFilters = CrtScanlineCompilerService.generateFFmpegFilters(clip.crtScanline);
+          if (crtFilters.isNotEmpty) {
+            vFilters.addAll(crtFilters);
+          }
+        }
+
         // Smart AI Cutout Studio & Glowing Neon Outlines
         if (clip.smartCutout.isEnabled) {
           final cutoutFilters = SmartCutoutCompilerService.generateFFmpegFilters(
@@ -782,6 +792,12 @@ class FFmpegCommandBuilder {
         if (clip.spatialPan.isActive) {
           final panFilters = SpatialPanCompilerService.generateFFmpegFilters(clip.spatialPan);
           aFilters.addAll(panFilters);
+        }
+
+        // Creative Stylist: Reverb Chamber & Spatial Acoustic Convolver
+        if (clip.reverb.isActive) {
+          final reverbFilters = ReverbCompilerService.generateFFmpegFilters(clip.reverb);
+          aFilters.addAll(reverbFilters);
         }
 
         // Format harmonization (48kHz sample rate, fltp, stereo)
