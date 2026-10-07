@@ -45,6 +45,9 @@ import '../../audio/services/tremolo_wah_compiler_service.dart';
 import '../../vfx/services/tilt_shift_compiler_service.dart';
 import '../../vfx/services/neon_glow_compiler_service.dart';
 import '../../audio/services/pitch_harmonizer_compiler_service.dart';
+import '../../vfx/services/chromatic_aberration_compiler_service.dart';
+import '../../vfx/services/solarize_invert_compiler_service.dart';
+import '../../audio/services/audio_stutter_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
 import '../../image_editor/services/pip_compiler_service.dart';
 import '../../cutout/services/smart_cutout_compiler_service.dart';
@@ -661,6 +664,30 @@ class FFmpegCommandBuilder {
           }
         }
 
+        // Optical Glitch: Chromatic Aberration & RGB Split
+        if (clip.chromaticAberration.isActive) {
+          final chromaticFilter = ChromaticAberrationCompilerService.compileFilter(
+            clip.chromaticAberration,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (chromaticFilter.isNotEmpty) {
+            vFilters.add(chromaticFilter);
+          }
+        }
+
+        // Color & Tone: Thermal Solarization & Tone Inversion
+        if (clip.solarizeInvert.isActive) {
+          final solarizeFilter = SolarizeInvertCompilerService.compileFilter(
+            clip.solarizeInvert,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (solarizeFilter.isNotEmpty) {
+            vFilters.add(solarizeFilter);
+          }
+        }
+
         // Smart AI Cutout Studio & Glowing Neon Outlines
         if (clip.smartCutout.isEnabled) {
           final cutoutFilters = SmartCutoutCompilerService.generateFFmpegFilters(
@@ -944,6 +971,14 @@ class FFmpegCommandBuilder {
           final pitchFilter = PitchHarmonizerCompilerService.compileFilter(clip.pitchHarmonizer);
           if (pitchFilter.isNotEmpty) {
             aFilters.add(pitchFilter);
+          }
+        }
+
+        // Rhythmic Dynamics: Audio Stutter & Glitch Buffer Repeater
+        if (clip.audioStutter.isActive) {
+          final stutterFilter = AudioStutterCompilerService.compileFilter(clip.audioStutter);
+          if (stutterFilter.isNotEmpty) {
+            aFilters.add(stutterFilter);
           }
         }
 

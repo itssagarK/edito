@@ -89,6 +89,9 @@ enum EditorTool {
   tiltShift,
   neonGlow,
   pitchHarmonizer,
+  chromaticAberration,
+  solarizeInvert,
+  audioStutter,
 }
 
 class EditorState {

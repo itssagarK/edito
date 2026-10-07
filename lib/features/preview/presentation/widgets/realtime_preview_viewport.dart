@@ -49,6 +49,8 @@ import '../../../vfx/models/kaleidoscope_config.dart';
 import '../../../vfx/models/datamosh_glitch_config.dart';
 import '../../../vfx/models/tilt_shift_config.dart';
 import '../../../vfx/models/neon_glow_config.dart';
+import '../../../vfx/models/chromatic_aberration_config.dart';
+import '../../../vfx/models/solarize_invert_config.dart';
 import '../../../vfx/services/vfx_compiler_service.dart';
 import '../../../vfx/presentation/widgets/vfx_preview_wrapper.dart';
 import '../../../../models/clip.dart';
@@ -1371,6 +1373,10 @@ class RealtimePreviewViewport extends ConsumerWidget {
           _buildTiltShiftOverlay(clip.tiltShift),
         if (clip.neonGlow.isActive)
           _buildNeonGlowOverlay(clip.neonGlow, currentPositionMs - clip.timelineInMs),
+        if (clip.chromaticAberration.isActive)
+          _buildChromaticAberrationOverlay(clip.chromaticAberration, currentPositionMs - clip.timelineInMs),
+        if (clip.solarizeInvert.isActive)
+          _buildSolarizeInvertOverlay(clip.solarizeInvert, currentPositionMs - clip.timelineInMs),
       ],
     );
   }
@@ -2277,6 +2283,38 @@ class RealtimePreviewViewport extends ConsumerWidget {
       child: IgnorePointer(
         child: CustomPaint(
           painter: _ViewportNeonGlowPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChromaticAberrationOverlay(ChromaticAberrationConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 1000.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportChromaticAberrationPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSolarizeInvertOverlay(SolarizeInvertConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 3000.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportSolarizeInvertPainter(
             config: config,
             phase: phase,
           ),
@@ -3462,6 +3500,142 @@ class _ViewportNeonGlowPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ViewportNeonGlowPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
+class _ViewportChromaticAberrationPainter extends CustomPainter {
+  final ChromaticAberrationConfig config;
+  final double phase;
+
+  _ViewportChromaticAberrationPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (!config.isActive || size.width <= 0 || size.height <= 0) return;
+
+    final width = size.width;
+    final height = size.height;
+    double maxShift = config.shiftAmount * 14.0;
+
+    if (config.mode == ChromaticAberrationMode.hologramJitter) {
+      maxShift *= math.sin(phase * 2 * math.pi * config.jitterSpeed);
+    }
+
+    final rad = config.angleDeg * (math.pi / 180.0);
+    double dx = maxShift;
+    double dy = 0.0;
+
+    if (config.mode == ChromaticAberrationMode.prismaticAngle ||
+        config.mode == ChromaticAberrationMode.hologramJitter) {
+      dx = maxShift * math.cos(rad);
+      dy = maxShift * math.sin(rad);
+    }
+
+    // Left/Right RGB channel fringe bands
+    final redPaint = Paint()
+      ..color = const Color(0xFFFF1744).withOpacity((0.18 * config.colorMix).clamp(0.0, 1.0))
+      ..blendMode = BlendMode.screen;
+    canvas.drawRect(Rect.fromLTWH(dx > 0 ? width - dx.abs() * 2 : 0, 0, dx.abs() * 2, height), redPaint);
+
+    final cyanPaint = Paint()
+      ..color = const Color(0xFF00E5FF).withOpacity((0.18 * config.colorMix).clamp(0.0, 1.0))
+      ..blendMode = BlendMode.screen;
+    canvas.drawRect(Rect.fromLTWH(dx > 0 ? 0 : width - dx.abs() * 2, 0, dx.abs() * 2, height), cyanPaint);
+
+    if (config.mode == ChromaticAberrationMode.radialDispersion) {
+      // Peripheral optical prism dispersion
+      final prismPaint = Paint()
+        ..shader = RadialGradient(
+          radius: 0.9,
+          colors: [
+            Colors.transparent,
+            const Color(0xFFFF007F).withOpacity((0.14 * config.colorMix).clamp(0.0, 1.0)),
+            const Color(0xFF00E5FF).withOpacity((0.18 * config.colorMix).clamp(0.0, 1.0)),
+          ],
+          stops: const [0.65, 0.88, 1.0],
+        ).createShader(Rect.fromLTWH(0, 0, width, height))
+        ..blendMode = BlendMode.screen;
+      canvas.drawRect(Rect.fromLTWH(0, 0, width, height), prismPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportChromaticAberrationPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
+class _ViewportSolarizeInvertPainter extends CustomPainter {
+  final SolarizeInvertConfig config;
+  final double phase;
+
+  _ViewportSolarizeInvertPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (!config.isActive || size.width <= 0 || size.height <= 0) return;
+
+    final width = size.width;
+    final height = size.height;
+    final rect = Rect.fromLTWH(0, 0, width, height);
+
+    switch (config.mode) {
+      case SolarizeInvertMode.negativeInvert:
+        final negPaint = Paint()
+          ..color = Colors.white.withOpacity((config.intensity * 0.85).clamp(0.0, 1.0))
+          ..blendMode = BlendMode.difference;
+        canvas.drawRect(rect, negPaint);
+        break;
+
+      case SolarizeInvertMode.sabattier:
+        final sabPaint = Paint()
+          ..color = Colors.white.withOpacity((config.intensity * 0.45).clamp(0.0, 1.0))
+          ..blendMode = BlendMode.exclusion;
+        canvas.drawRect(rect, sabPaint);
+        break;
+
+      case SolarizeInvertMode.psychedelic:
+        final cycleHue = (config.tintHue + (phase * 360.0)) % 360.0;
+        final psychColor = HSVColor.fromAHSV(1.0, cycleHue, 0.9, 0.9).toColor();
+        final psychPaint = Paint()
+          ..color = psychColor.withOpacity((config.intensity * 0.35).clamp(0.0, 1.0))
+          ..blendMode = BlendMode.color;
+        canvas.drawRect(rect, psychPaint);
+        break;
+
+      case SolarizeInvertMode.thermalHeat:
+        final thermalPaint = Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [
+              const Color(0xFF0000FF).withOpacity((config.intensity * 0.35).clamp(0.0, 1.0)),
+              const Color(0xFFFF0055).withOpacity((config.intensity * 0.35).clamp(0.0, 1.0)),
+              const Color(0xFFFFDD00).withOpacity((config.intensity * 0.35).clamp(0.0, 1.0)),
+            ],
+          ).createShader(rect)
+          ..blendMode = BlendMode.color;
+        canvas.drawRect(rect, thermalPaint);
+        break;
+
+      case SolarizeInvertMode.crossProcess:
+        final crossPaint = Paint()
+          ..color = const Color(0xFF00FF88).withOpacity((config.intensity * 0.25).clamp(0.0, 1.0))
+          ..blendMode = BlendMode.overlay;
+        canvas.drawRect(rect, crossPaint);
+        break;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportSolarizeInvertPainter oldDelegate) {
     return oldDelegate.config != config || oldDelegate.phase != phase;
   }
 }

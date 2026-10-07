@@ -720,6 +720,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openPitchHarmonizerModal();
         break;
 
+      case EditorTool.chromaticAberration:
+        _openChromaticAberrationModal();
+        break;
+
+      case EditorTool.solarizeInvert:
+        _openSolarizeInvertModal();
+        break;
+
+      case EditorTool.audioStutter:
+        _openAudioStutterModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1073,6 +1085,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openPitchHarmonizerModal() {
     _openDockedTool(EditorTool.pitchHarmonizer, trackType: TrackType.audio, purpose: 'Vocal Pitch & Harmonizer');
+  }
+
+  void _openChromaticAberrationModal() {
+    _openDockedTool(EditorTool.chromaticAberration, trackType: TrackType.video, purpose: 'RGB Chromatic Aberration & Glitch');
+  }
+
+  void _openSolarizeInvertModal() {
+    _openDockedTool(EditorTool.solarizeInvert, trackType: TrackType.video, purpose: 'Thermal Solarization & Invert');
+  }
+
+  void _openAudioStutterModal() {
+    _openDockedTool(EditorTool.audioStutter, trackType: TrackType.audio, purpose: 'Rhythmic Audio Stutter & Beat Repeater');
   }
 
   void _openAudioToolsModal() {

@@ -79,6 +79,9 @@ import '../../../audio/presentation/widgets/tremolo_wah_sheet.dart';
 import '../../../vfx/presentation/widgets/tilt_shift_sheet.dart';
 import '../../../vfx/presentation/widgets/neon_glow_sheet.dart';
 import '../../../audio/presentation/widgets/pitch_harmonizer_sheet.dart';
+import '../../../vfx/presentation/widgets/chromatic_aberration_sheet.dart';
+import '../../../vfx/presentation/widgets/solarize_invert_sheet.dart';
+import '../../../audio/presentation/widgets/audio_stutter_sheet.dart';
 import '../../../overlays/presentation/widgets/typewriter_title_sheet.dart';
 import '../../../transform/presentation/widgets/transform_studio_sheet.dart';
 
@@ -268,6 +271,12 @@ class DockedToolPanel extends StatelessWidget {
         return 'Neon Glow & Hologram';
       case EditorTool.pitchHarmonizer:
         return 'Pitch & Harmonizer';
+      case EditorTool.chromaticAberration:
+        return 'RGB Chromatic Glitch';
+      case EditorTool.solarizeInvert:
+        return 'Thermal Solarize & Invert';
+      case EditorTool.audioStutter:
+        return 'Rhythmic Audio Stutter';
       default:
         return tool.name.toUpperCase();
     }
@@ -431,6 +440,12 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.electric_bolt_rounded;
       case EditorTool.pitchHarmonizer:
         return Icons.music_note_rounded;
+      case EditorTool.chromaticAberration:
+        return Icons.grain_rounded;
+      case EditorTool.solarizeInvert:
+        return Icons.wb_sunny_outlined;
+      case EditorTool.audioStutter:
+        return Icons.graphic_eq_rounded;
       default:
         return Icons.edit;
     }
@@ -1351,6 +1366,30 @@ class DockedToolPanel extends StatelessWidget {
 
       case EditorTool.pitchHarmonizer:
         return PitchHarmonizerSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.chromaticAberration:
+        return ChromaticAberrationSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.solarizeInvert:
+        return SolarizeInvertSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.audioStutter:
+        return AudioStutterSheet(
           clip: clip,
           onSave: onSaveClip,
           isDocked: true,

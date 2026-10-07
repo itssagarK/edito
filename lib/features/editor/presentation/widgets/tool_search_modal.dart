@@ -651,6 +651,30 @@ class _ToolSearchModalState extends State<ToolSearchModal> {
       icon: Icons.music_note_rounded,
       keywords: ['pitch', 'harmonizer', 'harmony', 'vocal', 'semitone', 'transposition', 'formant', 'octave', 'robot', 'ring mod', 'voice', 'audio'],
     ),
+    _SearchableTool(
+      tool: EditorTool.chromaticAberration,
+      title: 'RGB Chromatic Aberration & Glitch',
+      category: 'Visuals',
+      description: 'Optical prism displacement, Red/Cyan 3D anaglyph separation, holographic jitter, and angle dispersion vectors',
+      icon: Icons.grain_rounded,
+      keywords: ['chromatic', 'aberration', 'rgb', 'split', 'glitch', 'prism', 'dispersion', 'anaglyph', '3d', 'hologram', 'jitter', 'color shift', 'vfx'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.solarizeInvert,
+      title: 'Thermal Solarization & Color Invert',
+      category: 'Visuals',
+      description: 'Sabattier photographic tone inflection curves, negative film inversion, psychedelic hue cycling, and FLIR thermal heat map',
+      icon: Icons.wb_sunny_outlined,
+      keywords: ['solarize', 'solarization', 'sabattier', 'invert', 'negative', 'psychedelic', 'thermal', 'flir', 'heat', 'cross process', 'tone curve', 'contrast'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.audioStutter,
+      title: 'Rhythmic Audio Stutter & Glitch Repeater',
+      category: 'Audio',
+      description: 'Musical micro-buffer beat repetition (1/4 to 1/32 notes), accelerating drill build-ups, tape stop pitch drops, and brickwall limiter',
+      icon: Icons.graphic_eq_rounded,
+      keywords: ['stutter', 'repeater', 'buffer', 'glitch', 'drill', 'beat', 'rhythm', 'tape stop', 'pitch drop', 'accelerando', 'gate', 'chop', 'audio', 'sound'],
+    ),
   ];
 
   @override

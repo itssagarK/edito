@@ -63,6 +63,9 @@ import '../features/audio/models/tremolo_wah_config.dart';
 import '../features/vfx/models/tilt_shift_config.dart';
 import '../features/vfx/models/neon_glow_config.dart';
 import '../features/audio/models/pitch_harmonizer_config.dart';
+import '../features/vfx/models/chromatic_aberration_config.dart';
+import '../features/vfx/models/solarize_invert_config.dart';
+import '../features/audio/models/audio_stutter_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -144,6 +147,9 @@ class Clip extends Equatable {
   final TiltShiftConfig tiltShift;
   final NeonGlowConfig neonGlow;
   final PitchHarmonizerConfig pitchHarmonizer;
+  final ChromaticAberrationConfig chromaticAberration;
+  final SolarizeInvertConfig solarizeInvert;
+  final AudioStutterConfig audioStutter;
 
   const Clip({
     required this.id,
@@ -225,6 +231,9 @@ class Clip extends Equatable {
     this.tiltShift = const TiltShiftConfig(),
     this.neonGlow = const NeonGlowConfig(),
     this.pitchHarmonizer = const PitchHarmonizerConfig(),
+    this.chromaticAberration = const ChromaticAberrationConfig(),
+    this.solarizeInvert = const SolarizeInvertConfig(),
+    this.audioStutter = const AudioStutterConfig(),
   });
 
   Clip copyWith({
@@ -307,6 +316,9 @@ class Clip extends Equatable {
     TiltShiftConfig? tiltShift,
     NeonGlowConfig? neonGlow,
     PitchHarmonizerConfig? pitchHarmonizer,
+    ChromaticAberrationConfig? chromaticAberration,
+    SolarizeInvertConfig? solarizeInvert,
+    AudioStutterConfig? audioStutter,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -388,6 +400,9 @@ class Clip extends Equatable {
       tiltShift: tiltShift ?? this.tiltShift,
       neonGlow: neonGlow ?? this.neonGlow,
       pitchHarmonizer: pitchHarmonizer ?? this.pitchHarmonizer,
+      chromaticAberration: chromaticAberration ?? this.chromaticAberration,
+      solarizeInvert: solarizeInvert ?? this.solarizeInvert,
+      audioStutter: audioStutter ?? this.audioStutter,
     );
   }
 
@@ -471,6 +486,9 @@ class Clip extends Equatable {
         'tiltShift': tiltShift.toJson(),
         'neonGlow': neonGlow.toJson(),
         'pitchHarmonizer': pitchHarmonizer.toJson(),
+        'chromaticAberration': chromaticAberration.toJson(),
+        'solarizeInvert': solarizeInvert.toJson(),
+        'audioStutter': audioStutter.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -686,6 +704,15 @@ class Clip extends Equatable {
         pitchHarmonizer: json['pitchHarmonizer'] != null
             ? PitchHarmonizerConfig.fromJson(json['pitchHarmonizer'] as Map<String, dynamic>)
             : const PitchHarmonizerConfig(),
+        chromaticAberration: json['chromaticAberration'] != null
+            ? ChromaticAberrationConfig.fromJson(json['chromaticAberration'] as Map<String, dynamic>)
+            : const ChromaticAberrationConfig(),
+        solarizeInvert: json['solarizeInvert'] != null
+            ? SolarizeInvertConfig.fromJson(json['solarizeInvert'] as Map<String, dynamic>)
+            : const SolarizeInvertConfig(),
+        audioStutter: json['audioStutter'] != null
+            ? AudioStutterConfig.fromJson(json['audioStutter'] as Map<String, dynamic>)
+            : const AudioStutterConfig(),
       );
 
   @override
@@ -769,5 +796,8 @@ class Clip extends Equatable {
         tiltShift,
         neonGlow,
         pitchHarmonizer,
+        chromaticAberration,
+        solarizeInvert,
+        audioStutter,
       ];
 }
