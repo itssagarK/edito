@@ -54,6 +54,9 @@ import '../../audio/services/jet_flanger_compiler_service.dart';
 import '../../vfx/services/luma_key_compiler_service.dart';
 import '../../vfx/services/matrix_rain_compiler_service.dart';
 import '../../audio/services/ring_modulator_compiler_service.dart';
+import '../../vfx/services/echo_motion_compiler_service.dart';
+import '../../vfx/services/ascii_art_compiler_service.dart';
+import '../../audio/services/sub_bass_exciter_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
 import '../../image_editor/services/pip_compiler_service.dart';
 import '../../cutout/services/smart_cutout_compiler_service.dart';
@@ -742,6 +745,30 @@ class FFmpegCommandBuilder {
           }
         }
 
+        // Motion Dynamics: Motion Blur & Temporal Echo Decay Trails
+        if (clip.echoMotion.isActive) {
+          final echoFilter = EchoMotionCompilerService.compileFilter(
+            clip.echoMotion,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (echoFilter.isNotEmpty) {
+            vFilters.add(echoFilter);
+          }
+        }
+
+        // Retro Computing: ASCII Terminal & Character Matrix Texturizer
+        if (clip.asciiArt.isActive) {
+          final asciiFilter = AsciiArtCompilerService.compileFilter(
+            clip.asciiArt,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (asciiFilter.isNotEmpty) {
+            vFilters.add(asciiFilter);
+          }
+        }
+
         // Smart AI Cutout Studio & Glowing Neon Outlines
         if (clip.smartCutout.isEnabled) {
           final cutoutFilters = SmartCutoutCompilerService.generateFFmpegFilters(
@@ -1049,6 +1076,14 @@ class FFmpegCommandBuilder {
           final ringFilter = RingModulatorCompilerService.compileFilter(clip.ringModulator);
           if (ringFilter.isNotEmpty) {
             aFilters.add(ringFilter);
+          }
+        }
+
+        // Sub-Bass & Harmonic Dynamics: 808 Saturator & Low-End Exciter
+        if (clip.subBassExciter.isActive) {
+          final subFilter = SubBassExciterCompilerService.compileFilter(clip.subBassExciter);
+          if (subFilter.isNotEmpty) {
+            aFilters.add(subFilter);
           }
         }
 

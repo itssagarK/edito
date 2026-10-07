@@ -72,6 +72,9 @@ import '../features/audio/models/jet_flanger_config.dart';
 import '../features/vfx/models/luma_key_config.dart';
 import '../features/vfx/models/matrix_rain_config.dart';
 import '../features/audio/models/ring_modulator_config.dart';
+import '../features/vfx/models/echo_motion_config.dart';
+import '../features/vfx/models/ascii_art_config.dart';
+import '../features/audio/models/sub_bass_exciter_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -162,6 +165,9 @@ class Clip extends Equatable {
   final LumaKeyConfig lumaKey;
   final MatrixRainConfig matrixRain;
   final RingModulatorConfig ringModulator;
+  final EchoMotionConfig echoMotion;
+  final AsciiArtConfig asciiArt;
+  final SubBassExciterConfig subBassExciter;
 
   const Clip({
     required this.id,
@@ -252,6 +258,9 @@ class Clip extends Equatable {
     this.lumaKey = const LumaKeyConfig(),
     this.matrixRain = const MatrixRainConfig(),
     this.ringModulator = const RingModulatorConfig(),
+    this.echoMotion = const EchoMotionConfig(),
+    this.asciiArt = const AsciiArtConfig(),
+    this.subBassExciter = const SubBassExciterConfig(),
   });
 
   Clip copyWith({
@@ -343,6 +352,9 @@ class Clip extends Equatable {
     LumaKeyConfig? lumaKey,
     MatrixRainConfig? matrixRain,
     RingModulatorConfig? ringModulator,
+    EchoMotionConfig? echoMotion,
+    AsciiArtConfig? asciiArt,
+    SubBassExciterConfig? subBassExciter,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -433,6 +445,9 @@ class Clip extends Equatable {
       lumaKey: lumaKey ?? this.lumaKey,
       matrixRain: matrixRain ?? this.matrixRain,
       ringModulator: ringModulator ?? this.ringModulator,
+      echoMotion: echoMotion ?? this.echoMotion,
+      asciiArt: asciiArt ?? this.asciiArt,
+      subBassExciter: subBassExciter ?? this.subBassExciter,
     );
   }
 
@@ -525,6 +540,9 @@ class Clip extends Equatable {
         'lumaKey': lumaKey.toJson(),
         'matrixRain': matrixRain.toJson(),
         'ringModulator': ringModulator.toJson(),
+        'echoMotion': echoMotion.toJson(),
+        'asciiArt': asciiArt.toJson(),
+        'subBassExciter': subBassExciter.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -767,6 +785,15 @@ class Clip extends Equatable {
         ringModulator: json['ringModulator'] != null
             ? RingModulatorConfig.fromJson(json['ringModulator'] as Map<String, dynamic>)
             : const RingModulatorConfig(),
+        echoMotion: json['echoMotion'] != null
+            ? EchoMotionConfig.fromJson(json['echoMotion'] as Map<String, dynamic>)
+            : const EchoMotionConfig(),
+        asciiArt: json['asciiArt'] != null
+            ? AsciiArtConfig.fromJson(json['asciiArt'] as Map<String, dynamic>)
+            : const AsciiArtConfig(),
+        subBassExciter: json['subBassExciter'] != null
+            ? SubBassExciterConfig.fromJson(json['subBassExciter'] as Map<String, dynamic>)
+            : const SubBassExciterConfig(),
       );
 
   @override
@@ -859,5 +886,8 @@ class Clip extends Equatable {
         lumaKey,
         matrixRain,
         ringModulator,
+        echoMotion,
+        asciiArt,
+        subBassExciter,
       ];
 }

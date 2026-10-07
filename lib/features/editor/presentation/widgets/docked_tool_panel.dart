@@ -88,6 +88,9 @@ import '../../../audio/presentation/widgets/jet_flanger_sheet.dart';
 import '../../../vfx/presentation/widgets/luma_key_sheet.dart';
 import '../../../vfx/presentation/widgets/matrix_rain_sheet.dart';
 import '../../../audio/presentation/widgets/ring_modulator_sheet.dart';
+import '../../../vfx/presentation/widgets/echo_motion_sheet.dart';
+import '../../../vfx/presentation/widgets/ascii_art_sheet.dart';
+import '../../../audio/presentation/widgets/sub_bass_exciter_sheet.dart';
 import '../../../overlays/presentation/widgets/typewriter_title_sheet.dart';
 import '../../../transform/presentation/widgets/transform_studio_sheet.dart';
 
@@ -295,6 +298,12 @@ class DockedToolPanel extends StatelessWidget {
         return 'Matrix Digital Code Rain';
       case EditorTool.ringModulator:
         return 'Metallic Ring Modulator';
+      case EditorTool.echoMotion:
+        return 'Motion Echo Trails';
+      case EditorTool.asciiArt:
+        return 'ASCII Terminal Matrix';
+      case EditorTool.subBassExciter:
+        return 'Sub-Bass 808 Exciter';
       default:
         return tool.name.toUpperCase();
     }
@@ -476,6 +485,12 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.terminal_rounded;
       case EditorTool.ringModulator:
         return Icons.notifications_active_rounded;
+      case EditorTool.echoMotion:
+        return Icons.blur_on_rounded;
+      case EditorTool.asciiArt:
+        return Icons.terminal_rounded;
+      case EditorTool.subBassExciter:
+        return Icons.speaker_group_rounded;
       default:
         return Icons.edit;
     }
@@ -1468,6 +1483,30 @@ class DockedToolPanel extends StatelessWidget {
 
       case EditorTool.ringModulator:
         return RingModulatorSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.echoMotion:
+        return EchoMotionSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.asciiArt:
+        return AsciiArtSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.subBassExciter:
+        return SubBassExciterSheet(
           clip: clip,
           onSave: onSaveClip,
           isDocked: true,

@@ -723,6 +723,30 @@ class _ToolSearchModalState extends State<ToolSearchModal> {
       icon: Icons.notifications_active_rounded,
       keywords: ['ring mod', 'ringmod', 'ring modulator', 'vocoder', 'robot', 'dalek', 'carrier', 'oscillator', 'metallic', 'alien', 'tremolo', 'audio', 'sound', 'dsp'],
     ),
+    _SearchableTool(
+      tool: EditorTool.echoMotion,
+      title: 'Motion Blur & Echo Decay Trails',
+      category: 'Visuals',
+      description: 'Temporal frame blending decay, long exposure ghost trails, discrete stepped phantom echoes, and light trail streak smearing',
+      icon: Icons.blur_on_rounded,
+      keywords: ['motion blur', 'echo', 'trails', 'ghost', 'long exposure', 'shutter speed', 'lag', 'smear', 'temporal', 'light trails', 'vfx', 'blur'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.asciiArt,
+      title: 'ASCII Terminal & Matrix Texturizer',
+      category: 'Visuals',
+      description: 'Retro computing character matrix rasterization, monochrome green phosphor, amber CRT, full-color ANSI glyphs, and character density scaling',
+      icon: Icons.terminal_rounded,
+      keywords: ['ascii', 'terminal', 'retro', 'text', 'matrix', 'glyph', 'vt100', 'amber', 'phosphor', '8-bit', 'raster', 'ansi', 'vfx'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.subBassExciter,
+      title: 'Sub-Bass 808 Saturator & Harmonic Exciter',
+      category: 'Audio',
+      description: 'Deep 30-80 Hz sub-oscillator boost, psychoacoustic 2nd/3rd harmonic overtone synthesis for phone speakers, tube saturation, and brickwall limiter',
+      icon: Icons.speaker_group_rounded,
+      keywords: ['sub bass', '808', 'bass', 'sub', 'low end', 'exciter', 'maxxbass', 'harmonics', 'saturation', 'punch', 'rumble', 'audio', 'sound', 'dsp'],
+    ),
   ];
 
   @override

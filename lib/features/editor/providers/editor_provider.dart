@@ -98,6 +98,9 @@ enum EditorTool {
   lumaKey,
   matrixRain,
   ringModulator,
+  echoMotion,
+  asciiArt,
+  subBassExciter,
 }
 
 class EditorState {

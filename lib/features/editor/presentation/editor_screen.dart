@@ -756,6 +756,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openRingModulatorModal();
         break;
 
+      case EditorTool.echoMotion:
+        _openEchoMotionModal();
+        break;
+
+      case EditorTool.asciiArt:
+        _openAsciiArtModal();
+        break;
+
+      case EditorTool.subBassExciter:
+        _openSubBassExciterModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1145,6 +1157,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openRingModulatorModal() {
     _openDockedTool(EditorTool.ringModulator, trackType: TrackType.audio, purpose: 'Metallic Ring Modulator & Vocoder');
+  }
+
+  void _openEchoMotionModal() {
+    _openDockedTool(EditorTool.echoMotion, trackType: TrackType.video, purpose: 'Motion Blur & Echo Decay Trails');
+  }
+
+  void _openAsciiArtModal() {
+    _openDockedTool(EditorTool.asciiArt, trackType: TrackType.video, purpose: 'ASCII Terminal & Matrix Texturizer');
+  }
+
+  void _openSubBassExciterModal() {
+    _openDockedTool(EditorTool.subBassExciter, trackType: TrackType.audio, purpose: 'Sub-Bass 808 Saturator & Harmonic Exciter');
   }
 
   void _openAudioToolsModal() {

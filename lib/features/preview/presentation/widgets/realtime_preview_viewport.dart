@@ -55,6 +55,8 @@ import '../../../vfx/models/pixel_sort_config.dart';
 import '../../../vfx/models/posterize_pop_config.dart';
 import '../../../vfx/models/luma_key_config.dart';
 import '../../../vfx/models/matrix_rain_config.dart';
+import '../../../vfx/models/echo_motion_config.dart';
+import '../../../vfx/models/ascii_art_config.dart';
 import '../../../vfx/services/vfx_compiler_service.dart';
 import '../../../vfx/presentation/widgets/vfx_preview_wrapper.dart';
 import '../../../../models/clip.dart';
@@ -1389,6 +1391,10 @@ class RealtimePreviewViewport extends ConsumerWidget {
           _buildLumaKeyOverlay(clip.lumaKey, currentPositionMs - clip.timelineInMs),
         if (clip.matrixRain.isActive)
           _buildMatrixRainOverlay(clip.matrixRain, currentPositionMs - clip.timelineInMs),
+        if (clip.echoMotion.isActive)
+          _buildEchoMotionOverlay(clip.echoMotion, currentPositionMs - clip.timelineInMs),
+        if (clip.asciiArt.isActive)
+          _buildAsciiArtOverlay(clip.asciiArt, currentPositionMs - clip.timelineInMs),
       ],
     );
   }
@@ -2391,6 +2397,38 @@ class RealtimePreviewViewport extends ConsumerWidget {
       child: IgnorePointer(
         child: CustomPaint(
           painter: _ViewportMatrixRainPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEchoMotionOverlay(EchoMotionConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 2000.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportEchoMotionPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAsciiArtOverlay(AsciiArtConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 3000.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportAsciiArtPainter(
             config: config,
             phase: phase,
           ),
@@ -3971,7 +4009,117 @@ class _ViewportMatrixRainPainter extends CustomPainter {
   }
 }
 
+class _ViewportEchoMotionPainter extends CustomPainter {
+  final EchoMotionConfig config;
+  final double phase;
 
+  _ViewportEchoMotionPainter({
+    required this.config,
+    required this.phase,
+  });
 
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0 || !config.isActive) return;
 
+    final primaryColor = switch (config.mode) {
+      EchoMotionMode.smoothMotionBlur => const Color(0xFF00E5FF),
+      EchoMotionMode.longExposureGhost => const Color(0xFF7C4DFF),
+      EchoMotionMode.phantomEcho => const Color(0xFFFF4081),
+      EchoMotionMode.lightTrailSmear => const Color(0xFFFFD700),
+      EchoMotionMode.dreamySlowShutter => const Color(0xFF00E676),
+    };
 
+    final smearAlpha = (config.opacity * config.decay * 0.22).clamp(0.04, 0.35);
+    final smearPaint = Paint()
+      ..color = primaryColor.withOpacity(smearAlpha)
+      ..blendMode = BlendMode.screen;
+
+    final rect = Offset.zero & size;
+    canvas.drawRect(rect, smearPaint);
+
+    // Directional trailing lines simulating shutter lag
+    final trailPaint = Paint()
+      ..color = primaryColor.withOpacity(smearAlpha * 0.6)
+      ..strokeWidth = 1.5;
+
+    final trailSpacing = 28.0;
+    final lagOffset = math.sin(phase * 2 * math.pi) * 12.0;
+
+    for (double y = 8; y < size.height; y += trailSpacing) {
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y + lagOffset),
+        trailPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportEchoMotionPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
+class _ViewportAsciiArtPainter extends CustomPainter {
+  final AsciiArtConfig config;
+  final double phase;
+
+  _ViewportAsciiArtPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0 || !config.isActive) return;
+
+    final rect = Offset.zero & size;
+
+    // Terminal tint based on mode
+    Color tintColor;
+    BlendMode blendMode = BlendMode.screen;
+
+    switch (config.mode) {
+      case AsciiArtMode.greenPhosphor:
+        tintColor = const Color(0x3300FF66);
+        break;
+      case AsciiArtMode.amberCathode:
+        tintColor = const Color(0x33FFB000);
+        break;
+      case AsciiArtMode.cyberpunkNeon:
+        tintColor = const Color(0x3300E5FF);
+        break;
+      case AsciiArtMode.matrixColor:
+        tintColor = const Color(0x22FFFFFF);
+        break;
+      case AsciiArtMode.monochromePaper:
+        tintColor = const Color(0x28E8E5D8);
+        blendMode = BlendMode.colorBurn;
+        break;
+    }
+
+    final tintPaint = Paint()
+      ..color = tintColor
+      ..blendMode = blendMode;
+    canvas.drawRect(rect, tintPaint);
+
+    // Character cell matrix grid lines
+    final cellSize = config.cellSize.clamp(4, 20).toDouble();
+    final gridPaint = Paint()
+      ..color = Colors.black.withOpacity(0.45)
+      ..strokeWidth = 1.0;
+
+    for (double x = 0; x < size.width; x += cellSize) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    }
+    for (double y = 0; y < size.height; y += cellSize) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportAsciiArtPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
