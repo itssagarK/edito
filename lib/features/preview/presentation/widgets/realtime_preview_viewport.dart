@@ -47,6 +47,8 @@ import '../../../vfx/models/light_leak_config.dart';
 import '../../../vfx/models/night_vision_config.dart';
 import '../../../vfx/models/kaleidoscope_config.dart';
 import '../../../vfx/models/datamosh_glitch_config.dart';
+import '../../../vfx/models/tilt_shift_config.dart';
+import '../../../vfx/models/neon_glow_config.dart';
 import '../../../vfx/services/vfx_compiler_service.dart';
 import '../../../vfx/presentation/widgets/vfx_preview_wrapper.dart';
 import '../../../../models/clip.dart';
@@ -1365,6 +1367,10 @@ class RealtimePreviewViewport extends ConsumerWidget {
           _buildKaleidoscopeOverlay(clip.kaleidoscope, currentPositionMs - clip.timelineInMs),
         if (clip.datamoshGlitch.isActive)
           _buildDatamoshGlitchOverlay(clip.datamoshGlitch, currentPositionMs - clip.timelineInMs),
+        if (clip.tiltShift.isActive)
+          _buildTiltShiftOverlay(clip.tiltShift),
+        if (clip.neonGlow.isActive)
+          _buildNeonGlowOverlay(clip.neonGlow, currentPositionMs - clip.timelineInMs),
       ],
     );
   }
@@ -2241,6 +2247,36 @@ class RealtimePreviewViewport extends ConsumerWidget {
       child: IgnorePointer(
         child: CustomPaint(
           painter: _ViewportDatamoshGlitchPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTiltShiftOverlay(TiltShiftConfig config) {
+    if (!config.isActive) return const SizedBox.shrink();
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportTiltShiftPainter(
+            config: config,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNeonGlowOverlay(NeonGlowConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 2000.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportNeonGlowPainter(
             config: config,
             phase: phase,
           ),
@@ -3274,6 +3310,162 @@ class _ViewportDatamoshGlitchPainter extends CustomPainter {
     return oldDelegate.config != config || oldDelegate.phase != phase;
   }
 }
+
+class _ViewportTiltShiftPainter extends CustomPainter {
+  final TiltShiftConfig config;
+
+  _ViewportTiltShiftPainter({
+    required this.config,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (!config.isActive || size.width <= 0 || size.height <= 0) return;
+
+    final width = size.width;
+    final height = size.height;
+
+    if (config.mode == TiltShiftMode.radialCircle) {
+      final center = Offset(width * 0.5, height * config.focusPosition);
+      final rx = (width * 0.4) * (config.focusBandwidth * 2.0);
+      final ry = (height * 0.4) * (config.focusBandwidth * 2.0);
+
+      final vignettePaint = Paint()
+        ..shader = RadialGradient(
+          colors: [
+            Colors.transparent,
+            Colors.transparent,
+            Colors.black.withOpacity(0.35),
+            Colors.black.withOpacity(0.60),
+          ],
+          stops: const [0.0, 0.6, 0.85, 1.0],
+        ).createShader(Rect.fromCenter(center: center, width: rx * 2.4, height: ry * 2.4));
+      canvas.drawRect(Rect.fromLTWH(0, 0, width, height), vignettePaint);
+    } else {
+      final centerY = height * config.focusPosition;
+      final halfBand = (height * config.focusBandwidth) / 2.0;
+      final topY = (centerY - halfBand).clamp(0.0, height);
+      final bottomY = (centerY + halfBand).clamp(0.0, height);
+
+      // Top progressive blur wash
+      final topPaint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.black.withOpacity(0.45),
+            Colors.transparent,
+          ],
+        ).createShader(Rect.fromLTWH(0, 0, width, topY));
+      canvas.drawRect(Rect.fromLTWH(0, 0, width, topY), topPaint);
+
+      // Bottom progressive blur wash
+      final bottomPaint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.bottomCenter,
+          end: Alignment.topCenter,
+          colors: [
+            Colors.black.withOpacity(0.45),
+            Colors.transparent,
+          ],
+        ).createShader(Rect.fromLTWH(0, bottomY, width, height - bottomY));
+      canvas.drawRect(Rect.fromLTWH(0, bottomY, width, height - bottomY), bottomPaint);
+    }
+
+    // Subtle diorama saturation warmth tint
+    if (config.saturationBoost > 1.15) {
+      final satPaint = Paint()
+        ..color = Colors.amber.withOpacity(0.06)
+        ..blendMode = BlendMode.colorBurn;
+      canvas.drawRect(Rect.fromLTWH(0, 0, width, height), satPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportTiltShiftPainter oldDelegate) {
+    return oldDelegate.config != config;
+  }
+}
+
+class _ViewportNeonGlowPainter extends CustomPainter {
+  final NeonGlowConfig config;
+  final double phase;
+
+  _ViewportNeonGlowPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (!config.isActive || size.width <= 0 || size.height <= 0) return;
+
+    final width = size.width;
+    final height = size.height;
+    final pulse = 0.90 + 0.10 * math.sin(phase * 2 * math.pi);
+    final intensity = config.glowIntensity * pulse;
+
+    Color neonColor;
+    switch (config.mode) {
+      case NeonGlowMode.cyberpunkNeon:
+        neonColor = const Color(0xFF00E5FF);
+        break;
+      case NeonGlowMode.hologramWireframe:
+        neonColor = const Color(0xFF00B0FF);
+        break;
+      case NeonGlowMode.rainbowEdges:
+        neonColor = const Color(0xFFFFD700);
+        break;
+      case NeonGlowMode.matrixPhosphor:
+        neonColor = const Color(0xFF00FF66);
+        break;
+      case NeonGlowMode.thermalContour:
+        neonColor = const Color(0xFFFF3D00);
+        break;
+    }
+
+    // Stylized silhouette contour wireframe
+    final path = Path();
+    final cx = width * 0.5;
+    final cy = height * 0.5;
+    path.addOval(Rect.fromCircle(center: Offset(cx, cy - 20), radius: 26));
+    path.moveTo(cx - 55, cy + 40);
+    path.quadraticBezierTo(cx - 35, cy + 8, cx - 20, cy + 10);
+    path.lineTo(cx + 20, cy + 10);
+    path.quadraticBezierTo(cx + 35, cy + 8, cx + 55, cy + 40);
+
+    // Glow Halo
+    final haloPaint = Paint()
+      ..color = neonColor.withOpacity((0.30 * intensity).clamp(0.0, 1.0))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = config.glowRadius * 1.5
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, config.glowRadius);
+    canvas.drawPath(path, haloPaint);
+
+    // Sharp Edge
+    final corePaint = Paint()
+      ..color = neonColor.withOpacity((0.85 * intensity).clamp(0.0, 1.0))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+    canvas.drawPath(path, corePaint);
+
+    // Scanlines
+    if (config.scanlines) {
+      final scanPaint = Paint()
+        ..color = Colors.black.withOpacity(0.25)
+        ..strokeWidth = 1.0;
+      for (double y = 0; y < height; y += 4.0) {
+        canvas.drawLine(Offset(0, y), Offset(width, y), scanPaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportNeonGlowPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
 
 
 

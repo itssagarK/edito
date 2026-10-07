@@ -42,6 +42,9 @@ import '../../audio/services/bitcrusher_compiler_service.dart';
 import '../../vfx/services/kaleidoscope_compiler_service.dart';
 import '../../vfx/services/datamosh_glitch_compiler_service.dart';
 import '../../audio/services/tremolo_wah_compiler_service.dart';
+import '../../vfx/services/tilt_shift_compiler_service.dart';
+import '../../vfx/services/neon_glow_compiler_service.dart';
+import '../../audio/services/pitch_harmonizer_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
 import '../../image_editor/services/pip_compiler_service.dart';
 import '../../cutout/services/smart_cutout_compiler_service.dart';
@@ -634,6 +637,30 @@ class FFmpegCommandBuilder {
           }
         }
 
+        // Spatial Optics: Tilt-Shift Miniature & Depth-of-Field
+        if (clip.tiltShift.isActive) {
+          final tiltFilter = TiltShiftCompilerService.compileFilter(
+            clip.tiltShift,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (tiltFilter.isNotEmpty) {
+            vFilters.add(tiltFilter);
+          }
+        }
+
+        // Cyberpunk Optics: Neon Edge Glow & Hologram Wireframe
+        if (clip.neonGlow.isActive) {
+          final neonFilter = NeonGlowCompilerService.compileFilter(
+            clip.neonGlow,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (neonFilter.isNotEmpty) {
+            vFilters.add(neonFilter);
+          }
+        }
+
         // Smart AI Cutout Studio & Glowing Neon Outlines
         if (clip.smartCutout.isEnabled) {
           final cutoutFilters = SmartCutoutCompilerService.generateFFmpegFilters(
@@ -909,6 +936,14 @@ class FFmpegCommandBuilder {
           final tremoloFilter = TremoloWahCompilerService.compileFilter(clip.tremoloWah);
           if (tremoloFilter.isNotEmpty) {
             aFilters.add(tremoloFilter);
+          }
+        }
+
+        // Vocal Pitch & Formant Harmonizer Studio
+        if (clip.pitchHarmonizer.isActive) {
+          final pitchFilter = PitchHarmonizerCompilerService.compileFilter(clip.pitchHarmonizer);
+          if (pitchFilter.isNotEmpty) {
+            aFilters.add(pitchFilter);
           }
         }
 

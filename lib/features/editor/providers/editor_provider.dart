@@ -86,6 +86,9 @@ enum EditorTool {
   kaleidoscope,
   datamoshGlitch,
   tremoloWah,
+  tiltShift,
+  neonGlow,
+  pitchHarmonizer,
 }
 
 class EditorState {

@@ -627,6 +627,30 @@ class _ToolSearchModalState extends State<ToolSearchModal> {
       icon: Icons.waves_rounded,
       keywords: ['tremolo', 'wah', 'autowah', 'lfo', 'modulation', 'amplitude', 'filter', 'resonance', 'leslie', 'rotary', 'stutter', 'gate', 'stereo', 'pan', 'audio'],
     ),
+    _SearchableTool(
+      tool: EditorTool.tiltShift,
+      title: 'Tilt-Shift Miniature Studio',
+      category: 'Visuals',
+      description: 'Progressive miniature depth-of-field blur falloff, linear and radial focus planes, and toy-model color saturation boost',
+      icon: Icons.camera_enhance_rounded,
+      keywords: ['tilt shift', 'miniature', 'diorama', 'blur', 'depth of field', 'dof', 'focus', 'macro', 'lens', 'radial', 'toy'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.neonGlow,
+      title: 'Cyberpunk Neon & Hologram Wireframe',
+      category: 'Visuals',
+      description: 'Sobel edge detection, electrifying neon silhouette edge glow, bloom diffusion halo, and holographic scanline raster',
+      icon: Icons.electric_bolt_rounded,
+      keywords: ['neon', 'glow', 'cyberpunk', 'edge', 'sobel', 'contour', 'wireframe', 'hologram', 'scanline', 'silhouette', 'bloom'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.pitchHarmonizer,
+      title: 'Vocal Pitch & Formant Harmonizer',
+      category: 'Audio',
+      description: 'Musical semitone transposition, dual-voice interval harmonies (3rds/5ths/octaves), robot ring mod, and brickwall ceiling limiter',
+      icon: Icons.music_note_rounded,
+      keywords: ['pitch', 'harmonizer', 'harmony', 'vocal', 'semitone', 'transposition', 'formant', 'octave', 'robot', 'ring mod', 'voice', 'audio'],
+    ),
   ];
 
   @override

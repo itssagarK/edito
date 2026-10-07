@@ -708,6 +708,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openTremoloWahModal();
         break;
 
+      case EditorTool.tiltShift:
+        _openTiltShiftModal();
+        break;
+
+      case EditorTool.neonGlow:
+        _openNeonGlowModal();
+        break;
+
+      case EditorTool.pitchHarmonizer:
+        _openPitchHarmonizerModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1049,6 +1061,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openTremoloWahModal() {
     _openDockedTool(EditorTool.tremoloWah, trackType: TrackType.audio, purpose: 'Stereo Tremolo & Auto-Wah');
+  }
+
+  void _openTiltShiftModal() {
+    _openDockedTool(EditorTool.tiltShift, trackType: TrackType.video, purpose: 'Tilt-Shift Miniature Studio');
+  }
+
+  void _openNeonGlowModal() {
+    _openDockedTool(EditorTool.neonGlow, trackType: TrackType.video, purpose: 'Cyberpunk Neon & Hologram Wireframe');
+  }
+
+  void _openPitchHarmonizerModal() {
+    _openDockedTool(EditorTool.pitchHarmonizer, trackType: TrackType.audio, purpose: 'Vocal Pitch & Harmonizer');
   }
 
   void _openAudioToolsModal() {

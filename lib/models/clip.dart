@@ -60,6 +60,9 @@ import '../features/audio/models/bitcrusher_config.dart';
 import '../features/vfx/models/kaleidoscope_config.dart';
 import '../features/vfx/models/datamosh_glitch_config.dart';
 import '../features/audio/models/tremolo_wah_config.dart';
+import '../features/vfx/models/tilt_shift_config.dart';
+import '../features/vfx/models/neon_glow_config.dart';
+import '../features/audio/models/pitch_harmonizer_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -138,6 +141,9 @@ class Clip extends Equatable {
   final KaleidoscopeConfig kaleidoscope;
   final DatamoshGlitchConfig datamoshGlitch;
   final TremoloWahConfig tremoloWah;
+  final TiltShiftConfig tiltShift;
+  final NeonGlowConfig neonGlow;
+  final PitchHarmonizerConfig pitchHarmonizer;
 
   const Clip({
     required this.id,
@@ -216,6 +222,9 @@ class Clip extends Equatable {
     this.kaleidoscope = const KaleidoscopeConfig(),
     this.datamoshGlitch = const DatamoshGlitchConfig(),
     this.tremoloWah = const TremoloWahConfig(),
+    this.tiltShift = const TiltShiftConfig(),
+    this.neonGlow = const NeonGlowConfig(),
+    this.pitchHarmonizer = const PitchHarmonizerConfig(),
   });
 
   Clip copyWith({
@@ -295,6 +304,9 @@ class Clip extends Equatable {
     KaleidoscopeConfig? kaleidoscope,
     DatamoshGlitchConfig? datamoshGlitch,
     TremoloWahConfig? tremoloWah,
+    TiltShiftConfig? tiltShift,
+    NeonGlowConfig? neonGlow,
+    PitchHarmonizerConfig? pitchHarmonizer,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -373,6 +385,9 @@ class Clip extends Equatable {
       kaleidoscope: kaleidoscope ?? this.kaleidoscope,
       datamoshGlitch: datamoshGlitch ?? this.datamoshGlitch,
       tremoloWah: tremoloWah ?? this.tremoloWah,
+      tiltShift: tiltShift ?? this.tiltShift,
+      neonGlow: neonGlow ?? this.neonGlow,
+      pitchHarmonizer: pitchHarmonizer ?? this.pitchHarmonizer,
     );
   }
 
@@ -453,6 +468,9 @@ class Clip extends Equatable {
         'kaleidoscope': kaleidoscope.toJson(),
         'datamoshGlitch': datamoshGlitch.toJson(),
         'tremoloWah': tremoloWah.toJson(),
+        'tiltShift': tiltShift.toJson(),
+        'neonGlow': neonGlow.toJson(),
+        'pitchHarmonizer': pitchHarmonizer.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -659,6 +677,15 @@ class Clip extends Equatable {
         tremoloWah: json['tremoloWah'] != null
             ? TremoloWahConfig.fromJson(json['tremoloWah'] as Map<String, dynamic>)
             : const TremoloWahConfig(),
+        tiltShift: json['tiltShift'] != null
+            ? TiltShiftConfig.fromJson(json['tiltShift'] as Map<String, dynamic>)
+            : const TiltShiftConfig(),
+        neonGlow: json['neonGlow'] != null
+            ? NeonGlowConfig.fromJson(json['neonGlow'] as Map<String, dynamic>)
+            : const NeonGlowConfig(),
+        pitchHarmonizer: json['pitchHarmonizer'] != null
+            ? PitchHarmonizerConfig.fromJson(json['pitchHarmonizer'] as Map<String, dynamic>)
+            : const PitchHarmonizerConfig(),
       );
 
   @override
@@ -739,5 +766,8 @@ class Clip extends Equatable {
         kaleidoscope,
         datamoshGlitch,
         tremoloWah,
+        tiltShift,
+        neonGlow,
+        pitchHarmonizer,
       ];
 }

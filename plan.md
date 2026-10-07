@@ -2,7 +2,7 @@
 
 > **Last Updated:** 2026-10-07  
 > **Target:** High-Performance, 100% On-Device & Offline AI Video Editing Engine (Edito)  
-> **Status:** Phase 0–19 **ALL COMPLETED** | Atmospheric Lighting & Retro Texture Suite Live (v1.0.82+83)  
+> **Status:** Phase 0–21 **ALL COMPLETED** | Spatial Optics & Binaural Dynamics Suite Live (v1.0.84+85)  
 
 ---
 
@@ -20,7 +20,7 @@ If this environment restarts or your session closes abruptly, follow this 4-step
    ```
    *(Must return 100% CLEAN. Never commit or proceed if this fails.)*
 3. **Locate Current Feature in Section 3 Below:**
-   - All features F1–F6 and Phase 13–18 are complete.
+   - All features F1–F6 and Phase 13–21 are complete.
 4. **Resume Direct Commands / Tests / Release**.
 
 ---
@@ -58,8 +58,11 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 | **15** | **PRO-MOTION-AUDIO** | Pro Motion & Audio Dynamics Suite (Action Freeze Climax, Bezier Curve Speed Ease, 8D Spatial Audio Pan) | Deterministic Timeline Surgery / Bezier / LFO DSP | Internal | ✅ **COMPLETED** (`v1.0.78`) |
 | **16** | **TYPOGRAPHY-VFX** | Creative Stylist & Typography Dynamics Suite (Typewriter Kinetic Titles, CRT Cyber Scanlines, Spatial Reverb Chamber) | Skia Canvas / DSP Convolver | Internal | ✅ **COMPLETED** (`v1.0.79`) |
 | **17** | **OPTICAL-GLOW-AUDIO** | Optical Glow & Retro Tone Suite (Anamorphic Streak Flare, Halation Film Bleed, Tape Cassette Audio Warble) | Skia Canvas / Optical Convolution / DSP Wow & Flutter | Internal | ✅ **COMPLETED** (`v1.0.80`) |
+| **18** | **CINEMATIC-SFX** | Cinematic Camera & Sound FX Suite (Handheld Shake, Fisheye Lens, Vinyl Turntable) | Skia Canvas / Mesh Distort / DSP Vinyl Crackle | Internal | ✅ **COMPLETED** (`v1.0.81`) |
 | **19** | **ATMOSPHERIC-CHIPTUNE** | Atmospheric Lighting & Retro Texture Suite (Light Leak Rainbow Prisms, Night Vision Infrared, 8-Bit Lo-Fi Chiptune) | Skia Canvas / Colormap False Color / DSP Bitcrusher | Internal | ✅ **COMPLETED** (`v1.0.82`) |
-| **20** | **KALEIDO-GLITCH-TREMOLO**| Prismatic Geometry & Audio Modulation Suite (Kaleidoscope Radial Mirror, Datamosh Glitch, Stereo Tremolo & Auto-Wah) | Skia Reflection / Delta Artifacts / LFO DSP | Internal | 🚀 **PLANNED** |
+| **20** | **KALEIDO-GLITCH-TREMOLO**| Prismatic Geometry & Audio Modulation Suite (Kaleidoscope Radial Mirror, Datamosh Glitch, Stereo Tremolo & Auto-Wah) | Skia Reflection / Delta Artifacts / LFO DSP | Internal | ✅ **COMPLETED** (`v1.0.83`) |
+| **21** | **SPATIAL-OPTICS-BINAURAL**| Spatial Optics & Binaural Dynamics Suite (Tilt-Shift Miniature, Edge Glow Neon Hologram, Vocal Pitch Harmonizer) | Skia Canvas / Edge Detect / DSP Pitch Shifter | Internal | ✅ **COMPLETED** (`v1.0.84`) |
+| **22** | **DYNAMIC-OPTICS-STUTTER**| Dynamic Optics & Audio Stutter Suite (RGB Chromatic Glitch, Thermal Solarization Invert, Rhythmic Beat Stutter) | Skia Canvas / Tone Curves / Micro-Buffer DSP | Internal | 🚀 **PLANNED** |
 
 ---
 
@@ -515,14 +518,36 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 
 ---
 
-### Phase 21: Spatial Optics & Binaural Dynamics Suite (Tilt-Shift Miniature, Neon Hologram Wireframe, Vocal Pitch & Formant Harmonizer) 🚀 [PLANNED] (v1.0.84)
+### Phase 21: Spatial Optics & Binaural Dynamics Suite (Tilt-Shift Miniature, Neon Hologram Wireframe, Vocal Pitch & Formant Harmonizer) ✅ [COMPLETED] (v1.0.84)
 **Goal:** Deliver 3 high-impact, 100% self-dependent creator tools powered by selective miniature optical focus planes, edge-detection holographic wireframe glows, and DSP musical vocal pitch/formant shifting:
-- **21.1 Tilt-Shift Miniature & Depth-of-Field Diorama Studio (`TiltShiftConfig`, `TiltShiftCompilerService`, `TiltShiftSheet`)**:
-  - Linear focal plane bar and radial circular focus mask, progressive Gaussian blur falloff outside focal region, toy-model color saturation boost, interactive Skia focal band drag handles, and FFmpeg selective blur & color grading export.
-- **21.2 Edge Glow Cyberpunk Neon & Hologram Wireframe Studio (`NeonGlowConfig`, `NeonGlowCompilerService`, `NeonGlowSheet`)**:
-  - Sobel edge-detection filter, neon/rainbow phosphor edge mapping, pulsating intensity glow, holographic scanline raster, Skia Canvas glowing silhouette overlay, and FFmpeg `edgedetect` / `colorkey` compositing.
-- **21.3 Dynamic Vocal Pitch Shifter & Formant Harmonizer Studio (`PitchHarmonizerConfig`, `PitchHarmonizerCompilerService`, `PitchHarmonizerSheet`)**:
-  - Musical semitone transposition (-12 to +12 semitones), dual-voice interval harmonies (octave, minor 3rd, perfect 5th), robotic ring modulation timbre, animated musical keyboard visualizer, and FFmpeg DSP filterchain with strict true-peak brickwall ceiling limiter per `AGENTS.md` Rule 4.
+- [x] **21.1 Tilt-Shift Miniature & Depth-of-Field Diorama Studio (`TiltShiftConfig`, `TiltShiftCompilerService`, `TiltShiftSheet`)**:
+  - Linear focal plane strip and radial circular focus mask, progressive Gaussian/box blur falloff outside focal region, miniature toy-model color saturation boost, interactive Skia focal band drag handles (`_TiltShiftPainter`), and FFmpeg `boxblur` / `blend` selective filter compilation.
+  - 5 curated presets: Toy Town Miniature, Diorama Horizontal, Portrait Radial Focus, Macro Shallow DoF, Architectural Tilt.
+- [x] **21.2 Edge Glow Cyberpunk Neon & Hologram Wireframe Studio (`NeonGlowConfig`, `NeonGlowCompilerService`, `NeonGlowSheet`)**:
+  - Sobel edge-detection filter, neon/rainbow phosphor edge mapping, pulsating intensity glow, holographic scanline raster, Skia Canvas glowing silhouette overlay (`_NeonGlowPainter`), and FFmpeg `edgedetect` / `colorkey` / `tblend` / `drawgrid` compositing.
+  - 5 curated presets: Tokyo Neon Cyan, Hologram Mesh Blue, Synthwave Magenta, Matrix Wireframe, Rainbow Spectrum.
+- [x] **21.3 Dynamic Vocal Pitch Shifter & Formant Harmonizer Studio (`PitchHarmonizerConfig`, `PitchHarmonizerCompilerService`, `PitchHarmonizerSheet`)**:
+  - Musical semitone transposition (-12 to +12 semitones, -50 to +50 cents), dual-voice interval harmonies (octave down/up, minor/major 3rd, perfect 4th/5th), robotic ring modulation timbre, animated musical keyboard visualizer (`_PitchHarmonizerPainter`), and FFmpeg `asetrate` / `atempo` / `amix` / `flanger` DSP pipeline with strict true-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`) per `AGENTS.md` Rule 4.
+  - 5 curated presets: Lead 5th Harmony, Sub-Octave Doubler, Airy Upper Octave, Demon Grave Pitch, Dalek Ring Mod.
+- [x] **Full Integration & Polish**:
+  - Wired into `Clip` domain model (`copyWith`, `toJson`, `fromJson`, `props`).
+  - Integrated into `FFmpegCommandBuilder` video export (`vFilters`) and audio export (`aFilters`) filtergraphs.
+  - Implemented live Skia Canvas compositing overlays in `RealtimePreviewViewport` (`_ViewportTiltShiftPainter`, `_ViewportNeonGlowPainter`).
+  - Registered in `EditorTool` enum, docked in `DockedToolPanel`, surfaced in `EditingToolbar` dock, `_showAllToolsModal`, and `_showClipMoreToolsSheet`, and indexed in `ToolSearchModal` (70 tools total).
+  - Created comprehensive test suite `test/spatial_optics_binaural_dynamics_test.dart`.
+  - Bumped version to `1.0.84+85` in `pubspec.yaml` and `scripts/configure_android.py`.
+  - Verified 100% clean with `python scripts/verify_codebase.py` (444 Dart files scanned).
+
+---
+
+### Phase 22: Dynamic Optics & Audio Stutter Suite (RGB Chromatic Glitch, Thermal Solarization Invert, Rhythmic Beat Stutter) 🚀 [PLANNED] (v1.0.85)
+**Goal:** Deliver 3 high-impact, 100% self-dependent creator tools powered by optical chromatic dispersion, photographic solarization inversion, and rhythmic audio buffer repetition:
+- **22.1 RGB Color Aberration & Holographic Glitch Shift Studio (`ChromaticAberrationConfig`, `ChromaticAberrationCompilerService`, `ChromaticAberrationSheet`)**:
+  - Radial and linear RGB channel separation, Red/Green/Blue color fringe offsets, lens dispersion prisms, animated Skia chromatic aberration preview, and FFmpeg `rgbashift` / `colorchannelmixer` filters.
+- **22.2 Thermal Solarization & Psychedelic Color Invert Studio (`SolarizeInvertConfig`, `SolarizeInvertCompilerService`, `SolarizeInvertSheet`)**:
+  - Tone curve inversion inflection thresholds, Sabattier solarization effect, negative color mapping, psychedelic trippy saturation cycling, and FFmpeg `lutrgb` / `curves` export filters.
+- **22.3 Rhythmic Audio Stutter & Glitch Buffer Beat Repeater Studio (`AudioStutterConfig`, `AudioStutterCompilerService`, `AudioStutterSheet`)**:
+  - Synchronized micro-buffer beat repeat slices (1/4, 1/8, 1/16, 1/32 beats), pitch-ramping stutter roll drops, tape stop deceleration brake, animated buffer waveform repeater monitor, and FFmpeg `atempo` / `asetrate` / `apad` / `adelay` DSP filtergraph with strict true-peak brickwall ceiling limiter per Rule 4.
 
 ---
 
@@ -609,8 +634,12 @@ If this environment restarts or your session closes abruptly, follow this 4-step
   - Added Prismatic Kaleidoscope & Radial Mirror Studio (`KaleidoscopeConfig`, `KaleidoscopeCompilerService`, `KaleidoscopeSheet`) with 2-12 radial symmetry facets, rotation drift, focal zoom, animated Skia mandala simulation, and FFmpeg mirror stack filters.
   - Added Glitch Data-Mosh & Compression Artifacts Studio (`DatamoshGlitchConfig`, `DatamoshGlitchCompilerService`, `DatamoshGlitchSheet`) with I-frame dropout simulation, macroblock DCT pixelation, RGB chromatic displacement slices, VHS tracking loss, and Skia glitch canvas preview.
   - Added Stereo Tremolo & Auto-Wah Dynamic Filter Studio (`TremoloWahConfig`, `TremoloWahCompilerService`, `TremoloWahSheet`) with periodic stereo LFO amplitude pulses, dynamic auto-wah bandpass envelope sweeping, Leslie rotary simulation, stutter chopper gate, animated dual-channel LFO waveform monitor, and strict true-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
-  - Added comprehensive test suite `test/prismatic_geometry_audio_modulation_test.dart`.
-  - Linter verification: 100% clean (434 files).
+- **2026-10-07 [Spatial Optics & Binaural Dynamics Suite (Phase 21 - v1.0.84)]:**
+  - Added Tilt-Shift Miniature & Depth-of-Field Diorama Studio (`TiltShiftConfig`, `TiltShiftCompilerService`, `TiltShiftSheet`) with linear and radial focus bands, box blur falloff, toy-model saturation boost, Skia interactive viewfinder handles, and selective FFmpeg boxblur/blend filter compilation.
+  - Added Edge Glow Cyberpunk Neon & Hologram Wireframe Studio (`NeonGlowConfig`, `NeonGlowCompilerService`, `NeonGlowSheet`) with Sobel edge detection, neon phosphor edge mapping, pulsating intensity glow, holographic scanlines, and animated Skia glowing contour monitor.
+  - Added Dynamic Vocal Pitch Shifter & Formant Harmonizer Studio (`PitchHarmonizerConfig`, `PitchHarmonizerCompilerService`, `PitchHarmonizerSheet`) with semitone/cent transposition, dual-voice interval harmonies, ring modulation, animated musical keyboard visualizer, and strict true-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
+  - Added comprehensive test suite `test/spatial_optics_binaural_dynamics_test.dart`.
+  - Linter verification: 100% clean (444 files).
 
 ---
 

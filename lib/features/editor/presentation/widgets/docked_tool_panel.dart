@@ -76,6 +76,9 @@ import '../../../audio/presentation/widgets/bitcrusher_sheet.dart';
 import '../../../vfx/presentation/widgets/kaleidoscope_sheet.dart';
 import '../../../vfx/presentation/widgets/datamosh_glitch_sheet.dart';
 import '../../../audio/presentation/widgets/tremolo_wah_sheet.dart';
+import '../../../vfx/presentation/widgets/tilt_shift_sheet.dart';
+import '../../../vfx/presentation/widgets/neon_glow_sheet.dart';
+import '../../../audio/presentation/widgets/pitch_harmonizer_sheet.dart';
 import '../../../overlays/presentation/widgets/typewriter_title_sheet.dart';
 import '../../../transform/presentation/widgets/transform_studio_sheet.dart';
 
@@ -259,6 +262,12 @@ class DockedToolPanel extends StatelessWidget {
         return 'Datamosh & Compression Glitch';
       case EditorTool.tremoloWah:
         return 'Stereo Tremolo & Auto-Wah';
+      case EditorTool.tiltShift:
+        return 'Tilt-Shift Miniature';
+      case EditorTool.neonGlow:
+        return 'Neon Glow & Hologram';
+      case EditorTool.pitchHarmonizer:
+        return 'Pitch & Harmonizer';
       default:
         return tool.name.toUpperCase();
     }
@@ -416,6 +425,12 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.broken_image_rounded;
       case EditorTool.tremoloWah:
         return Icons.waves_rounded;
+      case EditorTool.tiltShift:
+        return Icons.camera_enhance_rounded;
+      case EditorTool.neonGlow:
+        return Icons.electric_bolt_rounded;
+      case EditorTool.pitchHarmonizer:
+        return Icons.music_note_rounded;
       default:
         return Icons.edit;
     }
@@ -1312,6 +1327,30 @@ class DockedToolPanel extends StatelessWidget {
 
       case EditorTool.tremoloWah:
         return TremoloWahSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.tiltShift:
+        return TiltShiftSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.neonGlow:
+        return NeonGlowSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.pitchHarmonizer:
+        return PitchHarmonizerSheet(
           clip: clip,
           onSave: onSaveClip,
           isDocked: true,
