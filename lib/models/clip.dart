@@ -57,6 +57,9 @@ import '../features/audio/models/vinyl_record_config.dart';
 import '../features/vfx/models/light_leak_config.dart';
 import '../features/vfx/models/night_vision_config.dart';
 import '../features/audio/models/bitcrusher_config.dart';
+import '../features/vfx/models/kaleidoscope_config.dart';
+import '../features/vfx/models/datamosh_glitch_config.dart';
+import '../features/audio/models/tremolo_wah_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -132,6 +135,9 @@ class Clip extends Equatable {
   final LightLeakConfig lightLeak;
   final NightVisionConfig nightVision;
   final BitcrusherConfig bitcrusher;
+  final KaleidoscopeConfig kaleidoscope;
+  final DatamoshGlitchConfig datamoshGlitch;
+  final TremoloWahConfig tremoloWah;
 
   const Clip({
     required this.id,
@@ -207,6 +213,9 @@ class Clip extends Equatable {
     this.lightLeak = const LightLeakConfig(),
     this.nightVision = const NightVisionConfig(),
     this.bitcrusher = const BitcrusherConfig(),
+    this.kaleidoscope = const KaleidoscopeConfig(),
+    this.datamoshGlitch = const DatamoshGlitchConfig(),
+    this.tremoloWah = const TremoloWahConfig(),
   });
 
   Clip copyWith({
@@ -283,6 +292,9 @@ class Clip extends Equatable {
     LightLeakConfig? lightLeak,
     NightVisionConfig? nightVision,
     BitcrusherConfig? bitcrusher,
+    KaleidoscopeConfig? kaleidoscope,
+    DatamoshGlitchConfig? datamoshGlitch,
+    TremoloWahConfig? tremoloWah,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -358,6 +370,9 @@ class Clip extends Equatable {
       lightLeak: lightLeak ?? this.lightLeak,
       nightVision: nightVision ?? this.nightVision,
       bitcrusher: bitcrusher ?? this.bitcrusher,
+      kaleidoscope: kaleidoscope ?? this.kaleidoscope,
+      datamoshGlitch: datamoshGlitch ?? this.datamoshGlitch,
+      tremoloWah: tremoloWah ?? this.tremoloWah,
     );
   }
 
@@ -435,6 +450,9 @@ class Clip extends Equatable {
         'lightLeak': lightLeak.toJson(),
         'nightVision': nightVision.toJson(),
         'bitcrusher': bitcrusher.toJson(),
+        'kaleidoscope': kaleidoscope.toJson(),
+        'datamoshGlitch': datamoshGlitch.toJson(),
+        'tremoloWah': tremoloWah.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -632,6 +650,15 @@ class Clip extends Equatable {
         bitcrusher: json['bitcrusher'] != null
             ? BitcrusherConfig.fromJson(json['bitcrusher'] as Map<String, dynamic>)
             : const BitcrusherConfig(),
+        kaleidoscope: json['kaleidoscope'] != null
+            ? KaleidoscopeConfig.fromJson(json['kaleidoscope'] as Map<String, dynamic>)
+            : const KaleidoscopeConfig(),
+        datamoshGlitch: json['datamoshGlitch'] != null
+            ? DatamoshGlitchConfig.fromJson(json['datamoshGlitch'] as Map<String, dynamic>)
+            : const DatamoshGlitchConfig(),
+        tremoloWah: json['tremoloWah'] != null
+            ? TremoloWahConfig.fromJson(json['tremoloWah'] as Map<String, dynamic>)
+            : const TremoloWahConfig(),
       );
 
   @override
@@ -709,5 +736,8 @@ class Clip extends Equatable {
         lightLeak,
         nightVision,
         bitcrusher,
+        kaleidoscope,
+        datamoshGlitch,
+        tremoloWah,
       ];
 }

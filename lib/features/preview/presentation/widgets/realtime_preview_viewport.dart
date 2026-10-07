@@ -45,6 +45,8 @@ import '../../../vfx/models/camera_shake_config.dart';
 import '../../../vfx/models/lens_distortion_config.dart';
 import '../../../vfx/models/light_leak_config.dart';
 import '../../../vfx/models/night_vision_config.dart';
+import '../../../vfx/models/kaleidoscope_config.dart';
+import '../../../vfx/models/datamosh_glitch_config.dart';
 import '../../../vfx/services/vfx_compiler_service.dart';
 import '../../../vfx/presentation/widgets/vfx_preview_wrapper.dart';
 import '../../../../models/clip.dart';
@@ -1359,6 +1361,10 @@ class RealtimePreviewViewport extends ConsumerWidget {
           _buildLightLeakOverlay(clip.lightLeak, currentPositionMs - clip.timelineInMs),
         if (clip.nightVision.isActive)
           _buildNightVisionOverlay(clip.nightVision, currentPositionMs - clip.timelineInMs),
+        if (clip.kaleidoscope.isActive)
+          _buildKaleidoscopeOverlay(clip.kaleidoscope, currentPositionMs - clip.timelineInMs),
+        if (clip.datamoshGlitch.isActive)
+          _buildDatamoshGlitchOverlay(clip.datamoshGlitch, currentPositionMs - clip.timelineInMs),
       ],
     );
   }
@@ -2203,6 +2209,38 @@ class RealtimePreviewViewport extends ConsumerWidget {
       child: IgnorePointer(
         child: CustomPaint(
           painter: _ViewportNightVisionPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKaleidoscopeOverlay(KaleidoscopeConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 3000.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportKaleidoscopePainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDatamoshGlitchOverlay(DatamoshGlitchConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 1000.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportDatamoshGlitchPainter(
             config: config,
             phase: phase,
           ),
@@ -3097,6 +3135,146 @@ class _ViewportNightVisionPainter extends CustomPainter {
     return oldDelegate.config != config || oldDelegate.phase != phase;
   }
 }
+
+class _ViewportKaleidoscopePainter extends CustomPainter {
+  final KaleidoscopeConfig config;
+  final double phase;
+
+  _ViewportKaleidoscopePainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (!config.isActive || size.width <= 0 || size.height <= 0) return;
+
+    final center = Offset(size.width * config.centerX, size.height * config.centerY);
+    final maxRadius = math.sqrt(size.width * size.width + size.height * size.height);
+    final segments = config.segments.clamp(2, 12);
+    final stepAngle = (2 * math.pi) / segments;
+    final rotOffset = config.rotationSpeed * phase * 2 * math.pi;
+
+    // 1. Subtle radial facet reflection glow
+    final spokePaint = Paint()
+      ..color = Colors.cyanAccent.withOpacity(0.20)
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+
+    final arcPaint = Paint()
+      ..color = Colors.purpleAccent.withOpacity(0.12)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    // Draw radial symmetry facet boundaries
+    for (int i = 0; i < segments; i++) {
+      final angle = i * stepAngle + rotOffset;
+      final endPoint = Offset(
+        center.dx + math.cos(angle) * maxRadius,
+        center.dy + math.sin(angle) * maxRadius,
+      );
+      canvas.drawLine(center, endPoint, spokePaint);
+
+      // Draw secondary mirror reflection harmonic
+      if (segments >= 4) {
+        final halfAngle = angle + (stepAngle / 2.0);
+        final halfEnd = Offset(
+          center.dx + math.cos(halfAngle) * (maxRadius * 0.7),
+          center.dy + math.sin(halfAngle) * (maxRadius * 0.7),
+        );
+        final dimSpoke = Paint()
+          ..color = Colors.white.withOpacity(0.08)
+          ..strokeWidth = 0.8;
+        canvas.drawLine(center, halfEnd, dimSpoke);
+      }
+    }
+
+    // Concentric geometric mandala rings
+    final ringCount = (segments * 0.75).ceil().clamp(3, 8);
+    final ringStep = (math.min(size.width, size.height) * 0.45) / ringCount;
+    for (int r = 1; r <= ringCount; r++) {
+      final radius = r * ringStep * config.zoom;
+      canvas.drawCircle(center, radius, arcPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportKaleidoscopePainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
+class _ViewportDatamoshGlitchPainter extends CustomPainter {
+  final DatamoshGlitchConfig config;
+  final double phase;
+
+  _ViewportDatamoshGlitchPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (!config.isActive || size.width <= 0 || size.height <= 0) return;
+
+    final randSeed = (phase * 1000).toInt();
+    final rng = math.Random(randSeed);
+    final intensity = config.intensity;
+
+    // 1. Horizontal RGB slice displacement tearing
+    final numSlices = (intensity * 6).round().clamp(1, 8);
+    for (int i = 0; i < numSlices; i++) {
+      final sliceY = rng.nextDouble() * size.height;
+      final sliceH = (rng.nextDouble() * 18.0 + 4.0) * intensity;
+      final shiftX = (rng.nextDouble() * 32.0 - 16.0) * intensity;
+
+      // Chromatic RGB aberration fringe
+      final redPaint = Paint()
+        ..color = const Color(0xFFFF0055).withOpacity((0.35 * intensity).clamp(0.0, 1.0))
+        ..blendMode = BlendMode.screen;
+      final cyanPaint = Paint()
+        ..color = const Color(0xFF00FFFF).withOpacity((0.30 * intensity).clamp(0.0, 1.0))
+        ..blendMode = BlendMode.screen;
+
+      canvas.drawRect(Rect.fromLTWH(shiftX, sliceY, size.width, sliceH), redPaint);
+      canvas.drawRect(Rect.fromLTWH(-shiftX * 0.8, sliceY + 2, size.width, sliceH), cyanPaint);
+    }
+
+    // 2. Macroblock digital compression corruption squares
+    final blockSize = config.macroblockSize.toDouble().clamp(8.0, 48.0);
+    final numBlocks = (config.blockiness * 14).round();
+    for (int b = 0; b < numBlocks; b++) {
+      final bx = (rng.nextDouble() * (size.width / blockSize)).floor() * blockSize;
+      final by = (rng.nextDouble() * (size.height / blockSize)).floor() * blockSize;
+      final blockColor = (b % 3 == 0)
+          ? const Color(0xFF00FF66).withOpacity((0.35 * intensity).clamp(0.0, 1.0))
+          : ((b % 3 == 1)
+              ? const Color(0xFFFF00FF).withOpacity((0.35 * intensity).clamp(0.0, 1.0))
+              : Colors.black.withOpacity((0.45 * intensity).clamp(0.0, 1.0)));
+
+      final blockPaint = Paint()
+        ..color = blockColor
+        ..blendMode = BlendMode.hardLight;
+      canvas.drawRect(Rect.fromLTWH(bx, by, blockSize, blockSize), blockPaint);
+    }
+
+    // 3. VHS tracking tear horizontal bar
+    if (config.trackingLoss) {
+      final barY = (phase * size.height * 1.5) % size.height;
+      final barH = 22.0 * intensity;
+      final vhsPaint = Paint()
+        ..color = Colors.white.withOpacity((0.25 * intensity).clamp(0.0, 1.0))
+        ..blendMode = BlendMode.overlay;
+      canvas.drawRect(Rect.fromLTWH(0, barY, size.width, barH), vhsPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportDatamoshGlitchPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
 
 
 

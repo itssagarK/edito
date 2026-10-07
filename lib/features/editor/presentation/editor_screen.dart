@@ -696,6 +696,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openBitcrusherModal();
         break;
 
+      case EditorTool.kaleidoscope:
+        _openKaleidoscopeModal();
+        break;
+
+      case EditorTool.datamoshGlitch:
+        _openDatamoshGlitchModal();
+        break;
+
+      case EditorTool.tremoloWah:
+        _openTremoloWahModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1025,6 +1037,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openBitcrusherModal() {
     _openDockedTool(EditorTool.bitcrusher, trackType: TrackType.audio, purpose: '8-Bit Chiptune Crusher');
+  }
+
+  void _openKaleidoscopeModal() {
+    _openDockedTool(EditorTool.kaleidoscope, trackType: TrackType.video, purpose: 'Kaleidoscope & Radial Mirror');
+  }
+
+  void _openDatamoshGlitchModal() {
+    _openDockedTool(EditorTool.datamoshGlitch, trackType: TrackType.video, purpose: 'Datamosh & Compression Glitch');
+  }
+
+  void _openTremoloWahModal() {
+    _openDockedTool(EditorTool.tremoloWah, trackType: TrackType.audio, purpose: 'Stereo Tremolo & Auto-Wah');
   }
 
   void _openAudioToolsModal() {

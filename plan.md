@@ -493,14 +493,36 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 
 ---
 
-### Phase 20: Prismatic Geometry & Audio Modulation Suite (Kaleidoscope Radial Mirror, Datamosh Glitch, Stereo Tremolo & Auto-Wah) 🚀 [PLANNED]
+### Phase 20: Prismatic Geometry & Audio Modulation Suite (Kaleidoscope Radial Mirror, Datamosh Glitch, Stereo Tremolo & Auto-Wah) ✅ [COMPLETED] (v1.0.83)
 **Goal:** Deliver 3 high-impact, 100% self-dependent creator tools powered by radial optical kaleidoscope symmetry, temporal digital compression data-moshing, and periodic audio LFO wave modulation:
-- **20.1 Prismatic Kaleidoscope & Radial Mirror Studio (`KaleidoscopeConfig`, `KaleidoscopeCompilerService`, `KaleidoscopeSheet`)**:
-  - Multi-facet radial symmetry reflection (2 to 12 segments), center pivot offset, dynamic rotation spin, and FFmpeg filter pipeline.
-- **20.2 Glitch Data-Mosh & Compression Artifacts Studio (`DatamoshGlitchConfig`, `DatamoshGlitchCompilerService`, `DatamoshGlitchSheet`)**:
-  - Simulated I-frame keyframe dropout, pixel-vector bloom, blocky quantization chroma smears, temporal artifact trails, and Skia Canvas simulation.
-- **20.3 Stereo Tremolo & Auto-Wah Dynamic Filter Studio (`TremoloWahConfig`, `TremoloWahCompilerService`, `TremoloWahSheet`)**:
-  - LFO amplitude modulation tremolo, envelope-follower auto-wah bandpass sweep, frequency resonance, and strict true-peak brickwall ceiling limiter per Rule 4.
+- [x] **20.1 Prismatic Kaleidoscope & Radial Mirror Studio (`KaleidoscopeConfig`, `KaleidoscopeCompilerService`, `KaleidoscopeSheet`)**:
+  - Multi-facet radial symmetry reflection (2 to 12 segments: bilateral, quad, hexagon, octagon, dodecagon), center pivot offset, dynamic rotation spin, focal zoom, animated Skia Canvas mandala preview simulation (`_KaleidoscopePainter`), and FFmpeg `split` / `hflip` / `hstack` / `vstack` / `rotate` filter compilation.
+  - 5 curated presets: Classic Hexagon, Sacred Mandala, Quad Retro Mirror, Cosmic Crystal, Twin Symmetry.
+- [x] **20.2 Glitch Data-Mosh & Compression Artifacts Studio (`DatamoshGlitchConfig`, `DatamoshGlitchCompilerService`, `DatamoshGlitchSheet`)**:
+  - Simulated keyframe I-frame dropout, macroblock DCT pixelation ($8\text{px}$–$48\text{px}$), RGB chromatic displacement slices, VHS horizontal tracking loss, blocky quantization smears, animated Skia Canvas glitch preview (`_DatamoshPainter`), and FFmpeg `rgbashift` / `scale` / `noise` filter pipeline.
+  - 5 curated profiles: Classic Datamosh, Cyberpunk Glitch, Extreme Compression, VHS Tape Tear, Fatal Data Decay.
+- [x] **20.3 Stereo Tremolo & Auto-Wah Dynamic Filter Studio (`TremoloWahConfig`, `TremoloWahCompilerService`, `TremoloWahSheet`)**:
+  - LFO periodic stereo amplitude pulsation (sine, triangle, square, sawtooth; $0.2\text{Hz}$–$20.0\text{Hz}$), dynamic resonant auto-wah bandpass envelope ($200\text{Hz}$–$4000\text{Hz}$, Q-factor resonance $0.5$–$10.0$), Doppler Leslie rotary speaker simulation, EDM stutter chopper gate, animated Skia Canvas dual-channel LFO waveform monitor (`_TremoloWahPainter`), and strict true-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`) per `AGENTS.md` Rule 4.
+  - 5 curated presets: Vintage Surf Tremolo, Funky Auto-Wah, Leslie Organ Speaker, Hard EDM Stutter, Trippy Phaser Sweep.
+- [x] **Full Integration & Polish**:
+  - Wired into `Clip` domain model (`copyWith`, `toJson`, `fromJson`, `props`).
+  - Integrated into `FFmpegCommandBuilder` video export (`vFilters`) and audio export (`aFilters`) filtergraphs.
+  - Implemented live Skia Canvas compositing overlays in `RealtimePreviewViewport` (`_ViewportKaleidoscopePainter`, `_ViewportDatamoshGlitchPainter`).
+  - Registered in `EditorTool` enum, docked in `DockedToolPanel`, surfaced in `EditingToolbar` dock, `_showAllToolsModal`, and `_showClipMoreToolsSheet`, and indexed in `ToolSearchModal` (67 tools total).
+  - Created comprehensive test suite `test/prismatic_geometry_audio_modulation_test.dart`.
+  - Bumped version to `1.0.83+84` in `pubspec.yaml` and `scripts/configure_android.py`.
+  - Verified 100% clean with `python scripts/verify_codebase.py` (434 Dart files scanned).
+
+---
+
+### Phase 21: Spatial Optics & Binaural Dynamics Suite (Tilt-Shift Miniature, Neon Hologram Wireframe, Vocal Pitch & Formant Harmonizer) 🚀 [PLANNED] (v1.0.84)
+**Goal:** Deliver 3 high-impact, 100% self-dependent creator tools powered by selective miniature optical focus planes, edge-detection holographic wireframe glows, and DSP musical vocal pitch/formant shifting:
+- **21.1 Tilt-Shift Miniature & Depth-of-Field Diorama Studio (`TiltShiftConfig`, `TiltShiftCompilerService`, `TiltShiftSheet`)**:
+  - Linear focal plane bar and radial circular focus mask, progressive Gaussian blur falloff outside focal region, toy-model color saturation boost, interactive Skia focal band drag handles, and FFmpeg selective blur & color grading export.
+- **21.2 Edge Glow Cyberpunk Neon & Hologram Wireframe Studio (`NeonGlowConfig`, `NeonGlowCompilerService`, `NeonGlowSheet`)**:
+  - Sobel edge-detection filter, neon/rainbow phosphor edge mapping, pulsating intensity glow, holographic scanline raster, Skia Canvas glowing silhouette overlay, and FFmpeg `edgedetect` / `colorkey` compositing.
+- **21.3 Dynamic Vocal Pitch Shifter & Formant Harmonizer Studio (`PitchHarmonizerConfig`, `PitchHarmonizerCompilerService`, `PitchHarmonizerSheet`)**:
+  - Musical semitone transposition (-12 to +12 semitones), dual-voice interval harmonies (octave, minor 3rd, perfect 5th), robotic ring modulation timbre, animated musical keyboard visualizer, and FFmpeg DSP filterchain with strict true-peak brickwall ceiling limiter per `AGENTS.md` Rule 4.
 
 ---
 
@@ -582,6 +604,13 @@ If this environment restarts or your session closes abruptly, follow this 4-step
   - Added 8-Bit Lo-Fi Chiptune Bitcrusher Studio (`BitcrusherConfig`, `BitcrusherCompilerService`, `BitcrusherSheet`) with NES/GameBoy/Arcade/Walkie-Talkie downsampling, bit-depth DAC quantization, overdrive saturation, animated quantized waveform monitor, and true-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
   - Added unit test suite `test/atmospheric_lighting_retro_texture_test.dart`.
   - Linter verification: 100% clean (424 files).
+
+- **2026-10-07 [Prismatic Geometry & Audio Modulation Suite (Phase 20 - v1.0.83)]:**
+  - Added Prismatic Kaleidoscope & Radial Mirror Studio (`KaleidoscopeConfig`, `KaleidoscopeCompilerService`, `KaleidoscopeSheet`) with 2-12 radial symmetry facets, rotation drift, focal zoom, animated Skia mandala simulation, and FFmpeg mirror stack filters.
+  - Added Glitch Data-Mosh & Compression Artifacts Studio (`DatamoshGlitchConfig`, `DatamoshGlitchCompilerService`, `DatamoshGlitchSheet`) with I-frame dropout simulation, macroblock DCT pixelation, RGB chromatic displacement slices, VHS tracking loss, and Skia glitch canvas preview.
+  - Added Stereo Tremolo & Auto-Wah Dynamic Filter Studio (`TremoloWahConfig`, `TremoloWahCompilerService`, `TremoloWahSheet`) with periodic stereo LFO amplitude pulses, dynamic auto-wah bandpass envelope sweeping, Leslie rotary simulation, stutter chopper gate, animated dual-channel LFO waveform monitor, and strict true-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
+  - Added comprehensive test suite `test/prismatic_geometry_audio_modulation_test.dart`.
+  - Linter verification: 100% clean (434 files).
 
 ---
 

@@ -83,6 +83,9 @@ enum EditorTool {
   lightLeak,
   nightVision,
   bitcrusher,
+  kaleidoscope,
+  datamoshGlitch,
+  tremoloWah,
 }
 
 class EditorState {

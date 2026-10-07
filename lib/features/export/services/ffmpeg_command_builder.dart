@@ -39,6 +39,9 @@ import '../../audio/services/reverb_compiler_service.dart';
 import '../../audio/services/tape_cassette_compiler_service.dart';
 import '../../audio/services/vinyl_record_compiler_service.dart';
 import '../../audio/services/bitcrusher_compiler_service.dart';
+import '../../vfx/services/kaleidoscope_compiler_service.dart';
+import '../../vfx/services/datamosh_glitch_compiler_service.dart';
+import '../../audio/services/tremolo_wah_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
 import '../../image_editor/services/pip_compiler_service.dart';
 import '../../cutout/services/smart_cutout_compiler_service.dart';
@@ -607,6 +610,30 @@ class FFmpegCommandBuilder {
           }
         }
 
+        // Prismatic Geometry: Kaleidoscope & Radial Mirror
+        if (clip.kaleidoscope.isActive) {
+          final kaleidoFilter = KaleidoscopeCompilerService.compileFilter(
+            clip.kaleidoscope,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (kaleidoFilter.isNotEmpty) {
+            vFilters.add(kaleidoFilter);
+          }
+        }
+
+        // Glitch & Compression: Datamosh & Artifacts Studio
+        if (clip.datamoshGlitch.isActive) {
+          final datamoshFilter = DatamoshGlitchCompilerService.compileFilter(
+            clip.datamoshGlitch,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (datamoshFilter.isNotEmpty) {
+            vFilters.add(datamoshFilter);
+          }
+        }
+
         // Smart AI Cutout Studio & Glowing Neon Outlines
         if (clip.smartCutout.isEnabled) {
           final cutoutFilters = SmartCutoutCompilerService.generateFFmpegFilters(
@@ -874,6 +901,14 @@ class FFmpegCommandBuilder {
           final crusherFilter = BitcrusherCompilerService.compileFilter(clip.bitcrusher);
           if (crusherFilter.isNotEmpty) {
             aFilters.add(crusherFilter);
+          }
+        }
+
+        // Audio Modulation: Stereo Tremolo & Auto-Wah
+        if (clip.tremoloWah.isActive) {
+          final tremoloFilter = TremoloWahCompilerService.compileFilter(clip.tremoloWah);
+          if (tremoloFilter.isNotEmpty) {
+            aFilters.add(tremoloFilter);
           }
         }
 

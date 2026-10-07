@@ -603,6 +603,30 @@ class _ToolSearchModalState extends State<ToolSearchModal> {
       icon: Icons.videogame_asset_rounded,
       keywords: ['bitcrusher', '8-bit', 'chiptune', 'lofi', 'nes', 'gameboy', 'arcade', 'downsample', 'quantize', 'dac', 'sample rate', 'audio', 'sound'],
     ),
+    _SearchableTool(
+      tool: EditorTool.kaleidoscope,
+      title: 'Kaleidoscope & Radial Mirror',
+      category: 'Visuals',
+      description: 'Multi-facet radial symmetry reflection (2 to 12 facets), continuous rotation drift, center pivot offset, and mandala geometry',
+      icon: Icons.flare_rounded,
+      keywords: ['kaleidoscope', 'mirror', 'radial', 'symmetry', 'mandala', 'reflection', 'crystal', 'prismatic', 'facets', 'psychedelic', 'rotate'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.datamoshGlitch,
+      title: 'Datamosh & Compression Glitch',
+      category: 'Visuals',
+      description: 'I-frame dropout keyframe glitch, macroblock DCT compression, RGB spectral displacement chromatic tear, and VHS tracking noise',
+      icon: Icons.broken_image_rounded,
+      keywords: ['datamosh', 'glitch', 'compression', 'artifact', 'iframe', 'macroblock', 'vhs', 'rgb shift', 'tear', 'pixelate', 'decay', 'cyberpunk'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.tremoloWah,
+      title: 'Stereo Tremolo & Auto-Wah',
+      category: 'Audio',
+      description: 'Periodic stereo LFO amplitude modulation, dynamic resonant auto-wah filter envelope, Leslie rotary speaker, and brickwall limiter',
+      icon: Icons.waves_rounded,
+      keywords: ['tremolo', 'wah', 'autowah', 'lfo', 'modulation', 'amplitude', 'filter', 'resonance', 'leslie', 'rotary', 'stutter', 'gate', 'stereo', 'pan', 'audio'],
+    ),
   ];
 
   @override

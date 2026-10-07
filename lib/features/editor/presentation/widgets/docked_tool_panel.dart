@@ -73,6 +73,9 @@ import '../../../audio/presentation/widgets/vinyl_record_sheet.dart';
 import '../../../vfx/presentation/widgets/light_leak_sheet.dart';
 import '../../../vfx/presentation/widgets/night_vision_sheet.dart';
 import '../../../audio/presentation/widgets/bitcrusher_sheet.dart';
+import '../../../vfx/presentation/widgets/kaleidoscope_sheet.dart';
+import '../../../vfx/presentation/widgets/datamosh_glitch_sheet.dart';
+import '../../../audio/presentation/widgets/tremolo_wah_sheet.dart';
 import '../../../overlays/presentation/widgets/typewriter_title_sheet.dart';
 import '../../../transform/presentation/widgets/transform_studio_sheet.dart';
 
@@ -250,6 +253,12 @@ class DockedToolPanel extends StatelessWidget {
         return 'Night Vision & Thermal';
       case EditorTool.bitcrusher:
         return '8-Bit Chiptune Crusher';
+      case EditorTool.kaleidoscope:
+        return 'Kaleidoscope & Radial Mirror';
+      case EditorTool.datamoshGlitch:
+        return 'Datamosh & Compression Glitch';
+      case EditorTool.tremoloWah:
+        return 'Stereo Tremolo & Auto-Wah';
       default:
         return tool.name.toUpperCase();
     }
@@ -401,6 +410,12 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.visibility_rounded;
       case EditorTool.bitcrusher:
         return Icons.videogame_asset_rounded;
+      case EditorTool.kaleidoscope:
+        return Icons.flare_rounded;
+      case EditorTool.datamoshGlitch:
+        return Icons.broken_image_rounded;
+      case EditorTool.tremoloWah:
+        return Icons.waves_rounded;
       default:
         return Icons.edit;
     }
@@ -1273,6 +1288,30 @@ class DockedToolPanel extends StatelessWidget {
 
       case EditorTool.bitcrusher:
         return BitcrusherSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.kaleidoscope:
+        return KaleidoscopeSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.datamoshGlitch:
+        return DatamoshGlitchSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.tremoloWah:
+        return TremoloWahSheet(
           clip: clip,
           onSave: onSaveClip,
           isDocked: true,
