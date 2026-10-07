@@ -41,6 +41,8 @@ import '../../../vfx/models/impact_flash_config.dart';
 import '../../../vfx/models/crt_scanline_config.dart';
 import '../../../vfx/models/anamorphic_flare_config.dart';
 import '../../../vfx/models/film_halation_config.dart';
+import '../../../vfx/models/camera_shake_config.dart';
+import '../../../vfx/models/lens_distortion_config.dart';
 import '../../../vfx/services/vfx_compiler_service.dart';
 import '../../../vfx/presentation/widgets/vfx_preview_wrapper.dart';
 import '../../../../models/clip.dart';
@@ -1347,6 +1349,10 @@ class RealtimePreviewViewport extends ConsumerWidget {
           _buildAnamorphicFlareOverlay(clip.anamorphicFlare, currentPositionMs - clip.timelineInMs),
         if (clip.filmHalation.isActive)
           _buildFilmHalationOverlay(clip.filmHalation, currentPositionMs - clip.timelineInMs),
+        if (clip.cameraShake.isActive)
+          _buildCameraShakeOverlay(clip.cameraShake, currentPositionMs - clip.timelineInMs),
+        if (clip.lensDistortion.isActive)
+          _buildLensDistortionOverlay(clip.lensDistortion),
       ],
     );
   }
@@ -2137,6 +2143,36 @@ class RealtimePreviewViewport extends ConsumerWidget {
     );
   }
 
+  Widget _buildCameraShakeOverlay(CameraShakeConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 1000.0) % (2 * math.pi);
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportCameraShakePainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLensDistortionOverlay(LensDistortionConfig config) {
+    if (!config.isActive) return const SizedBox.shrink();
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportLensDistortionPainter(
+            config: config,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildProgressBarOverlay(ProgressBarConfig config, int currentMs, int totalMs) {
     if (totalMs <= 0) return const SizedBox.shrink();
     final progress = (currentMs / totalMs).clamp(0.0, 1.0);
@@ -2708,4 +2744,92 @@ class _ViewportFilmHalationPainter extends CustomPainter {
     return oldDelegate.config != config || oldDelegate.phase != phase;
   }
 }
+
+class _ViewportCameraShakePainter extends CustomPainter {
+  final CameraShakeConfig config;
+  final double phase;
+
+  _ViewportCameraShakePainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (!config.isActive) return;
+    final amp = config.intensity * 8.0;
+    final p = phase * config.speed;
+    final dx = math.sin(p * 1.5) * amp;
+    final dy = math.cos(p * 1.8) * (amp * 0.8);
+
+    final edgePaint = Paint()
+      ..color = const Color(0xFFFF5722).withOpacity(0.25)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    final inset = 6.0;
+    final cornerLen = 16.0;
+    final rect = Rect.fromLTWH(inset + dx, inset + dy, size.width - 2 * inset, size.height - 2 * inset);
+
+    // Viewfinder corner marks
+    canvas.drawLine(rect.topLeft, rect.topLeft + Offset(cornerLen, 0), edgePaint);
+    canvas.drawLine(rect.topLeft, rect.topLeft + Offset(0, cornerLen), edgePaint);
+    canvas.drawLine(rect.topRight, rect.topRight + Offset(-cornerLen, 0), edgePaint);
+    canvas.drawLine(rect.topRight, rect.topRight + Offset(0, cornerLen), edgePaint);
+    canvas.drawLine(rect.bottomLeft, rect.bottomLeft + Offset(cornerLen, 0), edgePaint);
+    canvas.drawLine(rect.bottomLeft, rect.bottomLeft + Offset(0, -cornerLen), edgePaint);
+    canvas.drawLine(rect.bottomRight, rect.bottomRight + Offset(-cornerLen, 0), edgePaint);
+    canvas.drawLine(rect.bottomRight, rect.bottomRight + Offset(0, -cornerLen), edgePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportCameraShakePainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
+class _ViewportLensDistortionPainter extends CustomPainter {
+  final LensDistortionConfig config;
+
+  _ViewportLensDistortionPainter({required this.config});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (!config.isActive) return;
+
+    // 1. Vignette shadow overlay on viewport edges
+    if (config.vignetteFalloff > 0.05) {
+      final vigOpacity = (config.vignetteFalloff * 0.75).clamp(0.05, 0.85);
+      final vigPaint = Paint()
+        ..shader = RadialGradient(
+          center: Alignment.center,
+          radius: 0.85,
+          colors: [
+            Colors.transparent,
+            Colors.black.withOpacity(vigOpacity * 0.5),
+            Colors.black.withOpacity(vigOpacity),
+          ],
+          stops: const [0.55, 0.80, 1.0],
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+      canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), vigPaint);
+    }
+
+    // 2. Optical border ring indicating spherical lens profile
+    final ringPaint = Paint()
+      ..color = const Color(0xFF00E5FF).withOpacity(0.18)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    canvas.drawCircle(Offset(cx, cy), math.min(cx, cy) * 0.96, ringPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportLensDistortionPainter oldDelegate) {
+    return oldDelegate.config != config;
+  }
+}
+
 

@@ -77,6 +77,9 @@ enum EditorTool {
   anamorphicFlare,
   filmHalation,
   tapeCassette,
+  cameraShake,
+  lensDistortion,
+  vinylRecord,
 }
 
 class EditorState {

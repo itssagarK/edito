@@ -67,6 +67,9 @@ import '../../../vfx/presentation/widgets/crt_scanline_sheet.dart';
 import '../../../vfx/presentation/widgets/anamorphic_flare_sheet.dart';
 import '../../../vfx/presentation/widgets/film_halation_sheet.dart';
 import '../../../audio/presentation/widgets/tape_cassette_sheet.dart';
+import '../../../vfx/presentation/widgets/camera_shake_sheet.dart';
+import '../../../vfx/presentation/widgets/lens_distortion_sheet.dart';
+import '../../../audio/presentation/widgets/vinyl_record_sheet.dart';
 import '../../../overlays/presentation/widgets/typewriter_title_sheet.dart';
 import '../../../transform/presentation/widgets/transform_studio_sheet.dart';
 
@@ -232,6 +235,12 @@ class DockedToolPanel extends StatelessWidget {
         return '35mm Film Halation Studio';
       case EditorTool.tapeCassette:
         return 'Vintage Tape Cassette Studio';
+      case EditorTool.cameraShake:
+        return 'Camera Shake & Tremor';
+      case EditorTool.lensDistortion:
+        return 'Lens Distortion & Fisheye';
+      case EditorTool.vinylRecord:
+        return 'Vinyl Turntable Studio';
       default:
         return tool.name.toUpperCase();
     }
@@ -370,6 +379,12 @@ class DockedToolPanel extends StatelessWidget {
       case EditorTool.filmHalation:
         return Icons.blur_on;
       case EditorTool.tapeCassette:
+        return Icons.album;
+      case EditorTool.cameraShake:
+        return Icons.vibration;
+      case EditorTool.lensDistortion:
+        return Icons.panorama_fish_eye;
+      case EditorTool.vinylRecord:
         return Icons.album;
       default:
         return Icons.edit;
@@ -1195,6 +1210,30 @@ class DockedToolPanel extends StatelessWidget {
 
       case EditorTool.tapeCassette:
         return TapeCassetteSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.cameraShake:
+        return CameraShakeSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.lensDistortion:
+        return LensDistortionSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.vinylRecord:
+        return VinylRecordSheet(
           clip: clip,
           onSave: onSaveClip,
           isDocked: true,

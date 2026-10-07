@@ -2,7 +2,7 @@
 
 > **Last Updated:** 2026-10-07  
 > **Target:** High-Performance, 100% On-Device & Offline AI Video Editing Engine (Edito)  
-> **Status:** Phase 0–17 **ALL COMPLETED** | Optical Glow & Retro Tone Suite Live (v1.0.80+81)  
+> **Status:** Phase 0–18 **ALL COMPLETED** | Cinematic Camera & Sound FX Suite Live (v1.0.81+82)  
 
 ---
 
@@ -20,7 +20,7 @@ If this environment restarts or your session closes abruptly, follow this 4-step
    ```
    *(Must return 100% CLEAN. Never commit or proceed if this fails.)*
 3. **Locate Current Feature in Section 3 Below:**
-   - All features F1–F6 and Phase 13–17 are complete.
+   - All features F1–F6 and Phase 13–18 are complete.
 4. **Resume Direct Commands / Tests / Release**.
 
 ---
@@ -58,7 +58,8 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 | **15** | **PRO-MOTION-AUDIO** | Pro Motion & Audio Dynamics Suite (Action Freeze Climax, Bezier Curve Speed Ease, 8D Spatial Audio Pan) | Deterministic Timeline Surgery / Bezier / LFO DSP | Internal | ✅ **COMPLETED** (`v1.0.78`) |
 | **16** | **TYPOGRAPHY-VFX** | Creative Stylist & Typography Dynamics Suite (Typewriter Kinetic Titles, CRT Cyber Scanlines, Spatial Reverb Chamber) | Skia Canvas / DSP Convolver | Internal | ✅ **COMPLETED** (`v1.0.79`) |
 | **17** | **OPTICAL-GLOW-AUDIO** | Optical Glow & Retro Tone Suite (Anamorphic Streak Flare, Halation Film Bleed, Tape Cassette Audio Warble) | Skia Canvas / Optical Convolution / DSP Wow & Flutter | Internal | ✅ **COMPLETED** (`v1.0.80`) |
-| **18** | **CAMERA-LENS-AUDIO** | Cinematic Camera & Sound FX Suite (Organic Camera Shake, Lens Distortion & Fisheye, Vinyl Turntable Dust) | Skia Canvas / Optical Matrix / DSP Filter | Internal | 🚀 **PLANNED** |
+| **18** | **CAMERA-LENS-AUDIO** | Cinematic Camera & Sound FX Suite (Organic Camera Shake, Lens Distortion & Fisheye, Vinyl Turntable Dust) | Skia Canvas / Optical Matrix / DSP Filter | Internal | ✅ **COMPLETED** (`v1.0.81`) |
+| **19** | **ATMOSPHERIC-CHIPTUNE** | Atmospheric Lighting & Retro Texture Suite (Light Leak Rainbow Prisms, Night Vision Infrared, 8-Bit Lo-Fi Chiptune) | Skia Canvas / Colormap False Color / DSP Bitcrusher | Internal | 🚀 **PLANNED** |
 
 ---
 
@@ -457,14 +458,36 @@ If this environment restarts or your session closes abruptly, follow this 4-step
 
 ---
 
-### Phase 18: Cinematic Camera & Sound FX Suite (Organic Camera Shake, Lens Distortion & Fisheye, Vinyl Turntable Dust) 🚀 [PLANNED]
+### Phase 18: Cinematic Camera & Sound FX Suite (Organic Camera Shake, Lens Distortion & Fisheye, Vinyl Turntable Dust) ✅ [COMPLETED] (v1.0.81)
 **Goal:** Deliver 3 high-impact, 100% self-dependent creator tools powered by deterministic mathematical motion drift, optical geometric lens deformation, and vinyl needle acoustic textures:
-- **18.1 Organic Handheld Camera Shake & Impact Tremor Studio (`CameraShakeConfig`, `CameraShakeCompilerService`, `CameraShakeSheet`)**:
-  - Natural handheld micro-drift, rapid impact earthquake shockwaves, vehicle motor rumble, frequency and amplitude LFOs, Skia viewport simulation, and FFmpeg `crop` + trigonometric/pseudo-random offset coordinate jitter.
-- **18.2 Lens Distortion & Action-Cam Fisheye Studio (`LensDistortionConfig`, `LensDistortionCompilerService`, `LensDistortionSheet`)**:
-  - Barrel curvature, pincushion distortion, ultra-wide action cam fisheye wrap, chromatic aberration RGB edge fringe, Skia warp preview, and FFmpeg `lenscorrection` / `vignette` pipeline.
-- **18.3 Vintage Vinyl Turntable & Dusty Needle Studio (`VinylRecordConfig`, `VinylRecordCompilerService`, `VinylRecordSheet`)**:
-  - Analog needle surface crackle, dust pops, 33⅓ vs 45 RPM speed warm tone EQ curves, authentic mechanical needle drop, and true-peak brickwall limiter ceiling.
+- [x] **18.1 Organic Handheld Camera Shake & Impact Tremor Studio (`CameraShakeConfig`, `CameraShakeCompilerService`, `CameraShakeSheet`)**:
+  - Natural handheld micro-drift, violent impact earthquake shockwaves, vehicle motor rumble, frequency and amplitude LFOs, Skia viewport simulation, and FFmpeg `crop` + trigonometric harmonic coordinate jitter.
+  - 5 camera shake profiles: Handheld, Earthquake, Vehicle Offroad, Heartbeat Pulse, Impact Tremor.
+- [x] **18.2 Lens Distortion & Action-Cam Fisheye Studio (`LensDistortionConfig`, `LensDistortionCompilerService`, `LensDistortionSheet`)**:
+  - Curved panoramic barrel fisheye curvature, telephoto pincushion zoom, chromatic aberration RGB edge fringe, corner vignette falloff, interactive Skia mesh warp canvas simulation, and FFmpeg `lenscorrection` / `vignette` pipeline.
+  - 5 optical profiles: Action Cam Fisheye, Anamorphic Barrel, Telephoto Pincushion, Drone Ultra-Wide, Vintage Spyglass.
+- [x] **18.3 Vintage Vinyl Turntable & Dusty Needle Studio (`VinylRecordConfig`, `VinylRecordCompilerService`, `VinylRecordSheet`)**:
+  - Analog needle surface crackle, dust pops, 33⅓, 45, and 78 RPM speeds, authentic mechanical needle drop cue, phono RIAA warmth EQ curve, and animated rotating vinyl turntable card.
+  - FFmpeg DSP compiler (`highpass`, `equalizer`, `lowpass`, `vibrato`) with strict true-peak brickwall ceiling limiter per `AGENTS.md` Rule 4 (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
+- [x] **Integration & Polish**:
+  - Wired into `Clip` domain model (`copyWith`, `toJson`, `fromJson`, `props`).
+  - Integrated into `FFmpegCommandBuilder` video and audio export filtergraphs.
+  - Implemented live Skia Canvas compositing overlays in `RealtimePreviewViewport`.
+  - Registered in `EditorTool` enum, docked in `DockedToolPanel`, surfaced in `EditingToolbar` dock and modal grid, and indexed in `ToolSearchModal` (64 tools total).
+  - Created comprehensive test suite `test/cinematic_camera_sound_fx_test.dart`.
+  - Bumped version to `1.0.81+82` in `pubspec.yaml` and `scripts/configure_android.py`.
+  - Verified 100% clean with `python scripts/verify_codebase.py` (414 Dart files scanned).
+
+---
+
+### Phase 19: Atmospheric Lighting & Retro Texture Suite (Light Leak Rainbow Prisms, Night Vision Infrared Scope, 8-Bit Lo-Fi Chiptune Crusher) 🚀 [PLANNED]
+**Goal:** Deliver 3 high-impact, 100% self-dependent creator tools powered by optical atmospheric light dispersion, spectral military infrared false-coloring, and DSP audio bit-crushing:
+- **19.1 Light Leak Rainbow Prisms Studio (`LightLeakConfig`, `LightLeakCompilerService`, `LightLeakSheet`)**:
+  - Organic solar light leaks, chromatic rainbow prism flares, warm anamorphic exposure breathing, Skia Canvas blending, and FFmpeg screen/colorchannelmixer composition.
+- **19.2 Night Vision & Thermal Infrared Scope Studio (`NightVisionConfig`, `NightVisionCompilerService`, `NightVisionSheet`)**:
+  - Phosphor green night-vision matrix, FLIR thermal false-color heatmap, CRT scan lines, phosphor bloom halo, and authentic military rangefinder reticle overlay.
+- **19.3 8-Bit Lo-Fi Chiptune Bitcrusher Studio (`BitcrusherConfig`, `BitcrusherCompilerService`, `BitcrusherSheet`)**:
+  - Sample rate downsampling ($3\text{kHz}$–$22\text{kHz}$), bit depth quantization ($2$ to $12$ bits), arcade crunch saturation, and true-peak brickwall ceiling limiter.
 
 ---
 
@@ -532,6 +555,13 @@ If this environment restarts or your session closes abruptly, follow this 4-step
   - Added Vintage Tape Cassette & Wow/Flutter Warble Studio (`TapeCassetteConfig`, `TapeCassetteCompilerService`, `TapeCassetteSheet`) with analog pitch drift, flutter vibration, tape warmth bump, rotating reels preview, and true-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
   - Added unit test suite `test/optical_glow_retro_tone_test.dart`.
   - Linter verification: 100% clean (404 files).
+
+- **2026-10-07 [Cinematic Camera & Sound FX Suite (Phase 18 - v1.0.81)]:**
+  - Added Organic Handheld Camera Shake & Impact Tremor Studio (`CameraShakeConfig`, `CameraShakeCompilerService`, `CameraShakeSheet`) with harmonic motion drift, 5 shake types, and viewfinder simulation.
+  - Added Lens Distortion & Action-Cam Fisheye Studio (`LensDistortionConfig`, `LensDistortionCompilerService`, `LensDistortionSheet`) with barrel/pincushion curvature, chromatic aberration RGB fringe, and optical mesh simulation.
+  - Added Vintage Vinyl Turntable & Dusty Needle Studio (`VinylRecordConfig`, `VinylRecordCompilerService`, `VinylRecordSheet`) with 33/45/78 RPM speeds, dust crackle, surface hiss, phono RIAA curve, rotating turntable simulation, and true-peak brickwall ceiling limiter (`alimiter=limit=0.95:attack=5:release=50:asc=1`).
+  - Added unit test suite `test/cinematic_camera_sound_fx_test.dart`.
+  - Linter verification: 100% clean (414 files).
 
 ---
 

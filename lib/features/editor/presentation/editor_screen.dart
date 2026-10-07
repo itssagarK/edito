@@ -672,6 +672,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openTapeCassetteModal();
         break;
 
+      case EditorTool.cameraShake:
+        _openCameraShakeModal();
+        break;
+
+      case EditorTool.lensDistortion:
+        _openLensDistortionModal();
+        break;
+
+      case EditorTool.vinylRecord:
+        _openVinylRecordModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -977,6 +989,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openTapeCassetteModal() {
     _openDockedTool(EditorTool.tapeCassette, trackType: TrackType.audio, purpose: 'Vintage Tape Cassette Studio');
+  }
+
+  void _openCameraShakeModal() {
+    _openDockedTool(EditorTool.cameraShake, trackType: TrackType.video, purpose: 'Camera Shake & Tremor');
+  }
+
+  void _openLensDistortionModal() {
+    _openDockedTool(EditorTool.lensDistortion, trackType: TrackType.video, purpose: 'Lens Distortion & Fisheye');
+  }
+
+  void _openVinylRecordModal() {
+    _openDockedTool(EditorTool.vinylRecord, trackType: TrackType.audio, purpose: 'Vinyl Turntable Studio');
   }
 
   void _openAudioToolsModal() {

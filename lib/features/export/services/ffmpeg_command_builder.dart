@@ -31,8 +31,11 @@ import '../../vfx/services/vfx_compiler_service.dart';
 import '../../vfx/services/crt_scanline_compiler_service.dart';
 import '../../vfx/services/anamorphic_flare_compiler_service.dart';
 import '../../vfx/services/film_halation_compiler_service.dart';
+import '../../vfx/services/camera_shake_compiler_service.dart';
+import '../../vfx/services/lens_distortion_compiler_service.dart';
 import '../../audio/services/reverb_compiler_service.dart';
 import '../../audio/services/tape_cassette_compiler_service.dart';
+import '../../audio/services/vinyl_record_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
 import '../../image_editor/services/pip_compiler_service.dart';
 import '../../cutout/services/smart_cutout_compiler_service.dart';
@@ -569,6 +572,22 @@ class FFmpegCommandBuilder {
           }
         }
 
+        // Optical: Handheld Camera Shake & Impact Tremor
+        if (clip.cameraShake.isActive) {
+          final shakeFilters = CameraShakeCompilerService.generateFFmpegFilters(clip.cameraShake);
+          if (shakeFilters.isNotEmpty) {
+            vFilters.addAll(shakeFilters);
+          }
+        }
+
+        // Optical: Lens Distortion & Action-Cam Fisheye
+        if (clip.lensDistortion.isActive) {
+          final distFilters = LensDistortionCompilerService.generateFFmpegFilters(clip.lensDistortion);
+          if (distFilters.isNotEmpty) {
+            vFilters.addAll(distFilters);
+          }
+        }
+
         // Smart AI Cutout Studio & Glowing Neon Outlines
         if (clip.smartCutout.isEnabled) {
           final cutoutFilters = SmartCutoutCompilerService.generateFFmpegFilters(
@@ -823,6 +842,12 @@ class FFmpegCommandBuilder {
         if (clip.tapeCassette.isActive) {
           final tapeFilters = TapeCassetteCompilerService.generateFFmpegFilters(clip.tapeCassette);
           aFilters.addAll(tapeFilters);
+        }
+
+        // Retro Tone: Vintage Vinyl Turntable & Dusty Needle
+        if (clip.vinylRecord.isActive) {
+          final vinylFilters = VinylRecordCompilerService.generateFFmpegFilters(clip.vinylRecord);
+          aFilters.addAll(vinylFilters);
         }
 
         // Format harmonization (48kHz sample rate, fltp, stereo)

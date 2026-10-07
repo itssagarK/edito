@@ -51,6 +51,9 @@ import '../features/audio/models/reverb_chamber_config.dart';
 import '../features/vfx/models/anamorphic_flare_config.dart';
 import '../features/vfx/models/film_halation_config.dart';
 import '../features/audio/models/tape_cassette_config.dart';
+import '../features/vfx/models/camera_shake_config.dart';
+import '../features/vfx/models/lens_distortion_config.dart';
+import '../features/audio/models/vinyl_record_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -120,6 +123,9 @@ class Clip extends Equatable {
   final AnamorphicFlareConfig anamorphicFlare;
   final FilmHalationConfig filmHalation;
   final TapeCassetteConfig tapeCassette;
+  final CameraShakeConfig cameraShake;
+  final LensDistortionConfig lensDistortion;
+  final VinylRecordConfig vinylRecord;
 
   const Clip({
     required this.id,
@@ -189,6 +195,9 @@ class Clip extends Equatable {
     this.anamorphicFlare = const AnamorphicFlareConfig(),
     this.filmHalation = const FilmHalationConfig(),
     this.tapeCassette = const TapeCassetteConfig(),
+    this.cameraShake = const CameraShakeConfig(),
+    this.lensDistortion = const LensDistortionConfig(),
+    this.vinylRecord = const VinylRecordConfig(),
   });
 
   Clip copyWith({
@@ -259,6 +268,9 @@ class Clip extends Equatable {
     AnamorphicFlareConfig? anamorphicFlare,
     FilmHalationConfig? filmHalation,
     TapeCassetteConfig? tapeCassette,
+    CameraShakeConfig? cameraShake,
+    LensDistortionConfig? lensDistortion,
+    VinylRecordConfig? vinylRecord,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -328,6 +340,9 @@ class Clip extends Equatable {
       anamorphicFlare: anamorphicFlare ?? this.anamorphicFlare,
       filmHalation: filmHalation ?? this.filmHalation,
       tapeCassette: tapeCassette ?? this.tapeCassette,
+      cameraShake: cameraShake ?? this.cameraShake,
+      lensDistortion: lensDistortion ?? this.lensDistortion,
+      vinylRecord: vinylRecord ?? this.vinylRecord,
     );
   }
 
@@ -399,6 +414,9 @@ class Clip extends Equatable {
         'anamorphicFlare': anamorphicFlare.toJson(),
         'filmHalation': filmHalation.toJson(),
         'tapeCassette': tapeCassette.toJson(),
+        'cameraShake': cameraShake.toJson(),
+        'lensDistortion': lensDistortion.toJson(),
+        'vinylRecord': vinylRecord.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -578,6 +596,15 @@ class Clip extends Equatable {
         tapeCassette: json['tapeCassette'] != null
             ? TapeCassetteConfig.fromJson(json['tapeCassette'] as Map<String, dynamic>)
             : const TapeCassetteConfig(),
+        cameraShake: json['cameraShake'] != null
+            ? CameraShakeConfig.fromJson(json['cameraShake'] as Map<String, dynamic>)
+            : const CameraShakeConfig(),
+        lensDistortion: json['lensDistortion'] != null
+            ? LensDistortionConfig.fromJson(json['lensDistortion'] as Map<String, dynamic>)
+            : const LensDistortionConfig(),
+        vinylRecord: json['vinylRecord'] != null
+            ? VinylRecordConfig.fromJson(json['vinylRecord'] as Map<String, dynamic>)
+            : const VinylRecordConfig(),
       );
 
   @override
@@ -649,5 +676,8 @@ class Clip extends Equatable {
         anamorphicFlare,
         filmHalation,
         tapeCassette,
+        cameraShake,
+        lensDistortion,
+        vinylRecord,
       ];
 }

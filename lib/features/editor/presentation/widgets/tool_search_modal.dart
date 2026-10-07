@@ -24,7 +24,7 @@ class _SearchableTool {
 }
 
 /// Instant tool search and quick launcher palette.
-/// Allows creators to find any of the 61 editing tools in milliseconds
+/// Allows creators to find any of the 64 editing tools in milliseconds
 /// without endless scrolling.
 class ToolSearchModal extends StatefulWidget {
   final Function(EditorTool) onSelectTool;
@@ -554,6 +554,30 @@ class _ToolSearchModalState extends State<ToolSearchModal> {
       description: 'Analog magnetic tape wow pitch drift, flutter vibration, head warmth bump, and high-frequency tape roll-off',
       icon: Icons.album,
       keywords: ['tape', 'cassette', 'wow', 'flutter', 'warble', 'lofi', 'vintage', 'analog', 'walkman', 'vhs'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.cameraShake,
+      title: 'Camera Shake & Tremor Studio',
+      category: 'Visuals',
+      description: 'Organic handheld camera drift, violent earthquake shockwaves, offroad vehicle vibration, and impact tremors',
+      icon: Icons.vibration,
+      keywords: ['shake', 'camera', 'handheld', 'tremor', 'earthquake', 'vibration', 'impact', 'drift', 'jitter', 'motion'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.lensDistortion,
+      title: 'Lens Distortion & Fisheye Studio',
+      category: 'Visuals',
+      description: 'Curved panoramic barrel fisheye curvature, telephoto pincushion zoom, chromatic aberration RGB fringes, and corner vignette',
+      icon: Icons.panorama_fish_eye,
+      keywords: ['distortion', 'fisheye', 'lens', 'barrel', 'pincushion', 'gopro', 'action', 'chromatic', 'aberration', 'warp'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.vinylRecord,
+      title: 'Vinyl Turntable Studio',
+      category: 'Audio',
+      description: 'Analog vinyl turntable surface crackle, dust pops, mechanical needle cue, 33/45/78 RPM speeds, and warm RIAA phono curve',
+      icon: Icons.album,
+      keywords: ['vinyl', 'record', 'turntable', 'crackle', 'dust', 'needle', 'lp', 'lofi', 'analog', 'vintage'],
     ),
   ];
 
