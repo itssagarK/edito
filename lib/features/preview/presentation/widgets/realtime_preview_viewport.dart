@@ -37,6 +37,7 @@ import '../../../blending/models/blend_mode_config.dart';
 import '../../../blending/presentation/widgets/blend_mode_wrapper.dart';
 import '../../../keyframes/presentation/widgets/keyframe_transform_wrapper.dart';
 import '../../../vfx/models/vfx_config.dart';
+import '../../../vfx/models/impact_flash_config.dart';
 import '../../../vfx/services/vfx_compiler_service.dart';
 import '../../../vfx/presentation/widgets/vfx_preview_wrapper.dart';
 import '../../../../models/clip.dart';
@@ -1335,6 +1336,8 @@ class RealtimePreviewViewport extends ConsumerWidget {
           _buildVideoBorderOverlay(clip.border),
         if (clip.headerFooter.hasActiveOverlay)
           _buildHeaderFooterOverlay(clip.headerFooter),
+        if (clip.impactFlash.isActive)
+          _buildImpactFlashOverlay(clip.impactFlash, currentPositionMs - clip.timelineInMs),
       ],
     );
   }
@@ -2027,6 +2030,36 @@ class RealtimePreviewViewport extends ConsumerWidget {
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImpactFlashOverlay(ImpactFlashConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final opacity = config.evaluateOpacity(offsetMs);
+    if (opacity <= 0.005) return const SizedBox.shrink();
+
+    Color flashColor;
+    switch (config.type) {
+      case ImpactFlashType.whiteFlash:
+        flashColor = Colors.white;
+        break;
+      case ImpactFlashType.blackFlash:
+        flashColor = Colors.black;
+        break;
+      case ImpactFlashType.warmGlow:
+        flashColor = const Color(0xFFFFA726);
+        break;
+      case ImpactFlashType.rgbStrobe:
+        flashColor = (offsetMs ~/ 50) % 2 == 0 ? const Color(0xFF00E5FF) : const Color(0xFFFF0055);
+        break;
+    }
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: ColoredBox(
+          color: flashColor.withOpacity(opacity),
         ),
       ),
     );

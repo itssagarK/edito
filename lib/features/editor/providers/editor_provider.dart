@@ -65,6 +65,9 @@ enum EditorTool {
   progressBar,
   kenBurns,
   gapCloser,
+  beatCut,
+  audioFade,
+  impactFlash,
 }
 
 class EditorState {

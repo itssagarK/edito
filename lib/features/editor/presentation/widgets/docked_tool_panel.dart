@@ -56,6 +56,9 @@ import '../../../transitions/presentation/widgets/transition_selector_sheet.dart
 import '../../../transitions/models/transition_type.dart';
 import '../../../audio/presentation/widgets/sound_effects_sheet.dart';
 import '../../../audio/presentation/widgets/audio_recorder_sheet.dart';
+import '../../../audio/presentation/widgets/audio_fade_sheet.dart';
+import '../../../beats/presentation/widgets/beat_cutter_sheet.dart';
+import '../../../vfx/presentation/widgets/impact_flash_sheet.dart';
 import '../../../transform/presentation/widgets/transform_studio_sheet.dart';
 
 class DockedToolPanel extends StatelessWidget {
@@ -196,6 +199,12 @@ class DockedToolPanel extends StatelessWidget {
         return 'Ken Burns Motion';
       case EditorTool.gapCloser:
         return 'Timeline Gap Closer';
+      case EditorTool.beatCut:
+        return 'Beat Cut & Rhythm Snapper';
+      case EditorTool.audioFade:
+        return 'Audio Fade & Anti-Pop';
+      case EditorTool.impactFlash:
+        return 'Impact Flash & Strobe';
       default:
         return tool.name.toUpperCase();
     }
@@ -311,6 +320,12 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.slow_motion_video;
       case EditorTool.gapCloser:
         return Icons.space_bar;
+      case EditorTool.beatCut:
+        return Icons.auto_awesome_motion;
+      case EditorTool.audioFade:
+        return Icons.graphic_eq;
+      case EditorTool.impactFlash:
+        return Icons.flash_on;
       default:
         return Icons.edit;
     }
@@ -1039,6 +1054,30 @@ class DockedToolPanel extends StatelessWidget {
         return GapCloserSheet(
           project: project,
           onProjectUpdated: onSaveProject,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.beatCut:
+        return BeatCutterSheet(
+          project: project,
+          onProjectUpdated: onSaveProject,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.audioFade:
+        return AudioFadeSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.impactFlash:
+        return ImpactFlashSheet(
+          clip: clip,
+          onSave: onSaveClip,
           isDocked: true,
           onDone: onClose,
         );

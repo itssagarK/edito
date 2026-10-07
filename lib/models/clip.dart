@@ -41,6 +41,8 @@ import '../features/film_grain/models/film_grain_config.dart';
 import '../features/vignette/models/vignette_config.dart';
 import '../features/transform/models/video_transform_config.dart';
 import '../features/image_editor/models/ken_burns_config.dart';
+import '../features/audio/models/audio_fade_config.dart';
+import '../features/vfx/models/impact_flash_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -100,6 +102,8 @@ class Clip extends Equatable {
   final VignetteConfig vignette;
   final VideoTransformConfig transform;
   final KenBurnsConfig kenBurns;
+  final AudioFadeConfig audioFade;
+  final ImpactFlashConfig impactFlash;
 
   const Clip({
     required this.id,
@@ -159,6 +163,8 @@ class Clip extends Equatable {
     this.vignette = const VignetteConfig(),
     this.transform = const VideoTransformConfig(),
     this.kenBurns = const KenBurnsConfig(),
+    this.audioFade = const AudioFadeConfig(),
+    this.impactFlash = const ImpactFlashConfig(),
   });
 
   Clip copyWith({
@@ -219,6 +225,8 @@ class Clip extends Equatable {
     VignetteConfig? vignette,
     VideoTransformConfig? transform,
     KenBurnsConfig? kenBurns,
+    AudioFadeConfig? audioFade,
+    ImpactFlashConfig? impactFlash,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -278,6 +286,8 @@ class Clip extends Equatable {
       vignette: vignette ?? this.vignette,
       transform: transform ?? this.transform,
       kenBurns: kenBurns ?? this.kenBurns,
+      audioFade: audioFade ?? this.audioFade,
+      impactFlash: impactFlash ?? this.impactFlash,
     );
   }
 
@@ -339,6 +349,8 @@ class Clip extends Equatable {
         'vignette': vignette.toJson(),
         'transform': transform.toJson(),
         'kenBurns': kenBurns.toJson(),
+        'audioFade': audioFade.toJson(),
+        'impactFlash': impactFlash.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -488,6 +500,12 @@ class Clip extends Equatable {
         kenBurns: json['kenBurns'] != null
             ? KenBurnsConfig.fromJson(json['kenBurns'] as Map<String, dynamic>)
             : const KenBurnsConfig(),
+        audioFade: json['audioFade'] != null
+            ? AudioFadeConfig.fromJson(json['audioFade'] as Map<String, dynamic>)
+            : const AudioFadeConfig(),
+        impactFlash: json['impactFlash'] != null
+            ? ImpactFlashConfig.fromJson(json['impactFlash'] as Map<String, dynamic>)
+            : const ImpactFlashConfig(),
       );
 
   @override
@@ -549,5 +567,7 @@ class Clip extends Equatable {
         vignette,
         transform,
         kenBurns,
+        audioFade,
+        impactFlash,
       ];
 }

@@ -458,6 +458,31 @@ class _ToolSearchModalState extends State<ToolSearchModal> {
       icon: Icons.space_bar,
       keywords: ['gap', 'closer', 'black frame', 'flash', 'blank', 'ripple', 'compact', 'timeline'],
     ),
+    _SearchableTool(
+      tool: EditorTool.beatCut,
+      title: 'Auto Beat Cut & Rhythm Snapper',
+      category: 'AI Studio',
+      isAi: true,
+      description: 'Auto-split clips on musical beats or tempo grid intervals & snap edit cutpoints',
+      icon: Icons.auto_awesome_motion,
+      keywords: ['beat', 'music', 'rhythm', 'tempo', 'cut', 'snapper', 'bpm', 'split', 'sync'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.audioFade,
+      title: 'Audio Fade & Anti-Pop Crossfade',
+      category: 'Audio',
+      description: 'Smooth logarithmic and S-curve audio fade-in & fade-out envelopes to remove clicks',
+      icon: Icons.graphic_eq,
+      keywords: ['fade', 'audio fade', 'crossfade', 'pop', 'envelope', 'smooth', 'volume ramp'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.impactFlash,
+      title: 'Cinematic Impact Flash & Strobe',
+      category: 'Visuals',
+      description: 'High-energy white burst, black dip, warm glow, or RGB cyber strobe accents at cutpoints',
+      icon: Icons.flash_on,
+      keywords: ['flash', 'impact', 'strobe', 'white burst', 'glow', 'cut accent', 'transition'],
+    ),
   ];
 
   @override

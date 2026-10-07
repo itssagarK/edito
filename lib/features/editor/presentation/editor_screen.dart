@@ -624,6 +624,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openGapCloserModal();
         break;
 
+      case EditorTool.beatCut:
+        _openBeatCutterModal();
+        break;
+
+      case EditorTool.audioFade:
+        _openAudioFadeModal();
+        break;
+
+      case EditorTool.impactFlash:
+        _openImpactFlashModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -881,6 +893,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openGapCloserModal() {
     _openDockedTool(EditorTool.gapCloser, trackType: TrackType.video, purpose: 'Timeline Gap Closer');
+  }
+
+  void _openBeatCutterModal() {
+    _openDockedTool(EditorTool.beatCut, trackType: TrackType.video, purpose: 'Beat Cut & Rhythm Snapper');
+  }
+
+  void _openAudioFadeModal() {
+    _openDockedTool(EditorTool.audioFade, purpose: 'Audio Fade & Anti-Pop');
+  }
+
+  void _openImpactFlashModal() {
+    _openDockedTool(EditorTool.impactFlash, trackType: TrackType.video, purpose: 'Impact Flash & Strobe');
   }
 
   void _openAudioToolsModal() {

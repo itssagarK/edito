@@ -23,6 +23,8 @@ import '../../speed/services/speed_ramping_service.dart';
 import '../../speed/services/auto_velocity_service.dart';
 import '../../transitions/models/transition_type.dart';
 import '../../transitions/services/transition_compiler_service.dart';
+import '../../audio/services/audio_fade_compiler_service.dart';
+import '../../vfx/services/impact_flash_compiler_service.dart';
 import '../../vfx/services/vfx_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
 import '../../image_editor/services/pip_compiler_service.dart';
@@ -511,6 +513,19 @@ class FFmpegCommandBuilder {
           }
         }
 
+        // Creator Power Suite: Cinematic Impact Flash & Strobe Accents
+        if (clip.impactFlash.isActive) {
+          final flashFilters = ImpactFlashCompilerService.generateFFmpegFilters(
+            clip.impactFlash,
+            clipDurationMs: clip.durationMs,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (flashFilters.isNotEmpty) {
+            vFilters.addAll(flashFilters);
+          }
+        }
+
         // Smart AI Cutout Studio & Glowing Neon Outlines
         if (clip.smartCutout.isEnabled) {
           final cutoutFilters = SmartCutoutCompilerService.generateFFmpegFilters(
@@ -738,6 +753,15 @@ class FFmpegCommandBuilder {
         if (clip.voiceEffects.isEnabled && clip.voiceEffects.character != VoiceEffectCharacter.none) {
           final voiceFilters = VoiceEffectsCompilerService.generateFFmpegFilters(clip.voiceEffects);
           aFilters.addAll(voiceFilters);
+        }
+
+        // Creator Power Suite: Audio Fade Envelopes & Anti-Pop Crossfades
+        if (clip.audioFade.isActive) {
+          final fadeFilters = AudioFadeCompilerService.generateFFmpegFilters(
+            clip.audioFade,
+            clipDurationMs: clip.durationMs,
+          );
+          aFilters.addAll(fadeFilters);
         }
 
         // Format harmonization (48kHz sample rate, fltp, stereo)
