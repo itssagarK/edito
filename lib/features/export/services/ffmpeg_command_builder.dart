@@ -33,9 +33,12 @@ import '../../vfx/services/anamorphic_flare_compiler_service.dart';
 import '../../vfx/services/film_halation_compiler_service.dart';
 import '../../vfx/services/camera_shake_compiler_service.dart';
 import '../../vfx/services/lens_distortion_compiler_service.dart';
+import '../../vfx/services/light_leak_compiler_service.dart';
+import '../../vfx/services/night_vision_compiler_service.dart';
 import '../../audio/services/reverb_compiler_service.dart';
 import '../../audio/services/tape_cassette_compiler_service.dart';
 import '../../audio/services/vinyl_record_compiler_service.dart';
+import '../../audio/services/bitcrusher_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
 import '../../image_editor/services/pip_compiler_service.dart';
 import '../../cutout/services/smart_cutout_compiler_service.dart';
@@ -588,6 +591,22 @@ class FFmpegCommandBuilder {
           }
         }
 
+        // Optical: Light Leak & Rainbow Prisms
+        if (clip.lightLeak.isActive) {
+          final leakFilter = LightLeakCompilerService.compileFilter(clip.lightLeak);
+          if (leakFilter.isNotEmpty) {
+            vFilters.add(leakFilter);
+          }
+        }
+
+        // Tactical / Thermal: Night Vision & FLIR Scope
+        if (clip.nightVision.isActive) {
+          final nvFilter = NightVisionCompilerService.compileFilter(clip.nightVision);
+          if (nvFilter.isNotEmpty) {
+            vFilters.add(nvFilter);
+          }
+        }
+
         // Smart AI Cutout Studio & Glowing Neon Outlines
         if (clip.smartCutout.isEnabled) {
           final cutoutFilters = SmartCutoutCompilerService.generateFFmpegFilters(
@@ -848,6 +867,14 @@ class FFmpegCommandBuilder {
         if (clip.vinylRecord.isActive) {
           final vinylFilters = VinylRecordCompilerService.generateFFmpegFilters(clip.vinylRecord);
           aFilters.addAll(vinylFilters);
+        }
+
+        // Retro Audio: 8-Bit Lo-Fi Chiptune Bitcrusher
+        if (clip.bitcrusher.isActive) {
+          final crusherFilter = BitcrusherCompilerService.compileFilter(clip.bitcrusher);
+          if (crusherFilter.isNotEmpty) {
+            aFilters.add(crusherFilter);
+          }
         }
 
         // Format harmonization (48kHz sample rate, fltp, stereo)

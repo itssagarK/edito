@@ -684,6 +684,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openVinylRecordModal();
         break;
 
+      case EditorTool.lightLeak:
+        _openLightLeakModal();
+        break;
+
+      case EditorTool.nightVision:
+        _openNightVisionModal();
+        break;
+
+      case EditorTool.bitcrusher:
+        _openBitcrusherModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1001,6 +1013,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openVinylRecordModal() {
     _openDockedTool(EditorTool.vinylRecord, trackType: TrackType.audio, purpose: 'Vinyl Turntable Studio');
+  }
+
+  void _openLightLeakModal() {
+    _openDockedTool(EditorTool.lightLeak, trackType: TrackType.video, purpose: 'Light Leak & Rainbow Prisms');
+  }
+
+  void _openNightVisionModal() {
+    _openDockedTool(EditorTool.nightVision, trackType: TrackType.video, purpose: 'Night Vision & Thermal Scope');
+  }
+
+  void _openBitcrusherModal() {
+    _openDockedTool(EditorTool.bitcrusher, trackType: TrackType.audio, purpose: '8-Bit Chiptune Crusher');
   }
 
   void _openAudioToolsModal() {

@@ -70,6 +70,9 @@ import '../../../audio/presentation/widgets/tape_cassette_sheet.dart';
 import '../../../vfx/presentation/widgets/camera_shake_sheet.dart';
 import '../../../vfx/presentation/widgets/lens_distortion_sheet.dart';
 import '../../../audio/presentation/widgets/vinyl_record_sheet.dart';
+import '../../../vfx/presentation/widgets/light_leak_sheet.dart';
+import '../../../vfx/presentation/widgets/night_vision_sheet.dart';
+import '../../../audio/presentation/widgets/bitcrusher_sheet.dart';
 import '../../../overlays/presentation/widgets/typewriter_title_sheet.dart';
 import '../../../transform/presentation/widgets/transform_studio_sheet.dart';
 
@@ -241,6 +244,12 @@ class DockedToolPanel extends StatelessWidget {
         return 'Lens Distortion & Fisheye';
       case EditorTool.vinylRecord:
         return 'Vinyl Turntable Studio';
+      case EditorTool.lightLeak:
+        return 'Light Leak & Prisms';
+      case EditorTool.nightVision:
+        return 'Night Vision & Thermal';
+      case EditorTool.bitcrusher:
+        return '8-Bit Chiptune Crusher';
       default:
         return tool.name.toUpperCase();
     }
@@ -386,6 +395,12 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.panorama_fish_eye;
       case EditorTool.vinylRecord:
         return Icons.album;
+      case EditorTool.lightLeak:
+        return Icons.wb_sunny_rounded;
+      case EditorTool.nightVision:
+        return Icons.visibility_rounded;
+      case EditorTool.bitcrusher:
+        return Icons.videogame_asset_rounded;
       default:
         return Icons.edit;
     }
@@ -1234,6 +1249,30 @@ class DockedToolPanel extends StatelessWidget {
 
       case EditorTool.vinylRecord:
         return VinylRecordSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.lightLeak:
+        return LightLeakSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.nightVision:
+        return NightVisionSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.bitcrusher:
+        return BitcrusherSheet(
           clip: clip,
           onSave: onSaveClip,
           isDocked: true,

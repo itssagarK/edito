@@ -80,6 +80,9 @@ enum EditorTool {
   cameraShake,
   lensDistortion,
   vinylRecord,
+  lightLeak,
+  nightVision,
+  bitcrusher,
 }
 
 class EditorState {

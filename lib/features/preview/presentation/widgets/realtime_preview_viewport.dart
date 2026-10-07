@@ -43,6 +43,8 @@ import '../../../vfx/models/anamorphic_flare_config.dart';
 import '../../../vfx/models/film_halation_config.dart';
 import '../../../vfx/models/camera_shake_config.dart';
 import '../../../vfx/models/lens_distortion_config.dart';
+import '../../../vfx/models/light_leak_config.dart';
+import '../../../vfx/models/night_vision_config.dart';
 import '../../../vfx/services/vfx_compiler_service.dart';
 import '../../../vfx/presentation/widgets/vfx_preview_wrapper.dart';
 import '../../../../models/clip.dart';
@@ -1353,6 +1355,10 @@ class RealtimePreviewViewport extends ConsumerWidget {
           _buildCameraShakeOverlay(clip.cameraShake, currentPositionMs - clip.timelineInMs),
         if (clip.lensDistortion.isActive)
           _buildLensDistortionOverlay(clip.lensDistortion),
+        if (clip.lightLeak.isActive)
+          _buildLightLeakOverlay(clip.lightLeak, currentPositionMs - clip.timelineInMs),
+        if (clip.nightVision.isActive)
+          _buildNightVisionOverlay(clip.nightVision, currentPositionMs - clip.timelineInMs),
       ],
     );
   }
@@ -2173,6 +2179,38 @@ class RealtimePreviewViewport extends ConsumerWidget {
     );
   }
 
+  Widget _buildLightLeakOverlay(LightLeakConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / (4000.0 / config.speed)) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportLightLeakPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNightVisionOverlay(NightVisionConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 2000.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportNightVisionPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildProgressBarOverlay(ProgressBarConfig config, int currentMs, int totalMs) {
     if (totalMs <= 0) return const SizedBox.shrink();
     final progress = (currentMs / totalMs).clamp(0.0, 1.0);
@@ -2831,5 +2869,234 @@ class _ViewportLensDistortionPainter extends CustomPainter {
     return oldDelegate.config != config;
   }
 }
+
+class _ViewportLightLeakPainter extends CustomPainter {
+  final LightLeakConfig config;
+  final double phase;
+
+  _ViewportLightLeakPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (!config.isActive || size.width <= 0 || size.height <= 0) return;
+
+    final pulse = 0.85 + 0.15 * math.sin(phase * 2 * math.pi);
+    final intensity = (config.intensity * pulse).clamp(0.0, 1.0);
+
+    Offset origin;
+    switch (config.position) {
+      case LightLeakPosition.topLeft:
+        origin = Offset(size.width * 0.05, size.height * 0.05);
+        break;
+      case LightLeakPosition.topRight:
+        origin = Offset(size.width * 0.95, size.height * 0.05);
+        break;
+      case LightLeakPosition.bottomLeft:
+        origin = Offset(size.width * 0.05, size.height * 0.95);
+        break;
+      case LightLeakPosition.bottomRight:
+        origin = Offset(size.width * 0.95, size.height * 0.95);
+        break;
+      case LightLeakPosition.centerSweep:
+        origin = Offset(size.width * 0.5, size.height * 0.5);
+        break;
+    }
+
+    final maxRadius = math.max(size.width, size.height) * 1.1;
+
+    switch (config.profile) {
+      case LightLeakProfile.warmSunsetFlare:
+        final flarePaint = Paint()
+          ..shader = RadialGradient(
+            colors: [
+              Colors.white.withOpacity((0.75 * intensity).clamp(0.0, 1.0)),
+              Colors.amber.withOpacity((0.55 * intensity).clamp(0.0, 1.0)),
+              Colors.deepOrange.withOpacity((0.30 * intensity).clamp(0.0, 1.0)),
+              Colors.transparent,
+            ],
+            stops: const [0.0, 0.25, 0.60, 1.0],
+          ).createShader(Rect.fromCircle(center: origin, radius: maxRadius))
+          ..blendMode = BlendMode.screen;
+        canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), flarePaint);
+        break;
+
+      case LightLeakProfile.rainbowPrism:
+        final prismColors = [
+          Colors.redAccent.withOpacity((0.35 * intensity).clamp(0.0, 1.0)),
+          Colors.orangeAccent.withOpacity((0.35 * intensity).clamp(0.0, 1.0)),
+          Colors.yellowAccent.withOpacity((0.35 * intensity).clamp(0.0, 1.0)),
+          Colors.greenAccent.withOpacity((0.35 * intensity).clamp(0.0, 1.0)),
+          Colors.cyanAccent.withOpacity((0.35 * intensity).clamp(0.0, 1.0)),
+          Colors.purpleAccent.withOpacity((0.35 * intensity).clamp(0.0, 1.0)),
+          Colors.transparent,
+        ];
+        final sweepPaint = Paint()
+          ..shader = SweepGradient(
+            colors: prismColors,
+            startAngle: 0.0,
+            endAngle: math.pi * 2,
+            transform: GradientRotation(phase * math.pi * 0.5),
+          ).createShader(Rect.fromCircle(center: origin, radius: maxRadius))
+          ..blendMode = BlendMode.screen;
+        canvas.drawCircle(origin, maxRadius, sweepPaint);
+        break;
+
+      case LightLeakProfile.vintage35mmBurn:
+        final burnPaint = Paint()
+          ..shader = LinearGradient(
+            begin: origin.dx < size.width / 2 ? Alignment.centerLeft : Alignment.centerRight,
+            end: origin.dx < size.width / 2 ? Alignment.centerRight : Alignment.centerLeft,
+            colors: [
+              Colors.white.withOpacity((0.70 * intensity).clamp(0.0, 1.0)),
+              Colors.deepOrange.withOpacity((0.50 * intensity).clamp(0.0, 1.0)),
+              Colors.redAccent.withOpacity((0.30 * intensity).clamp(0.0, 1.0)),
+              Colors.transparent,
+            ],
+            stops: const [0.0, 0.22, 0.50, 1.0],
+          ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+          ..blendMode = BlendMode.screen;
+        canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), burnPaint);
+        break;
+
+      case LightLeakProfile.anamorphicCyanLeak:
+        final beamY = origin.dy;
+        final beamHeight = size.height * 0.30;
+        final beamPaint = Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              Colors.cyanAccent.withOpacity((0.30 * intensity).clamp(0.0, 1.0)),
+              Colors.white.withOpacity((0.75 * intensity).clamp(0.0, 1.0)),
+              Colors.blueAccent.withOpacity((0.30 * intensity).clamp(0.0, 1.0)),
+              Colors.transparent,
+            ],
+            stops: const [0.0, 0.35, 0.50, 0.65, 1.0],
+          ).createShader(Rect.fromLTWH(0, beamY - beamHeight / 2, size.width, beamHeight))
+          ..blendMode = BlendMode.screen;
+        canvas.drawRect(Rect.fromLTWH(0, beamY - beamHeight / 2, size.width, beamHeight), beamPaint);
+        break;
+
+      case LightLeakProfile.subtleAmbientGlow:
+        final glowPaint = Paint()
+          ..shader = RadialGradient(
+            colors: [
+              Colors.amberAccent.withOpacity((0.35 * intensity).clamp(0.0, 1.0)),
+              Colors.transparent,
+            ],
+            stops: const [0.0, 1.0],
+          ).createShader(Rect.fromCircle(center: origin, radius: maxRadius * 0.8))
+          ..blendMode = BlendMode.screen;
+        canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), glowPaint);
+        break;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportLightLeakPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
+class _ViewportNightVisionPainter extends CustomPainter {
+  final NightVisionConfig config;
+  final double phase;
+
+  _ViewportNightVisionPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (!config.isActive || size.width <= 0 || size.height <= 0) return;
+
+    // 1. Phosphor tint wash or thermal wash
+    Color tintColor;
+    BlendMode tintBlend;
+    switch (config.mode) {
+      case NightVisionMode.phosphorGreen:
+        tintColor = const Color(0xFF00FF55).withOpacity(0.35);
+        tintBlend = BlendMode.color;
+        break;
+      case NightVisionMode.thermalFlirIronbow:
+        tintColor = const Color(0xFFFF5500).withOpacity(0.30);
+        tintBlend = BlendMode.color;
+        break;
+      case NightVisionMode.thermalRainbow:
+        tintColor = const Color(0xFF00E5FF).withOpacity(0.25);
+        tintBlend = BlendMode.color;
+        break;
+      case NightVisionMode.whiteHot:
+        tintColor = Colors.white.withOpacity(0.15);
+        tintBlend = BlendMode.color;
+        break;
+      case NightVisionMode.blackHot:
+        tintColor = Colors.black.withOpacity(0.20);
+        tintBlend = BlendMode.color;
+        break;
+    }
+    final tintPaint = Paint()
+      ..color = tintColor
+      ..blendMode = tintBlend;
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), tintPaint);
+
+    // 2. Scanlines
+    if (config.scanlines) {
+      final linePaint = Paint()
+        ..color = Colors.black.withOpacity(0.20)
+        ..strokeWidth = 1.0;
+      for (double y = 0; y < size.height; y += 4) {
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
+      }
+    }
+
+    // 3. Ocular scope vignette
+    if (config.vignette > 0.05) {
+      final center = Offset(size.width / 2, size.height / 2);
+      final radius = math.max(size.width, size.height) * 0.55;
+      final vigPaint = Paint()
+        ..shader = RadialGradient(
+          colors: [
+            Colors.transparent,
+            Colors.transparent,
+            Colors.black.withOpacity((0.65 * config.vignette).clamp(0.0, 1.0)),
+            Colors.black.withOpacity((0.95 * config.vignette).clamp(0.0, 1.0)),
+          ],
+          stops: const [0.0, 0.55, 0.82, 1.0],
+        ).createShader(Rect.fromCircle(center: center, radius: radius));
+      canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), vigPaint);
+    }
+
+    // 4. Reticle & HUD
+    if (config.reticle != NightVisionReticle.none) {
+      final center = Offset(size.width / 2, size.height / 2);
+      final hudColor = config.mode == NightVisionMode.phosphorGreen
+          ? const Color(0xFF00FF55)
+          : (config.mode == NightVisionMode.thermalFlirIronbow ? Colors.orangeAccent : Colors.cyanAccent);
+      final reticlePaint = Paint()
+        ..color = hudColor.withOpacity(0.75)
+        ..strokeWidth = 1.2
+        ..style = PaintingStyle.stroke;
+
+      const gap = 14.0;
+      const len = 32.0;
+      canvas.drawLine(Offset(center.dx - len, center.dy), Offset(center.dx - gap, center.dy), reticlePaint);
+      canvas.drawLine(Offset(center.dx + gap, center.dy), Offset(center.dx + len, center.dy), reticlePaint);
+      canvas.drawLine(Offset(center.dx, center.dy - len), Offset(center.dx, center.dy - gap), reticlePaint);
+      canvas.drawLine(Offset(center.dx, center.dy + gap), Offset(center.dx, center.dy + len), reticlePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportNightVisionPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
 
 

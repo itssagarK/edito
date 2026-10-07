@@ -579,6 +579,30 @@ class _ToolSearchModalState extends State<ToolSearchModal> {
       icon: Icons.album,
       keywords: ['vinyl', 'record', 'turntable', 'crackle', 'dust', 'needle', 'lp', 'lofi', 'analog', 'vintage'],
     ),
+    _SearchableTool(
+      tool: EditorTool.lightLeak,
+      title: 'Light Leak & Rainbow Prisms Studio',
+      category: 'Visuals',
+      description: 'Organic solar light leaks, chromatic rainbow prism flares, warm anamorphic exposure breathing, and Skia Canvas simulation',
+      icon: Icons.wb_sunny_rounded,
+      keywords: ['light', 'leak', 'rainbow', 'prism', 'solar', 'flare', 'sun', 'anamorphic', 'burn', 'film', 'exposure', 'glow', 'vfx'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.nightVision,
+      title: 'Night Vision & Thermal Scope Studio',
+      category: 'Visuals',
+      description: 'Military Gen-3 phosphor green matrix, FLIR thermal false-color heatmap, CRT scanlines, and tactical rangefinder reticles',
+      icon: Icons.visibility_rounded,
+      keywords: ['night vision', 'nvg', 'thermal', 'flir', 'infrared', 'ironbow', 'reticle', 'crosshair', 'scope', 'military', 'heatmap', 'green', 'tactical'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.bitcrusher,
+      title: '8-Bit Lo-Fi Chiptune Crusher',
+      category: 'Audio',
+      description: 'Sample rate downsampling, bit depth DAC quantization, arcade crunch saturation, and true-peak brickwall ceiling limiter',
+      icon: Icons.videogame_asset_rounded,
+      keywords: ['bitcrusher', '8-bit', 'chiptune', 'lofi', 'nes', 'gameboy', 'arcade', 'downsample', 'quantize', 'dac', 'sample rate', 'audio', 'sound'],
+    ),
   ];
 
   @override

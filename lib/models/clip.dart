@@ -54,6 +54,9 @@ import '../features/audio/models/tape_cassette_config.dart';
 import '../features/vfx/models/camera_shake_config.dart';
 import '../features/vfx/models/lens_distortion_config.dart';
 import '../features/audio/models/vinyl_record_config.dart';
+import '../features/vfx/models/light_leak_config.dart';
+import '../features/vfx/models/night_vision_config.dart';
+import '../features/audio/models/bitcrusher_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -126,6 +129,9 @@ class Clip extends Equatable {
   final CameraShakeConfig cameraShake;
   final LensDistortionConfig lensDistortion;
   final VinylRecordConfig vinylRecord;
+  final LightLeakConfig lightLeak;
+  final NightVisionConfig nightVision;
+  final BitcrusherConfig bitcrusher;
 
   const Clip({
     required this.id,
@@ -198,6 +204,9 @@ class Clip extends Equatable {
     this.cameraShake = const CameraShakeConfig(),
     this.lensDistortion = const LensDistortionConfig(),
     this.vinylRecord = const VinylRecordConfig(),
+    this.lightLeak = const LightLeakConfig(),
+    this.nightVision = const NightVisionConfig(),
+    this.bitcrusher = const BitcrusherConfig(),
   });
 
   Clip copyWith({
@@ -271,6 +280,9 @@ class Clip extends Equatable {
     CameraShakeConfig? cameraShake,
     LensDistortionConfig? lensDistortion,
     VinylRecordConfig? vinylRecord,
+    LightLeakConfig? lightLeak,
+    NightVisionConfig? nightVision,
+    BitcrusherConfig? bitcrusher,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -343,6 +355,9 @@ class Clip extends Equatable {
       cameraShake: cameraShake ?? this.cameraShake,
       lensDistortion: lensDistortion ?? this.lensDistortion,
       vinylRecord: vinylRecord ?? this.vinylRecord,
+      lightLeak: lightLeak ?? this.lightLeak,
+      nightVision: nightVision ?? this.nightVision,
+      bitcrusher: bitcrusher ?? this.bitcrusher,
     );
   }
 
@@ -417,6 +432,9 @@ class Clip extends Equatable {
         'cameraShake': cameraShake.toJson(),
         'lensDistortion': lensDistortion.toJson(),
         'vinylRecord': vinylRecord.toJson(),
+        'lightLeak': lightLeak.toJson(),
+        'nightVision': nightVision.toJson(),
+        'bitcrusher': bitcrusher.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -605,6 +623,15 @@ class Clip extends Equatable {
         vinylRecord: json['vinylRecord'] != null
             ? VinylRecordConfig.fromJson(json['vinylRecord'] as Map<String, dynamic>)
             : const VinylRecordConfig(),
+        lightLeak: json['lightLeak'] != null
+            ? LightLeakConfig.fromJson(json['lightLeak'] as Map<String, dynamic>)
+            : const LightLeakConfig(),
+        nightVision: json['nightVision'] != null
+            ? NightVisionConfig.fromJson(json['nightVision'] as Map<String, dynamic>)
+            : const NightVisionConfig(),
+        bitcrusher: json['bitcrusher'] != null
+            ? BitcrusherConfig.fromJson(json['bitcrusher'] as Map<String, dynamic>)
+            : const BitcrusherConfig(),
       );
 
   @override
@@ -679,5 +706,8 @@ class Clip extends Equatable {
         cameraShake,
         lensDistortion,
         vinylRecord,
+        lightLeak,
+        nightVision,
+        bitcrusher,
       ];
 }
