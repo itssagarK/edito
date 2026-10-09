@@ -78,6 +78,9 @@ import '../features/audio/models/sub_bass_exciter_config.dart';
 import '../features/vfx/models/radial_zoom_blur_config.dart';
 import '../features/vfx/models/cyber_hud_config.dart';
 import '../features/audio/models/binaural_auto_pan_config.dart';
+import '../features/vfx/models/water_caustics_config.dart';
+import '../features/vfx/models/diamond_prism_config.dart';
+import '../features/audio/models/multiband_compressor_config.dart';
 
 class Clip extends Equatable {
   final String id;
@@ -174,6 +177,9 @@ class Clip extends Equatable {
   final RadialZoomBlurConfig radialZoomBlur;
   final CyberHudConfig cyberHud;
   final BinauralAutoPanConfig binauralAutoPan;
+  final WaterCausticsConfig waterCaustics;
+  final DiamondPrismConfig diamondPrism;
+  final MultibandCompressorConfig multibandCompressor;
 
   const Clip({
     required this.id,
@@ -270,6 +276,9 @@ class Clip extends Equatable {
     this.radialZoomBlur = const RadialZoomBlurConfig(),
     this.cyberHud = const CyberHudConfig(),
     this.binauralAutoPan = const BinauralAutoPanConfig(),
+    this.waterCaustics = const WaterCausticsConfig(),
+    this.diamondPrism = const DiamondPrismConfig(),
+    this.multibandCompressor = const MultibandCompressorConfig(),
   });
 
   Clip copyWith({
@@ -367,6 +376,9 @@ class Clip extends Equatable {
     RadialZoomBlurConfig? radialZoomBlur,
     CyberHudConfig? cyberHud,
     BinauralAutoPanConfig? binauralAutoPan,
+    WaterCausticsConfig? waterCaustics,
+    DiamondPrismConfig? diamondPrism,
+    MultibandCompressorConfig? multibandCompressor,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -463,6 +475,9 @@ class Clip extends Equatable {
       radialZoomBlur: radialZoomBlur ?? this.radialZoomBlur,
       cyberHud: cyberHud ?? this.cyberHud,
       binauralAutoPan: binauralAutoPan ?? this.binauralAutoPan,
+      waterCaustics: waterCaustics ?? this.waterCaustics,
+      diamondPrism: diamondPrism ?? this.diamondPrism,
+      multibandCompressor: multibandCompressor ?? this.multibandCompressor,
     );
   }
 
@@ -561,6 +576,9 @@ class Clip extends Equatable {
         'radialZoomBlur': radialZoomBlur.toJson(),
         'cyberHud': cyberHud.toJson(),
         'binauralAutoPan': binauralAutoPan.toJson(),
+        'waterCaustics': waterCaustics.toJson(),
+        'diamondPrism': diamondPrism.toJson(),
+        'multibandCompressor': multibandCompressor.toJson(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -821,6 +839,15 @@ class Clip extends Equatable {
         binauralAutoPan: json['binauralAutoPan'] != null
             ? BinauralAutoPanConfig.fromJson(json['binauralAutoPan'] as Map<String, dynamic>)
             : const BinauralAutoPanConfig(),
+        waterCaustics: json['waterCaustics'] != null
+            ? WaterCausticsConfig.fromJson(json['waterCaustics'] as Map<String, dynamic>)
+            : const WaterCausticsConfig(),
+        diamondPrism: json['diamondPrism'] != null
+            ? DiamondPrismConfig.fromJson(json['diamondPrism'] as Map<String, dynamic>)
+            : const DiamondPrismConfig(),
+        multibandCompressor: json['multibandCompressor'] != null
+            ? MultibandCompressorConfig.fromJson(json['multibandCompressor'] as Map<String, dynamic>)
+            : const MultibandCompressorConfig(),
       );
 
   @override
@@ -919,5 +946,8 @@ class Clip extends Equatable {
         radialZoomBlur,
         cyberHud,
         binauralAutoPan,
+        waterCaustics,
+        diamondPrism,
+        multibandCompressor,
       ];
 }

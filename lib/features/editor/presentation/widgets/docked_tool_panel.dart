@@ -94,6 +94,9 @@ import '../../../audio/presentation/widgets/sub_bass_exciter_sheet.dart';
 import '../../../vfx/presentation/widgets/radial_zoom_blur_sheet.dart';
 import '../../../vfx/presentation/widgets/cyber_hud_sheet.dart';
 import '../../../audio/presentation/widgets/binaural_auto_pan_sheet.dart';
+import '../../../vfx/presentation/widgets/water_caustics_sheet.dart';
+import '../../../vfx/presentation/widgets/diamond_prism_sheet.dart';
+import '../../../audio/presentation/widgets/multiband_compressor_sheet.dart';
 import '../../../overlays/presentation/widgets/typewriter_title_sheet.dart';
 import '../../../transform/presentation/widgets/transform_studio_sheet.dart';
 
@@ -313,6 +316,12 @@ class DockedToolPanel extends StatelessWidget {
         return 'Cyber HUD Reticle';
       case EditorTool.binauralAutoPan:
         return '3D Binaural Auto-Pan';
+      case EditorTool.waterCaustics:
+        return 'Liquid Water Caustics';
+      case EditorTool.diamondPrism:
+        return 'Diamond Glass Prism';
+      case EditorTool.multibandCompressor:
+        return '3-Band Master Compressor';
       default:
         return tool.name.toUpperCase();
     }

@@ -59,6 +59,8 @@ import '../../../vfx/models/echo_motion_config.dart';
 import '../../../vfx/models/ascii_art_config.dart';
 import '../../../vfx/models/radial_zoom_blur_config.dart';
 import '../../../vfx/models/cyber_hud_config.dart';
+import '../../../vfx/models/water_caustics_config.dart';
+import '../../../vfx/models/diamond_prism_config.dart';
 import '../../../vfx/services/vfx_compiler_service.dart';
 import '../../../vfx/presentation/widgets/vfx_preview_wrapper.dart';
 import '../../../../models/clip.dart';
@@ -1401,6 +1403,10 @@ class RealtimePreviewViewport extends ConsumerWidget {
           _buildRadialZoomBlurOverlay(clip.radialZoomBlur, currentPositionMs - clip.timelineInMs),
         if (clip.cyberHud.isActive)
           _buildCyberHudOverlay(clip.cyberHud, currentPositionMs - clip.timelineInMs),
+        if (clip.waterCaustics.isActive)
+          _buildWaterCausticsOverlay(clip.waterCaustics, currentPositionMs - clip.timelineInMs),
+        if (clip.diamondPrism.isActive)
+          _buildDiamondPrismOverlay(clip.diamondPrism, currentPositionMs - clip.timelineInMs),
       ],
     );
   }
@@ -2467,6 +2473,38 @@ class RealtimePreviewViewport extends ConsumerWidget {
       child: IgnorePointer(
         child: CustomPaint(
           painter: _ViewportCyberHudPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWaterCausticsOverlay(WaterCausticsConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 3000.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportWaterCausticsPainter(
+            config: config,
+            phase: phase,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDiamondPrismOverlay(DiamondPrismConfig config, int offsetMs) {
+    if (!config.isActive) return const SizedBox.shrink();
+    final phase = (offsetMs / 3500.0) % 1.0;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _ViewportDiamondPrismPainter(
             config: config,
             phase: phase,
           ),
@@ -4319,3 +4357,176 @@ class _ViewportCyberHudPainter extends CustomPainter {
     return oldDelegate.config != config || oldDelegate.phase != phase;
   }
 }
+
+class _ViewportWaterCausticsPainter extends CustomPainter {
+  final WaterCausticsConfig config;
+  final double phase;
+
+  _ViewportWaterCausticsPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0 || !config.isActive) return;
+
+    Color accentColor;
+    switch (config.mode) {
+      case WaterCausticsMode.tropicalPool:
+        accentColor = const Color(0xFF00E5FF);
+        break;
+      case WaterCausticsMode.abyssalDeep:
+        accentColor = const Color(0xFF2979FF);
+        break;
+      case WaterCausticsMode.emeraldLagoon:
+        accentColor = const Color(0xFF00E676);
+        break;
+      case WaterCausticsMode.bioluminescentReef:
+        accentColor = const Color(0xFFD500F9);
+        break;
+      case WaterCausticsMode.sunkenGold:
+        accentColor = const Color(0xFFFFD600);
+        break;
+    }
+
+    final intensity = config.intensity;
+    final scale = config.scale;
+    final time = phase * 2 * math.pi * config.speed;
+
+    // Aquatic ambient tint wash
+    final tintPaint = Paint()
+      ..color = accentColor.withOpacity((0.14 * config.tintDepth * intensity).clamp(0.0, 0.4))
+      ..blendMode = BlendMode.screen;
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), tintPaint);
+
+    // Procedural caustic light web paths
+    final cols = (6 * scale).round().clamp(3, 12);
+    final rows = (4 * scale).round().clamp(2, 9);
+    final dx = size.width / cols;
+    final dy = size.height / rows;
+
+    final linePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
+
+    for (int r = 0; r < rows; r++) {
+      for (int c = 0; c < cols; c++) {
+        final x0 = c * dx;
+        final y0 = r * dy;
+
+        final wave1 = math.sin(time + c * 0.8 + r * 0.6) * 6.0 * config.refractionWarp;
+        final wave2 = math.cos(time * 1.2 + c * 0.5 - r * 0.8) * 5.0 * config.refractionWarp;
+
+        final start = Offset(x0 + wave1, y0 + wave2);
+        final cp1 = Offset(x0 + dx * 0.4 + wave2, y0 + dy * 0.2 + wave1);
+        final cp2 = Offset(x0 + dx * 0.7 - wave1, y0 + dy * 0.8 - wave2);
+        final end = Offset(x0 + dx + wave2, y0 + dy + wave1);
+
+        final path = Path()
+          ..moveTo(start.dx, start.dy)
+          ..cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, end.dx, end.dy);
+
+        // Luminous caustic glow
+        linePaint
+          ..color = accentColor.withOpacity((0.30 * intensity).clamp(0.0, 0.7))
+          ..strokeWidth = 2.0;
+        canvas.drawPath(path, linePaint);
+
+        // Bright specular core
+        final corePaint = Paint()
+          ..color = Colors.white.withOpacity((0.50 * intensity).clamp(0.0, 0.8))
+          ..strokeWidth = 1.0
+          ..style = PaintingStyle.stroke;
+        canvas.drawPath(path, corePaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportWaterCausticsPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+
+class _ViewportDiamondPrismPainter extends CustomPainter {
+  final DiamondPrismConfig config;
+  final double phase;
+
+  _ViewportDiamondPrismPainter({
+    required this.config,
+    required this.phase,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0 || !config.isActive) return;
+
+    final apex = Offset(size.width * config.centerX, size.height * config.centerY);
+    final count = config.facetCount.clamp(3, 12);
+    final dispersion = config.dispersionStrength;
+    final reflection = config.innerReflectionIntensity;
+    final rotAngle = config.isRotating ? (phase * 2 * math.pi) : 0.0;
+    final baseAngle = (config.refractionAngle * math.pi / 180.0) + rotAngle;
+    final maxRadius = math.max(size.width, size.height) * 0.8;
+
+    final rainbowColors = [
+      const Color(0xFFFF1744),
+      const Color(0xFFFF9100),
+      const Color(0xFFFFEA00),
+      const Color(0xFF00E676),
+      const Color(0xFF00E5FF),
+      const Color(0xFF2979FF),
+      const Color(0xFFD500F9),
+      const Color(0xFFFF1744),
+    ];
+
+    for (int i = 0; i < count; i++) {
+      final a = baseAngle + (i * 2 * math.pi / count);
+      final p = Offset(apex.dx + math.cos(a) * maxRadius, apex.dy + math.sin(a) * maxRadius);
+      final facetColor = rainbowColors[i % rainbowColors.length];
+
+      // Rainbow dispersion streak
+      final strokePaint = Paint()
+        ..shader = LinearGradient(
+          colors: [
+            Colors.white.withOpacity(0.65 * dispersion),
+            facetColor.withOpacity(0.80 * dispersion),
+            Colors.transparent,
+          ],
+        ).createShader(Rect.fromPoints(apex, p))
+        ..strokeWidth = 1.8
+        ..style = PaintingStyle.stroke;
+      canvas.drawLine(apex, p, strokePaint);
+
+      // Specular glint
+      if (reflection > 0.2) {
+        final glintPos = Offset(
+          apex.dx + math.cos(a) * (maxRadius * 0.4),
+          apex.dy + math.sin(a) * (maxRadius * 0.4),
+        );
+        final glintPaint = Paint()
+          ..color = Colors.white.withOpacity((0.7 * reflection).clamp(0.0, 1.0))
+          ..strokeWidth = 1.2;
+        const gLen = 6.0;
+        canvas.drawLine(glintPos.translate(-gLen, 0), glintPos.translate(gLen, 0), glintPaint);
+        canvas.drawLine(glintPos.translate(0, -gLen), glintPos.translate(0, gLen), glintPaint);
+      }
+    }
+
+    // Apex crown glint
+    final crownPaint = Paint()
+      ..color = Colors.white.withOpacity((0.85 * reflection).clamp(0.2, 1.0))
+      ..strokeWidth = 1.5;
+    const cLen = 10.0;
+    canvas.drawLine(apex.translate(-cLen, 0), apex.translate(cLen, 0), crownPaint);
+    canvas.drawLine(apex.translate(0, -cLen), apex.translate(0, cLen), crownPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ViewportDiamondPrismPainter oldDelegate) {
+    return oldDelegate.config != config || oldDelegate.phase != phase;
+  }
+}
+

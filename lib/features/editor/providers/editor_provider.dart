@@ -104,6 +104,9 @@ enum EditorTool {
   radialZoomBlur,
   cyberHud,
   binauralAutoPan,
+  waterCaustics,
+  diamondPrism,
+  multibandCompressor,
 }
 
 class EditorState {

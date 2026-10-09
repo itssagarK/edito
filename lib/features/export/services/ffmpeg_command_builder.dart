@@ -60,6 +60,9 @@ import '../../audio/services/sub_bass_exciter_compiler_service.dart';
 import '../../vfx/services/radial_zoom_blur_compiler_service.dart';
 import '../../vfx/services/cyber_hud_compiler_service.dart';
 import '../../audio/services/binaural_auto_pan_compiler_service.dart';
+import '../../vfx/services/water_caustics_compiler_service.dart';
+import '../../vfx/services/diamond_prism_compiler_service.dart';
+import '../../audio/services/multiband_compressor_compiler_service.dart';
 import '../../image_editor/services/auto_reframe_service.dart';
 import '../../image_editor/services/pip_compiler_service.dart';
 import '../../cutout/services/smart_cutout_compiler_service.dart';
@@ -796,6 +799,30 @@ class FFmpegCommandBuilder {
           }
         }
 
+        // Aquatic VFX: Liquid Water Caustics & Shimmering Waves
+        if (clip.waterCaustics.isActive) {
+          final causticsFilter = WaterCausticsCompilerService.compileFilter(
+            clip.waterCaustics,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (causticsFilter.isNotEmpty) {
+            vFilters.add(causticsFilter);
+          }
+        }
+
+        // Optical VFX: Diamond Glass Prism & Rainbow Dispersion
+        if (clip.diamondPrism.isActive) {
+          final prismFilter = DiamondPrismCompilerService.compileFilter(
+            clip.diamondPrism,
+            targetWidth: targetW,
+            targetHeight: targetH,
+          );
+          if (prismFilter.isNotEmpty) {
+            vFilters.add(prismFilter);
+          }
+        }
+
         // Smart AI Cutout Studio & Glowing Neon Outlines
         if (clip.smartCutout.isEnabled) {
           final cutoutFilters = SmartCutoutCompilerService.generateFFmpegFilters(
@@ -1119,6 +1146,14 @@ class FFmpegCommandBuilder {
           final panFilter = BinauralAutoPanCompilerService.compileFilter(clip.binauralAutoPan);
           if (panFilter.isNotEmpty) {
             aFilters.add(panFilter);
+          }
+        }
+
+        // Studio Dynamics: 3-Band Audio Master Compressor
+        if (clip.multibandCompressor.isActive) {
+          final compFilter = MultibandCompressorCompilerService.compileFilter(clip.multibandCompressor);
+          if (compFilter.isNotEmpty) {
+            aFilters.add(compFilter);
           }
         }
 
