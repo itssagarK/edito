@@ -771,6 +771,30 @@ class _ToolSearchModalState extends State<ToolSearchModal> {
       icon: Icons.surround_sound_rounded,
       keywords: ['binaural', 'auto pan', 'pan', 'doppler', '3d audio', 'spatial', 'orbit', 'pendulum', 'stereo', 'headphones', 'soundstage', 'audio', 'sound', 'dsp'],
     ),
+    _SearchableTool(
+      tool: EditorTool.waterCaustics,
+      title: 'Liquid Water Caustics & Underwater Wave',
+      category: 'Visuals',
+      description: 'Shimmering underwater caustic light webs, refractive ripple distortion, deep ocean cyan gradients, and aquatic wave shimmer',
+      icon: Icons.water_drop_rounded,
+      keywords: ['water', 'caustics', 'underwater', 'wave', 'ripple', 'shimmer', 'aquatic', 'liquid', 'ocean', 'sea', 'light web', 'vfx', 'visuals'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.diamondPrism,
+      title: 'Diamond Glass Prism & Geometric Light Refraction',
+      category: 'Visuals',
+      description: 'Multi-faceted optical diamond dispersion, chromatic rainbow facet splitting, geometric internal reflections, and crystal flares',
+      icon: Icons.diamond_rounded,
+      keywords: ['diamond', 'prism', 'glass', 'refraction', 'facet', 'crystal', 'dispersion', 'rainbow', 'flare', 'geometric', 'vfx', 'visuals'],
+    ),
+    _SearchableTool(
+      tool: EditorTool.multibandCompressor,
+      title: '3-Band Studio Mastering Compressor',
+      category: 'Audio',
+      description: 'Independent Low, Mid, and High crossover dynamics compression, threshold, ratio, makeup gain, live VU meters, and brickwall limiter',
+      icon: Icons.equalizer_rounded,
+      keywords: ['multiband', 'compressor', 'mastering', 'crossover', 'dynamics', 'audio', 'sound', 'limiter', 'eq', 'gain', 'master', 'dsp'],
+    ),
   ];
 
   @override

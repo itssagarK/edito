@@ -780,6 +780,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openBinauralAutoPanModal();
         break;
 
+      case EditorTool.waterCaustics:
+        _openWaterCausticsModal();
+        break;
+
+      case EditorTool.diamondPrism:
+        _openDiamondPrismModal();
+        break;
+
+      case EditorTool.multibandCompressor:
+        _openMultibandCompressorModal();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1193,6 +1205,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   void _openBinauralAutoPanModal() {
     _openDockedTool(EditorTool.binauralAutoPan, trackType: TrackType.audio, purpose: '3D Binaural Auto-Pan & Doppler Swell');
+  }
+
+  void _openWaterCausticsModal() {
+    _openDockedTool(EditorTool.waterCaustics, trackType: TrackType.video, purpose: 'Liquid Water Caustics & Underwater Light Wave');
+  }
+
+  void _openDiamondPrismModal() {
+    _openDockedTool(EditorTool.diamondPrism, trackType: TrackType.video, purpose: 'Diamond Glass Prism & Geometric Light Refraction');
+  }
+
+  void _openMultibandCompressorModal() {
+    _openDockedTool(EditorTool.multibandCompressor, trackType: TrackType.audio, purpose: '3-Band Studio Mastering Compressor');
   }
 
   void _openAudioToolsModal() {

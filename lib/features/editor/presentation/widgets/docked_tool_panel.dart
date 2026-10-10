@@ -515,6 +515,12 @@ class DockedToolPanel extends StatelessWidget {
         return Icons.gps_fixed_rounded;
       case EditorTool.binauralAutoPan:
         return Icons.surround_sound_rounded;
+      case EditorTool.waterCaustics:
+        return Icons.water_drop_rounded;
+      case EditorTool.diamondPrism:
+        return Icons.diamond_rounded;
+      case EditorTool.multibandCompressor:
+        return Icons.equalizer_rounded;
       default:
         return Icons.edit;
     }
@@ -1555,6 +1561,30 @@ class DockedToolPanel extends StatelessWidget {
 
       case EditorTool.binauralAutoPan:
         return BinauralAutoPanSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.waterCaustics:
+        return WaterCausticsSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.diamondPrism:
+        return DiamondPrismSheet(
+          clip: clip,
+          onSave: onSaveClip,
+          isDocked: true,
+          onDone: onClose,
+        );
+
+      case EditorTool.multibandCompressor:
+        return MultibandCompressorSheet(
           clip: clip,
           onSave: onSaveClip,
           isDocked: true,
